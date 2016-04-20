@@ -30,6 +30,20 @@ import org.jboss.as.cli.CommandFormatException;
 public interface ParsingContext {
 
     /**
+     * Implement this interface to provide a new input.
+     */
+    interface InputProvider {
+
+        /**
+         * Returns a new input.
+         *
+         * @param ctx The current context.
+         * @return The new input. Can't be null.
+         */
+        String getInput(ParsingContext ctx);
+    }
+
+    /**
      * The complete string being parsed.
      *
      * @return  the complete string being parsed
@@ -218,4 +232,11 @@ public interface ParsingContext {
      * otherwise - false
      */
     boolean isDeactivated(char c);
+
+    /**
+     * Make changes to the current input using the passed provider.
+     *
+     * @param provider The input provider. Can't be null.
+     */
+    void updateInput(InputProvider provider);
 }

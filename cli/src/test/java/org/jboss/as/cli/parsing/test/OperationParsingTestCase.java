@@ -200,6 +200,100 @@ public class OperationParsingTestCase {
     }
 
     @Test
+    public void testOperationWithImplicitValues() throws Exception {
+        DefaultCallbackHandler handler = new DefaultCallbackHandler();
+
+        parse(":reload(admin-only)", handler);
+        assertEquals(1, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("admin-only"));
+
+        parse(":reload(admin-only,)", handler);
+        assertEquals(1, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("admin-only"));
+
+        parse(":reload(admin-only,", handler);
+        assertEquals(1, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("admin-only"));
+
+        parse(":reload(admin-only", handler);
+        assertEquals(1, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("admin-only"));
+
+        parse(":reload(admin-only,use-current-server-config)", handler);
+        assertEquals(2, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+
+        parse(":reload(admin-only,use-current-server-config,", handler);
+        assertEquals(2, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+
+        parse(":reload(admin-only,use-current-server-config,)", handler);
+        assertEquals(2, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+
+        parse(":reload(admin-only,use-current-server-config", handler);
+        assertEquals(2, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+
+        parse(":reload(server-config=\" toto,tutu  \",admin-only,use-current-server-config,", handler);
+        assertEquals(3, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertEquals("\" toto,tutu  \"", handler.getPropertyValue("server-config"));
+
+        parse(":reload(server-config=\" toto,tutu  \",admin-only,use-current-server-config)", handler);
+        assertEquals(3, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertEquals("\" toto,tutu  \"", handler.getPropertyValue("server-config"));
+
+        parse(":reload(server-config=\" toto,tutu  \",admin-only,use-current-server-config,)", handler);
+        assertEquals(3, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertEquals("\" toto,tutu  \"", handler.getPropertyValue("server-config"));
+
+        parse(":reload(server-config=\" toto,tutu  \",admin-only,use-current-server-config", handler);
+        assertEquals(3, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertEquals("\" toto,tutu  \"", handler.getPropertyValue("server-config"));
+
+        parse(":reload(server-config = \" toto,tutu  \" , admin-only ,  use-current-server-config  )", handler);
+        assertEquals(3, handler.getPropertyNames().size());
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertTrue(handler.getPropertyNames().contains("admin-only"));
+        assertEquals("true", handler.getPropertyValue("use-current-server-config"));
+        assertEquals("\" toto,tutu  \"", handler.getPropertyValue("server-config"));
+
+    }
+
+    @Test
     public void testComposite() throws Exception {
 
         final String op = "composite";

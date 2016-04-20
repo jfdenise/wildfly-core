@@ -46,8 +46,8 @@ public class PropertyListState extends DefaultParsingState {
         this('(', ',', propState, ')');
     }
 
-    public PropertyListState(char listStart, char propSeparator, char... listEnd) {
-        this(listStart, propSeparator, new PropertyState(propSeparator, listEnd), listEnd);
+    public PropertyListState(boolean isOperation, char listStart, char propSeparator, char... listEnd) {
+        this(listStart, propSeparator, new PropertyState(isOperation, propSeparator, listEnd), listEnd);
     }
 
     PropertyListState(final char listStart, char propSeparator, final PropertyState propState, final char... listEnd) {

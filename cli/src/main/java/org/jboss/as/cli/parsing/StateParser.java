@@ -23,6 +23,7 @@ package org.jboss.as.cli.parsing;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Objects;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -149,6 +150,16 @@ public class StateParser {
             initialState.getEndContentHandler().handle(this);
             initialState.getLeaveHandler().handle(this);
             return input;
+        }
+
+        @Override
+        public void updateInput(InputProvider provider) {
+            Objects.requireNonNull(provider);
+            String newInput = provider.getInput(this);
+            if (newInput == null) {
+                throw new IllegalArgumentException("New input can't be null");
+            }
+            input = newInput;
         }
 
         @Override

@@ -40,7 +40,8 @@ public class RolloutPlanState extends DefaultParsingState {
     public static final String ID = "ROLLOUT_PLAN_HEADER";
 
     RolloutPlanState() {
-        this(ServerGroupListState.INSTANCE, new PropertyListState(' ', ' ', ';', '}'));
+        this(ServerGroupListState.INSTANCE,
+                new PropertyListState(false, ' ', ' ', ';', '}'));
     }
 
     RolloutPlanState(final ServerGroupListState sgList, final PropertyListState props) {

@@ -41,7 +41,8 @@ public class ServerGroupState extends DefaultParsingState {
     public static final String ID = "SG";
 
     ServerGroupState() {
-        this(ServerGroupNameState.INSTANCE, PropertyListState.INSTANCE);
+        this(ServerGroupNameState.INSTANCE,
+                new PropertyListState(false, '(', ',', ')'));
     }
 
     ServerGroupState(ServerGroupNameState name, final PropertyListState propList) {
