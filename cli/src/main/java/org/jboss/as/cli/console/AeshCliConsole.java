@@ -46,12 +46,13 @@ import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
 import org.jboss.aesh.parser.Parser;
 import org.jboss.as.cli.CliConfig;
+import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.impl.CLIPrintStream;
-import org.jboss.as.cli.impl.Console;
 
 /**
  * @author jdenise@redhat.com
@@ -158,6 +159,7 @@ class AeshCliConsole implements Console {
 
     private CommandRegistry createCommandRegistry() {
         return new AeshCommandRegistryBuilder()
+                .command(Connect.class)
                 .create();
     }
 
@@ -307,5 +309,22 @@ class AeshCliConsole implements Console {
     @Override
     public void releaseOutput() {
         printStream.releaseOutput();
+    }
+
+    @Override
+    public void interact(boolean connect) throws CliInitializationException {
+        if (connect) {
+            try {
+                commandContext.connectController();
+                setPrompt(commandContext.getPrompt());
+            } catch (CommandLineException e) {
+                throw new CliInitializationException("Failed to connect to the controller", e);
+            }
+        } else {
+            print("You are disconnected at the moment. Type 'connect' to connect to the server or"
+                    + " 'help' for the list of supported commands.");
+            printNewLine();
+        }
+        console.start();
     }
 }

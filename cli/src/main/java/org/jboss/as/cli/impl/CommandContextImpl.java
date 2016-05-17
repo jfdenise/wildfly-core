@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl;
 
+import org.jboss.as.cli.console.Console;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -303,9 +304,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         initSSLContext();
         initJaasConfig();
-        if(configuration.isInitConsole() || configuration.getConsoleInput() != null) {
-            console.start();
-        }
 
         addShutdownHook();
         CliLauncher.runcom(this);
@@ -816,6 +814,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
+    public Console getConsole() {
+        return console;
+    }
+
+    @Override
     public void connectController() throws CommandLineException {
         connectController(null);
     }
@@ -1111,7 +1114,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     String promptConnectPart;
 
-    String getPrompt() {
+    @Override
+    public String getPrompt() {
         if(lineBuffer != null) {
             return "> ";
         }

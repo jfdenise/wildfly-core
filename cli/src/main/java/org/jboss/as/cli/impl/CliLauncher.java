@@ -278,8 +278,8 @@ public class CliLauncher {
 
             // Interactive mode
             ctxBuilder.setInitConsole(true);
-            cmdCtx = initCommandContext(ctxBuilder.build(), connect);
-            cmdCtx.interact();
+            cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+            cmdCtx.getConsole().interact(connect);
         } catch (CliInitializationException | CommandFormatException t) {
             System.out.println(Util.getMessagesFromThrowable(t));
             exitCode = 1;

@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import org.jboss.aesh.console.settings.Settings;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.impl.Console;
 
 /**
  *

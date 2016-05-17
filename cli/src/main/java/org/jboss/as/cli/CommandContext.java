@@ -32,6 +32,7 @@ import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.ParsedCommandLine;
+import org.jboss.as.cli.console.Console;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
@@ -416,10 +417,24 @@ public interface CommandContext {
     /**
      * This method will start an interactive session.
      * It requires an initialized at the construction time console.
-     * Does nothing. Console is no more handled by the CommandContext.
      */
     @Deprecated
-    default void interact() {}
+    default void interact() {
+        try {
+            if (getConsole() != null) {
+                getConsole().interact(false);
+            }
+        } catch (CliInitializationException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Deprecated
+    default Console getConsole() {
+        return null;
+    }
+
+    String getPrompt();
 
     /**
      * Returns current default filesystem directory.
