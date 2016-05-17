@@ -27,7 +27,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -68,26 +67,15 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslException;
 
-import org.jboss.aesh.console.AeshConsoleCallback;
-import org.jboss.aesh.console.ConsoleCallback;
-import org.jboss.aesh.console.ConsoleOperation;
-import org.jboss.aesh.console.Process;
-import org.jboss.aesh.console.helper.InterruptHook;
-import org.jboss.aesh.console.settings.FileAccessPermission;
-import org.jboss.aesh.console.settings.Settings;
-import org.jboss.aesh.console.settings.SettingsBuilder;
-import org.jboss.aesh.edit.actions.Action;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CliInitializationException;
-import org.jboss.as.cli.CommandCompleter;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHandlerProvider;
 import org.jboss.as.cli.CommandHistory;
-import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
 import org.jboss.as.cli.CommandRegistry;
@@ -153,12 +141,10 @@ import org.jboss.as.cli.handlers.trycatch.FinallyHandler;
 import org.jboss.as.cli.handlers.trycatch.TryHandler;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
-import org.jboss.as.cli.operation.OperationCandidatesProvider;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestParser;
@@ -177,6 +163,7 @@ import org.jboss.sasl.callback.DigestHashCallback;
 import org.jboss.stdio.StdioContext;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.xnio.http.RedirectException;
+import org.jboss.as.cli.console.ConsoleBuilder;
 
 /**
  *
@@ -190,19 +177,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private static final byte TERMINATING = 1;
     private static final byte TERMINATED = 2;
 
-    /**
-     * State Tracking
-     *
-     * Interact             - Interactive UI
-     *
-     * Silent               - Only send input. No output.
-     * Error On Interact    - If non-interactive mode requests user interaction, throw an error.
-     */
-    private boolean INTERACT          = false;
-
-    private boolean SILENT            = false;
-    private boolean ERROR_ON_INTERACT = false;
-
     /** the cli configuration */
     private final CliConfig config;
     private final ControllerAddressResolver addressResolver;
@@ -212,7 +186,12 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** loads command handlers from the domain management model extensions */
     private ExtensionsLoader extLoader;
 
-    private Console console;
+    /**
+     * At some point the Context shouldn't have a reference to the console.
+     * @deprecated
+     */
+    @Deprecated
+    private final Console console;
 
     /** whether the session should be terminated */
     private byte terminate;
@@ -245,14 +224,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private final OperationRequestAddress prefix = new DefaultOperationRequestAddress();
     /** the prefix formatter */
     private final NodePathFormatter prefixFormatter = DefaultPrefixFormatter.INSTANCE;
-    /** provider of operation request candidates for tab-completion */
-    private final OperationCandidatesProvider operationCandidatesProvider;
     /** operation request handler */
     private final OperationRequestHandler operationHandler;
     /** batches */
     private BatchManager batchManager = new DefaultBatchManager();
-    /** the default command completer */
-    private final CommandCompleter cmdCompleter;
+
     /** the timeout handler */
     private final GeneralTimeoutHandler timeoutHandler = new GeneralTimeoutHandler();
     /** the client bind address */
@@ -281,8 +257,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** this object saves information to be used in ConnectionInfoHandler */
     private ConnectionInfoBean connInfoBean;
 
-    private final CLIPrintStream cliPrintStream;
-
     // Store a ref to the default input stream aesh will use before we do any manipulation of stdin
     //private InputStream stdIn = new SettingsBuilder().create().getInputStream();
     private boolean uninstallIO;
@@ -295,30 +269,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
      * @throws CliInitializationException
      */
     CommandContextImpl() throws CliInitializationException {
-        this.console = null;
-        this.operationCandidatesProvider = null;
-        this.cmdCompleter = null;
-        operationHandler = new OperationRequestHandler();
-        initStdIO();
-        try {
-            initCommands();
-        } catch (CommandLineException e) {
-            throw new CliInitializationException("Failed to initialize commands", e);
-        }
-        config = CliConfigImpl.load(this);
-        addressResolver = ControllerAddressResolver.newInstance(config, null);
-        resolveParameterValues = config.isResolveParameterValues();
-        SILENT = config.isSilent();
-        ERROR_ON_INTERACT = config.isErrorOnInteract();
-        username = null;
-        password = null;
-        disableLocalAuth = false;
-        clientBindAddress = null;
-        cliPrintStream = new CLIPrintStream();
-        initSSLContext();
-        initJaasConfig();
-        addShutdownHook();
-        CliLauncher.runcom(this);
+        this(new CommandContextConfiguration.Builder().build());
     }
 
     /**
@@ -335,12 +286,14 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         this.password = configuration.getPassword();
         this.disableLocalAuth = configuration.isDisableLocalAuth();
         this.clientBindAddress = configuration.getClientBindAddress();
-
-        SILENT = config.isSilent();
-        ERROR_ON_INTERACT = config.isErrorOnInteract();
-
+        this.console = new ConsoleBuilder().setContext(this).
+                setConsoleInputStream(configuration.getConsoleInput()).
+                setConsoleOutputStream(configuration.getConsoleOutput()).
+                setErrorOnInteract(configuration.isErrorOnInteract()).
+                setInteractive(configuration.isInitConsole()).
+                setSilent(configuration.isSilent()).
+                create();
         resolveParameterValues = config.isResolveParameterValues();
-        cliPrintStream = configuration.getConsoleOutput() == null ? new CLIPrintStream() : new CLIPrintStream(configuration.getConsoleOutput());
         initStdIO();
         try {
             initCommands();
@@ -350,18 +303,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         initSSLContext();
         initJaasConfig();
-        if (configuration.isInitConsole() || configuration.getConsoleInput() != null) {
-            cmdCompleter = new CommandCompleter(cmdRegistry);
-            // we don't ask to start the console here because it will start reading the input immediately
-            // this will break in case the launching line had input redirection and switch to connect to the controller,
-            // e.g. jboss-cli.ch -c < some_file
-            // the input will be read before the connection is established
-            initBasicConsole(configuration.getConsoleInput(), false);
-            console.addCompleter(cmdCompleter);
-            this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
-        } else {
-            this.cmdCompleter = null;
-            this.operationCandidatesProvider = null;
+        if(configuration.isInitConsole() || configuration.getConsoleInput() != null) {
+            console.start();
         }
 
         addShutdownHook();
@@ -372,120 +315,10 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         shutdownHook = new CliShutdownHook.Handler() {
             @Override
             public void shutdown() {
-                if (CommandContextImpl.this.console != null) {
-                    CommandContextImpl.this.console.interrupt();
-                }
+                console.interrupt();
                 terminateSession();
             }};
         CliShutdownHook.add(shutdownHook);
-    }
-
-    protected void initBasicConsole(InputStream consoleInput) throws CliInitializationException {
-        initBasicConsole(consoleInput, true);
-    }
-
-    protected void initBasicConsole(InputStream consoleInput, boolean start) throws CliInitializationException {
-        // this method shouldn't be called twice during the session
-        assert console == null : "the console has already been initialized";
-        Settings settings = createSettings(consoleInput);
-        this.console = Console.Factory.getConsole(this, settings);
-        console.setCallback(initCallback());
-        if(start) {
-            console.start();
-        }
-    }
-
-    private ConsoleCallback initCallback() {
-        return new CLIAeshConsoleCallback() {
-
-            @Override
-            public int execute(ConsoleOperation output) throws InterruptedException {
-                // Track the active process
-                setActiveProcess(true);
-
-                try {
-                    // Actual work stuff
-                    if (cmdCompleter == null) {
-                        throw new IllegalStateException("The console hasn't been initialized at construction time.");
-                    }
-                    if (output.getBuffer() == null)
-                        terminateSession();
-                    else {
-                        handleSafe(output.getBuffer().trim());
-                        if (INTERACT && terminate == RUNNING) {
-                            console.setPrompt(getPrompt());
-                        }
-                    }
-                    return 0;
-
-                }finally{
-                    setActiveProcess(false);
-                }
-            }
-
-        };
-    }
-
-    abstract class CLIAeshConsoleCallback extends AeshConsoleCallback{
-
-        private Process process;
-
-        public boolean hasActiveProcess() {
-            return activeProcess;
-        }
-
-        public void setActiveProcess(boolean activeProcess) {
-            this.activeProcess = activeProcess;
-        }
-
-        private boolean activeProcess = false;
-
-        @Override
-        public void setProcess(org.jboss.aesh.console.Process process){
-            this.process = process;
-        }
-
-        public int getProcessPID(){
-            return process.getPID();
-        }
-    }
-
-    private Settings createSettings(InputStream consoleInput) {
-        SettingsBuilder settings = new SettingsBuilder();
-        if(consoleInput != null) {
-            settings.inputStream(consoleInput);
-        }
-        settings.outputStream(cliPrintStream);
-
-        settings.enableExport(false);
-
-        settings.disableHistory(!config.isHistoryEnabled());
-        settings.historyFile(new File(config.getHistoryFileDir(), config.getHistoryFileName()));
-        settings.historySize(config.getHistoryMaxSize());
-
-        // Modify Default History File Permissions
-        FileAccessPermission permissions = new FileAccessPermission();
-        permissions.setReadableOwnerOnly(true);
-        permissions.setWritableOwnerOnly(true);
-        settings.historyFilePermission(permissions);
-
-        settings.parseOperators(false);
-
-        settings.interruptHook(
-                new InterruptHook() {
-                    @Override
-                    public void handleInterrupt(org.jboss.aesh.console.Console console, Action action) {
-                        if(shutdownHook != null ){
-                            shutdownHook.shutdown();
-                        }else {
-                            terminateSession();
-                        }
-                        Thread.currentThread().interrupt();
-                    }
-                }
-        );
-
-        return settings.create();
     }
 
     private void initStdIO() {
@@ -832,9 +665,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             terminate = TERMINATING;
             disconnectController();
             restoreStdIO();
-            if(console != null) {
-                console.stop();
-            }
+            console.stop();
             if (shutdownHook != null) {
                 CliShutdownHook.remove(shutdownHook);
             }
@@ -843,6 +674,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
+    @Deprecated
     public void printLine(String message) {
         final Level logLevel;
         if(exitCode != 0) {
@@ -865,14 +697,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             return;
         }
 
-        if(!SILENT) {
-            if (console != null) {
-                console.print(message);
-                console.printNewLine();
-            } else { // non-interactive mode
-                cliPrintStream.println(message);
-            }
-        }
+        console.print(message);
+        console.printNewLine();
     }
 
     /**
@@ -888,15 +714,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         printLine(message);
     }
 
+    @Deprecated
     private String readLine(String prompt, boolean password) throws CommandLineException {
-        // Only fail an interact if we're not in interactive.
-        if(!INTERACT && ERROR_ON_INTERACT){
-            interactionDisabled();
-        }
-
-        if (console == null) {
-            initBasicConsole(null);
-        } else if(!console.running()) {
+        if(!console.running()) {
             console.start();
         }
 
@@ -908,12 +728,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     }
 
-    protected void interactionDisabled() throws CommandLineException {
-        throw new CommandLineException("Invalid Usage. Prompt attempted in non-interactive mode. Please check commands or change CLI mode.");
-    }
-
 
     @Override
+    @Deprecated
     public void printColumns(Collection<String> col) {
         if(log.isInfoEnabled()) {
             log.info(col);
@@ -930,15 +747,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             return;
         }
 
-        if(!SILENT) {
-            if (console != null) {
-                console.printColumns(col);
-            } else { // non interactive mode
-                for (String item : col) {
-                    cliPrintStream.println(item);
-                }
-            }
-        }
+        console.printColumns(col);
     }
 
     @Override
@@ -1004,11 +813,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     public NodePathFormatter getNodePathFormatter() {
 
         return prefixFormatter;
-    }
-
-    @Override
-    public OperationCandidatesProvider getOperationCandidatesProvider() {
-        return operationCandidatesProvider;
     }
 
     @Override
@@ -1352,14 +1156,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
+    @Deprecated
     public CommandHistory getHistory() {
-        if(console == null) {
-            try {
-                initBasicConsole(null, INTERACT);
-            } catch (CliInitializationException e) {
-                throw new IllegalStateException("Failed to initialize console.", e);
-            }
-        }
         return console.getHistory();
     }
 
@@ -1437,11 +1235,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
-    public CommandLineCompleter getDefaultCommandCompleter() {
-        return cmdCompleter;
-    }
-
-    @Override
     public ParsedCommandLine getParsedCommandLine() {
         return parsedCmd;
     }
@@ -1486,42 +1279,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
-    public void interact() {
-        INTERACT = true;
-        if(cmdCompleter == null) {
-            throw new IllegalStateException("The console hasn't been initialized at construction time.");
-        }
-
-        if (this.client == null) {
-            printLine("You are disconnected at the moment. Type 'connect' to connect to the server or"
-                    + " 'help' for the list of supported commands.");
-        }
-
-        console.setPrompt(getPrompt());
-        if(!console.running()) {
-            console.start();
-        }
-        // if console is already running before we have started interacting, we need to
-        // make sure that the prompt is correctly displayed
-        else {
-            console.redrawPrompt();
-        }
-        if(console.isControlled()) {
-            console.continuous();
-        }
-
-        while(/*!isTerminated() && */console.running()){
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        INTERACT = false;
-    }
-
-    @Override
     public boolean isResolveParameterValues() {
         return resolveParameterValues;
     }
@@ -1559,46 +1316,26 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
+    @Deprecated
     public boolean isSilent() {
-        return SILENT;
+        return console.isSilent();
     }
 
     @Override
+    @Deprecated
     public void setSilent(boolean silent) {
-        SILENT = silent;
+        console.setSilent(silent);
     }
 
     @Override
+    @Deprecated
     public int getTerminalWidth() {
-        if( !INTERACT ){
-            return 0;
-        }
-
-        if(console == null) {
-            try {
-                this.initBasicConsole(null);
-            } catch (CliInitializationException e) {
-                this.error("Failed to initialize the console: " + e.getLocalizedMessage());
-                return 80;
-            }
-        }
         return console.getTerminalWidth();
     }
 
     @Override
+    @Deprecated
     public int getTerminalHeight() {
-        if( !INTERACT ){
-            return 0;
-        }
-
-        if(console == null) {
-            try {
-                this.initBasicConsole(null);
-            } catch (CliInitializationException e) {
-                this.error("Failed to initialize the console: " + e.getLocalizedMessage());
-                return 24;
-            }
-        }
         return console.getTerminalHeight();
     }
 
@@ -1676,9 +1413,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                         boolean callContinuous = false;
                         try {
                             if (username == null || password == null) {
-                                if (console == null) {
-                                    initBasicConsole(null, false);
-                                }
                                 console.controlled();
                                 if (!console.running()) {
                                     console.start();
@@ -1688,7 +1422,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                             }
                             dohandle(callbacks);
                             success = true;
-                        } catch (IOException | UnsupportedCallbackException | CliInitializationException e) {
+                        } catch (IOException | UnsupportedCallbackException e) {
                             throw new RuntimeException(e);
                         } finally {
                             // in case of success the console will continue after connectController has finished all the initialization required
@@ -1728,12 +1462,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     if (username == null) {
                         showRealm();
                         try {
-                            if(console == null) {
-                                if(ERROR_ON_INTERACT) {
-                                    interactionDisabled();
-                                }
-                                initBasicConsole(null);
-                            }
                             console.setCompletion(false);
                             console.getHistory().setUseHistory(false);
                             username = readLine("Username: ", false);
@@ -1756,12 +1484,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                         showRealm();
                         String temp;
                         try {
-                            if(console == null) {
-                                if(ERROR_ON_INTERACT) {
-                                    interactionDisabled();
-                                }
-                                initBasicConsole(null);
-                            }
                             console.setCompletion(false);
                             console.getHistory().setUseHistory(false);
                             temp = readLine("Password: ", true);
@@ -2080,13 +1802,15 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
+    @Deprecated
     public void captureOutput(PrintStream captor) {
         assert captor != null;
-        cliPrintStream.captureOutput(captor);
-    }
+        console.captureOutput(captor);
+}
 
     @Override
+    @Deprecated
     public void releaseOutput() {
-        cliPrintStream.releaseOutput();
+        console.releaseOutput();
     }
 }

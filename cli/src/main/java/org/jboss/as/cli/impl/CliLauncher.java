@@ -34,6 +34,7 @@ import java.util.Properties;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContextFactory;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.gui.GuiMain;
@@ -279,21 +280,10 @@ public class CliLauncher {
             ctxBuilder.setInitConsole(true);
             cmdCtx = initCommandContext(ctxBuilder.build(), connect);
             cmdCtx.interact();
-        } catch(Throwable t) {
+        } catch (CliInitializationException | CommandFormatException t) {
             System.out.println(Util.getMessagesFromThrowable(t));
             exitCode = 1;
-        } finally {
-            if((cmdCtx != null) && !gui) {
-                cmdCtx.terminateSession();
-                if(cmdCtx.getExitCode() != 0) {
-                    exitCode = cmdCtx.getExitCode();
-                }
-            }
-            if (!gui) {
-                System.exit(exitCode);
-            }
         }
-        System.exit(exitCode);
     }
 
     private static CommandContext initCommandContext(CommandContextConfiguration ctxConfig, boolean connect) throws CliInitializationException {

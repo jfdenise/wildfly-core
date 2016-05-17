@@ -79,12 +79,14 @@ public interface CommandContext {
      * Prints a string to the CLI's output.
      * @param message the message to print
      */
+    @Deprecated
     void printLine(String message);
 
     /**
      * Prints a collection of strings as columns to the CLI's output.
      * @param col  the collection of strings to print as columns.
      */
+    @Deprecated
     void printColumns(Collection<String> col);
 
     /**
@@ -300,12 +302,16 @@ public interface CommandContext {
      * Returns the provider of operation request candidates for tab-completion.
      * @return provider of operation request candidates for tab-completion.
      */
-    OperationCandidatesProvider getOperationCandidatesProvider();
+    @Deprecated
+    default OperationCandidatesProvider getOperationCandidatesProvider() {
+        return null;
+    }
 
     /**
      * Returns the history of all the commands and operations.
      * @return  the history of all the commands and operations.
      */
+    @Deprecated
     CommandHistory getHistory();
 
     /**
@@ -356,7 +362,10 @@ public interface CommandContext {
      * Returns the default command line completer.
      * @return  the default command line completer.
      */
-    CommandLineCompleter getDefaultCommandCompleter();
+    @Deprecated
+    default CommandLineCompleter getDefaultCommandCompleter() {
+       return null;
+    }
 
     /**
      * Indicates whether the CLI is in the domain mode or standalone one (assuming established
@@ -407,8 +416,10 @@ public interface CommandContext {
     /**
      * This method will start an interactive session.
      * It requires an initialized at the construction time console.
+     * Does nothing. Console is no more handled by the CommandContext.
      */
-    void interact();
+    @Deprecated
+    default void interact() {}
 
     /**
      * Returns current default filesystem directory.
