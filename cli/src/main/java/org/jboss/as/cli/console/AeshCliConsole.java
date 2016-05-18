@@ -22,6 +22,7 @@
 package org.jboss.as.cli.console;
 
 import java.io.File;
+import java.io.IOException;
 import org.jboss.aesh.console.AeshConsole;
 import org.jboss.aesh.console.AeshConsoleBuilder;
 import org.jboss.aesh.console.Prompt;
@@ -41,7 +42,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
+import org.jboss.aesh.console.AeshConsoleBufferBuilder;
+import org.jboss.aesh.console.AeshInputProcessorBuilder;
+import org.jboss.aesh.console.ConsoleBuffer;
 import org.jboss.aesh.console.ConsoleCallback;
+import org.jboss.aesh.console.InputProcessor;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
 import org.jboss.aesh.parser.Parser;
@@ -73,8 +78,8 @@ class AeshCliConsole implements Console {
             Settings aeshSettings,
             InputStream consoleInput, OutputStream consoleOutput) {
         this.commandContext = commandContext;
-        this.printStream = consoleOutput == null ? new CLIPrintStream() :
-                new CLIPrintStream(consoleOutput);
+        this.printStream = consoleOutput == null ? new CLIPrintStream()
+                : new CLIPrintStream(consoleOutput);
         Settings settings = aeshSettings == null
                 ? createSettings(commandContext.getConfig(),
                         consoleInput,
@@ -215,18 +220,10 @@ class AeshCliConsole implements Console {
     }
 
     @Override
-    public String readLine(String prompt) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public String readLine(String prompt, Character mask) throws CommandLineException {
-        // Only fail an interact if we're not in interactive.
-        if (errorOnInteract) {
-            interactionDisabled();
+    public void println(String msg) {
+        if (!silent) {
+            console.getShell().out().println(msg);
         }
-
-        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     private static void interactionDisabled() throws CommandLineException {
@@ -326,5 +323,40 @@ class AeshCliConsole implements Console {
             printNewLine();
         }
         console.start();
+    }
+
+    @Override
+    public String promptForInput(String prompt)
+            throws IOException, InterruptedException, CommandLineException {
+        return promptForInput(prompt, null);
+    }
+
+    @Override
+    public String promptForInput(String prompt, Character mask)
+            throws IOException, InterruptedException, CommandLineException {
+        if (errorOnInteract) {
+            interactionDisabled();
+        }
+
+        ConsoleBuffer consoleBuffer = new AeshConsoleBufferBuilder()
+                .shell(console.getShell())
+                .prompt(new Prompt(prompt, mask))
+                .create();
+        InputProcessor inputProcessor = new AeshInputProcessorBuilder()
+                .consoleBuffer(consoleBuffer)
+                .create();
+
+        consoleBuffer.displayPrompt();
+        String result;
+        do {
+            result = inputProcessor.parseOperation(console.
+                    getConsoleCallback().getInput());
+        } while (result == null);
+        return result;
+    }
+
+    @Override
+    public void error(String msg) {
+        console.getShell().err().println(msg);
     }
 }

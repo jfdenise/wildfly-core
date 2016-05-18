@@ -209,7 +209,12 @@ public interface CommandContext {
      * @param controller the controller to connect to
      * @throws CommandLineException in case the attempt to connect failed
      */
-    void connectController(String controller) throws CommandLineException;
+    @Deprecated
+    default void connectController(String controller) throws CommandLineException {
+        connectController(controller, getConsole());
+    }
+
+    void connectController(String controller, Console console) throws CommandLineException;
 
     /**
      * Connects the controller client using the host and the port.

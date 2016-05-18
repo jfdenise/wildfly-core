@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.console;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import org.jboss.aesh.console.ConsoleCallback;
@@ -32,6 +33,7 @@ import org.jboss.as.cli.CommandLineException;
 /**
  *
  * @author Alexey Loubyansky
+ * @author jdenise@redhat.com
  */
 public interface Console {
 
@@ -51,9 +53,7 @@ public interface Console {
 
     void printNewLine();
 
-    String readLine(String prompt) throws CommandLineException;
-
-    String readLine(String prompt, Character mask) throws CommandLineException;
+    void println(String msg);
 
     int getTerminalWidth();
 
@@ -62,17 +62,17 @@ public interface Console {
     /**
      * Checks whether the tab-completion is enabled.
      *
-     * @return  true if tab-completion is enabled, false - otherwise
+     * @return true if tab-completion is enabled, false - otherwise
      */
     boolean isCompletionEnabled();
 
     /**
      * Enables or disables the tab-completion.
      *
-     * @param completionEnabled  true will enable the tab-completion, false will disable it
+     * @param completionEnabled true will enable the tab-completion, false will
+     * disable it
      */
     // void setCompletionEnabled(boolean completionEnabled);
-
     /**
      * Interrupts blocking readLine method.
      *
@@ -109,4 +109,12 @@ public interface Console {
     void releaseOutput();
 
     void interact(boolean connect) throws CliInitializationException;
+
+    String promptForInput(String prompt, Character mask)
+            throws IOException, InterruptedException, CommandLineException;
+
+    String promptForInput(String prompt)
+            throws IOException, InterruptedException, CommandLineException;
+
+    void error(String msg);
 }
