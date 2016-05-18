@@ -89,7 +89,6 @@ import org.jboss.as.cli.handlers.LsHandler;
 import org.jboss.as.cli.handlers.OperationRequestHandler;
 import org.jboss.as.cli.handlers.PrefixHandler;
 import org.jboss.as.cli.handlers.PrintWorkingNodeHandler;
-import org.jboss.as.cli.handlers.QuitHandler;
 import org.jboss.as.cli.handlers.ReadAttributeHandler;
 import org.jboss.as.cli.handlers.ReadOperationHandler;
 import org.jboss.as.cli.handlers.ReloadHandler;
@@ -317,7 +316,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         cmdRegistry.registerHandler(new LsHandler(this), "ls");
         cmdRegistry.registerHandler(new ASModuleHandler(this), "module");
         cmdRegistry.registerHandler(new PrintWorkingNodeHandler(), "pwd", "pwn");
-        cmdRegistry.registerHandler(new QuitHandler(), "quit", "q", "exit");
         cmdRegistry.registerHandler(new ReadAttributeHandler(this), "read-attribute");
         cmdRegistry.registerHandler(new ReadOperationHandler(this), "read-operation");
         cmdRegistry.registerHandler(new VersionHandler(), "version");

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -57,6 +57,8 @@ import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.Connect;
+import org.jboss.as.cli.command.Exit;
+import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.impl.CLIPrintStream;
 
 /**
@@ -165,6 +167,8 @@ class AeshCliConsole implements Console {
     private CommandRegistry createCommandRegistry() {
         return new AeshCommandRegistryBuilder()
                 .command(Connect.class)
+                .command(Exit.class)
+                .command(Quit.class)
                 .create();
     }
 
