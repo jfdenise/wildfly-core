@@ -40,6 +40,7 @@ import org.jboss.as.cli.ConnectionInfo;
 import org.jboss.as.cli.ControllerAddress;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.cli.console.Console;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -446,5 +447,16 @@ public class MockCommandContext implements CommandContext {
     @Override
     public void releaseOutput() {
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void connectController(String controller,
+            Console console) throws CommandLineException {
+
+    }
+
+    @Override
+    public String getPrompt() {
+        return null;
     }
 }

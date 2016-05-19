@@ -28,7 +28,6 @@ import org.jboss.aesh.console.AeshConsoleBuilder;
 import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.command.invocation.CommandInvocationServices;
 import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
-import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.Settings;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.jboss.as.cli.aesh.provider.CliCommandInvocationProvider;
@@ -42,11 +41,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.AeshConsoleBufferBuilder;
 import org.jboss.aesh.console.AeshInputProcessorBuilder;
 import org.jboss.aesh.console.ConsoleBuffer;
 import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.aesh.console.InputProcessor;
+import org.jboss.aesh.console.command.registry.MutableCommandRegistry;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
 import org.jboss.aesh.parser.Parser;
@@ -59,6 +60,7 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Exit;
 import org.jboss.as.cli.command.Quit;
+import org.jboss.as.cli.command.operation.OperationSpecialCommand;
 import org.jboss.as.cli.impl.CLIPrintStream;
 
 /**
@@ -72,13 +74,14 @@ class AeshCliConsole implements Console {
 
     protected AeshConsole console;
     private final CommandContext commandContext;
-    private CommandRegistry commandRegistry;
+    private CliCommandRegistry commandRegistry;
     private final CLIPrintStream printStream;
     private static final String PROVIDER = "JBOSS_CLI";
 
     AeshCliConsole(CommandContext commandContext, boolean silent, boolean errorOnInteract,
             Settings aeshSettings,
-            InputStream consoleInput, OutputStream consoleOutput) {
+            InputStream consoleInput, OutputStream consoleOutput)
+            throws CommandLineParserException {
         this.commandContext = commandContext;
         this.printStream = consoleOutput == null ? new CLIPrintStream()
                 : new CLIPrintStream(consoleOutput);
@@ -106,12 +109,14 @@ class AeshCliConsole implements Console {
         /// XXX JFDENISE TODO
     }
 
-    private void setupConsole(Settings settings) {
+    private void setupConsole(Settings settings) throws CommandLineParserException {
 
         CommandInvocationServices services = new CommandInvocationServices();
         services.registerProvider(PROVIDER, new CliCommandInvocationProvider(commandContext));
 
         commandRegistry = createCommandRegistry();
+
+        commandRegistry.addSpecialCommand(new OperationSpecialCommand(commandContext, this));
 
         CliOptionActivatorProvider activatorProvider = new CliOptionActivatorProvider(commandContext);
 
@@ -164,12 +169,14 @@ class AeshCliConsole implements Console {
         return settings.create();
     }
 
-    private CommandRegistry createCommandRegistry() {
-        return new AeshCommandRegistryBuilder()
+    private CliCommandRegistry createCommandRegistry() {
+        MutableCommandRegistry reg = (MutableCommandRegistry) new AeshCommandRegistryBuilder()
                 .command(Connect.class)
                 .command(Exit.class)
                 .command(Quit.class)
                 .create();
+        CliCommandRegistry clireg = new CliCommandRegistry(reg);
+        return clireg;
     }
 
     @Override

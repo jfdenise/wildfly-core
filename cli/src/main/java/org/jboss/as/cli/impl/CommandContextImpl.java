@@ -48,6 +48,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.sasl.SaslException;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
 
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -242,7 +243,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
      *
      * @throws CliInitializationException
      */
-    CommandContextImpl() throws CliInitializationException {
+    CommandContextImpl() throws CliInitializationException, CommandLineParserException {
         this(new CommandContextConfiguration.Builder().build());
     }
 
@@ -250,7 +251,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
      * Default constructor used for both interactive and non-interactive mode.
      *
      */
-    CommandContextImpl(CommandContextConfiguration configuration) throws CliInitializationException {
+    CommandContextImpl(CommandContextConfiguration configuration)
+            throws CliInitializationException, CommandLineParserException {
         config = CliConfigImpl.load(this, configuration);
         addressResolver = ControllerAddressResolver.newInstance(config, configuration.getController());
 

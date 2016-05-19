@@ -1054,7 +1054,7 @@ public class GenericTypeOperationHandler extends BatchModeCommandHandler {
         };
     }
 
-    interface AttributeDescription {
+    public interface AttributeDescription {
         String getName();
         ModelType getType();
         String getAccess();

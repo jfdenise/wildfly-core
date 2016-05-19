@@ -78,7 +78,7 @@ public class OperationRequestCompleter implements CommandLineCompleter {
         return complete(ctx, parsedCmd, ctx.getOperationCandidatesProvider(), buffer, cursor, candidates);
     }
 
-    protected int complete(CommandContext ctx, ParsedCommandLine parsedCmd, OperationCandidatesProvider candidatesProvider, final String buffer, int cursor, List<String> candidates) {
+    public int complete(CommandContext ctx, ParsedCommandLine parsedCmd, OperationCandidatesProvider candidatesProvider, final String buffer, int cursor, List<String> candidates) {
 
         if(parsedCmd.isRequestComplete()) {
             return -1;
