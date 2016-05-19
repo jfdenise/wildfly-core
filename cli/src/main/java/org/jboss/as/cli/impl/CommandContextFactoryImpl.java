@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
 
 /**
  *
@@ -41,7 +42,11 @@ public class CommandContextFactoryImpl extends CommandContextFactory {
      */
     @Override
     public CommandContext newCommandContext() throws CliInitializationException {
-        return new CommandContextImpl();
+        try {
+            return new CommandContextImpl();
+        } catch (CommandLineParserException ex) {
+            throw new CliInitializationException(ex);
+        }
     }
 
     @Override
@@ -154,6 +159,10 @@ public class CommandContextFactoryImpl extends CommandContextFactory {
 
     @Override
     public CommandContext newCommandContext(CommandContextConfiguration configuration) throws CliInitializationException {
-        return new CommandContextImpl(configuration);
+        try {
+            return new CommandContextImpl(configuration);
+        } catch (CommandLineParserException ex) {
+            throw new CliInitializationException(ex);
+        }
     }
 }
