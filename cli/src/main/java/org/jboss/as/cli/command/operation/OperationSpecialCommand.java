@@ -228,7 +228,7 @@ public class OperationSpecialCommand implements CliSpecialCommand {
             try {
                 final ModelNode result = client.execute(request);
                 if (Util.isSuccess(result)) {
-                    console.print(result.toString());
+                    console.println(result.toString());
                 } else {
                     throw new CommandLineException(result.toString());
                 }
