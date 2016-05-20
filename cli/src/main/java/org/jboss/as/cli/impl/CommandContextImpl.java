@@ -430,6 +430,31 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private StringBuilder lineBuffer;
 
     @Override
+    public void handleOperation(ParsedCommandLine line) throws CommandLineException {
+        if (line.getFormat() == OperationFormat.INSTANCE) {
+            final ModelNode request = Util.toOperationRequest(this, line);
+
+            if (isBatchMode()) {
+                String str = line.getOriginalLine();
+                StringBuilder op = new StringBuilder();
+                op.append(getNodePathFormatter().format(line.getAddress()));
+                op.append(str.substring(str.indexOf(':')));
+                DefaultBatchedCommand batchedCmd
+                        = new DefaultBatchedCommand(this, op.toString(), request);
+                Batch batch = getBatchManager().getActiveBatch();
+                batch.add(batchedCmd);
+            } else {
+                try {
+                    set(Scope.REQUEST, "OP_REQ", request);
+                    operationHandler.handle(this);
+                } finally {
+                    clear(Scope.REQUEST);
+                }
+            }
+        }
+    }
+
+    @Override
     public void handle(String line) throws CommandLineException {
         if (line.isEmpty() || line.charAt(0) == '#') {
             return; // ignore comments
@@ -459,20 +484,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             if(redirection != null) {
                 redirection.target.handle(this);
             } else if (parsedCmd.getFormat() == OperationFormat.INSTANCE) {
-                final ModelNode request = parsedCmd.toOperationRequest(this);
-
-                if (isBatchMode()) {
-                    StringBuilder op = new StringBuilder();
-                    op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
-                    op.append(line.substring(line.indexOf(':')));
-                    DefaultBatchedCommand batchedCmd
-                            = new DefaultBatchedCommand(this, op.toString(), request);
-                    Batch batch = getBatchManager().getActiveBatch();
-                    batch.add(batchedCmd);
-                } else {
-                    set(Scope.REQUEST, "OP_REQ", request);
-                    operationHandler.handle(this);
-                }
+                handleOperation(parsedCmd);
             } else {
                 final String cmdName = parsedCmd.getOperationName();
                 CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());

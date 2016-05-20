@@ -57,6 +57,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Exit;
 import org.jboss.as.cli.command.Quit;
@@ -171,6 +172,7 @@ class AeshCliConsole implements Console {
 
     private CliCommandRegistry createCommandRegistry() {
         MutableCommandRegistry reg = (MutableCommandRegistry) new AeshCommandRegistryBuilder()
+                .command(BatchCommand.class)
                 .command(Connect.class)
                 .command(Exit.class)
                 .command(Quit.class)

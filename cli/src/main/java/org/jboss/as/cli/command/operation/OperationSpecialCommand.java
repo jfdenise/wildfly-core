@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.CancellationException;
 import org.jboss.aesh.cl.CommandLine;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.cl.internal.ProcessedCommandBuilder;
@@ -50,14 +48,11 @@ import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.Util;
 import org.jboss.as.cli.console.CliCommandRegistry.CliSpecialCommand;
 import org.jboss.as.cli.console.Console;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
-import org.jboss.as.controller.client.ModelControllerClient;
-import org.jboss.dmr.ModelNode;
 
 /**
  *
@@ -178,9 +173,7 @@ public class OperationSpecialCommand implements CliSpecialCommand {
                 operationParser.reset();
                 operationParser.parse(ctx.getCurrentNodePath(),
                         line.getOriginalInput(), ctx);
-                final ModelNode request = Util.toOperationRequest(ctx,
-                        operationParser);
-                handle(ctx, request);
+                ctx.handleOperation(operationParser);
             } catch (CommandLineException ex) {
                 throw new RuntimeException(ex);
             }
@@ -207,44 +200,8 @@ public class OperationSpecialCommand implements CliSpecialCommand {
         @Override
         public void close() throws Exception {
         }
-
-        public void handle(CommandContext ctx, ModelNode request)
-                throws CommandLineException {
-
-            ModelControllerClient client = ctx.getModelControllerClient();
-            if (client == null) {
-                throw new CommandFormatException("You are disconnected at the moment."
-                        + " Type 'connect' to connect to the server"
-                        + " or 'help' for the list of supported commands.");
-            }
-
-            if (ctx.getConfig().isValidateOperationRequests()) {
-                ModelNode opDescOutcome = Util.validateRequest(ctx, request);
-                if (opDescOutcome != null) { // operation has params that might need to be replaced
-                    Util.replaceFilePathsWithBytes(request, opDescOutcome);
-                }
-            }
-
-            try {
-                final ModelNode result = client.execute(request);
-                if (Util.isSuccess(result)) {
-                    console.println(result.toString());
-                } else {
-                    throw new CommandLineException(result.toString());
-                }
-            } catch (NoSuchElementException e) {
-                throw new CommandLineException("ModelNode request is incomplete", e);
-            } catch (CancellationException e) {
-                throw new CommandLineException("The result couldn't be retrieved"
-                        + " (perhaps the task was cancelled", e);
-            } catch (IOException e) {
-                ctx.disconnectController();
-                throw new CommandLineException("Communication error", e);
-            } catch (RuntimeException e) {
-                throw new CommandLineException("Failed to execute operation.", e);
-            }
-        }
     }
+
     private final OperationCommandContainer op = new OperationCommandContainer();
     private final CommandContext ctx;
     private final DefaultOperationCandidatesProvider operationCandidatesProvider
