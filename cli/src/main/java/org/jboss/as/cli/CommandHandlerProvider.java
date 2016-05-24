@@ -28,6 +28,7 @@ package org.jboss.as.cli;
  *
  * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2012 Red Hat Inc.
  */
+@Deprecated
 public interface CommandHandlerProvider {
 
     CommandHandler createCommandHandler(CommandContext ctx);

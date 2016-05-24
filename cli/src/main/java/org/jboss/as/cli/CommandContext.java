@@ -309,9 +309,7 @@ public interface CommandContext {
      * @return provider of operation request candidates for tab-completion.
      */
     @Deprecated
-    default OperationCandidatesProvider getOperationCandidatesProvider() {
-        return null;
-    }
+    OperationCandidatesProvider getOperationCandidatesProvider();
 
     /**
      * Returns the history of all the commands and operations.
@@ -369,9 +367,7 @@ public interface CommandContext {
      * @return  the default command line completer.
      */
     @Deprecated
-    default CommandLineCompleter getDefaultCommandCompleter() {
-       return null;
-    }
+    CommandLineCompleter getDefaultCommandCompleter();
 
     /**
      * Indicates whether the CLI is in the domain mode or standalone one (assuming established

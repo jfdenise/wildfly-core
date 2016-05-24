@@ -22,44 +22,44 @@
 package org.jboss.as.cli.console;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.complete.CompleteOperation;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandNotFoundException;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.command.registry.MutableCommandRegistry;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandLineException;
 
 /**
  *
- * @author jfdenise
+ * @author jdenise@redhat.com
  */
 public class CliCommandRegistry implements CommandRegistry {
 
-    /**
-     * Special command handle parsing, completion and execution in a non Aesh
-     * Command way.
-     */
-    public interface CliSpecialCommand {
-
-        CommandContainer commandFor(String line);
-
-        boolean complete(CompleteOperation completeOperation);
-
-        CommandContainer<Command> getCommand();
-    }
-
     private final MutableCommandRegistry reg;
     private final List<CliSpecialCommand> specials = new ArrayList<>();
+    private final Map<String, CliSpecialCommand> legacyHandlers = new HashMap<>();
+    private final CommandContext context;
+    private final Console console;
 
-    public CliCommandRegistry(MutableCommandRegistry reg) {
+    public CliCommandRegistry(Console console,
+            MutableCommandRegistry reg, CommandContext context)
+            throws CommandLineException {
+        this.console = console;
         this.reg = reg;
+        this.context = context;
     }
 
-    public void addSpecialCommand(CliSpecialCommand special) {
+    public void addSpecialCommand(CliSpecialCommand special)
+            throws CommandLineException {
         specials.add(special);
-        reg.addCommand(special.getCommand());
+        addCommand(special.getCommand());
     }
 
     public void addCommand(CommandContainer container) {
@@ -75,6 +75,12 @@ public class CliCommandRegistry implements CommandRegistry {
                 return command;
             }
         }
+        for (CliSpecialCommand bridge : legacyHandlers.values()) {
+            CommandContainer<Command> command = bridge.commandFor(name);
+            if (command != null) {
+                return command;
+            }
+        }
         return reg.getCommand(name, line);
     }
 
@@ -82,6 +88,12 @@ public class CliCommandRegistry implements CommandRegistry {
     public void completeCommandName(CompleteOperation completeOperation) {
         for (CliSpecialCommand special : specials) {
             if (special.complete(completeOperation)) {
+                return;
+            }
+        }
+
+        for (CliSpecialCommand bridge : legacyHandlers.values()) {
+            if (bridge.complete(completeOperation)) {
                 return;
             }
         }
@@ -99,4 +111,17 @@ public class CliCommandRegistry implements CommandRegistry {
         reg.removeCommand(name);
     }
 
+    public void registerLegacyHandler(String[] names) throws CommandLineParserException {
+        for (String n : names) {
+            CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
+                    executor(new CliLegacyCommandBridge(console, n, context)).create();
+            addCommand(cmd.getCommand());
+            legacyHandlers.put(n, cmd);
+        }
+    }
+
+    public void removeLegacyHandler(String cmdName) {
+        reg.removeCommand(cmdName);
+        legacyHandlers.remove(cmdName);
+    }
 }

@@ -41,12 +41,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.ServiceLoader;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.AeshConsoleBufferBuilder;
 import org.jboss.aesh.console.AeshInputProcessorBuilder;
 import org.jboss.aesh.console.ConsoleBuffer;
 import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.aesh.console.InputProcessor;
+import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.container.AeshCommandContainerBuilder;
 import org.jboss.aesh.console.command.registry.MutableCommandRegistry;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
@@ -54,9 +57,11 @@ import org.jboss.aesh.parser.Parser;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Exit;
@@ -70,19 +75,40 @@ import org.jboss.as.cli.impl.CLIPrintStream;
  */
 class AeshCliConsole implements Console {
 
+    private class LegacyCommandRegistry extends CommandRegistry {
+        @Override
+        public void registerHandler(CommandHandler handler, boolean tabComplete, String... names) throws RegisterHandlerException {
+            super.registerHandler(handler, tabComplete, names);
+            try {
+                commandRegistry.registerLegacyHandler(names);
+            } catch (CommandLineParserException ex) {
+                throw new RegisterHandlerException(ex.getMessage());
+            }
+        }
+
+        @Override
+        public CommandHandler remove(String cmdName) {
+            CommandHandler ch = super.remove(cmdName);
+            commandRegistry.removeLegacyHandler(cmdName);
+            return ch;
+        }
+    }
+
     private boolean silent;
     private final boolean errorOnInteract;
 
     protected AeshConsole console;
     private final CommandContext commandContext;
     private CliCommandRegistry commandRegistry;
+    private final CommandRegistry legacyRegistry = new LegacyCommandRegistry();
     private final CLIPrintStream printStream;
     private static final String PROVIDER = "JBOSS_CLI";
+    private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
 
     AeshCliConsole(CommandContext commandContext, boolean silent, boolean errorOnInteract,
             Settings aeshSettings,
             InputStream consoleInput, OutputStream consoleOutput)
-            throws CommandLineParserException {
+            throws CommandLineParserException, CommandLineException {
         this.commandContext = commandContext;
         this.printStream = consoleOutput == null ? new CLIPrintStream()
                 : new CLIPrintStream(consoleOutput);
@@ -110,14 +136,19 @@ class AeshCliConsole implements Console {
         /// XXX JFDENISE TODO
     }
 
-    private void setupConsole(Settings settings) throws CommandLineParserException {
+    private void setupConsole(Settings settings) throws CommandLineParserException,
+            CommandLineException {
 
         CommandInvocationServices services = new CommandInvocationServices();
         services.registerProvider(PROVIDER, new CliCommandInvocationProvider(commandContext));
 
         commandRegistry = createCommandRegistry();
 
-        commandRegistry.addSpecialCommand(new OperationSpecialCommand(commandContext, this));
+        commandRegistry.addSpecialCommand(new CliSpecialCommandBuilder().name(":").
+                context(commandContext).
+                executor(new OperationSpecialCommand(commandContext)).create());
+
+        registerExtraCommands();
 
         CliOptionActivatorProvider activatorProvider = new CliOptionActivatorProvider(commandContext);
 
@@ -135,6 +166,13 @@ class AeshCliConsole implements Console {
                 .create();
 
         console.setCurrentCommandInvocationProvider(PROVIDER);
+    }
+
+    private void registerExtraCommands() throws CommandLineException, CommandLineParserException {
+        ServiceLoader<Command> loader = ServiceLoader.load(Command.class);
+        for (Command command : loader) {
+            commandRegistry.addCommand(containerBuilder.create(command));
+        }
     }
 
     private Settings createSettings(CliConfig config, InputStream consoleInput,
@@ -170,14 +208,15 @@ class AeshCliConsole implements Console {
         return settings.create();
     }
 
-    private CliCommandRegistry createCommandRegistry() {
+    private CliCommandRegistry createCommandRegistry() throws CommandLineException {
         MutableCommandRegistry reg = (MutableCommandRegistry) new AeshCommandRegistryBuilder()
                 .command(BatchCommand.class)
                 .command(Connect.class)
                 .command(Exit.class)
                 .command(Quit.class)
                 .create();
-        CliCommandRegistry clireg = new CliCommandRegistry(reg);
+        CliCommandRegistry clireg = new CliCommandRegistry(this,
+                reg, commandContext);
         return clireg;
     }
 
@@ -203,7 +242,7 @@ class AeshCliConsole implements Console {
 
     @Override
     public void clearScreen() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        console.clear();
     }
 
     @Override
@@ -371,5 +410,10 @@ class AeshCliConsole implements Console {
     @Override
     public void error(String msg) {
         console.getShell().err().println(msg);
+    }
+
+    @Override
+    public CommandRegistry getLegacyCommandRegistry() {
+        return legacyRegistry;
     }
 }

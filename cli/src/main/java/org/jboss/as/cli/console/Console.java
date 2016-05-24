@@ -29,6 +29,7 @@ import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.CommandRegistry;
 
 /**
  *
@@ -117,4 +118,6 @@ public interface Console {
             throws IOException, InterruptedException, CommandLineException;
 
     void error(String msg);
+
+    CommandRegistry getLegacyCommandRegistry();
 }

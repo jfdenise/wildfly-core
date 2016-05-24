@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLException;
 import javax.security.auth.callback.CallbackHandler;
@@ -54,14 +53,15 @@ import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CliInitializationException;
+import org.jboss.as.cli.CommandCompleter;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHandlerProvider;
 import org.jboss.as.cli.CommandHistory;
+import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
-import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.ConnectionInfo;
 import org.jboss.as.cli.ControllerAddress;
 import org.jboss.as.cli.ControllerAddressResolver;
@@ -72,53 +72,7 @@ import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
 import org.jboss.as.cli.batch.impl.DefaultBatchManager;
 import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
-import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
-import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
-import org.jboss.as.cli.handlers.ArchiveHandler;
-import org.jboss.as.cli.handlers.ClearScreenHandler;
-import org.jboss.as.cli.handlers.CommandCommandHandler;
-import org.jboss.as.cli.handlers.ConnectionInfoHandler;
-import org.jboss.as.cli.handlers.DeployHandler;
-import org.jboss.as.cli.handlers.DeploymentInfoHandler;
-import org.jboss.as.cli.handlers.DeploymentOverlayHandler;
-import org.jboss.as.cli.handlers.EchoDMRHandler;
-import org.jboss.as.cli.handlers.EchoVariableHandler;
-import org.jboss.as.cli.handlers.GenericTypeOperationHandler;
-import org.jboss.as.cli.handlers.HelpHandler;
-import org.jboss.as.cli.handlers.HistoryHandler;
-import org.jboss.as.cli.handlers.LsHandler;
 import org.jboss.as.cli.handlers.OperationRequestHandler;
-import org.jboss.as.cli.handlers.PrefixHandler;
-import org.jboss.as.cli.handlers.PrintWorkingNodeHandler;
-import org.jboss.as.cli.handlers.ReadAttributeHandler;
-import org.jboss.as.cli.handlers.ReadOperationHandler;
-import org.jboss.as.cli.handlers.ReloadHandler;
-import org.jboss.as.cli.handlers.SetVariableHandler;
-import org.jboss.as.cli.handlers.ShutdownHandler;
-import org.jboss.as.cli.handlers.UndeployHandler;
-import org.jboss.as.cli.handlers.UnsetVariableHandler;
-import org.jboss.as.cli.handlers.VersionHandler;
-import org.jboss.as.cli.handlers.batch.BatchClearHandler;
-import org.jboss.as.cli.handlers.batch.BatchDiscardHandler;
-import org.jboss.as.cli.handlers.batch.BatchEditLineHandler;
-import org.jboss.as.cli.handlers.batch.BatchHandler;
-import org.jboss.as.cli.handlers.batch.BatchHoldbackHandler;
-import org.jboss.as.cli.handlers.batch.BatchListHandler;
-import org.jboss.as.cli.handlers.batch.BatchMoveLineHandler;
-import org.jboss.as.cli.handlers.batch.BatchRemoveLineHandler;
-import org.jboss.as.cli.handlers.batch.BatchRunHandler;
-import org.jboss.as.cli.handlers.ifelse.ElseHandler;
-import org.jboss.as.cli.handlers.ifelse.EndIfHandler;
-import org.jboss.as.cli.handlers.ifelse.IfHandler;
-import org.jboss.as.cli.handlers.jca.DataSourceAddCompositeHandler;
-import org.jboss.as.cli.handlers.jca.JDBCDriverInfoHandler;
-import org.jboss.as.cli.handlers.jca.JDBCDriverNameProvider;
-import org.jboss.as.cli.handlers.jca.XADataSourceAddCompositeHandler;
-import org.jboss.as.cli.handlers.module.ASModuleHandler;
-import org.jboss.as.cli.handlers.trycatch.CatchHandler;
-import org.jboss.as.cli.handlers.trycatch.EndTryHandler;
-import org.jboss.as.cli.handlers.trycatch.FinallyHandler;
-import org.jboss.as.cli.handlers.trycatch.TryHandler;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationFormatException;
@@ -129,7 +83,6 @@ import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestParser;
 import org.jboss.as.cli.operation.impl.DefaultPrefixFormatter;
-import org.jboss.as.cli.operation.impl.RolloutPlanCompleter;
 import org.jboss.as.cli.parsing.command.CommandFormat;
 import org.jboss.as.cli.parsing.operation.OperationFormat;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -141,6 +94,8 @@ import org.jboss.logging.Logger.Level;
 import org.jboss.stdio.StdioContext;
 import org.xnio.http.RedirectException;
 import org.jboss.as.cli.console.ConsoleBuilder;
+import org.jboss.as.cli.operation.OperationCandidatesProvider;
+import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
 import org.jboss.as.cli.security.AuthenticationCallbackHandler;
 import org.jboss.as.cli.security.CliSSLContext;
 
@@ -160,8 +115,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private final CliConfig config;
     private final ControllerAddressResolver addressResolver;
 
-    /** command registry */
-    private final CommandRegistry cmdRegistry = new CommandRegistry();
     /** loads command handlers from the domain management model extensions */
     private ExtensionsLoader extLoader;
 
@@ -229,6 +182,18 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** command line handling redirection */
     private CommandLineRedirectionRegistration redirection;
 
+    /**
+     * provider of operation request candidates for tab-completion
+     */
+    @Deprecated
+    private final OperationCandidatesProvider operationCandidatesProvider = new DefaultOperationCandidatesProvider();
+
+    /**
+     * the default command completer
+     */
+    @Deprecated
+    private final CommandCompleter cmdCompleter;
+
     /** this object saves information to be used in ConnectionInfoHandler */
     private ConnectionInfoBean connInfoBean;
 
@@ -243,7 +208,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
      *
      * @throws CliInitializationException
      */
-    CommandContextImpl() throws CliInitializationException, CommandLineParserException {
+    CommandContextImpl() throws CliInitializationException, CommandLineParserException, CommandLineException {
         this(new CommandContextConfiguration.Builder().build());
     }
 
@@ -252,7 +217,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
      *
      */
     CommandContextImpl(CommandContextConfiguration configuration)
-            throws CliInitializationException, CommandLineParserException {
+            throws CliInitializationException, CommandLineParserException, CommandLineException {
         config = CliConfigImpl.load(this, configuration);
         addressResolver = ControllerAddressResolver.newInstance(config, configuration.getController());
 
@@ -269,6 +234,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 setInteractive(configuration.isInitConsole()).
                 setSilent(configuration.isSilent()).
                 create();
+        cmdCompleter = new CommandCompleter(console.getLegacyCommandRegistry());
+
         resolveParameterValues = config.isResolveParameterValues();
         initStdIO();
         try {
@@ -309,52 +276,51 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     private void initCommands() throws CommandLineException {
-        cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
-        cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
-        cmdRegistry.registerHandler(new CommandCommandHandler(cmdRegistry), "command");
-        cmdRegistry.registerHandler(new EchoDMRHandler(), "echo-dmr");
-        cmdRegistry.registerHandler(new HelpHandler(cmdRegistry), "help", "h");
-        cmdRegistry.registerHandler(new HistoryHandler(), "history");
-        cmdRegistry.registerHandler(new LsHandler(this), "ls");
-        cmdRegistry.registerHandler(new ASModuleHandler(this), "module");
-        cmdRegistry.registerHandler(new PrintWorkingNodeHandler(), "pwd", "pwn");
-        cmdRegistry.registerHandler(new ReadAttributeHandler(this), "read-attribute");
-        cmdRegistry.registerHandler(new ReadOperationHandler(this), "read-operation");
-        cmdRegistry.registerHandler(new VersionHandler(), "version");
-        cmdRegistry.registerHandler(new ConnectionInfoHandler(), "connection-info");
-
+        /*console.getLegacyCommandRegistry().registerHandler(new PrefixHandler(), "cd", "cn");
+        console.getLegacyCommandRegistry().registerHandler(new ClearScreenHandler(), "clear", "cls");
+        console.getLegacyCommandRegistry().registerHandler(new CommandCommandHandler(console.getLegacyCommandRegistry()), "command");
+        console.getLegacyCommandRegistry().registerHandler(new EchoDMRHandler(), "echo-dmr");
+        console.getLegacyCommandRegistry().registerHandler(new HelpHandler(console.getLegacyCommandRegistry()), "help", "h");
+        console.getLegacyCommandRegistry().registerHandler(new HistoryHandler(), "history");
+        console.getLegacyCommandRegistry().registerHandler(new LsHandler(this), "ls");
+        console.getLegacyCommandRegistry().registerHandler(new ASModuleHandler(this), "module");
+        console.getLegacyCommandRegistry().registerHandler(new PrintWorkingNodeHandler(), "pwd", "pwn");
+        console.getLegacyCommandRegistry().registerHandler(new ReadAttributeHandler(this), "read-attribute");
+        console.getLegacyCommandRegistry().registerHandler(new ReadOperationHandler(this), "read-operation");
+        console.getLegacyCommandRegistry().registerHandler(new VersionHandler(), "version");
+        console.getLegacyCommandRegistry().registerHandler(new ConnectionInfoHandler(), "connection-info");
         // variables
-        cmdRegistry.registerHandler(new SetVariableHandler(), "set");
-        cmdRegistry.registerHandler(new EchoVariableHandler(), "echo");
-        cmdRegistry.registerHandler(new UnsetVariableHandler(), "unset");
+        console.getLegacyCommandRegistry().registerHandler(new SetVariableHandler(), "set");
+        console.getLegacyCommandRegistry().registerHandler(new EchoVariableHandler(), "echo");
+        console.getLegacyCommandRegistry().registerHandler(new UnsetVariableHandler(), "unset");
 
         // deployment
-        cmdRegistry.registerHandler(new DeployHandler(this), "deploy");
-        cmdRegistry.registerHandler(new UndeployHandler(this), "undeploy");
-        cmdRegistry.registerHandler(new DeploymentInfoHandler(this), "deployment-info");
-        cmdRegistry.registerHandler(new DeploymentOverlayHandler(this), "deployment-overlay");
+        console.getLegacyCommandRegistry().registerHandler(new DeployHandler(this), "deploy");
+        console.getLegacyCommandRegistry().registerHandler(new UndeployHandler(this), "undeploy");
+        console.getLegacyCommandRegistry().registerHandler(new DeploymentInfoHandler(this), "deployment-info");
+        console.getLegacyCommandRegistry().registerHandler(new DeploymentOverlayHandler(this), "deployment-overlay");
 
         // batch commands
-        cmdRegistry.registerHandler(new BatchHandler(this), "batch");
-        cmdRegistry.registerHandler(new BatchDiscardHandler(), "discard-batch");
-        cmdRegistry.registerHandler(new BatchListHandler(), "list-batch");
-        cmdRegistry.registerHandler(new BatchHoldbackHandler(), "holdback-batch");
-        cmdRegistry.registerHandler(new BatchRunHandler(this), "run-batch");
-        cmdRegistry.registerHandler(new BatchClearHandler(), "clear-batch");
-        cmdRegistry.registerHandler(new BatchRemoveLineHandler(), "remove-batch-line");
-        cmdRegistry.registerHandler(new BatchMoveLineHandler(), "move-batch-line");
-        cmdRegistry.registerHandler(new BatchEditLineHandler(), "edit-batch-line");
+//        cmdRegistry.registerHandler(new BatchHandler(this), "batch");
+//        cmdRegistry.registerHandler(new BatchDiscardHandler(), "discard-batch");
+//        cmdRegistry.registerHandler(new BatchListHandler(), "list-batch");
+//        cmdRegistry.registerHandler(new BatchHoldbackHandler(), "holdback-batch");
+//        cmdRegistry.registerHandler(new BatchRunHandler(this), "run-batch");
+//        cmdRegistry.registerHandler(new BatchClearHandler(), "clear-batch");
+//        cmdRegistry.registerHandler(new BatchRemoveLineHandler(), "remove-batch-line");
+//        cmdRegistry.registerHandler(new BatchMoveLineHandler(), "move-batch-line");
+//        cmdRegistry.registerHandler(new BatchEditLineHandler(), "edit-batch-line");
 
         // try-catch
-        cmdRegistry.registerHandler(new TryHandler(), "try");
-        cmdRegistry.registerHandler(new CatchHandler(), "catch");
-        cmdRegistry.registerHandler(new FinallyHandler(), "finally");
-        cmdRegistry.registerHandler(new EndTryHandler(), "end-try");
+        console.getLegacyCommandRegistry().registerHandler(new TryHandler(), "try");
+        console.getLegacyCommandRegistry().registerHandler(new CatchHandler(), "catch");
+        console.getLegacyCommandRegistry().registerHandler(new FinallyHandler(), "finally");
+        console.getLegacyCommandRegistry().registerHandler(new EndTryHandler(), "end-try");
 
         // if else
-        cmdRegistry.registerHandler(new IfHandler(), "if");
-        cmdRegistry.registerHandler(new ElseHandler(), "else");
-        cmdRegistry.registerHandler(new EndIfHandler(), "end-if");
+        console.getLegacyCommandRegistry().registerHandler(new IfHandler(), "if");
+        console.getLegacyCommandRegistry().registerHandler(new ElseHandler(), "else");
+        console.getLegacyCommandRegistry().registerHandler(new EndIfHandler(), "end-if");
 
         // data-source
         final DefaultCompleter driverNameCompleter = new DefaultCompleter(JDBCDriverNameProvider.INSTANCE);
@@ -364,42 +330,53 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         final DataSourceAddCompositeHandler dsAddHandler = new DataSourceAddCompositeHandler(this, "/subsystem=datasources/data-source");
         dsAddHandler.addValueCompleter(Util.DRIVER_NAME, driverNameCompleter);
         dsHandler.addHandler(Util.ADD, dsAddHandler);
-        cmdRegistry.registerHandler(dsHandler, "data-source");
+        console.getLegacyCommandRegistry().registerHandler(dsHandler, "data-source");
         final GenericTypeOperationHandler xaDsHandler = new GenericTypeOperationHandler(this, "/subsystem=datasources/xa-data-source", null);
         xaDsHandler.addValueCompleter(Util.DRIVER_NAME, driverNameCompleter);
         // override the xa add operation with the handler that accepts xa props
         final XADataSourceAddCompositeHandler xaDsAddHandler = new XADataSourceAddCompositeHandler(this, "/subsystem=datasources/xa-data-source");
         xaDsAddHandler.addValueCompleter(Util.DRIVER_NAME, driverNameCompleter);
         xaDsHandler.addHandler(Util.ADD, xaDsAddHandler);
-        cmdRegistry.registerHandler(xaDsHandler, "xa-data-source");
-        cmdRegistry.registerHandler(new JDBCDriverInfoHandler(this), "jdbc-driver-info");
+        console.getLegacyCommandRegistry().registerHandler(xaDsHandler, "xa-data-source");
+        console.getLegacyCommandRegistry().registerHandler(new JDBCDriverInfoHandler(this), "jdbc-driver-info");
 
         // rollout plan
         final GenericTypeOperationHandler rolloutPlan = new GenericTypeOperationHandler(this, "/management-client-content=rollout-plans/rollout-plan", null);
         rolloutPlan.addValueConverter("content", HeadersArgumentValueConverter.INSTANCE);
         rolloutPlan.addValueCompleter("content", RolloutPlanCompleter.INSTANCE);
-        cmdRegistry.registerHandler(rolloutPlan, "rollout-plan");
+        console.getLegacyCommandRegistry().registerHandler(rolloutPlan, "rollout-plan");
 
         // supported but hidden from tab-completion until stable implementation
-        cmdRegistry.registerHandler(new ArchiveHandler(this), false, "archive");
+        console.getLegacyCommandRegistry().registerHandler(new ArchiveHandler(this), false, "archive");
 
-        final AtomicReference<EmbeddedProcessLaunch> embeddedServerLaunch = EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(cmdRegistry, this);
-        cmdRegistry.registerHandler(new ReloadHandler(this, embeddedServerLaunch), "reload");
-        cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
+        final AtomicReference<EmbeddedProcessLaunch> embeddedServerLaunch = EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(console.getLegacyCommandRegistry(), this);
+        console.getLegacyCommandRegistry().registerHandler(new ReloadHandler(this, embeddedServerLaunch), "reload");
+        console.getLegacyCommandRegistry().registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
+         */
         registerExtraHandlers();
 
-        extLoader = new ExtensionsLoader(cmdRegistry, this);
+        extLoader = new ExtensionsLoader(console.getLegacyCommandRegistry(), this);
     }
 
     private void registerExtraHandlers() throws CommandLineException {
         ServiceLoader<CommandHandlerProvider> loader = ServiceLoader.load(CommandHandlerProvider.class);
         for (CommandHandlerProvider provider : loader) {
-            cmdRegistry.registerHandler(provider.createCommandHandler(this), provider.isTabComplete(), provider.getNames());
+            console.getLegacyCommandRegistry().registerHandler(provider.createCommandHandler(this), provider.isTabComplete(), provider.getNames());
         }
     }
 
     public int getExitCode() {
         return exitCode;
+    }
+
+    @Override
+    public OperationCandidatesProvider getOperationCandidatesProvider() {
+        return operationCandidatesProvider;
+    }
+
+    @Override
+    public CommandLineCompleter getDefaultCommandCompleter() {
+        return cmdCompleter;
     }
 
     /**
@@ -451,6 +428,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     clear(Scope.REQUEST);
                 }
             }
+        } else {
+            throw new CommandLineException("Not an operation");
         }
     }
 
@@ -487,7 +466,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 handleOperation(parsedCmd);
             } else {
                 final String cmdName = parsedCmd.getOperationName();
-                CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
+                CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(cmdName.toLowerCase());
                 if (handler != null) {
                     if (isBatchMode() && handler.isBatchMode(this)) {
                         if (!(handler instanceof OperationCommand)) {
@@ -510,7 +489,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
                 }
             }
-        } catch(CommandLineException e) {
+        } catch (CommandLineException e) {
             throw e;
         } catch(Throwable t) {
             if(log.isDebugEnabled()) {
@@ -1076,7 +1055,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 return request;
             }
 
-            final CommandHandler handler = cmdRegistry.getCommandHandler(parsedCmd.getOperationName());
+            final CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(parsedCmd.getOperationName());
             if (handler == null) {
                 throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
             }
@@ -1312,7 +1291,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     }
                 } else {
                     final String cmdName = parsedCmd.getOperationName();
-                    CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
+                    CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(cmdName.toLowerCase());
                     if (handler != null) {
                         if (isBatchMode() && handler.isBatchMode(CommandContextImpl.this)) {
                             if (!(handler instanceof OperationCommand)) {

@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.settings.Settings;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandLineException;
 
 /**
  *
@@ -76,7 +77,7 @@ public class ConsoleBuilder {
         return this;
     }
 
-    public Console create() throws CommandLineParserException {
+    public Console create() throws CommandLineParserException, CommandLineException {
         if (context == null) {
             throw new IllegalArgumentException("Context can't be null");
         }

@@ -428,7 +428,10 @@ public class OperationRequestCompleter implements CommandLineCompleter {
             } else {
                 for (String name : names) {
                     if (name.startsWith(chunk)) {
-                        candidates.add(name);
+                        // XXX JFDENISE, in the CmmandHandler to Aesh Command bridge
+                        // we need this separator to be added for command name.
+                        // It is not handled by the native completion.
+                        candidates.add(name + " ");
                     }
                 }
             }
