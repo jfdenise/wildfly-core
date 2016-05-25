@@ -23,18 +23,18 @@ package org.jboss.as.cli.command.legacy;
 
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.OperationCommand;
 import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 
 /**
  *
  * @author jfdenise
  */
-public class CliLegacyBatchCompliantCommandBridge extends CliLegacyCommandBridge
-        implements BatchCompliantCommand {
+public class CliLegacyBatchCompliantCommandBridge extends
+        CliLegacyDMRCommandBridge implements BatchCompliantCommand {
 
     public CliLegacyBatchCompliantCommandBridge(String name,
-            CommandContext ctx) throws CommandLineParserException {
-        super(name, ctx);
+            CommandContext ctx, OperationCommand handler) throws CommandLineParserException {
+        super(name, ctx, handler);
     }
-
 }

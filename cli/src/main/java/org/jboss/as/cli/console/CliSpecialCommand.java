@@ -76,9 +76,6 @@ public class CliSpecialCommand {
         }
     }
 
-    private static class Batch extends CommandImpl implements BatchCompliantCommand {
-    }
-
     private static class DMR extends CommandImpl implements DMRCommand {
 
         private final DMRCommand cmd;
@@ -93,9 +90,9 @@ public class CliSpecialCommand {
         }
     }
 
-    private static class BatchDMR extends DMR implements BatchCompliantCommand {
+    private static class Batch extends DMR implements BatchCompliantCommand {
 
-        public BatchDMR(DMRCommand cmd) {
+        public Batch(DMRCommand cmd) {
             super(cmd);
         }
 
@@ -108,11 +105,7 @@ public class CliSpecialCommand {
 
         private CliSpecialParser(String name) throws CommandLineParserException {
             if (executor instanceof BatchCompliantCommand) {
-                if (executor instanceof DMRCommand) {
-                    command = new BatchDMR((DMRCommand) executor);
-                } else {
-                    command = new Batch();
-                }
+                command = new Batch((DMRCommand) executor);
             } else if (executor instanceof DMRCommand) {
                 command = new DMR((DMRCommand) executor);
             } else {

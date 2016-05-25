@@ -36,6 +36,9 @@ import org.jboss.aesh.console.command.container.DefaultCommandContainer;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.command.DMRCommand;
+import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 
 /**
  *
@@ -83,8 +86,17 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
             CommandInvocation commandInvocation)
             throws CommandLineParserException, OptionValidatorException, CommandValidatorException, IOException, InterruptedException {
         try {
+            if (context.isBatchMode()) {
+                Command c = container.getParser().getCommand();
+                if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
+                    context.addBatchOperation(((DMRCommand) c).buildRequest(line.getOriginalInput(), context), line.getOriginalInput());
+                    return null;
+                }
+            }
             CommandContainerResult res = container.executeCommand(line, invocationProviders, aeshContext, commandInvocation);
             return res;
+        } catch (CommandFormatException ex) {
+            throw new RuntimeException(ex);
         } finally {
             postExecution(context, commandInvocation);
         }

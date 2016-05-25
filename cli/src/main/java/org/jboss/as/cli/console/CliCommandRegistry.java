@@ -24,7 +24,6 @@ package org.jboss.as.cli.console;
 import org.jboss.as.cli.command.legacy.CliLegacyCommandBridge;
 import org.jboss.as.cli.command.legacy.CliLegacyBatchCompliantCommandBridge;
 import org.jboss.as.cli.command.legacy.CliLegacyDMRCommandBridge;
-import org.jboss.as.cli.command.legacy.CliLegacyDMRBatchCompliantCommandBridge;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,15 +120,12 @@ public class CliCommandRegistry implements CommandRegistry {
             CliLegacyCommandBridge bridge;
             if (handler instanceof OperationCommand) {
                 if (handler.isBatchMode(context)) {
-                    bridge = new CliLegacyDMRBatchCompliantCommandBridge(n,
+                    bridge = new CliLegacyBatchCompliantCommandBridge(n,
                             context, (OperationCommand) handler);
                 } else {
                     bridge = new CliLegacyDMRCommandBridge(n,
                             context, (OperationCommand) handler);
                 }
-            } else if (handler.isBatchMode(context)) {
-                bridge = new CliLegacyBatchCompliantCommandBridge(n,
-                        context);
             } else {
                 bridge = new CliLegacyCommandBridge(n,
                         context);

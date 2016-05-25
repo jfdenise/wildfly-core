@@ -41,7 +41,7 @@ import org.jboss.dmr.ModelNode;
  *
  * @author Alexey Loubyansky
  */
-public interface CommandContext {
+public interface CommandContext extends Context {
 
     /**
      * Scope for entries added to context.
@@ -213,8 +213,6 @@ public interface CommandContext {
     default void connectController(String controller) throws CommandLineException {
         connectController(controller, getConsole());
     }
-
-    void connectController(String controller, Console console) throws CommandLineException;
 
     /**
      * Connects the controller client using the host and the port.
@@ -410,6 +408,7 @@ public interface CommandContext {
      * @throws CommandFormatException in case there was an error handling the
      * command or operation
      */
+    @Override
     default void handleOperation(ParsedCommandLine line) throws CommandLineException {
         handle(line.getOriginalLine());
     }
@@ -449,8 +448,6 @@ public interface CommandContext {
         return null;
     }
 
-    String getPrompt();
-
     /**
      * Returns current default filesystem directory.
      * @return  current default filesystem directory.
@@ -486,13 +483,6 @@ public interface CommandContext {
      * false if system properties should be resolved on the server side.
      */
     void setResolveParameterValues(boolean resolve);
-
-    /**
-     * Set the current node path.
-     *
-     * @param address The node path
-     */
-    void setCurrentNodePath(OperationRequestAddress address);
 
     /**
      * Whether the info or error messages should be written to the terminal output.
@@ -603,6 +593,4 @@ public interface CommandContext {
      * @throws java.lang.IllegalStateException if output isn't currently being captured
      */
     void releaseOutput();
-
-    void setParsedCommandLine(ParsedCommandLine line);
 }

@@ -21,10 +21,12 @@
  */
 package org.jboss.as.cli.command.batch;
 
+import org.jboss.as.cli.command.DMRCommand;
+
 /**
  *
  * @author jfdenise
  */
-public interface BatchCompliantCommand {
+public interface BatchCompliantCommand extends DMRCommand {
 
 }

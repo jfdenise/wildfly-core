@@ -433,6 +433,13 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         }
     }
 
+    public void addBatchOperation(ModelNode request, String line) {
+        BatchedCommand batchedCmd
+                = new DefaultBatchedCommand(this, line, request);
+        Batch batch = getBatchManager().getActiveBatch();
+        batch.add(batchedCmd);
+    }
+
     @Override
     public void handle(String line) throws CommandLineException {
         if (line.isEmpty() || line.charAt(0) == '#') {
@@ -474,10 +481,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                         } else {
                             try {
                                 ModelNode request = ((OperationCommand) handler).buildRequest(this);
-                                BatchedCommand batchedCmd
-                                        = new DefaultBatchedCommand(this, line, request);
-                                Batch batch = getBatchManager().getActiveBatch();
-                                batch.add(batchedCmd);
+                                addBatchOperation(request, line);
                             } catch (CommandFormatException e) {
                                 throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
                             }
