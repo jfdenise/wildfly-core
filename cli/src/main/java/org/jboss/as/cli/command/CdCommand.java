@@ -19,40 +19,49 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command.batch;
+package org.jboss.as.cli.command;
 
-import java.io.IOException;
-import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.aesh.cl.Option;
+import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.command.CliCommandInvocation;
+import java.io.IOException;
+import java.util.List;
+import org.jboss.aesh.cl.Arguments;
+import org.jboss.aesh.cl.Option;
+import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
+import org.jboss.as.cli.aesh.converter.OperationRequestAddressConverter;
+import org.jboss.as.cli.operation.OperationRequestAddress;
 
 /**
+ * A Command to change the current node path.
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "discard", description = "")
-public class BatchDiscardCommand implements Command<CliCommandInvocation> {
+@CommandDefinition(name = "cd", description = "")
+public class CdCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Arguments(completer = PathOptionCompleter.class,
+            converter = OperationRequestAddressConverter.class)
+    // XXX jfdenise when we have ON/OFF for validation
+    //validator = ChangeNodeValidator.class)
+    private List<OperationRequestAddress> arguments;
+
+    @Option(name = "no-validation")
+    private boolean noValidation;
+
+    @Option(hasValue = false)
     private boolean help;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws IOException, InterruptedException {
         if (help) {
-            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("batch discard"));
+            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("cd"));
             return null;
         }
-        CommandContext ctx = commandInvocation.getCommandContext();
-        boolean result = ctx.getBatchManager().discardActiveBatch();
-        if (!result) {
-            throw new RuntimeException("There is no active batch to discard.");
+        if (arguments != null && arguments.size() > 0) {
+            commandInvocation.getCommandContext().setCurrentNodePath(arguments.get(0));
         }
-
         return null;
     }
-
 }

@@ -48,6 +48,8 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.sasl.SaslException;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandNotFoundException;
 
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -72,6 +74,8 @@ import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
 import org.jboss.as.cli.batch.impl.DefaultBatchManager;
 import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
+import org.jboss.as.cli.command.DMRCommand;
+import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 import org.jboss.as.cli.handlers.OperationRequestHandler;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
@@ -151,7 +155,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** various key/value pairs */
     private Map<Scope, Map<String, Object>> map = new HashMap<>();
     /** operation request address prefix */
-    private final OperationRequestAddress prefix = new DefaultOperationRequestAddress();
+    private OperationRequestAddress prefix = new DefaultOperationRequestAddress();
     /** the prefix formatter */
     private final NodePathFormatter prefixFormatter = DefaultPrefixFormatter.INSTANCE;
     /** operation request handler */
@@ -1055,19 +1059,22 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 return request;
             }
 
-            final CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(parsedCmd.getOperationName());
+            final Command handler = console.getCommandRegistry().
+                    findCommand(parsedCmd.getOperationName(), parsedCmd.getOriginalLine());
             if (handler == null) {
                 throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
             }
             if(batchMode) {
-                if(!handler.isBatchMode(this)) {
+                if (!(handler instanceof BatchCompliantCommand)) {
                     throw new OperationFormatException("The command is not allowed in a batch.");
                 }
-            } else if (!(handler instanceof OperationCommand)) {
+            } else if (!(handler instanceof DMRCommand)) {
                 throw new OperationFormatException("The command does not translate to an operation request.");
             }
 
-            return ((OperationCommand) handler).buildRequest(this);
+            return ((DMRCommand) handler).buildRequest(this);
+        } catch (CommandNotFoundException ex) {
+            throw new CommandFormatException(ex);
         } finally {
             clear(Scope.REQUEST);
             this.parsedCmd = originalParsedArguments;
@@ -1178,6 +1185,10 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     @Deprecated
     public int getTerminalHeight() {
         return console.getTerminalHeight();
+    }
+
+    public void setCurrentNodePath(OperationRequestAddress address) {
+        this.prefix = address;
     }
 
     @Override

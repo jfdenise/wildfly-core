@@ -488,6 +488,13 @@ public interface CommandContext {
     void setResolveParameterValues(boolean resolve);
 
     /**
+     * Set the current node path.
+     *
+     * @param address The node path
+     */
+    void setCurrentNodePath(OperationRequestAddress address);
+
+    /**
      * Whether the info or error messages should be written to the terminal output.
      *
      * The output of the info and error messages is done in the following way:

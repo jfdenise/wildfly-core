@@ -29,16 +29,21 @@ import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.Util;
+import org.jboss.as.cli.command.DMRCommand;
+import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
+import org.jboss.dmr.ModelNode;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class OperationSpecialCommand implements CliSpecialExecutor {
+public class OperationSpecialCommand implements CliSpecialExecutor,
+        BatchCompliantCommand, DMRCommand {
 
     private final CommandContext ctx;
     private final DefaultOperationCandidatesProvider operationCandidatesProvider
@@ -86,6 +91,11 @@ public class OperationSpecialCommand implements CliSpecialExecutor {
     public OperationSpecialCommand(CommandContext ctx)
             throws CommandLineParserException {
         this.ctx = ctx;
+    }
+
+    @Override
+    public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
+        return Util.toOperationRequest(context, context.getParsedCommandLine());
     }
 
 }

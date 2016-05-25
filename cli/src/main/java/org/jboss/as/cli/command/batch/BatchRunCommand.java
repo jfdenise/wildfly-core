@@ -38,6 +38,7 @@ import org.jboss.as.cli.command.CliCommandInvocation;
 import org.jboss.as.cli.command.CommandUtil;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
+import org.jboss.as.cli.command.DMRCommand;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
@@ -46,7 +47,7 @@ import org.jboss.dmr.ModelNode;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = "run", description = "")
-public class BatchRunCommand implements Command<CliCommandInvocation> {
+public class BatchRunCommand implements Command<CliCommandInvocation>, DMRCommand {
 
     @Option(name = "help", hasValue = false)
     private boolean help;
@@ -69,7 +70,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation> {
         ModelNode response;
         CommandContext context = commandInvocation.getCommandContext();
         try {
-            final ModelNode request = buildRequest(commandInvocation);
+            final ModelNode request = buildRequest(context);
             if (headers != null) {
                 request.get(Util.OPERATION_HEADERS).set(headers);
             }
@@ -108,8 +109,8 @@ public class BatchRunCommand implements Command<CliCommandInvocation> {
         return null;
     }
 
-    public ModelNode buildRequest(CliCommandInvocation commandInvocation) throws CommandLineException {
-        final BatchManager batchManager = commandInvocation.getCommandContext().getBatchManager();
+    public ModelNode newRequest(CommandContext context) throws CommandLineException {
+        final BatchManager batchManager = context.getBatchManager();
         if (batchManager.isBatchActive()) {
             final Batch batch = batchManager.getActiveBatch();
             List<BatchedCommand> currentBatch = batch.getCommands();
@@ -122,6 +123,15 @@ public class BatchRunCommand implements Command<CliCommandInvocation> {
         }
         // XXX JF DENISE, HIDE WHEN NOT IN BATCH MODE
         throw new CommandLineException("Command can be executed only in the batch mode.");
+    }
+
+    @Override
+    public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
+        try {
+            return newRequest(context);
+        } catch (CommandLineException ex) {
+            throw new CommandFormatException(ex);
+        }
     }
 
 }

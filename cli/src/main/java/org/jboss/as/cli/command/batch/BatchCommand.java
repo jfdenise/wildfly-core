@@ -74,7 +74,7 @@ public class BatchCommand implements Command<CliCommandInvocation> {
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws IOException, InterruptedException {
         if (help) {
-            commandInvocation.getCommandContext().printLine("Aesh should have hooks for help!");
+            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("batch"));
             return null;
         }
         if (commandInvocation.getCommandContext().getBatchManager().isBatchActive()) {

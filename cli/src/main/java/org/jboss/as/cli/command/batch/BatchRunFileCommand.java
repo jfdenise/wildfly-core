@@ -30,7 +30,6 @@ import org.jboss.aesh.cl.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.batch.BatchManager;
-import org.jboss.as.cli.command.CliCommandInvocation;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.jboss.as.cli.aesh.converter.FileConverter;
 import org.jboss.dmr.ModelNode;
@@ -47,9 +46,8 @@ public class BatchRunFileCommand extends BatchRunCommand {
     private File file;
 
     @Override
-    public ModelNode buildRequest(CliCommandInvocation commandInvocation) throws CommandLineException {
-        CommandContext ctx = commandInvocation.getCommandContext();
-        final BatchManager batchManager = commandInvocation.getCommandContext().getBatchManager();
+    public ModelNode newRequest(CommandContext ctx) throws CommandLineException {
+        final BatchManager batchManager = ctx.getBatchManager();
         if (batchManager.isBatchActive()) {
             throw new CommandLineException("Batch already active, can't start new batch");
         }

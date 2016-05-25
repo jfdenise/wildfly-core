@@ -120,4 +120,6 @@ public interface Console {
     void error(String msg);
 
     CommandRegistry getLegacyCommandRegistry();
+
+    CliCommandRegistry getCommandRegistry();
 }

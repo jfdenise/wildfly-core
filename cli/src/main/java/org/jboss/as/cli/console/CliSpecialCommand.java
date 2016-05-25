@@ -38,13 +38,19 @@ import org.jboss.aesh.complete.CompleteOperation;
 import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.InvocationProviders;
 import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.command.DMRCommand;
+import org.jboss.as.cli.command.batch.BatchCommand;
+import org.jboss.as.cli.command.batch.BatchCompliantCommand;
+import org.jboss.dmr.ModelNode;
 
 /**
  *
@@ -63,12 +69,57 @@ public class CliSpecialCommand {
 
     }
 
+    private static class CommandImpl implements Command {
+
+        @Override
+        public CommandResult execute(CommandInvocation commandInvocation) throws IOException, InterruptedException {
+            throw new UnsupportedOperationException("Bridge Command can't be called directly.");
+        }
+    }
+
+    private static class Batch extends CommandImpl implements BatchCompliantCommand {
+    }
+
+    private static class DMR extends CommandImpl implements DMRCommand {
+
+        private final DMRCommand cmd;
+
+        DMR(DMRCommand cmd) {
+            this.cmd = cmd;
+        }
+
+        @Override
+        public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
+            return cmd.buildRequest(context);
+        }
+    }
+
+    private static class BatchDMR extends DMR implements BatchCompliantCommand {
+
+        public BatchDMR(DMRCommand cmd) {
+            super(cmd);
+        }
+
+    }
+
     private class CliSpecialParser implements CommandLineParser<Command> {
 
         private final ProcessedCommand cmd;
+        private final Command command;
 
         private CliSpecialParser(String name) throws CommandLineParserException {
-            cmd = new ProcessedCommandBuilder().name(name).create();
+            if (executor instanceof BatchCompliantCommand) {
+                if (executor instanceof DMRCommand) {
+                    command = new BatchDMR((DMRCommand) executor);
+                } else {
+                    command = new BatchCommand();
+                }
+            } else if (executor instanceof DMRCommand) {
+                command = new DMR((DMRCommand) executor);
+            } else {
+                command = new CommandImpl();
+            }
+            cmd = new ProcessedCommandBuilder().command(command).name(name).create();
         }
 
         @Override
@@ -78,7 +129,7 @@ public class CliSpecialCommand {
 
         @Override
         public Command getCommand() {
-            return null;
+            return command;
         }
 
         @Override
@@ -171,7 +222,9 @@ public class CliSpecialCommand {
                 CommandValidatorException, IOException, InterruptedException {
 
             try {
-                return executor.execute(commandContext, line.getOriginalInput());
+                CommandContainerResult res = executor.execute(commandContext, line.getOriginalInput());
+                CliCommandContainer.postExecution(commandContext, commandInvocation);
+                return res;
             } catch (CommandLineException ex) {
                 throw new RuntimeException(ex);
             }

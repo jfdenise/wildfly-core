@@ -19,40 +19,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command.batch;
+package org.jboss.as.cli.command;
 
-import java.io.IOException;
-import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.aesh.cl.Option;
-import org.jboss.aesh.console.command.Command;
-import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.command.CliCommandInvocation;
+import org.jboss.as.cli.CommandFormatException;
+import org.jboss.dmr.ModelNode;
 
 /**
+ * Command that can build the associated DMR request
+ * Public API.
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "discard", description = "")
-public class BatchDiscardCommand implements Command<CliCommandInvocation> {
-
-    @Option(name = "help", hasValue = false)
-    private boolean help;
-
-    @Override
-    public CommandResult execute(CliCommandInvocation commandInvocation)
-            throws IOException, InterruptedException {
-        if (help) {
-            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("batch discard"));
-            return null;
-        }
-        CommandContext ctx = commandInvocation.getCommandContext();
-        boolean result = ctx.getBatchManager().discardActiveBatch();
-        if (!result) {
-            throw new RuntimeException("There is no active batch to discard.");
-        }
-
-        return null;
-    }
-
+public interface DMRCommand {
+    ModelNode buildRequest(CommandContext context) throws CommandFormatException;
 }

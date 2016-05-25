@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.jboss.as.cli.console;
+package org.jboss.as.cli.command.legacy;
 
 import java.util.List;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
@@ -19,13 +19,13 @@ import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
  *
  * @author jdenise@redhat.com
  */
-class CliLegacyCommandBridge implements CliSpecialExecutor {
+public class CliLegacyCommandBridge implements CliSpecialExecutor {
 
     @Override
-    public CommandContainerResult execute(CommandContext commandContext, String originalInput) throws CommandLineException {
+    public CommandContainerResult execute(CommandContext commandContext,
+            String originalInput) throws CommandLineException {
         try {
             ctx.handle(originalInput);
-            console.setPrompt(ctx.getPrompt());
         } catch (CommandLineException ex) {
             throw new RuntimeException(ex);
         }
@@ -36,13 +36,11 @@ class CliLegacyCommandBridge implements CliSpecialExecutor {
 
     private final CommandContext ctx;
     private final String name;
-    private final Console console;
 
-    CliLegacyCommandBridge(Console console, String name, CommandContext ctx)
+    public CliLegacyCommandBridge(String name, CommandContext ctx)
             throws CommandLineParserException {
         this.ctx = ctx;
         this.name = name;
-        this.console = console;
     }
 
     @Override

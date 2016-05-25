@@ -21,20 +21,28 @@
  */
 package org.jboss.as.cli.console;
 
+import org.jboss.as.cli.command.legacy.CliLegacyCommandBridge;
+import org.jboss.as.cli.command.legacy.CliLegacyBatchCompliantCommandBridge;
+import org.jboss.as.cli.command.legacy.CliLegacyDMRCommandBridge;
+import org.jboss.as.cli.command.legacy.CliLegacyDMRBatchCompliantCommandBridge;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.complete.CompleteOperation;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandNotFoundException;
+import org.jboss.aesh.console.command.container.AeshCommandContainerBuilder;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.command.registry.MutableCommandRegistry;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.OperationCommand;
 
 /**
  *
@@ -42,17 +50,14 @@ import org.jboss.as.cli.CommandLineException;
  */
 public class CliCommandRegistry implements CommandRegistry {
 
-    private final MutableCommandRegistry reg;
+    private final MutableCommandRegistry reg = new MutableCommandRegistry();
     private final List<CliSpecialCommand> specials = new ArrayList<>();
     private final Map<String, CliSpecialCommand> legacyHandlers = new HashMap<>();
     private final CommandContext context;
-    private final Console console;
+    private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
 
-    public CliCommandRegistry(Console console,
-            MutableCommandRegistry reg, CommandContext context)
+    public CliCommandRegistry(CommandContext context)
             throws CommandLineException {
-        this.console = console;
-        this.reg = reg;
         this.context = context;
     }
 
@@ -63,7 +68,13 @@ public class CliCommandRegistry implements CommandRegistry {
     }
 
     public void addCommand(CommandContainer container) {
-        reg.addCommand(container);
+        CliCommandContainer cliContainer
+                = new CliCommandContainer(context, container);
+        reg.addCommand(cliContainer);
+    }
+
+    public void addCommand(Command command) {
+        addCommand(containerBuilder.create(command));
     }
 
     @Override
@@ -71,12 +82,6 @@ public class CliCommandRegistry implements CommandRegistry {
             throws CommandNotFoundException {
         for (CliSpecialCommand special : specials) {
             CommandContainer<Command> command = special.commandFor(name);
-            if (command != null) {
-                return command;
-            }
-        }
-        for (CliSpecialCommand bridge : legacyHandlers.values()) {
-            CommandContainer<Command> command = bridge.commandFor(name);
             if (command != null) {
                 return command;
             }
@@ -111,10 +116,26 @@ public class CliCommandRegistry implements CommandRegistry {
         reg.removeCommand(name);
     }
 
-    public void registerLegacyHandler(String[] names) throws CommandLineParserException {
+    public void registerLegacyHandler(CommandHandler handler, String[] names) throws CommandLineParserException {
         for (String n : names) {
+            CliLegacyCommandBridge bridge;
+            if (handler instanceof OperationCommand) {
+                if (handler.isBatchMode(context)) {
+                    bridge = new CliLegacyDMRBatchCompliantCommandBridge(n,
+                            context, (OperationCommand) handler);
+                } else {
+                    bridge = new CliLegacyDMRCommandBridge(n,
+                            context, (OperationCommand) handler);
+                }
+            } else if (handler.isBatchMode(context)) {
+                bridge = new CliLegacyBatchCompliantCommandBridge(n,
+                        context);
+            } else {
+                bridge = new CliLegacyCommandBridge(n,
+                        context);
+            }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
-                    executor(new CliLegacyCommandBridge(console, n, context)).create();
+                    executor(bridge).create();
             addCommand(cmd.getCommand());
             legacyHandlers.put(n, cmd);
         }
@@ -123,5 +144,20 @@ public class CliCommandRegistry implements CommandRegistry {
     public void removeLegacyHandler(String cmdName) {
         reg.removeCommand(cmdName);
         legacyHandlers.remove(cmdName);
+    }
+
+    public Command findCommand(String name, String line) throws CommandNotFoundException {
+        // XXX JFDENISE, Aesh should offer this logic.
+        CommandContainer c = reg.getCommand(name, line);
+        CommandLineParser p = c.getParser();
+        String[] split = line.split(" ");
+        if (split.length > 1) {
+            String sub = split[1];
+            CommandLineParser child = c.getParser().getChildParser(sub);
+            if (child != null) {
+                p = child;
+            }
+        }
+        return p.getCommand();
     }
 }

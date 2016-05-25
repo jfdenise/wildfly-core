@@ -27,7 +27,6 @@ import org.jboss.aesh.console.AeshConsole;
 import org.jboss.aesh.console.AeshConsoleBuilder;
 import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.command.invocation.CommandInvocationServices;
-import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
 import org.jboss.aesh.console.settings.Settings;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.jboss.as.cli.aesh.provider.CliCommandInvocationProvider;
@@ -50,7 +49,6 @@ import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.aesh.console.InputProcessor;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.container.AeshCommandContainerBuilder;
-import org.jboss.aesh.console.command.registry.MutableCommandRegistry;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
 import org.jboss.aesh.parser.Parser;
@@ -66,6 +64,12 @@ import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Exit;
 import org.jboss.as.cli.command.Quit;
+import org.jboss.as.cli.command.CdCommand;
+import org.jboss.as.cli.command.ClearScreenCommand;
+import org.jboss.as.cli.command.ConnectionInfoCommand;
+import org.jboss.as.cli.command.EchoCommand;
+import org.jboss.as.cli.command.EchoDMRCommand;
+import org.jboss.as.cli.command.SetCommand;
 import org.jboss.as.cli.command.operation.OperationSpecialCommand;
 import org.jboss.as.cli.impl.CLIPrintStream;
 
@@ -80,7 +84,7 @@ class AeshCliConsole implements Console {
         public void registerHandler(CommandHandler handler, boolean tabComplete, String... names) throws RegisterHandlerException {
             super.registerHandler(handler, tabComplete, names);
             try {
-                commandRegistry.registerLegacyHandler(names);
+                commandRegistry.registerLegacyHandler(handler, names);
             } catch (CommandLineParserException ex) {
                 throw new RegisterHandlerException(ex.getMessage());
             }
@@ -209,14 +213,18 @@ class AeshCliConsole implements Console {
     }
 
     private CliCommandRegistry createCommandRegistry() throws CommandLineException {
-        MutableCommandRegistry reg = (MutableCommandRegistry) new AeshCommandRegistryBuilder()
-                .command(BatchCommand.class)
-                .command(Connect.class)
-                .command(Exit.class)
-                .command(Quit.class)
-                .create();
-        CliCommandRegistry clireg = new CliCommandRegistry(this,
-                reg, commandContext);
+        CliCommandRegistry clireg = new CliCommandRegistry(commandContext);
+        clireg.addCommand(new BatchCommand());
+        clireg.addCommand(new CdCommand());
+        clireg.addCommand(new ClearScreenCommand());
+        clireg.addCommand(new Connect());
+        clireg.addCommand(new ConnectionInfoCommand());
+        clireg.addCommand(new EchoCommand());
+        clireg.addCommand(new EchoDMRCommand());
+        clireg.addCommand(new Exit());
+        clireg.addCommand(new Quit());
+        clireg.addCommand(new SetCommand());
+
         return clireg;
     }
 
@@ -415,5 +423,10 @@ class AeshCliConsole implements Console {
     @Override
     public CommandRegistry getLegacyCommandRegistry() {
         return legacyRegistry;
+    }
+
+    @Override
+    public CliCommandRegistry getCommandRegistry() {
+        return commandRegistry;
     }
 }

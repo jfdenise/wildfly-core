@@ -19,30 +19,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command;
+package org.jboss.as.cli.command.legacy;
 
-import org.jboss.aesh.cl.Arguments;
-import org.jboss.aesh.cl.CommandDefinition;
-import org.jboss.aesh.console.command.Command;
-import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.as.cli.CommandLineException;
-import java.io.IOException;
-import java.util.List;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.command.DMRCommand;
+import org.jboss.dmr.ModelNode;
 
-@CommandDefinition(name = "connect", description = "Connect to a JBoss Server")
-public class Connect implements Command<CliCommandInvocation> {
+/**
+ *
+ * @author jfdenise
+ */
+public class CliLegacyDMRCommandBridge extends CliLegacyCommandBridge implements DMRCommand {
 
-    @Arguments()
-    private List<String> controller;
+    private final OperationCommand handler;
+    public CliLegacyDMRCommandBridge(String name,
+            CommandContext ctx, OperationCommand handler) throws CommandLineParserException {
+        super(name, ctx);
+        this.handler = handler;
+    }
 
     @Override
-    public CommandResult execute(CliCommandInvocation commandInvocation) throws IOException, InterruptedException {
-        try {
-            String url = controller == null || controller.isEmpty() ? null : controller.get(0);
-            commandInvocation.getCommandContext().connectController(url);
-        } catch (CommandLineException ex) {
-            throw new RuntimeException(ex);
-        }
-        return null;
+    public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
+        return handler.buildRequest(context);
     }
+
 }
