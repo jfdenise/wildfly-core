@@ -603,4 +603,6 @@ public interface CommandContext {
      * @throws java.lang.IllegalStateException if output isn't currently being captured
      */
     void releaseOutput();
+
+    void setParsedCommandLine(ParsedCommandLine line);
 }

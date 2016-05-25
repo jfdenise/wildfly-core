@@ -148,7 +148,7 @@ public class CliCommandRegistry implements CommandRegistry {
 
     public Command findCommand(String name, String line) throws CommandNotFoundException {
         // XXX JFDENISE, Aesh should offer this logic.
-        CommandContainer c = reg.getCommand(name, line);
+        CommandContainer c = getCommand(name, line);
         CommandLineParser p = c.getParser();
         String[] split = line.split(" ");
         if (split.length > 1) {

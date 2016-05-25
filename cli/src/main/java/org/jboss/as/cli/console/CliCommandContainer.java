@@ -82,9 +82,12 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
             AeshContext aeshContext,
             CommandInvocation commandInvocation)
             throws CommandLineParserException, OptionValidatorException, CommandValidatorException, IOException, InterruptedException {
-        CommandContainerResult res = container.executeCommand(line, invocationProviders, aeshContext, commandInvocation);
-        postExecution(context, commandInvocation);
-        return res;
+        try {
+            CommandContainerResult res = container.executeCommand(line, invocationProviders, aeshContext, commandInvocation);
+            return res;
+        } finally {
+            postExecution(context, commandInvocation);
+        }
     }
 
     static void postExecution(CommandContext context, CommandInvocation commandInvocation) {

@@ -48,8 +48,6 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.sasl.SaslException;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
-import org.jboss.aesh.console.command.Command;
-import org.jboss.aesh.console.command.CommandNotFoundException;
 
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -74,8 +72,6 @@ import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
 import org.jboss.as.cli.batch.impl.DefaultBatchManager;
 import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
-import org.jboss.as.cli.command.DMRCommand;
-import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 import org.jboss.as.cli.handlers.OperationRequestHandler;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
@@ -1039,6 +1035,12 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         return buildRequest(line, false);
     }
 
+    @Override
+    public void setParsedCommandLine(ParsedCommandLine line) {
+        // XXX JFDENISE, dirty but for compatibility.
+        parsedCmd = (DefaultCallbackHandler) line;
+    }
+
     protected ModelNode buildRequest(String line, boolean batchMode) throws CommandFormatException {
 
         if (line == null || line.isEmpty()) {
@@ -1059,22 +1061,20 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 return request;
             }
 
-            final Command handler = console.getCommandRegistry().
-                    findCommand(parsedCmd.getOperationName(), parsedCmd.getOriginalLine());
+            final CommandHandler handler = console.getLegacyCommandRegistry().
+                    getCommandHandler(parsedCmd.getOperationName());
             if (handler == null) {
                 throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
             }
             if(batchMode) {
-                if (!(handler instanceof BatchCompliantCommand)) {
+                if (!(handler.isBatchMode(this))) {
                     throw new OperationFormatException("The command is not allowed in a batch.");
                 }
-            } else if (!(handler instanceof DMRCommand)) {
+            } else if (!(handler instanceof OperationCommand)) {
                 throw new OperationFormatException("The command does not translate to an operation request.");
             }
 
-            return ((DMRCommand) handler).buildRequest(this);
-        } catch (CommandNotFoundException ex) {
-            throw new CommandFormatException(ex);
+            return ((OperationCommand) handler).buildRequest(this);
         } finally {
             clear(Scope.REQUEST);
             this.parsedCmd = originalParsedArguments;

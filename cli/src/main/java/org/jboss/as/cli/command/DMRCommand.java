@@ -32,5 +32,5 @@ import org.jboss.dmr.ModelNode;
  * @author jdenise@redhat.com
  */
 public interface DMRCommand {
-    ModelNode buildRequest(CommandContext context) throws CommandFormatException;
+    ModelNode buildRequest(String input, CommandContext context) throws CommandFormatException;
 }

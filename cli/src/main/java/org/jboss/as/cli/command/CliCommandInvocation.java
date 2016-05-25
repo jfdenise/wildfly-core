@@ -10,10 +10,10 @@ import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.command.CommandOperation;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
-import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.terminal.Shell;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.console.CliCommandRegistry;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -38,8 +38,9 @@ public class CliCommandInvocation implements CommandInvocation {
     }
 
     @Override
-    public CommandRegistry getCommandRegistry() {
-        return commandInvocation.getCommandRegistry();
+    public CliCommandRegistry getCommandRegistry() {
+        // XXX JFDENISE, We should have a ref to the repository.
+        return (CliCommandRegistry) commandInvocation.getCommandRegistry();
     }
 
     @Override

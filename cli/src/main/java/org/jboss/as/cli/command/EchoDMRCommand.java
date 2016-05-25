@@ -27,8 +27,9 @@ import org.jboss.aesh.console.command.CommandResult;
 import java.io.IOException;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
-import org.jboss.as.cli.CommandContext;
+import org.jboss.aesh.console.command.CommandNotFoundException;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.dmr.ModelNode;
 
 /**
  * A Command to echo variables
@@ -48,7 +49,7 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
         if (cmd != null && cmd.size() > 0) {
             try {
                 echoDMR(commandInvocation);
-            } catch (CommandFormatException ex) {
+            } catch (CommandFormatException | CommandNotFoundException ex) {
                 throw new RuntimeException(ex);
             }
         } else {
@@ -58,13 +59,28 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
     }
 
     private void echoDMR(CliCommandInvocation commandInvocation)
-            throws CommandFormatException {
+            throws CommandFormatException, CommandNotFoundException, InterruptedException {
         StringBuilder builder = new StringBuilder();
         for (String s : cmd) {
             builder.append(s).append(" ");
         }
-        CommandContext ctx = commandInvocation.getCommandContext();
+        commandInvocation.getShell().out().println(retrieveRequest(cmd.get(0), builder.toString(),
+                commandInvocation).toString());
+    }
 
-        commandInvocation.getShell().out().println(ctx.buildRequest(builder.toString()).toString());
+    private ModelNode retrieveRequest(String opName, String originalInput,
+            CliCommandInvocation commandInvocation)
+            throws CommandNotFoundException, InterruptedException, CommandFormatException {
+        final Command handler = commandInvocation.getCommandRegistry().
+                findCommand(opName, originalInput);
+        if (handler == null) {
+            throw new CommandFormatException("No command handler for '" + opName + "'.");
+        }
+
+        if (!(handler instanceof DMRCommand)) {
+            throw new CommandFormatException("The command does not translate to an operation request.");
+        }
+
+        return ((DMRCommand) handler).buildRequest(originalInput, commandInvocation.getCommandContext());
     }
 }

@@ -459,4 +459,14 @@ public class MockCommandContext implements CommandContext {
     public String getPrompt() {
         return null;
     }
+
+    @Override
+    public void setCurrentNodePath(OperationRequestAddress address) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setParsedCommandLine(ParsedCommandLine line) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

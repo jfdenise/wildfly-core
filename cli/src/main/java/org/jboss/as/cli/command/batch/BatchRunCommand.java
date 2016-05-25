@@ -70,7 +70,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
         ModelNode response;
         CommandContext context = commandInvocation.getCommandContext();
         try {
-            final ModelNode request = buildRequest(context);
+            final ModelNode request = newRequest(context);
             if (headers != null) {
                 request.get(Util.OPERATION_HEADERS).set(headers);
             }
@@ -126,7 +126,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
     }
 
     @Override
-    public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
+    public ModelNode buildRequest(String input, CommandContext context) throws CommandFormatException {
         try {
             return newRequest(context);
         } catch (CommandLineException ex) {

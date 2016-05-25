@@ -48,7 +48,6 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.DMRCommand;
-import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 import org.jboss.dmr.ModelNode;
 
@@ -89,8 +88,8 @@ public class CliSpecialCommand {
         }
 
         @Override
-        public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
-            return cmd.buildRequest(context);
+        public ModelNode buildRequest(String input, CommandContext context) throws CommandFormatException {
+            return cmd.buildRequest(input, context);
         }
     }
 
@@ -112,7 +111,7 @@ public class CliSpecialCommand {
                 if (executor instanceof DMRCommand) {
                     command = new BatchDMR((DMRCommand) executor);
                 } else {
-                    command = new BatchCommand();
+                    command = new Batch();
                 }
             } else if (executor instanceof DMRCommand) {
                 command = new DMR((DMRCommand) executor);
@@ -223,10 +222,11 @@ public class CliSpecialCommand {
 
             try {
                 CommandContainerResult res = executor.execute(commandContext, line.getOriginalInput());
-                CliCommandContainer.postExecution(commandContext, commandInvocation);
                 return res;
             } catch (CommandLineException ex) {
                 throw new RuntimeException(ex);
+            } finally {
+                CliCommandContainer.postExecution(commandContext, commandInvocation);
             }
         }
 
