@@ -45,6 +45,10 @@ public class OperationRequestCompleter implements CommandLineCompleter {
 
     public static final OperationRequestCompleter INSTANCE = new OperationRequestCompleter();
 
+    public static final OperationRequestCompleter INSTANCE_WITH_BLANK = new OperationRequestCompleter(true);
+
+    private final boolean addBlank;
+
     public static final CommandLineCompleter ARG_VALUE_COMPLETER = new CommandLineCompleter(){
         final DefaultCallbackHandler parsedOp = new DefaultCallbackHandler();
         @Override
@@ -64,6 +68,14 @@ public class OperationRequestCompleter implements CommandLineCompleter {
         }
     };
 
+    public OperationRequestCompleter() {
+        this(false);
+    }
+
+    public OperationRequestCompleter(boolean b) {
+        addBlank = b;
+    }
+
     @Override
     public int complete(CommandContext ctx, final String buffer, int cursor, List<String> candidates) {
         return complete(ctx, ctx.getParsedCommandLine(), buffer, cursor, candidates);
@@ -78,7 +90,7 @@ public class OperationRequestCompleter implements CommandLineCompleter {
         return complete(ctx, parsedCmd, ctx.getOperationCandidatesProvider(), buffer, cursor, candidates);
     }
 
-    protected int complete(CommandContext ctx, ParsedCommandLine parsedCmd, OperationCandidatesProvider candidatesProvider, final String buffer, int cursor, List<String> candidates) {
+    public int complete(CommandContext ctx, ParsedCommandLine parsedCmd, OperationCandidatesProvider candidatesProvider, final String buffer, int cursor, List<String> candidates) {
 
         if(parsedCmd.isRequestComplete()) {
             return -1;
@@ -428,7 +440,14 @@ public class OperationRequestCompleter implements CommandLineCompleter {
             } else {
                 for (String name : names) {
                     if (name.startsWith(chunk)) {
-                        candidates.add(name);
+                        if (addBlank) {
+                            // XXX JFDENISE, in the CmmandHandler to Aesh Command bridge
+                            // we need this separator to be added for command name.
+                            // It is not handled by the native completion.
+                            candidates.add(name + " ");
+                        } else {
+                            candidates.add(name);
+                        }
                     }
                 }
             }

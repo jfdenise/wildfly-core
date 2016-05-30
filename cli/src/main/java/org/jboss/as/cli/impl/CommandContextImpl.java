@@ -167,7 +167,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     private final ControllerAddressResolver addressResolver;
 
     /** command registry */
-    private final CommandRegistry cmdRegistry = new CommandRegistry();
+    private final CommandRegistry cmdRegistry;
     /** loads command handlers from the domain management model extensions */
     private ExtensionsLoader extLoader;
 
@@ -282,12 +282,12 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 create();
         resolveParameterValues = config.isResolveParameterValues();
         initStdIO();
+        cmdRegistry = console.getLegacyCommandRegistry();
         try {
             initCommands();
         } catch (CommandLineException e) {
             throw new CliInitializationException("Failed to initialize commands", e);
         }
-
         sslContext = new CliSSLContext(config.getSslConfig(), timeoutHandler,
                 (X509Certificate[] chain) -> {
                     if (connInfoBean == null) {
@@ -479,23 +479,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             if(redirection != null) {
                 redirection.target.handle(this);
             } else if (parsedCmd.getFormat() == OperationFormat.INSTANCE) {
-                final ModelNode request = parsedCmd.toOperationRequest(this);
-
-                if (isBatchMode()) {
-                    StringBuilder op = new StringBuilder();
-                    op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
-                    op.append(line.substring(line.indexOf(':')));
-                    DefaultBatchedCommand batchedCmd
-                            = new DefaultBatchedCommand(this, op.toString(), request);
-                    Batch batch = getBatchManager().getActiveBatch();
-                    batch.add(batchedCmd);
-                } else {
-                    set(Scope.REQUEST, "OP_REQ", request);
-                    operationHandler.handle(this);
-                }
+                handleOperation(parsedCmd);
             } else {
                 final String cmdName = parsedCmd.getOperationName();
-                CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
+                CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(cmdName.toLowerCase());
                 if (handler != null) {
                     if (isBatchMode() && handler.isBatchMode(this)) {
                         if (!(handler instanceof OperationCommand)) {
@@ -503,10 +490,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                         } else {
                             try {
                                 ModelNode request = ((OperationCommand) handler).buildRequest(this);
-                                BatchedCommand batchedCmd
-                                        = new DefaultBatchedCommand(this, line, request);
-                                Batch batch = getBatchManager().getActiveBatch();
-                                batch.add(batchedCmd);
+                                addBatchOperation(request, line);
                             } catch (CommandFormatException e) {
                                 throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
                             }
@@ -518,7 +502,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                     throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
                 }
             }
-        } catch(CommandLineException e) {
+        } catch (CommandLineException e) {
             throw e;
         } catch(Throwable t) {
             if(log.isDebugEnabled()) {
@@ -1388,5 +1372,42 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     @Deprecated
     public void releaseOutput() {
         console.releaseOutput();
+    }
+
+    public void setParsedCommandLine(DefaultCallbackHandler line) {
+        parsedCmd = line;
+    }
+
+    public void addBatchOperation(ModelNode request, String line) {
+        BatchedCommand batchedCmd
+                = new DefaultBatchedCommand(this, line, request);
+        Batch batch = getBatchManager().getActiveBatch();
+        batch.add(batchedCmd);
+    }
+
+    public void handleOperation(ParsedCommandLine line) throws CommandLineException {
+        if (line.getFormat() == OperationFormat.INSTANCE) {
+            final ModelNode request = Util.toOperationRequest(this, line);
+
+            if (isBatchMode()) {
+                String str = line.getOriginalLine();
+                StringBuilder op = new StringBuilder();
+                op.append(getNodePathFormatter().format(line.getAddress()));
+                op.append(str.substring(str.indexOf(':')));
+                DefaultBatchedCommand batchedCmd
+                        = new DefaultBatchedCommand(this, op.toString(), request);
+                Batch batch = getBatchManager().getActiveBatch();
+                batch.add(batchedCmd);
+            } else {
+                try {
+                    set(Scope.REQUEST, "OP_REQ", request);
+                    operationHandler.handle(this);
+                } finally {
+                    clear(Scope.REQUEST);
+                }
+            }
+        } else {
+            throw new CommandLineException("Not an operation");
+        }
     }
 }
