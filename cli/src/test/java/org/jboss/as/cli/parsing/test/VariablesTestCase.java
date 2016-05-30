@@ -77,6 +77,8 @@ public class VariablesTestCase {
         ctx.setVariable(OP_VAR_NAME, null);
         ctx.setVariable(OP_PROP_VAR_NAME, null);
         ctx.setVariable("myVar", null);
+        // Due to AESH-367
+        ctx.terminateSession();
     }
 
     @Test
