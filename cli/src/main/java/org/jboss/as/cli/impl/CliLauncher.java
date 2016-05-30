@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -34,6 +34,7 @@ import java.util.Properties;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContextFactory;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.gui.GuiMain;
@@ -277,23 +278,12 @@ public class CliLauncher {
 
             // Interactive mode
             ctxBuilder.setInitConsole(true);
-            cmdCtx = initCommandContext(ctxBuilder.build(), connect);
-            cmdCtx.interact();
-        } catch(Throwable t) {
+            cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+            ((CommandContextImpl)cmdCtx).getConsole().interact(connect);
+        } catch (CliInitializationException | CommandFormatException t) {
             System.out.println(Util.getMessagesFromThrowable(t));
             exitCode = 1;
-        } finally {
-            if((cmdCtx != null) && !gui) {
-                cmdCtx.terminateSession();
-                if(cmdCtx.getExitCode() != 0) {
-                    exitCode = cmdCtx.getExitCode();
-                }
-            }
-            if (!gui) {
-                System.exit(exitCode);
-            }
         }
-        System.exit(exitCode);
     }
 
     private static CommandContext initCommandContext(CommandContextConfiguration ctxConfig, boolean connect) throws CliInitializationException {

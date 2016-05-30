@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -33,25 +33,25 @@ import java.util.Locale;
  *
  * @author Brian Stansberry (c) 2015 Red Hat Inc.
  */
-final class CLIPrintStream extends PrintStream {
+public final class CLIPrintStream extends PrintStream {
 
     private static final ThreadLocal<Boolean> entered = new ThreadLocal<Boolean>();
 
     private final PrintStream baseDelegate;
     private volatile PrintStream delegate;
 
-    CLIPrintStream() {
+    public CLIPrintStream() {
         super(new ByteArrayOutputStream(), true);
         this.delegate = this.baseDelegate = System.out;
     }
 
-    CLIPrintStream(OutputStream consoleOutput) {
+    public CLIPrintStream(OutputStream consoleOutput) {
         super(new ByteArrayOutputStream(), true);
         assert consoleOutput != null;
         this.delegate = this.baseDelegate = new PrintStream(consoleOutput);
     }
 
-    void captureOutput(PrintStream delegate) {
+    public void captureOutput(PrintStream delegate) {
         if (this.delegate != this.baseDelegate) {
             throw new IllegalStateException("Output is already being captured");
         }
@@ -59,7 +59,7 @@ final class CLIPrintStream extends PrintStream {
         this.delegate = delegate == null ? baseDelegate : delegate;
     }
 
-    void releaseOutput() {
+    public void releaseOutput() {
         if (this.delegate == this.baseDelegate) {
             throw new IllegalStateException("Output is not being captured");
         }
