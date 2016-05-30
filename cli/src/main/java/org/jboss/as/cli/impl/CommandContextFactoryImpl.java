@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -29,6 +29,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.as.cli.CommandLineException;
 
 /**
  *
@@ -41,7 +43,11 @@ public class CommandContextFactoryImpl extends CommandContextFactory {
      */
     @Override
     public CommandContext newCommandContext() throws CliInitializationException {
-        return new CommandContextImpl();
+        try {
+            return new CommandContextImpl();
+        } catch (CommandLineException | CommandLineParserException ex) {
+            throw new CliInitializationException(ex);
+        }
     }
 
     @Override
@@ -154,6 +160,10 @@ public class CommandContextFactoryImpl extends CommandContextFactory {
 
     @Override
     public CommandContext newCommandContext(CommandContextConfiguration configuration) throws CliInitializationException {
-        return new CommandContextImpl(configuration);
+        try {
+            return new CommandContextImpl(configuration);
+        } catch (CommandLineException | CommandLineParserException ex) {
+            throw new CliInitializationException(ex);
+        }
     }
 }

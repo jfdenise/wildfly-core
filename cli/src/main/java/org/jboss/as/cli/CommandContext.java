@@ -610,4 +610,7 @@ public interface CommandContext {
      */
     ModelNode execute(Operation op, String description)
             throws CommandLineException, IOException;
+    default String getPrompt() {
+        return "";
+    }
 }
