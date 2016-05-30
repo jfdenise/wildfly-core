@@ -132,7 +132,7 @@ class AeshCliConsole implements Console {
 
     @Override
     public void interrupt() {
-        /// XXX JFDENISE TODO
+
     }
 
     private void setupConsole(Settings settings) throws CommandLineParserException,
@@ -359,6 +359,7 @@ class AeshCliConsole implements Console {
                 ctx.connectController();
                 setPrompt(ctx.getPrompt());
             } catch (CommandLineException e) {
+                ctx.terminateSession();
                 throw new CliInitializationException("Failed to connect to the controller", e);
             }
         } else {
@@ -366,7 +367,7 @@ class AeshCliConsole implements Console {
                     + " 'help' for the list of supported commands.");
             printNewLine();
         }
-        console.start();
+        start();
     }
 
     @Override

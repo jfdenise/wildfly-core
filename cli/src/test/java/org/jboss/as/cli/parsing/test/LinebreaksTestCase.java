@@ -32,6 +32,7 @@ import org.jboss.as.cli.CommandContextFactory;
 import org.jboss.as.cli.Util;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -70,6 +71,11 @@ public class LinebreaksTestCase {
     @BeforeClass
     public static void setup() throws Exception {
         ctx = CommandContextFactory.getInstance().newCommandContext();
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        ctx.terminateSession();
     }
 
     @Test
