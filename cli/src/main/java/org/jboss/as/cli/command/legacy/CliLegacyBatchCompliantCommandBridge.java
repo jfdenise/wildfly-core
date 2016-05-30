@@ -19,41 +19,24 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl;
+package org.jboss.as.cli.command.legacy;
 
+import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.as.cli.CliCommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.dmr.ModelNode;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 
 /**
  *
  * @author jfdenise
  */
-// XXX JFDENISE, is public for now, will be package when moved to right package
-public class CliCommandContextImpl implements CliCommandContext {
-    private final CommandContextImpl context;
-    public CliCommandContextImpl(CommandContextImpl context) {
-        this.context = context;
-    }
+public class CliLegacyBatchCompliantCommandBridge extends
+        CliLegacyDMRCommandBridge implements BatchCompliantCommand {
 
-    @Override
-    public boolean isDomainMode() {
-        return context.isDomainMode();
-    }
-
-    @Override
-    public void setParsedCommandLine(DefaultCallbackHandler line) {
-        context.setParsedCommandLine(line);
-    }
-
-    @Override
-    public void addBatchOperation(ModelNode buildRequest, String originalInput) {
-        context.addBatchOperation(buildRequest, originalInput);
-    }
-
-    @Override
-    public void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException {
-        context.handleOperation(operationParser);
+    public CliLegacyBatchCompliantCommandBridge(String name,
+            CommandContext ctx, CliCommandContext commandContext,
+            OperationCommand handler) throws CommandLineParserException {
+        super(name, ctx, commandContext, handler);
     }
 }
