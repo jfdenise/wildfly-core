@@ -19,23 +19,14 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli;
+package org.jboss.as.cli.command.batch;
 
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.dmr.ModelNode;
-
+import org.jboss.as.cli.command.DMRCommand;
 
 /**
  *
- * @author Alexey Loubyansky
+ * @author jfdenise
  */
-public interface CliCommandContext {
+public interface BatchCompliantCommand extends DMRCommand {
 
-    boolean isDomainMode();
-
-    void setParsedCommandLine(DefaultCallbackHandler line);
-
-    void addBatchOperation(ModelNode buildRequest, String originalInput);
-
-    void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException;
 }

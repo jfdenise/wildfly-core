@@ -44,12 +44,18 @@ public class CommandCompleter implements CommandLineCompleter {
 
     private final CommandRegistry cmdRegistry;
     private final CommandCandidatesProvider cmdProvider;
-
+    private final boolean blank;
     public CommandCompleter(CommandRegistry cmdRegistry) {
-        if(cmdRegistry == null)
+        this(cmdRegistry, false);
+    }
+
+    public CommandCompleter(CommandRegistry cmdRegistry, boolean blank) {
+        if (cmdRegistry == null) {
             throw new IllegalArgumentException("Command registry can't be null.");
+        }
         this.cmdRegistry = cmdRegistry;
         this.cmdProvider = new CommandCandidatesProvider(cmdRegistry);
+        this.blank = blank;
     }
 
     @Override
@@ -122,8 +128,10 @@ public class CommandCompleter implements CommandLineCompleter {
         } else  {
             candidatesProvider = ctx.getOperationCandidatesProvider();
         }
-
-        final int result = OperationRequestCompleter.INSTANCE.complete(ctx, candidatesProvider, buffer, cursor, candidates);
+        OperationRequestCompleter completer = blank
+                ? OperationRequestCompleter.INSTANCE_WITH_BLANK
+                : OperationRequestCompleter.INSTANCE;
+        final int result = completer.complete(ctx, candidatesProvider, buffer, cursor, candidates);
         // Util.NOT_OPERATOR not supported in commands.
         if (parsedCmd.getFormat() != OperationFormat.INSTANCE) {
             int notIndex = candidates.indexOf(Util.NOT_OPERATOR);

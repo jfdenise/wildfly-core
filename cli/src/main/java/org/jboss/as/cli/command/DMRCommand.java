@@ -19,41 +19,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl;
+package org.jboss.as.cli.command;
 
-import org.jboss.as.cli.CliCommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.dmr.ModelNode;
 
 /**
+ * Command that can build the associated DMR request
+ * Public API.
  *
- * @author jfdenise
+ * @author jdenise@redhat.com
  */
-// XXX JFDENISE, is public for now, will be package when moved to right package
-public class CliCommandContextImpl implements CliCommandContext {
-    private final CommandContextImpl context;
-    public CliCommandContextImpl(CommandContextImpl context) {
-        this.context = context;
-    }
-
-    @Override
-    public boolean isDomainMode() {
-        return context.isDomainMode();
-    }
-
-    @Override
-    public void setParsedCommandLine(DefaultCallbackHandler line) {
-        context.setParsedCommandLine(line);
-    }
-
-    @Override
-    public void addBatchOperation(ModelNode buildRequest, String originalInput) {
-        context.addBatchOperation(buildRequest, originalInput);
-    }
-
-    @Override
-    public void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException {
-        context.handleOperation(operationParser);
-    }
+public interface DMRCommand {
+    ModelNode buildRequest(String input, CommandContext context) throws CommandFormatException;
 }

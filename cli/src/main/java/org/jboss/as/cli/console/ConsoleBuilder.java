@@ -68,7 +68,7 @@ public class ConsoleBuilder {
         return this;
     }
 
-    public ConsoleBuilder setErrorOnInteract(boolean errorOnInteract) {
+    public ConsoleBuilder setErrorOnInteract(Boolean errorOnInteract) {
         this.errorOnInteract = errorOnInteract;
         return this;
     }
