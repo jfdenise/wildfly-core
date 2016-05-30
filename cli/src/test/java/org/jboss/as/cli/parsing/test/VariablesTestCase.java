@@ -75,6 +75,7 @@ public class VariablesTestCase {
         ctx.setVariable(NODE_NAME_VAR_NAME, null);
         ctx.setVariable(OP_VAR_NAME, null);
         ctx.setVariable(OP_PROP_VAR_NAME, null);
+        ctx.terminateSession();
     }
 
     @Test
