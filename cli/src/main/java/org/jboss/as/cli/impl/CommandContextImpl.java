@@ -265,6 +265,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     //private InputStream stdIn = new SettingsBuilder().create().getInputStream();
     private boolean uninstallIO;
 
+    private CliShutdownHook.Handler shutdownHook;
+
     private static JaasConfigurationWrapper jaasConfigurationWrapper; // we want this wrapper to be only created once
 
     private final boolean echoCommand;
@@ -332,8 +334,19 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             this.operationCandidatesProvider = null;
         }
         initJaasConfig();
-
+        addShutdownHook();
         CliLauncher.runcom(this);
+    }
+
+    protected void addShutdownHook() {
+        shutdownHook = new CliShutdownHook.Handler() {
+            @Override
+            public void shutdown() {
+                console.interrupt();
+                terminateSession();
+            }
+        };
+        CliShutdownHook.add(shutdownHook);
     }
 
     private void initStdIO() {
@@ -527,6 +540,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 handleOperation(parsedCmd);
             } else {
                 final String cmdName = parsedCmd.getOperationName();
+                // XXX JF DENISE, NEED TO BRIDGE BOTH REGISTRIES...
+                // FOR BACKEWARD COMPAT
                 CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(cmdName.toLowerCase());
                 if (handler != null) {
                     if (isBatchMode() && handler.isBatchMode(this)) {

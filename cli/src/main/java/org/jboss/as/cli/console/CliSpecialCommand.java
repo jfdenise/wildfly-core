@@ -218,8 +218,6 @@ public class CliSpecialCommand {
                 return res;
             } catch (CommandLineException ex) {
                 throw new RuntimeException(ex);
-            } finally {
-                CliCommandContainer.postExecution(commandContext, commandInvocation);
             }
         }
 
