@@ -21,7 +21,10 @@
  */
 package org.jboss.as.cli.console;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import org.jboss.aesh.console.AeshConsole;
 import org.jboss.aesh.console.AeshConsoleBuilder;
@@ -40,6 +43,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.ServiceLoader;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.AeshConsoleBufferBuilder;
@@ -65,6 +69,7 @@ import org.jboss.as.cli.impl.CLIPrintStream;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.Console;
+import org.jboss.as.protocol.StreamUtils;
 
 /**
  * @author jdenise@redhat.com
@@ -72,7 +77,40 @@ import org.jboss.as.cli.impl.Console;
  */
 class AeshCliConsole implements Console {
 
+    private interface CommandProcessor {
+
+        void process() throws CommandLineException;
+    }
+
+    private static class SilentPrintStream extends PrintStream {
+
+        public SilentPrintStream() {
+            super(new SilentByteArrayOutputStream());
+        }
+
+        private static class SilentByteArrayOutputStream extends ByteArrayOutputStream {
+
+            @Override
+            public void write(int b) {
+                // do nothing
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) {
+                // do nothing
+            }
+
+            @Override
+            public void writeTo(OutputStream out) throws IOException {
+                // do nothing
+            }
+
+        }
+
+    }
+
     private class LegacyCommandRegistry extends CommandRegistry {
+
         @Override
         public void registerHandler(CommandHandler handler, boolean tabComplete, String... names) throws RegisterHandlerException {
             super.registerHandler(handler, tabComplete, names);
@@ -92,6 +130,7 @@ class AeshCliConsole implements Console {
     }
 
     private boolean silent;
+    private final boolean interactive;
     private final Boolean errorOnInteract;
 
     protected AeshConsole console;
@@ -103,7 +142,7 @@ class AeshCliConsole implements Console {
     private static final String PROVIDER = "JBOSS_CLI";
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
 
-    AeshCliConsole(CommandContextImpl commandContext, boolean silent, Boolean errorOnInteract,
+    AeshCliConsole(CommandContextImpl commandContext, boolean silent, Boolean errorOnInteract, boolean interactive,
             Settings aeshSettings,
             InputStream consoleInput, OutputStream consoleOutput)
             throws CommandLineParserException, CommandLineException {
@@ -111,13 +150,14 @@ class AeshCliConsole implements Console {
         this.commandContext = new CliCommandContextImpl(ctx);
         this.printStream = consoleOutput == null ? new CLIPrintStream()
                 : new CLIPrintStream(consoleOutput);
+        this.interactive = interactive;
+        this.silent = silent;
+        this.errorOnInteract = errorOnInteract == null ? false : errorOnInteract;
         Settings settings = aeshSettings == null
                 ? createSettings(commandContext.getConfig(),
                         consoleInput,
                         printStream) : aeshSettings;
         setupConsole(settings);
-        this.silent = silent;
-        this.errorOnInteract = errorOnInteract == null ? false : errorOnInteract;
     }
 
     @Override
@@ -161,7 +201,7 @@ class AeshCliConsole implements Console {
                 .optionActivatorProvider(activatorProvider)
                 .validatorInvocationProvider(new CliValidatorInvocationProvider(commandContext))
                 .manProvider(new CliManProvider())
-                .prompt(new Prompt("[disconnected /] "))
+                .prompt(interactive ? new Prompt("[disconnected /] ") : null)
                 .create();
 
         console.setCurrentCommandInvocationProvider(PROVIDER);
@@ -180,7 +220,11 @@ class AeshCliConsole implements Console {
         if (consoleInput != null) {
             settings.inputStream(consoleInput);
         }
-        settings.outputStream(consoleOutput);
+        if (silent) {
+            settings.outputStream(new SilentPrintStream());
+        } else {
+            settings.outputStream(consoleOutput);
+        }
 
         settings.enableExport(false);
 
@@ -356,11 +400,10 @@ class AeshCliConsole implements Console {
     public void interact(boolean connect) throws CliInitializationException {
         if (connect) {
             try {
-                ctx.connectController();
-                setPrompt(ctx.getPrompt());
-            } catch (CommandLineException e) {
-                ctx.terminateSession();
-                throw new CliInitializationException("Failed to connect to the controller", e);
+                //start();
+                connect();
+            } catch (CommandLineException ex) {
+                throw new CliInitializationException("Failed to connect to the controller", ex);
             }
         } else {
             print("You are disconnected at the moment. Type 'connect' to connect to the server or"
@@ -402,7 +445,9 @@ class AeshCliConsole implements Console {
 
     @Override
     public void error(String msg) {
-        console.getShell().err().println(msg);
+        if (!silent) {
+            console.getShell().err().println(msg);
+        }
     }
 
     @Override
@@ -413,5 +458,68 @@ class AeshCliConsole implements Console {
     @Override
     public CliCommandRegistry getCommandRegistry() {
         return commandRegistry;
+    }
+
+    @Override
+    public void executeCommand(String command) throws CommandLineException {
+        try {
+            if (!command.isEmpty() && command.charAt(0) != '#') {
+                console.executeCommand(command);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CommandLineException(e);
+        }
+    }
+
+    private void connect() throws CommandLineException {
+        executeCommand("connect");
+    }
+
+    @Override
+    public void process(List<String> commands, boolean connect) throws CommandLineException {
+        processNonInteractive(() -> {
+            for (String command : commands) {
+                executeCommand(command);
+            }
+        }, connect);
+    }
+
+    private void processNonInteractive(CommandProcessor processor, boolean connect) throws CommandLineException {
+        if (console.isRunning()) {
+            throw new RuntimeException("Console is already running");
+        }
+        //console.start();
+
+        if (connect) {
+            connect();
+        }
+
+        try {
+            processor.process();
+        } finally {
+            ctx.terminateSession();
+            //console.stop();
+        }
+    }
+
+    @Override
+    public void processFile(File file, boolean connect) throws CommandLineException {
+        processNonInteractive(() -> {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(file));
+                String line = reader.readLine();
+                while (line != null) {
+                    executeCommand(line.trim());
+                    line = reader.readLine();
+                }
+            } catch (Throwable e) {
+                throw new IllegalStateException("Failed to process file '" + file.getAbsolutePath() + "'", e);
+            } finally {
+                StreamUtils.safeClose(reader);
+            }
+        }, connect);
+
     }
 }

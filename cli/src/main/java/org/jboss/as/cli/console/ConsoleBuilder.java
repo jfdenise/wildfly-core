@@ -83,7 +83,7 @@ public class ConsoleBuilder {
             throw new IllegalArgumentException("Context can't be null");
         }
 
-        return new AeshCliConsole(context, silent, errorOnInteract, aeshSettings,
+        return new AeshCliConsole(context, silent, errorOnInteract, interactive, aeshSettings,
                 consoleInput, consoleOutput);
     }
 

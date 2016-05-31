@@ -245,6 +245,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     //private InputStream stdIn = new SettingsBuilder().create().getInputStream();
     private boolean uninstallIO;
 
+    private CliShutdownHook.Handler shutdownHook;
+
     private static JaasConfigurationWrapper jaasConfigurationWrapper; // we want this wrapper to be only created once
 
     /**
@@ -303,8 +305,19 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             this.operationCandidatesProvider = null;
         }
         initJaasConfig();
-
+        addShutdownHook();
         CliLauncher.runcom(this);
+    }
+
+    protected void addShutdownHook() {
+        shutdownHook = new CliShutdownHook.Handler() {
+            @Override
+            public void shutdown() {
+                console.interrupt();
+                terminateSession();
+            }
+        };
+        CliShutdownHook.add(shutdownHook);
     }
 
     private void initStdIO() {
@@ -456,19 +469,19 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         }
 
         int i = line.length() - 1;
-        while(i > 0 && line.charAt(i) <= ' ') {
-            if(line.charAt(--i) == '\\') {
+        while (i > 0 && line.charAt(i) <= ' ') {
+            if (line.charAt(--i) == '\\') {
                 break;
             }
         }
-        if(line.charAt(i) == '\\') {
-            if(lineBuffer == null) {
+        if (line.charAt(i) == '\\') {
+            if (lineBuffer == null) {
                 lineBuffer = new StringBuilder();
             }
             lineBuffer.append(line, 0, i);
             lineBuffer.append(' ');
             return;
-        } else if(lineBuffer != null) {
+        } else if (lineBuffer != null) {
             lineBuffer.append(line);
             line = lineBuffer.toString();
             lineBuffer = null;
@@ -482,6 +495,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 handleOperation(parsedCmd);
             } else {
                 final String cmdName = parsedCmd.getOperationName();
+                // XXX JF DENISE, NEED TO BRIDGE BOTH REGISTRIES...
+                // FOR BACKEWARD COMPAT
                 CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(cmdName.toLowerCase());
                 if (handler != null) {
                     if (isBatchMode() && handler.isBatchMode(this)) {
@@ -552,6 +567,9 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             disconnectController();
             restoreStdIO();
             console.stop();
+            if (shutdownHook != null) {
+                CliShutdownHook.remove(shutdownHook);
+            }
             terminate = TERMINATED;
         }
     }

@@ -34,11 +34,9 @@ import java.util.Properties;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContextFactory;
-import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.gui.GuiMain;
-import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.protocol.StreamUtils;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
@@ -50,7 +48,7 @@ public class CliLauncher {
 
     public static void main(String[] args) throws Exception {
         int exitCode = 0;
-        CommandContext cmdCtx = null;
+        CommandContext cmdCtx;
         boolean gui = false;
         final List<String> systemPropertyKeys = new ArrayList<>();
         try {
@@ -245,57 +243,57 @@ public class CliLauncher {
             }
 
             ctxBuilder.setConnectionTimeout(connectionTimeout);
-
-            if(argError != null) {
-                System.err.println(argError);
-                exitCode = 1;
-                return;
-            }
-
-            if(version) {
-                cmdCtx = initCommandContext(ctxBuilder.build(), connect);
-                VersionHandler.INSTANCE.handle(cmdCtx);
-                return;
-            }
-
-            if(file != null) {
-                cmdCtx = initCommandContext(ctxBuilder.build(), connect);
-                processFile(file, cmdCtx);
-                return;
-            }
-
-            if(commands != null) {
-                cmdCtx = initCommandContext(ctxBuilder.build(), connect);
-                processCommands(commands, cmdCtx);
-                return;
-            }
-
-            if (gui) {
-                cmdCtx = initCommandContext(ctxBuilder.build(), true);
-                processGui(cmdCtx);
-                return;
-            }
-
-            // Interactive mode
-            ctxBuilder.setInitConsole(true);
-            cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
-            ((CommandContextImpl)cmdCtx).getConsole().interact(connect);
-        } catch (CliInitializationException | CommandFormatException t) {
-            System.out.println(Util.getMessagesFromThrowable(t));
-            exitCode = 1;
-        }
-    }
-
-    private static CommandContext initCommandContext(CommandContextConfiguration ctxConfig, boolean connect) throws CliInitializationException {
-        final CommandContext cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxConfig);
-        if(connect) {
             try {
-                cmdCtx.connectController();
-            } catch (CommandLineException e) {
-                throw new CliInitializationException("Failed to connect to the controller", e);
+                if (argError != null) {
+                    System.err.println(argError);
+                    exitCode = 1;
+                    return;
+                }
+
+                if (version) {
+                    List<String> vers = new ArrayList<>();
+                    vers.add("version");
+                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                    ((CommandContextImpl) cmdCtx).getConsole().process(vers, connect);
+                    return;
+                }
+
+                if (file != null) {
+                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                    ((CommandContextImpl) cmdCtx).getConsole().processFile(file, connect);
+                    return;
+                }
+
+                if (commands != null) {
+                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                    ((CommandContextImpl) cmdCtx).getConsole().process(commands, connect);
+                    return;
+                }
+
+                if (gui) {
+                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                    try {
+                        cmdCtx.connectController();
+                    } catch (CommandLineException e) {
+                        throw new CliInitializationException("Failed to connect to the controller", e);
+                    }
+                    processGui(cmdCtx);
+                    return;
+                }
+
+                // Interactive mode
+                ctxBuilder.setInitConsole(true);
+                cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                ((CommandContextImpl) cmdCtx).getConsole().interact(connect);
+            } catch (CommandLineException t) {
+                System.out.println(Util.getMessagesFromThrowable(t));
+                exitCode = 1;
+            }
+        } finally {
+            if (exitCode != 0) {
+                System.exit(exitCode);
             }
         }
-        return cmdCtx;
     }
 
     private static void processGui(final CommandContext cmdCtx) {
@@ -306,22 +304,14 @@ public class CliLauncher {
         }
     }
 
-    private static void processCommands(List<String> commands, CommandContext cmdCtx) {
-        int i = 0;
-        while (cmdCtx.getExitCode() == 0 && i < commands.size() && !cmdCtx.isTerminated()) {
-            cmdCtx.handleSafe(commands.get(i));
-            ++i;
-        }
-    }
-
-    private static void processFile(File file, final CommandContext cmdCtx) {
+    private static void processFile(File file, final CommandContextImpl cmdCtx) {
 
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine();
             while (cmdCtx.getExitCode() == 0 && !cmdCtx.isTerminated() && line != null) {
-                cmdCtx.handleSafe(line.trim());
+                cmdCtx.getConsole().executeCommand(line.trim());
                 line = reader.readLine();
             }
         } catch (Throwable e) {
@@ -335,7 +325,7 @@ public class CliLauncher {
     private static final String CURRENT_WORKING_DIRECTORY = "user.dir";
     private static final String JBOSS_CLI_RC_FILE = ".jbossclirc";
 
-    static void runcom(CommandContext ctx) throws CliInitializationException {
+    static void runcom(CommandContextImpl ctx) throws CliInitializationException {
         File jbossCliRcFile = null;
         // system property first
         String jbossCliRc = WildFlySecurityManager.getPropertyPrivileged(JBOSS_CLI_RC_PROPERTY, null);
