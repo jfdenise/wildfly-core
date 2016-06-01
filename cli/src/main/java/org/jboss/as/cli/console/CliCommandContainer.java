@@ -94,7 +94,7 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
                 Command c = container.getParser().getCommand();
                 if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
                     commandContext.addBatchOperation(((DMRCommand) c).
-                            buildRequest(line.getOriginalInput(), context),
+                            buildRequest(line.getOriginalInput(), commandContext),
                             line.getOriginalInput());
                     return null;
                 }

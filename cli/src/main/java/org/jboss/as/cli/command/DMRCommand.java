@@ -21,7 +21,7 @@
  */
 package org.jboss.as.cli.command;
 
-import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.dmr.ModelNode;
 
@@ -32,5 +32,5 @@ import org.jboss.dmr.ModelNode;
  * @author jdenise@redhat.com
  */
 public interface DMRCommand {
-    ModelNode buildRequest(String input, CommandContext context) throws CommandFormatException;
+    ModelNode buildRequest(String input, CliCommandContext context) throws CommandFormatException;
 }

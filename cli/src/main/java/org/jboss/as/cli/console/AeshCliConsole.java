@@ -522,4 +522,10 @@ class AeshCliConsole implements Console {
         }, connect);
 
     }
+
+    @Override
+    public CliCommandContext getCliCommandContext() {
+        return commandContext;
+    }
+
 }
