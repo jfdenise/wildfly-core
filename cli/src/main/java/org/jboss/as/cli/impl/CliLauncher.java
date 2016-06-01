@@ -48,7 +48,7 @@ public class CliLauncher {
 
     public static void main(String[] args) throws Exception {
         int exitCode = 0;
-        CommandContext cmdCtx;
+        CommandContext cmdCtx = null;
         boolean gui = false;
         final List<String> systemPropertyKeys = new ArrayList<>();
         try {
@@ -243,52 +243,51 @@ public class CliLauncher {
             }
 
             ctxBuilder.setConnectionTimeout(connectionTimeout);
-            try {
-                if (argError != null) {
-                    System.err.println(argError);
-                    exitCode = 1;
-                    return;
-                }
 
-                if (version) {
-                    List<String> vers = new ArrayList<>();
-                    vers.add("version");
-                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
-                    ((CommandContextImpl) cmdCtx).getConsole().process(vers, connect);
-                    return;
-                }
-
-                if (file != null) {
-                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
-                    ((CommandContextImpl) cmdCtx).getConsole().processFile(file, connect);
-                    return;
-                }
-
-                if (commands != null) {
-                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
-                    ((CommandContextImpl) cmdCtx).getConsole().process(commands, connect);
-                    return;
-                }
-
-                if (gui) {
-                    cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
-                    try {
-                        cmdCtx.connectController();
-                    } catch (CommandLineException e) {
-                        throw new CliInitializationException("Failed to connect to the controller", e);
-                    }
-                    processGui(cmdCtx);
-                    return;
-                }
-
-                // Interactive mode
-                ctxBuilder.setInitConsole(true);
-                cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
-                ((CommandContextImpl) cmdCtx).getConsole().interact(connect);
-            } catch (CommandLineException t) {
-                System.out.println(Util.getMessagesFromThrowable(t));
+            if (argError != null) {
+                System.err.println(argError);
                 exitCode = 1;
+                return;
             }
+
+            if (version) {
+                List<String> vers = new ArrayList<>();
+                vers.add("version");
+                cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                ((CommandContextImpl) cmdCtx).getConsole().process(vers, connect);
+                return;
+            }
+
+            if (file != null) {
+                cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                ((CommandContextImpl) cmdCtx).getConsole().processFile(file, connect);
+                return;
+            }
+
+            if (commands != null) {
+                cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                ((CommandContextImpl) cmdCtx).getConsole().process(commands, connect);
+                return;
+            }
+
+            if (gui) {
+                cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                try {
+                    cmdCtx.connectController();
+                } catch (CommandLineException e) {
+                    throw new CliInitializationException("Failed to connect to the controller", e);
+                }
+                processGui(cmdCtx);
+                return;
+            }
+
+            // Interactive mode
+            ctxBuilder.setInitConsole(true);
+            cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+            ((CommandContextImpl) cmdCtx).getConsole().interact(connect);
+        } catch (Exception ex) {
+            System.out.println(Util.getMessagesFromThrowable(ex));
+            exitCode = 1;
         } finally {
             if (exitCode != 0) {
                 System.exit(exitCode);

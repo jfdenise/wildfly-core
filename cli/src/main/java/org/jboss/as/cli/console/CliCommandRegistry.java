@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.cl.parser.OptionParserException;
 import org.jboss.aesh.complete.CompleteOperation;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandNotFoundException;
@@ -56,11 +57,13 @@ public class CliCommandRegistry implements CommandRegistry {
     private final CommandContext context;
     private final CliCommandContext commandContext;
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
+    private final boolean interactive;
 
-    public CliCommandRegistry(CommandContext context, CliCommandContext commandContext)
+    public CliCommandRegistry(CommandContext context, CliCommandContext commandContext, boolean interactive)
             throws CommandLineException {
         this.context = context;
         this.commandContext = commandContext;
+        this.interactive = interactive;
     }
 
     public void addSpecialCommand(CliSpecialCommand special)
@@ -69,13 +72,17 @@ public class CliCommandRegistry implements CommandRegistry {
         addCommand(special.getCommand());
     }
 
-    public void addCommand(CommandContainer container) {
-        CliCommandContainer cliContainer
-                = new CliCommandContainer(context, commandContext, container);
+    public void addCommand(CommandContainer container) throws CommandLineException {
+        CliCommandContainer cliContainer;
+        try {
+            cliContainer = new CliCommandContainer(context, commandContext, container, interactive);
+        } catch (OptionParserException ex) {
+            throw new CommandLineException(ex);
+        }
         reg.addCommand(cliContainer);
     }
 
-    public void addCommand(Command command) {
+    public void addCommand(Command command) throws CommandLineException {
         addCommand(containerBuilder.create(command));
     }
 
@@ -118,7 +125,8 @@ public class CliCommandRegistry implements CommandRegistry {
         reg.removeCommand(name);
     }
 
-    public void registerLegacyHandler(CommandHandler handler, String[] names) throws CommandLineParserException {
+    public void registerLegacyHandler(CommandHandler handler, String[] names)
+            throws CommandLineParserException, CommandLineException {
         for (String n : names) {
             CliLegacyCommandBridge bridge;
             if (handler instanceof OperationCommand) {
@@ -134,7 +142,7 @@ public class CliCommandRegistry implements CommandRegistry {
                         context);
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
-                    executor(bridge).create();
+                    executor(bridge).interactive(interactive).create();
             addCommand(cmd.getCommand());
             legacyHandlers.put(n, cmd);
         }
