@@ -282,31 +282,32 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 setInteractive(configuration.isInitConsole()).
                 setSilent(configuration.isSilent()).
                 create();
-        resolveParameterValues = config.isResolveParameterValues();
-        initStdIO();
-        cmdRegistry = console.getLegacyCommandRegistry();
         try {
+            resolveParameterValues = config.isResolveParameterValues();
+            initStdIO();
+            cmdRegistry = console.getLegacyCommandRegistry();
+            addShutdownHook();
             initCommands();
+            sslContext = new CliSSLContext(config.getSslConfig(), timeoutHandler,
+                    (X509Certificate[] chain) -> {
+                        if (connInfoBean == null) {
+                            connInfoBean = new ConnectionInfoBean();
+                            connInfoBean.setServerCertificates(chain);
+                        }
+                    }, console);
+            if (configuration.isInitConsole() || configuration.getConsoleInput() != null) {
+                cmdCompleter = new CommandCompleter(cmdRegistry);
+                this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
+            } else {
+                this.cmdCompleter = null;
+                this.operationCandidatesProvider = null;
+            }
+            initJaasConfig();
+            CliLauncher.runcom(this);
         } catch (CommandLineException e) {
+            console.interrupt();
             throw new CliInitializationException("Failed to initialize commands", e);
         }
-        sslContext = new CliSSLContext(config.getSslConfig(), timeoutHandler,
-                (X509Certificate[] chain) -> {
-                    if (connInfoBean == null) {
-                        connInfoBean = new ConnectionInfoBean();
-                        connInfoBean.setServerCertificates(chain);
-                    }
-                }, console);
-        if (configuration.isInitConsole() || configuration.getConsoleInput() != null) {
-            cmdCompleter = new CommandCompleter(cmdRegistry);
-            this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
-        } else {
-            this.cmdCompleter = null;
-            this.operationCandidatesProvider = null;
-        }
-        initJaasConfig();
-        addShutdownHook();
-        CliLauncher.runcom(this);
     }
 
     protected void addShutdownHook() {

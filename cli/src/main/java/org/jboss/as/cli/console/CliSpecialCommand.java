@@ -32,6 +32,7 @@ import org.jboss.aesh.cl.parser.CommandLineCompletionParser;
 import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.populator.CommandPopulator;
+import org.jboss.aesh.cl.result.ResultHandler;
 import org.jboss.aesh.cl.validator.CommandValidatorException;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.complete.CompleteOperation;
@@ -112,7 +113,26 @@ public class CliSpecialCommand {
             } else {
                 command = new CommandImpl();
             }
-            cmd = new ProcessedCommandBuilder().command(command).name(name).create();
+            cmd = new ProcessedCommandBuilder().command(command).name(name).resultHandler(new ResultHandler() {
+                @Override
+                public void onSuccess() {
+
+                }
+
+                @Override
+                public void onFailure(CommandResult result) {
+                    if (!interactive) {
+                        throw new RuntimeException("Operation " + name + " failed");
+                    }
+                }
+
+                @Override
+                public void onValidationFailure(CommandResult result, Exception exception) {
+                    if (!interactive) {
+                        throw new RuntimeException("Operation " + name + " failed: ", exception);
+                    }
+                }
+            }).create();
         }
 
         @Override
@@ -245,14 +265,16 @@ public class CliSpecialCommand {
     private final CommandContext commandContext;
     private final CliSpecialCommandContainer container;
     private final CliSpecialExecutor executor;
-
+    private final boolean interactive;
     CliSpecialCommand(String name,
             CliSpecialExecutor executor,
-            CommandContext commandContext)
+            CommandContext commandContext,
+            boolean interactive)
             throws CommandLineParserException {
         this.commandContext = commandContext;
         this.executor = executor;
         container = new CliSpecialCommandContainer(name);
+        this.interactive = interactive;
     }
 
     public CommandContainer commandFor(String line) {

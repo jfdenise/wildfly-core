@@ -116,7 +116,7 @@ class AeshCliConsole implements Console {
             super.registerHandler(handler, tabComplete, names);
             try {
                 commandRegistry.registerLegacyHandler(handler, names);
-            } catch (CommandLineParserException ex) {
+            } catch (CommandLineException | CommandLineParserException ex) {
                 throw new RegisterHandlerException(ex.getMessage());
             }
         }
@@ -172,7 +172,7 @@ class AeshCliConsole implements Console {
 
     @Override
     public void interrupt() {
-
+        console.stop();
     }
 
     private void setupConsole(Settings settings) throws CommandLineParserException,
@@ -185,6 +185,7 @@ class AeshCliConsole implements Console {
 
         commandRegistry.addSpecialCommand(new CliSpecialCommandBuilder().name(":").
                 context(ctx).
+                interactive(interactive).
                 executor(new OperationSpecialCommand(ctx, commandContext)).create());
 
         registerExtraCommands();
@@ -196,7 +197,7 @@ class AeshCliConsole implements Console {
                 .settings(settings)
                 .commandInvocationProvider(services)
                 .completerInvocationProvider(new CliCompleterInvocationProvider(commandContext, commandRegistry))
-                .commandNotFoundHandler(new CliCommandNotFound())
+                .commandNotFoundHandler(new CliCommandNotFound(interactive))
                 .converterInvocationProvider(new CliConverterInvocationProvider(commandContext))
                 .optionActivatorProvider(activatorProvider)
                 .validatorInvocationProvider(new CliValidatorInvocationProvider(commandContext))
@@ -252,7 +253,7 @@ class AeshCliConsole implements Console {
     }
 
     private CliCommandRegistry createCommandRegistry() throws CommandLineException {
-        CliCommandRegistry clireg = new CliCommandRegistry(ctx, commandContext);
+        CliCommandRegistry clireg = new CliCommandRegistry(ctx, commandContext, interactive);
         return clireg;
     }
 
