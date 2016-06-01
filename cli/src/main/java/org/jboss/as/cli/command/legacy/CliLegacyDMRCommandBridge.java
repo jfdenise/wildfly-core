@@ -40,19 +40,21 @@ public class CliLegacyDMRCommandBridge extends CliLegacyCommandBridge implements
     private final DefaultCallbackHandler line
             = new DefaultCallbackHandler(true);
     private final CliCommandContext commandContext;
+    private final CommandContext ctx;
     public CliLegacyDMRCommandBridge(String name,
             CommandContext ctx, CliCommandContext commandContext, OperationCommand handler) throws CommandLineParserException {
         super(name, ctx);
         this.handler = handler;
         this.commandContext = commandContext;
+        this.ctx = ctx;
     }
 
     @Override
-    public ModelNode buildRequest(String input, CommandContext context) throws CommandFormatException {
+    public ModelNode buildRequest(String input, CliCommandContext context) throws CommandFormatException {
         line.reset();
-        line.parse(context.getCurrentNodePath(), input, context);
+        line.parse(ctx.getCurrentNodePath(), input, ctx);
         commandContext.setParsedCommandLine(line);
-        return handler.buildRequest(context);
+        return handler.buildRequest(ctx);
     }
 
 }

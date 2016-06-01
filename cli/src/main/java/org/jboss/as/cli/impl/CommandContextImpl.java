@@ -495,8 +495,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 handleOperation(parsedCmd);
             } else {
                 final String cmdName = parsedCmd.getOperationName();
-                // XXX JF DENISE, NEED TO BRIDGE BOTH REGISTRIES...
-                // FOR BACKEWARD COMPAT
+                // From the CommandContext, we only have access to legacy commands.
+                // Commands that comply with Aesh Commands are not seen from this context.
                 CommandHandler handler = console.getLegacyCommandRegistry().getCommandHandler(cmdName.toLowerCase());
                 if (handler != null) {
                     if (isBatchMode() && handler.isBatchMode(this)) {
