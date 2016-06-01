@@ -27,6 +27,7 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
 import org.jboss.aesh.console.ConsoleCallback;
+import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
@@ -132,5 +133,7 @@ public interface Console {
     CliCommandRegistry getCommandRegistry();
 
     void executeCommand(String command) throws CommandLineException;
+
+    CliCommandContext getCliCommandContext();
 
 }

@@ -44,6 +44,7 @@ import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
+import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
@@ -85,7 +86,7 @@ public class CliSpecialCommand {
         }
 
         @Override
-        public ModelNode buildRequest(String input, CommandContext context) throws CommandFormatException {
+        public ModelNode buildRequest(String input, CliCommandContext context) throws CommandFormatException {
             return cmd.buildRequest(input, context);
         }
     }
