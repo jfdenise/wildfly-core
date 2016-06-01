@@ -14,14 +14,21 @@ import org.jboss.aesh.terminal.Shell;
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
 public class CliCommandNotFound implements CommandNotFoundHandler {
+
+    private final boolean interactive;
+
+    CliCommandNotFound(boolean interactive) {
+        this.interactive = interactive;
+    }
+
     @Override
     public void handleCommandNotFound(String line, Shell shell) {
-        if(line.startsWith("#")) {
+        if (line.startsWith("#")) {
             //we ignore this since batch lines might use it as comments
-        }
-        else {
+        } else if (interactive) {
             shell.out().println("Command not found: " + Parser.findFirstWord(line));
+        } else {
+            throw new RuntimeException("Command not found: " + Parser.findFirstWord(line));
         }
-
     }
 }

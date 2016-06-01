@@ -35,7 +35,7 @@ public class CliSpecialCommandBuilder {
     private CommandContext commandContext;
     private String name;
     private CliSpecialExecutor executor;
-
+    private boolean interactive;
     public CliSpecialCommandBuilder name(String name) {
         this.name = name;
         return this;
@@ -51,12 +51,17 @@ public class CliSpecialCommandBuilder {
         return this;
     }
 
+    public CliSpecialCommandBuilder interactive(boolean interactive) {
+        this.interactive = interactive;
+        return this;
+    }
+
     public CliSpecialCommand create() throws CommandLineParserException {
         Objects.requireNonNull(name);
         Objects.requireNonNull(commandContext);
         Objects.requireNonNull(executor);
 
-        return new CliSpecialCommand(name, executor, commandContext);
+        return new CliSpecialCommand(name, executor, commandContext, interactive);
     }
 
 }

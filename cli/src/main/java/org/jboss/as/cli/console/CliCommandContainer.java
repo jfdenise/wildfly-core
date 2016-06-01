@@ -22,14 +22,22 @@
 package org.jboss.as.cli.console;
 
 import java.io.IOException;
+import java.util.List;
+import org.jboss.aesh.cl.CommandLine;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
+import org.jboss.aesh.cl.parser.CommandLineCompletionParser;
 import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.cl.parser.OptionParserException;
+import org.jboss.aesh.cl.populator.CommandPopulator;
+import org.jboss.aesh.cl.result.ResultHandler;
 import org.jboss.aesh.cl.validator.CommandValidatorException;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.InvocationProviders;
 import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
@@ -47,20 +55,148 @@ import org.jboss.as.cli.command.batch.BatchCompliantCommand;
  */
 public class CliCommandContainer extends DefaultCommandContainer<Command> {
 
+    private class ExceptionResultHandler implements ResultHandler {
+        private final ResultHandler rh;
+
+        ExceptionResultHandler(ResultHandler rh) {
+            this.rh = rh;
+        }
+
+        @Override
+        public void onSuccess() {
+            if (rh != null) {
+                rh.onSuccess();
+            }
+        }
+
+        @Override
+        public void onFailure(CommandResult result) {
+            if (rh != null) {
+                rh.onFailure(result);
+            }
+            throw new RuntimeException("Command "
+                    + container.getParser().getProcessedCommand().getName()
+                    + " failed.");
+        }
+
+        @Override
+        public void onValidationFailure(CommandResult result, Exception exception) {
+            if (rh != null) {
+                rh.onValidationFailure(result, exception);
+            }
+            throw new RuntimeException(exception);
+        }
+
+    }
+
+    private class CliCommandParser implements CommandLineParser<Command> {
+        private final ProcessedCommand<Command> cmd;
+
+        CliCommandParser() throws OptionParserException {
+            ProcessedCommand<Command> p = container.getParser().getProcessedCommand();
+            cmd = new ProcessedCommand<>(p.getName(), p.getCommand(), p.getDescription(),
+                    p.getValidator(),
+                    new ExceptionResultHandler(p.getResultHandler()),
+                    p.getArgument(), p.getOptions(), p.getCommandPopulator());
+        }
+
+        @Override
+        public ProcessedCommand<Command> getProcessedCommand() {
+            return cmd;
+        }
+
+        @Override
+        public Command getCommand() {
+            return container.getParser().getCommand();
+        }
+
+        @Override
+        public CommandLineCompletionParser getCompletionParser() {
+            return container.getParser().getCompletionParser();
+        }
+
+        @Override
+        public List<String> getAllNames() {
+            return container.getParser().getAllNames();
+        }
+
+        @Override
+        public CommandLineParser<? extends Command> getChildParser(String name) {
+            return container.getParser().getChildParser(name);
+        }
+
+        @Override
+        public void addChildParser(CommandLineParser<? extends Command> childParser) {
+            container.getParser().addChildParser(childParser);
+        }
+
+        @Override
+        public List<CommandLineParser<? extends Command>> getAllChildParsers() {
+            return container.getParser().getAllChildParsers();
+        }
+
+        @Override
+        public CommandPopulator getCommandPopulator() {
+            return container.getParser().getCommandPopulator();
+        }
+
+        @Override
+        public String printHelp() {
+            return container.getParser().printHelp();
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(String line) {
+            return container.getParser().parse(line);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(String line, boolean ignoreRequirements) {
+            return container.getParser().parse(line, ignoreRequirements);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(AeshLine line, boolean ignoreRequirements) {
+            return container.getParser().parse(line, ignoreRequirements);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(List<String> lines, boolean ignoreRequirements) {
+            return container.getParser().parse(lines, ignoreRequirements);
+        }
+
+        @Override
+        public void clear() {
+            container.getParser().clear();
+        }
+
+        @Override
+        public boolean isGroupCommand() {
+            return container.getParser().isGroupCommand();
+        }
+
+        @Override
+        public void setChild(boolean b) {
+            container.getParser().setChild(b);
+        }
+    }
+
     private final CommandContext context;
     private final CliCommandContext commandContext;
     private final CommandContainer<Command> container;
-
+    private final CommandLineParser<Command> parser;
     public CliCommandContainer(CommandContext context,
-            CliCommandContext commandContext, CommandContainer<Command> container) {
+            CliCommandContext commandContext, CommandContainer<Command> container,
+            boolean interactive) throws OptionParserException {
         this.context = context;
         this.commandContext = commandContext;
         this.container = container;
+        this.parser = interactive ? container.getParser() : new CliCommandParser();
     }
 
     @Override
     public CommandLineParser<Command> getParser() {
-        return container.getParser();
+        return parser;
     }
 
     @Override
@@ -85,10 +221,12 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
     }
 
     @Override
-    public CommandContainerResult executeCommand(AeshLine line, InvocationProviders invocationProviders,
+    public CommandContainerResult executeCommand(AeshLine line,
+            InvocationProviders invocationProviders,
             AeshContext aeshContext,
             CommandInvocation commandInvocation)
-            throws CommandLineParserException, OptionValidatorException, CommandValidatorException, IOException, InterruptedException {
+            throws CommandLineParserException, OptionValidatorException,
+            CommandValidatorException, IOException, InterruptedException {
         try {
             if (context.isBatchMode()) {
                 Command c = container.getParser().getCommand();
@@ -99,7 +237,8 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
                     return null;
                 }
             }
-            CommandContainerResult res = container.executeCommand(line, invocationProviders, aeshContext, commandInvocation);
+            CommandContainerResult res = container.executeCommand(line,
+                    invocationProviders, aeshContext, commandInvocation);
             return res;
         } catch (CommandFormatException ex) {
             throw new RuntimeException(ex);
