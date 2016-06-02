@@ -297,7 +297,7 @@ public class CliSpecialCommand {
         return false;
     }
 
-    CommandContainer<Command> getCommand() {
+    CommandContainer<Command> getCommandContainer() {
         return container;
     }
 }

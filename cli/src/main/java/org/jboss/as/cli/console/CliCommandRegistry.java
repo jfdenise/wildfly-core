@@ -44,6 +44,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
+import org.jboss.logging.Logger;
 
 /**
  *
@@ -51,6 +52,7 @@ import org.jboss.as.cli.OperationCommand;
  */
 public class CliCommandRegistry implements CommandRegistry {
 
+    private static final Logger log = Logger.getLogger(CliCommandRegistry.class);
     private final MutableCommandRegistry reg = new MutableCommandRegistry();
     private final List<CliSpecialCommand> specials = new ArrayList<>();
     private final Map<String, CliSpecialCommand> legacyHandlers = new HashMap<>();
@@ -69,10 +71,10 @@ public class CliCommandRegistry implements CommandRegistry {
     public void addSpecialCommand(CliSpecialCommand special)
             throws CommandLineException {
         specials.add(special);
-        addCommand(special.getCommand());
+        addCommand(special.getCommandContainer());
     }
 
-    public void addCommand(CommandContainer container) throws CommandLineException {
+    private void addCommand(CommandContainer container) throws CommandLineException {
         CliCommandContainer cliContainer;
         try {
             cliContainer = new CliCommandContainer(context, commandContext, container, interactive);
@@ -83,7 +85,15 @@ public class CliCommandRegistry implements CommandRegistry {
     }
 
     public void addCommand(Command command) throws CommandLineException {
-        addCommand(containerBuilder.create(command));
+        CommandContainer container = containerBuilder.create(command);
+        // If a legacy handler exists, just remove it.
+        String name = container.getParser().getProcessedCommand().getName();
+        if (legacyHandlers.containsKey(name)) {
+            removeLegacyHandler(name);
+            log.info("Legacy handler " + name
+                    + "remved, new one registered.");
+        }
+        addCommand(container);
     }
 
     @Override
@@ -127,6 +137,19 @@ public class CliCommandRegistry implements CommandRegistry {
 
     public void registerLegacyHandler(CommandHandler handler, String[] names)
             throws CommandLineParserException, CommandLineException {
+        for (String name : names) {
+            try {
+                Command c = findCommand(name, null);
+                if (c != null) {
+                    // Do not register legacy command when new one already present.
+                    log.info("Not registering legacy handler " + name
+                            + ". New one is already registered.");
+                    return;
+                }
+            } catch (CommandNotFoundException ex) {
+                // That is fine.
+            }
+        }
         for (String n : names) {
             CliLegacyCommandBridge bridge;
             if (handler instanceof OperationCommand) {
@@ -143,7 +166,7 @@ public class CliCommandRegistry implements CommandRegistry {
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
                     executor(bridge).interactive(interactive).create();
-            addCommand(cmd.getCommand());
+            addCommand(cmd.getCommandContainer());
             legacyHandlers.put(n, cmd);
         }
     }

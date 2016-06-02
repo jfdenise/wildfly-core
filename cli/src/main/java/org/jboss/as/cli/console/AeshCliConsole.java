@@ -140,7 +140,6 @@ class AeshCliConsole implements Console {
     private final CommandRegistry legacyRegistry = new LegacyCommandRegistry();
     private final CLIPrintStream printStream;
     private static final String PROVIDER = "JBOSS_CLI";
-    private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
 
     AeshCliConsole(CommandContextImpl commandContext, boolean silent, Boolean errorOnInteract, boolean interactive,
             Settings aeshSettings,
@@ -211,7 +210,7 @@ class AeshCliConsole implements Console {
     private void registerExtraCommands() throws CommandLineException, CommandLineParserException {
         ServiceLoader<Command> loader = ServiceLoader.load(Command.class);
         for (Command command : loader) {
-            commandRegistry.addCommand(containerBuilder.create(command));
+            commandRegistry.addCommand(command);
         }
     }
 
