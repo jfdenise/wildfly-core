@@ -56,4 +56,23 @@ public class CliCommandContextImpl implements CliCommandContext {
     public void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException {
         context.handleOperation(operationParser);
     }
+
+    @Override
+    public void connectController(String url) throws CommandLineException {
+        context.connectController(url, context.getConsole());
+    }
+
+    @Override
+    public void interruptConnect() {
+        context.interruptConnect();
+    }
+
+    @Override
+    public void exit() {
+        // Exit should be enough, but Aesh Console is not properly cleaned
+        // in shutdown handler.
+        context.terminateSession();
+        System.exit(1);
+    }
+
 }

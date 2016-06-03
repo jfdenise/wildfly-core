@@ -6,29 +6,32 @@
  */
 package org.jboss.as.cli.console;
 
+import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.settings.CommandNotFoundHandler;
 import org.jboss.aesh.parser.Parser;
 import org.jboss.aesh.terminal.Shell;
+import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
 public class CliCommandNotFound implements CommandNotFoundHandler {
 
-    private final boolean interactive;
+    private final CliResultHandler handler;
 
-    CliCommandNotFound(boolean interactive) {
-        this.interactive = interactive;
+    CliCommandNotFound(CliResultHandler handler) {
+        this.handler = handler;
     }
 
     @Override
     public void handleCommandNotFound(String line, Shell shell) {
-        if (line.startsWith("#")) {
-            //we ignore this since batch lines might use it as comments
-        } else if (interactive) {
+        if (line.startsWith("#")) {//we ignore this since batch lines might use it as comments
+
+        } else if (handler.isInteractive()) {
             shell.out().println("Command not found: " + Parser.findFirstWord(line));
         } else {
-            throw new RuntimeException("Command not found: " + Parser.findFirstWord(line));
+            handler.onValidationFailure(CommandResult.FAILURE,
+                    new RuntimeException("Command not found: " + Parser.findFirstWord(line)));
         }
     }
 }

@@ -30,14 +30,11 @@ import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.parser.OptionParserException;
 import org.jboss.aesh.cl.populator.CommandPopulator;
-import org.jboss.aesh.cl.result.ResultHandler;
 import org.jboss.aesh.cl.validator.CommandValidatorException;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.InvocationProviders;
-import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.command.Command;
-import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
@@ -48,55 +45,23 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.command.DMRCommand;
 import org.jboss.as.cli.command.batch.BatchCompliantCommand;
+import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 
 /**
  *
  * @author jfdenise
  */
-public class CliCommandContainer extends DefaultCommandContainer<Command> {
-
-    private class ExceptionResultHandler implements ResultHandler {
-        private final ResultHandler rh;
-
-        ExceptionResultHandler(ResultHandler rh) {
-            this.rh = rh;
-        }
-
-        @Override
-        public void onSuccess() {
-            if (rh != null) {
-                rh.onSuccess();
-            }
-        }
-
-        @Override
-        public void onFailure(CommandResult result) {
-            if (rh != null) {
-                rh.onFailure(result);
-            }
-            throw new RuntimeException("Command "
-                    + container.getParser().getProcessedCommand().getName()
-                    + " failed.");
-        }
-
-        @Override
-        public void onValidationFailure(CommandResult result, Exception exception) {
-            if (rh != null) {
-                rh.onValidationFailure(result, exception);
-            }
-            throw new RuntimeException(exception);
-        }
-
-    }
+class CliCommandContainer extends DefaultCommandContainer<Command> {
 
     private class CliCommandParser implements CommandLineParser<Command> {
         private final ProcessedCommand<Command> cmd;
 
-        CliCommandParser() throws OptionParserException {
+        CliCommandParser(CliResultHandler handler) throws OptionParserException {
             ProcessedCommand<Command> p = container.getParser().getProcessedCommand();
+            handler.setResultHandler(p.getResultHandler());
             cmd = new ProcessedCommand<>(p.getName(), p.getCommand(), p.getDescription(),
                     p.getValidator(),
-                    new ExceptionResultHandler(p.getResultHandler()),
+                    handler,
                     p.getArgument(), p.getOptions(), p.getCommandPopulator());
         }
 
@@ -185,13 +150,18 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
     private final CliCommandContext commandContext;
     private final CommandContainer<Command> container;
     private final CommandLineParser<Command> parser;
-    public CliCommandContainer(CommandContext context,
-            CliCommandContext commandContext, CommandContainer<Command> container,
-            boolean interactive) throws OptionParserException {
+    private final AeshCliConsole console;
+
+    CliCommandContainer(AeshCliConsole console,
+            CommandContext context,
+            CliCommandContext commandContext,
+            CommandContainer<Command> container,
+            CliResultHandler handler) throws OptionParserException {
         this.context = context;
         this.commandContext = commandContext;
         this.container = container;
-        this.parser = interactive ? container.getParser() : new CliCommandParser();
+        this.parser = new CliCommandParser(handler);
+        this.console = console;
     }
 
     @Override
@@ -247,7 +217,7 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
         }
     }
 
-    static void postExecution(CommandContext context, CommandInvocation commandInvocation) {
-        commandInvocation.setPrompt(new Prompt(context.getPrompt()));
+    private void postExecution(CommandContext context, CommandInvocation commandInvocation) {
+        console.setPrompt(context.getPrompt());
     }
 }

@@ -32,7 +32,6 @@ import org.jboss.aesh.cl.parser.CommandLineCompletionParser;
 import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.populator.CommandPopulator;
-import org.jboss.aesh.cl.result.ResultHandler;
 import org.jboss.aesh.cl.validator.CommandValidatorException;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.complete.CompleteOperation;
@@ -51,6 +50,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.DMRCommand;
 import org.jboss.as.cli.command.batch.BatchCompliantCommand;
+import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -113,26 +113,8 @@ public class CliSpecialCommand {
             } else {
                 command = new CommandImpl();
             }
-            cmd = new ProcessedCommandBuilder().command(command).name(name).resultHandler(new ResultHandler() {
-                @Override
-                public void onSuccess() {
-
-                }
-
-                @Override
-                public void onFailure(CommandResult result) {
-                    if (!interactive) {
-                        throw new RuntimeException("Operation " + name + " failed");
-                    }
-                }
-
-                @Override
-                public void onValidationFailure(CommandResult result, Exception exception) {
-                    if (!interactive) {
-                        throw new RuntimeException("Operation " + name + " failed: ", exception);
-                    }
-                }
-            }).create();
+            cmd = new ProcessedCommandBuilder().command(command).name(name).
+                    resultHandler(handler).create();
         }
 
         @Override
@@ -265,16 +247,17 @@ public class CliSpecialCommand {
     private final CommandContext commandContext;
     private final CliSpecialCommandContainer container;
     private final CliSpecialExecutor executor;
-    private final boolean interactive;
+    private final CliResultHandler handler;
+
     CliSpecialCommand(String name,
             CliSpecialExecutor executor,
             CommandContext commandContext,
-            boolean interactive)
+            CliResultHandler handler)
             throws CommandLineParserException {
         this.commandContext = commandContext;
         this.executor = executor;
+        this.handler = handler;
         container = new CliSpecialCommandContainer(name);
-        this.interactive = interactive;
     }
 
     public CommandContainer commandFor(String line) {

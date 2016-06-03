@@ -257,6 +257,9 @@ public class CLI {
 
     private void initOfflineContext() {
         try {
+            if (ctx != null) {
+                ctx.terminateSession();
+            }
             ctx = CommandContextFactory.getInstance().newCommandContext();
         } catch (CliInitializationException e) {
             throw new IllegalStateException("Unable to initialize "
@@ -289,6 +292,9 @@ public class CLI {
                         + "to controller.", ex);
             }
             throw new IllegalStateException(ex);
+        }
+        if (ctx != null) {
+            ctx.terminateSession();
         }
         ctx = newContext;
     }

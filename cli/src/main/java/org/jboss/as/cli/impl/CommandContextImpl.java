@@ -47,7 +47,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLException;
-import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.sasl.SaslException;
@@ -275,6 +274,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     private int timeout = DEFAULT_TIMEOUT;
     private int configTimeout;
 
+    private AuthenticationCallbackHandler cbh;
+
     /**
      * Version mode - only used when --version is called from the command line.
      *
@@ -308,7 +309,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 setConsoleInputStream(configuration.getConsoleInput()).
                 setConsoleOutputStream(configuration.getConsoleOutput()).
                 setErrorOnInteract(configuration.isErrorOnInteract()).
-                setInteractive(configuration.isInitConsole()).
                 setSilent(configuration.isSilent()).
                 create();
         try {
@@ -842,6 +842,13 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         connectController(controller, getConsole());
     }
 
+    void interruptConnect() {
+        if (cbh != null) {
+            cbh.interruptConnectCallback();
+        }
+        sslContext.interruptConnectCallback();
+    }
+
     public void connectController(String controller, Console cons) throws CommandLineException {
 
         ControllerAddress address = addressResolver.resolveAddress(controller);
@@ -853,7 +860,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         boolean retry = false;
         do {
             try {
-                CallbackHandler cbh = new AuthenticationCallbackHandler(username, password, cons);
+                cbh = new AuthenticationCallbackHandler(timeoutHandler, username, password, cons);
                 if (log.isDebugEnabled()) {
                     log.debug("connecting to " + address.getHost() + ':' + address.getPort() + " as " + username);
                 }
