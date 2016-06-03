@@ -51,20 +51,26 @@ public class AuthenticationCallbackHandler implements CallbackHandler {
     private String username;
     private char[] password;
     private String digest;
-    private final GeneralTimeoutHandler timeoutHandler = new GeneralTimeoutHandler();
+    private final GeneralTimeoutHandler timeoutHandler;
     private Console console;
-    public AuthenticationCallbackHandler(String username, char[] password,
+    private Thread callbackThread;
+
+    public AuthenticationCallbackHandler(GeneralTimeoutHandler timeoutHandler,
+            String username, char[] password,
             Console console) {
         // A local cache is used for scenarios where no values are specified on the command line
         // and the user wishes to use the connect command to establish a new connection.
+        this.timeoutHandler = timeoutHandler;
         this.username = username;
         this.password = password;
         this.console = console;
     }
 
-    public AuthenticationCallbackHandler(String username, String digest) {
+    public AuthenticationCallbackHandler(GeneralTimeoutHandler timeoutHandler,
+            String username, String digest) {
         this.username = username;
         this.digest = digest;
+        this.timeoutHandler = timeoutHandler;
     }
 
     @Override
@@ -92,6 +98,13 @@ public class AuthenticationCallbackHandler implements CallbackHandler {
 
     }
 
+    public void interruptConnectCallback() {
+        if (callbackThread != null) {
+            callbackThread.interrupt();
+            callbackThread = null;
+        }
+    }
+
     private void dohandle(Callback[] callbacks) throws IOException,
             UnsupportedCallbackException, InterruptedException, CommandLineException {
         // Special case for anonymous authentication to avoid prompting user for their name.
@@ -99,51 +112,55 @@ public class AuthenticationCallbackHandler implements CallbackHandler {
             ((NameCallback) callbacks[0]).setName("anonymous CLI user");
             return;
         }
-
-        for (Callback current : callbacks) {
-            if (current instanceof RealmCallback) {
-                RealmCallback rcb = (RealmCallback) current;
-                String defaultText = rcb.getDefaultText();
-                realm = defaultText;
-                rcb.setText(defaultText); // For now just use the realm suggested.
-            } else if (current instanceof RealmChoiceCallback) {
-                throw new UnsupportedCallbackException(current, "Realm choice not currently supported.");
-            } else if (current instanceof NameCallback) {
-                NameCallback ncb = (NameCallback) current;
-                if (username == null) {
-                    showRealm();
-                    username = console.promptForInput("Username: ", null);
-                    if (username == null || username.length() == 0) {
-                        throw new SaslException("No username supplied.");
+        callbackThread = Thread.currentThread();
+        try {
+            for (Callback current : callbacks) {
+                if (current instanceof RealmCallback) {
+                    RealmCallback rcb = (RealmCallback) current;
+                    String defaultText = rcb.getDefaultText();
+                    realm = defaultText;
+                    rcb.setText(defaultText); // For now just use the realm suggested.
+                } else if (current instanceof RealmChoiceCallback) {
+                    throw new UnsupportedCallbackException(current, "Realm choice not currently supported.");
+                } else if (current instanceof NameCallback) {
+                    NameCallback ncb = (NameCallback) current;
+                    if (username == null) {
+                        showRealm();
+                        username = console.promptForInput("Username: ", null);
+                        if (username == null || username.length() == 0) {
+                            throw new SaslException("No username supplied.");
+                        }
                     }
-                }
-                ncb.setName(username);
-            } else if (current instanceof PasswordCallback && digest == null) {
-                // If a digest had been set support for PasswordCallback is disabled.
-                PasswordCallback pcb = (PasswordCallback) current;
-                if (password == null) {
-                    showRealm();
-                    String temp = console.promptForInput("Password: ", '\u0000');
-                    if (temp != null) {
-                        password = temp.toCharArray();
+                    ncb.setName(username);
+                } else if (current instanceof PasswordCallback && digest == null) {
+                    // If a digest had been set support for PasswordCallback is disabled.
+                    PasswordCallback pcb = (PasswordCallback) current;
+                    if (password == null) {
+                        showRealm();
+                        String temp = console.promptForInput("Password: ", '\u0000');
+                        if (temp != null) {
+                            password = temp.toCharArray();
+                        }
                     }
+                    pcb.setPassword(password);
+                } else if (current instanceof DigestHashCallback && digest != null) {
+                    // We don't support an interactive use of this callback so it must have been set in advance.
+                    DigestHashCallback dhc = (DigestHashCallback) current;
+                    dhc.setHexHash(digest);
+                } else {
+                    console.error("Unexpected Callback " + current.getClass().getName());
+                    throw new UnsupportedCallbackException(current);
                 }
-                pcb.setPassword(password);
-            } else if (current instanceof DigestHashCallback && digest != null) {
-                // We don't support an interactive use of this callback so it must have been set in advance.
-                DigestHashCallback dhc = (DigestHashCallback) current;
-                dhc.setHexHash(digest);
-            } else {
-                console.error("Unexpected Callback " + current.getClass().getName());
-                throw new UnsupportedCallbackException(current);
             }
+        } finally {
+            callbackThread = null;
         }
     }
 
     private void showRealm() {
         if (realmShown == false && realm != null) {
             realmShown = true;
-            console.error("Authenticating against security realm: " + realm);
+            console.println("Authenticating against security realm: " + realm);
         }
     }
 }

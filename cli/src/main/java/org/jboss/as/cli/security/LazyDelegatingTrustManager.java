@@ -69,6 +69,7 @@ public class LazyDelegatingTrustManager implements X509TrustManager {
     private final GeneralTimeoutHandler timeoutHandler;
     private final ServerCertificateConsumer consumer;
     private final Console console;
+    private Thread callbackThread;
 
     LazyDelegatingTrustManager(Console console,
             CliSSLContext.ServerCertificateConsumer consumer,
@@ -219,6 +220,13 @@ public class LazyDelegatingTrustManager implements X509TrustManager {
         return getDelegate().getAcceptedIssuers();
     }
 
+    public void interruptConnectCallback() {
+        if (callbackThread != null) {
+            callbackThread.interrupt();
+            callbackThread = null;
+        }
+    }
+
     /**
      * Handle the last SSL failure, prompting the user to accept or reject the
      * certificate of the remote server.
@@ -226,45 +234,50 @@ public class LazyDelegatingTrustManager implements X509TrustManager {
      * @return true if the certificate validation should be retried.
      */
     private void handleSSLFailure(Certificate[] lastChain) throws CommandLineException, IOException, InterruptedException {
-        console.println("Unable to connect due to unrecognised server certificate");
-        for (Certificate current : lastChain) {
-            if (current instanceof X509Certificate) {
-                X509Certificate x509Current = (X509Certificate) current;
-                Map<String, String> fingerprints = FingerprintGenerator.generateFingerprints(x509Current);
-                console.println("Subject    - " + x509Current.getSubjectX500Principal().getName());
-                console.println("Issuer     - " + x509Current.getIssuerDN().getName());
-                console.println("Valid From - " + x509Current.getNotBefore());
-                console.println("Valid To   - " + x509Current.getNotAfter());
-                for (String alg : fingerprints.keySet()) {
-                    console.println(alg + " : " + fingerprints.get(alg));
+        callbackThread = Thread.currentThread();
+        try {
+            console.println("Unable to connect due to unrecognised server certificate");
+            for (Certificate current : lastChain) {
+                if (current instanceof X509Certificate) {
+                    X509Certificate x509Current = (X509Certificate) current;
+                    Map<String, String> fingerprints = FingerprintGenerator.generateFingerprints(x509Current);
+                    console.println("Subject    - " + x509Current.getSubjectX500Principal().getName());
+                    console.println("Issuer     - " + x509Current.getIssuerDN().getName());
+                    console.println("Valid From - " + x509Current.getNotBefore());
+                    console.println("Valid To   - " + x509Current.getNotAfter());
+                    for (String alg : fingerprints.keySet()) {
+                        console.println(alg + " : " + fingerprints.get(alg));
+                    }
+                    console.println("");
                 }
-                console.println("");
             }
-        }
 
-        for (;;) {
-            String response;
-            if (isModifyTrustStore()) {
-                response = console.promptForInput("Accept certificate? [N]o, [T]emporarily, [P]ermanently : ");
-            } else {
-                response = console.promptForInput("Accept certificate? [N]o, [T]emporarily : ");
-            }
-            if (response == null) {
-                break;
-            } else if (response.length() == 1) {
-                switch (response.toLowerCase(Locale.ENGLISH).charAt(0)) {
-                    case 'n':
-                        return;
-                    case 't':
-                        storeChainTemporarily(lastChain);
-                        return;
-                    case 'p':
-                        if (isModifyTrustStore()) {
-                            storeChainPermenantly(lastChain);
+            for (;;) {
+                String response;
+                if (isModifyTrustStore()) {
+                    response = console.promptForInput("Accept certificate? [N]o, [T]emporarily, [P]ermanently : ");
+                } else {
+                    response = console.promptForInput("Accept certificate? [N]o, [T]emporarily : ");
+                }
+                if (response == null) {
+                    break;
+                } else if (response.length() == 1) {
+                    switch (response.toLowerCase(Locale.ENGLISH).charAt(0)) {
+                        case 'n':
                             return;
-                        }
+                        case 't':
+                            storeChainTemporarily(lastChain);
+                            return;
+                        case 'p':
+                            if (isModifyTrustStore()) {
+                                storeChainPermenantly(lastChain);
+                                return;
+                            }
+                    }
                 }
             }
+        } finally {
+            callbackThread = null;
         }
     }
 }

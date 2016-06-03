@@ -126,4 +126,10 @@ public class CliSSLContext {
             throw new CliInitializationException(e);
         }
     }
+
+    public void interruptConnectCallback() {
+        if (trustManager != null) {
+            trustManager.interruptConnectCallback();
+        }
+    }
 }
