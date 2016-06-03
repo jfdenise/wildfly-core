@@ -282,6 +282,8 @@ public class CliLauncher {
             }
 
             // Interactive mode
+            // Keep the setInitConsole call for backward compatbility, the console
+            // switch ots mode according to the way it is used (interact,process,processFile)
             ctxBuilder.setInitConsole(true);
             cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
             ((CommandContextImpl) cmdCtx).getConsole().interact(connect);

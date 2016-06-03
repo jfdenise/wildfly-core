@@ -38,4 +38,10 @@ public interface CliCommandContext {
     void addBatchOperation(ModelNode buildRequest, String originalInput);
 
     void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException;
+
+    void connectController(String url) throws CommandLineException;
+
+    void interruptConnect();
+
+    void exit();
 }

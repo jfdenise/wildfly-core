@@ -35,18 +35,12 @@ import org.jboss.as.cli.impl.Console;
  */
 public class ConsoleBuilder {
 
-    private boolean interactive;
     private boolean silent;
     private Boolean errorOnInteract;
     private CommandContextImpl context;
     private Settings aeshSettings;
     private InputStream consoleInput;
     private OutputStream consoleOutput;
-
-    public ConsoleBuilder setInteractive(boolean interactive) {
-        this.interactive = interactive;
-        return this;
-    }
 
     public ConsoleBuilder setConsoleInputStream(InputStream consoleInput) {
         this.consoleInput = consoleInput;
@@ -83,7 +77,7 @@ public class ConsoleBuilder {
             throw new IllegalArgumentException("Context can't be null");
         }
 
-        return new AeshCliConsole(context, silent, errorOnInteract, interactive, aeshSettings,
+        return new AeshCliConsole(context, silent, errorOnInteract, aeshSettings,
                 consoleInput, consoleOutput);
     }
 

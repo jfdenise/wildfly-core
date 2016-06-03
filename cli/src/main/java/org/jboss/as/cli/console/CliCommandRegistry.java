@@ -59,13 +59,14 @@ public class CliCommandRegistry implements CommandRegistry {
     private final CommandContext context;
     private final CliCommandContext commandContext;
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
-    private final boolean interactive;
+    private final AeshCliConsole console;
 
-    public CliCommandRegistry(CommandContext context, CliCommandContext commandContext, boolean interactive)
+    CliCommandRegistry(AeshCliConsole console, CommandContext context,
+            CliCommandContext commandContext)
             throws CommandLineException {
         this.context = context;
         this.commandContext = commandContext;
-        this.interactive = interactive;
+        this.console = console;
     }
 
     public void addSpecialCommand(CliSpecialCommand special)
@@ -77,7 +78,9 @@ public class CliCommandRegistry implements CommandRegistry {
     private void addCommand(CommandContainer container) throws CommandLineException {
         CliCommandContainer cliContainer;
         try {
-            cliContainer = new CliCommandContainer(context, commandContext, container, interactive);
+            cliContainer = new CliCommandContainer(console,
+                    context, commandContext,
+                    container, console.newResultHandler());
         } catch (OptionParserException ex) {
             throw new CommandLineException(ex);
         }
@@ -165,7 +168,7 @@ public class CliCommandRegistry implements CommandRegistry {
                         context);
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
-                    executor(bridge).interactive(interactive).create();
+                    executor(bridge).resultHandler(console.newResultHandler()).create();
             addCommand(cmd.getCommandContainer());
             legacyHandlers.put(n, cmd);
         }
@@ -180,7 +183,7 @@ public class CliCommandRegistry implements CommandRegistry {
         // XXX JFDENISE, Aesh should offer this logic.
         CommandContainer c = getCommand(name, line);
         CommandLineParser p = c.getParser();
-        String[] split = line.split(" ");
+        String[] split = line == null ? new String[0] : line.split(" ");
         if (split.length > 1) {
             String sub = split[1];
             CommandLineParser child = c.getParser().getChildParser(sub);

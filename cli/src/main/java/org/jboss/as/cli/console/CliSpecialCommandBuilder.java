@@ -24,19 +24,20 @@ package org.jboss.as.cli.console;
 import java.util.Objects;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class CliSpecialCommandBuilder {
+class CliSpecialCommandBuilder {
 
     private CommandContext commandContext;
     private String name;
     private CliSpecialExecutor executor;
-    private boolean interactive;
-    public CliSpecialCommandBuilder name(String name) {
+    private CliResultHandler handler;
+    CliSpecialCommandBuilder name(String name) {
         this.name = name;
         return this;
     }
@@ -51,8 +52,8 @@ public class CliSpecialCommandBuilder {
         return this;
     }
 
-    public CliSpecialCommandBuilder interactive(boolean interactive) {
-        this.interactive = interactive;
+    public CliSpecialCommandBuilder resultHandler(CliResultHandler handler) {
+        this.handler = handler;
         return this;
     }
 
@@ -61,7 +62,7 @@ public class CliSpecialCommandBuilder {
         Objects.requireNonNull(commandContext);
         Objects.requireNonNull(executor);
 
-        return new CliSpecialCommand(name, executor, commandContext, interactive);
+        return new CliSpecialCommand(name, executor, commandContext, handler);
     }
 
 }

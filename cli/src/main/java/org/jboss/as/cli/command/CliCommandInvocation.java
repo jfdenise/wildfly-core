@@ -112,4 +112,14 @@ public class CliCommandInvocation implements CommandInvocation {
         commandInvocation.println(msg);
     }
 
+    @Override
+    public boolean isEchoing() {
+        return commandInvocation.isEchoing();
+    }
+
+    @Override
+    public void setEcho(boolean interactive) {
+        commandInvocation.setEcho(interactive);
+    }
+
 }
