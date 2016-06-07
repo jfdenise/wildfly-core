@@ -38,12 +38,15 @@ import org.wildfly.core.testrunner.ServerController;
 import org.wildfly.core.testrunner.WildflyTestRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.Ignore;
 
 /**
  * Test various connection states of the CLI class.
  *
  * @author Jean-Francois Denise (jdenise@redhat.com)
  */
+// Unignore it when https://issues.jboss.org/browse/AESH-367 is fixed
+@Ignore
 @RunWith(WildflyTestRunner.class)
 @ServerControl(manual = true)
 public class CLIScriptSupportTestCase {
