@@ -10,6 +10,7 @@ import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.invocation.CommandInvocationProvider;
 import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.command.CliCommandInvocation;
+import org.jboss.as.cli.impl.Console;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -17,13 +18,15 @@ import org.jboss.as.cli.command.CliCommandInvocation;
 public class CliCommandInvocationProvider implements CommandInvocationProvider<CliCommandInvocation> {
 
     private final CliCommandContext commandContext;
+    private final Console console;
 
-    public CliCommandInvocationProvider(final CliCommandContext commandContext) {
+    public CliCommandInvocationProvider(final CliCommandContext commandContext, Console console) {
         this.commandContext = commandContext;
+        this.console = console;
     }
 
     @Override
     public CliCommandInvocation enhanceCommandInvocation(CommandInvocation commandInvocation) {
-        return new CliCommandInvocation(commandContext, commandInvocation);
+        return new CliCommandInvocation(commandContext, commandInvocation, console);
     }
 }

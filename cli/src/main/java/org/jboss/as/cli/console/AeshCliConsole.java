@@ -248,7 +248,7 @@ class AeshCliConsole implements Console {
             CommandLineException {
 
         CommandInvocationServices services = new CommandInvocationServices();
-        services.registerProvider(PROVIDER, new CliCommandInvocationProvider(commandContext));
+        services.registerProvider(PROVIDER, new CliCommandInvocationProvider(commandContext, this));
 
         commandRegistry = createCommandRegistry();
 
@@ -288,11 +288,8 @@ class AeshCliConsole implements Console {
         if (consoleInput != null) {
             settings.inputStream(consoleInput);
         }
-        if (silent) {
-            settings.outputStream(new SilentPrintStream());
-        } else {
-            settings.outputStream(consoleOutput);
-        }
+
+        settings.outputStream(consoleOutput);
 
         settings.enableExport(false);
 
