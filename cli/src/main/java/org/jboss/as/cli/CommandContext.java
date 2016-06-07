@@ -79,17 +79,20 @@ public interface CommandContext {
      * Prints a string to the CLI's output.
      * @param message the message to print
      */
+    @Deprecated
     void printLine(String message);
 
     /**
      * Prints a collection of strings as columns to the CLI's output.
      * @param col  the collection of strings to print as columns.
      */
+    @Deprecated
     void printColumns(Collection<String> col);
 
     /**
      * Clears the screen.
      */
+    @Deprecated
     void clearScreen();
 
     /**
@@ -479,6 +482,7 @@ public interface CommandContext {
      * @return  current terminal with if the console has been initialized,
      *          -1 otherwise
      */
+    @Deprecated
     int getTerminalWidth();
 
     /**
@@ -488,6 +492,7 @@ public interface CommandContext {
      * @return  current terminal height if the console has been initialized,
      *          -1 otherwise
      */
+    @Deprecated
     int getTerminalHeight();
 
     /**

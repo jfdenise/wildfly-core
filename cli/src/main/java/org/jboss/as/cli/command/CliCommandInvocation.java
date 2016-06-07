@@ -6,6 +6,7 @@
  */
 package org.jboss.as.cli.command;
 
+import java.util.Collection;
 import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.command.CommandOperation;
@@ -14,6 +15,7 @@ import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.terminal.Shell;
 import org.jboss.as.cli.CliCommandContext;
+import org.jboss.as.cli.impl.Console;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -22,10 +24,12 @@ public class CliCommandInvocation implements CommandInvocation {
 
     private final CommandInvocation commandInvocation;
     private final CliCommandContext ctx;
-
-    public CliCommandInvocation(final CliCommandContext ctx, CommandInvocation commandInvocation) {
+    private final Console console;
+    public CliCommandInvocation(CliCommandContext ctx,
+            CommandInvocation commandInvocation, Console console) {
         this.ctx = ctx;
         this.commandInvocation = commandInvocation;
+        this.console = console;
     }
 
     public final CliCommandContext getCommandContext() {
@@ -104,12 +108,20 @@ public class CliCommandInvocation implements CommandInvocation {
 
     @Override
     public void print(String msg) {
-        commandInvocation.print(msg);
+        console.print(msg);
     }
 
     @Override
     public void println(String msg) {
-        commandInvocation.println(msg);
+        console.println(msg);
+    }
+
+    public void printColumns(Collection<String> col) {
+        console.printColumns(col);
+    }
+
+    public void clearScreen() {
+        console.clearScreen();
     }
 
     @Override

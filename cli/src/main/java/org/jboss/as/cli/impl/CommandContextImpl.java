@@ -279,8 +279,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         this.console = new ConsoleBuilder().setContext(this).
                 setConsoleInputStream(configuration.getConsoleInput()).
                 setConsoleOutputStream(configuration.getConsoleOutput()).
-                setErrorOnInteract(configuration.isErrorOnInteract()).
-                setSilent(configuration.isSilent()).
+                setErrorOnInteract(config.isErrorOnInteract()).
+                setSilent(config.isSilent()).
                 create();
         try {
             resolveParameterValues = config.isResolveParameterValues();
@@ -516,8 +516,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                     }
                 } else {
                     throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
+                    }
                 }
-            }
         } catch (CommandLineException e) {
             throw e;
         } catch(Throwable t) {
@@ -1204,13 +1204,11 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     }
 
     @Override
-    @Deprecated
     public boolean isSilent() {
         return console.isSilent();
     }
 
     @Override
-    @Deprecated
     public void setSilent(boolean silent) {
         console.setSilent(silent);
     }
