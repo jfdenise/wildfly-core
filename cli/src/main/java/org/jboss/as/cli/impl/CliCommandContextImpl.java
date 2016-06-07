@@ -21,9 +21,12 @@
  */
 package org.jboss.as.cli.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
+import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -42,29 +45,45 @@ public class CliCommandContextImpl implements CliCommandContext {
         return context.isDomainMode();
     }
 
-    @Override
     public void setParsedCommandLine(DefaultCallbackHandler line) {
         context.setParsedCommandLine(line);
     }
 
-    @Override
     public void addBatchOperation(ModelNode buildRequest, String originalInput) {
         context.addBatchOperation(buildRequest, originalInput);
     }
 
-    @Override
     public void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException {
         context.handleOperation(operationParser);
     }
 
     @Override
-    public void connectController(String url) throws CommandLineException {
-        context.connectController(url, context.getConsole());
+    public void connectController(String url) throws CommandLineException, InterruptedException {
+        List<CommandLineException> holder = new ArrayList<>();
+        Thread thr = new Thread(() -> {
+            try {
+                context.connectController(url, context.getConsole());
+            } catch (CommandLineException ex) {
+                holder.add(ex);
+            }
+        });
+        thr.start();
+        try {
+            // We will be possibly interrupted by console if Ctrl-C typed.
+            thr.join();
+        } catch (InterruptedException ex) {
+            context.interruptConnect();
+            thr.interrupt();
+            throw ex;
+        }
+        if (!holder.isEmpty()) {
+            throw holder.get(0);
+        }
     }
 
     @Override
-    public void interruptConnect() {
-        context.interruptConnect();
+    public ModelControllerClient getModelControllerClient() {
+        return context.getModelControllerClient();
     }
 
     @Override

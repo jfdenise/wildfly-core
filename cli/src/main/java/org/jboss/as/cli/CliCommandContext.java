@@ -21,27 +21,20 @@
  */
 package org.jboss.as.cli;
 
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.dmr.ModelNode;
-
+import org.jboss.as.controller.client.ModelControllerClient;
 
 /**
  *
- * @author Alexey Loubyansky
+ * @author Alexey Loubyansky, jdenise
  */
 public interface CliCommandContext {
 
     boolean isDomainMode();
 
-    void setParsedCommandLine(DefaultCallbackHandler line);
+    void connectController(String url)
+            throws CommandLineException, InterruptedException;
 
-    void addBatchOperation(ModelNode buildRequest, String originalInput);
-
-    void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException;
-
-    void connectController(String url) throws CommandLineException;
-
-    void interruptConnect();
+    ModelControllerClient getModelControllerClient();
 
     void exit();
 }

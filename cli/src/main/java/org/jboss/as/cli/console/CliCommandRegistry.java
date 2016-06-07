@@ -39,11 +39,11 @@ import org.jboss.aesh.console.command.container.AeshCommandContainerBuilder;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.command.registry.MutableCommandRegistry;
-import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.logging.Logger;
 
 /**
@@ -57,12 +57,12 @@ public class CliCommandRegistry implements CommandRegistry {
     private final List<CliSpecialCommand> specials = new ArrayList<>();
     private final Map<String, CliSpecialCommand> legacyHandlers = new HashMap<>();
     private final CommandContext context;
-    private final CliCommandContext commandContext;
+    private final CliCommandContextImpl commandContext;
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
     private final AeshCliConsole console;
 
     CliCommandRegistry(AeshCliConsole console, CommandContext context,
-            CliCommandContext commandContext)
+            CliCommandContextImpl commandContext)
             throws CommandLineException {
         this.context = context;
         this.commandContext = commandContext;

@@ -22,10 +22,10 @@
 package org.jboss.as.cli.command.legacy;
 
 import org.jboss.aesh.cl.parser.CommandLineParserException;
-import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.OperationCommand;
 import org.jboss.as.cli.command.batch.BatchCompliantCommand;
+import org.jboss.as.cli.impl.CliCommandContextImpl;
 
 /**
  *
@@ -35,7 +35,7 @@ public class CliLegacyBatchCompliantCommandBridge extends
         CliLegacyDMRCommandBridge implements BatchCompliantCommand {
 
     public CliLegacyBatchCompliantCommandBridge(String name,
-            CommandContext ctx, CliCommandContext commandContext,
+            CommandContext ctx, CliCommandContextImpl commandContext,
             OperationCommand handler) throws CommandLineParserException {
         super(name, ctx, commandContext, handler);
     }

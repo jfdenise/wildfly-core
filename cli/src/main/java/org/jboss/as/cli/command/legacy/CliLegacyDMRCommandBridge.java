@@ -27,6 +27,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.OperationCommand;
 import org.jboss.as.cli.command.DMRCommand;
+import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.dmr.ModelNode;
 
@@ -39,10 +40,10 @@ public class CliLegacyDMRCommandBridge extends CliLegacyCommandBridge implements
     private final OperationCommand handler;
     private final DefaultCallbackHandler line
             = new DefaultCallbackHandler(true);
-    private final CliCommandContext commandContext;
+    private final CliCommandContextImpl commandContext;
     private final CommandContext ctx;
     public CliLegacyDMRCommandBridge(String name,
-            CommandContext ctx, CliCommandContext commandContext, OperationCommand handler) throws CommandLineParserException {
+            CommandContext ctx, CliCommandContextImpl commandContext, OperationCommand handler) throws CommandLineParserException {
         super(name, ctx);
         this.handler = handler;
         this.commandContext = commandContext;
