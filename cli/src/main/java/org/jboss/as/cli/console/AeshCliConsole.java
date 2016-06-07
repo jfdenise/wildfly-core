@@ -198,7 +198,7 @@ class AeshCliConsole implements Console {
 
     protected AeshConsole console;
     private final CommandContextImpl ctx;
-    private final CliCommandContext commandContext;
+    private final CliCommandContextImpl commandContext;
     private CliCommandRegistry commandRegistry;
     private final CommandRegistry legacyRegistry = new LegacyCommandRegistry();
     private final CLIPrintStream printStream;

@@ -27,40 +27,24 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
 import java.io.IOException;
 import java.util.List;
-import org.jboss.as.cli.impl.ArgumentWithValue;
+import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.aesh.converter.PropertyResolverConverter;
 
 @CommandDefinition(name = "connect", description = "Connect to a JBoss Server")
 public class Connect implements Command<CliCommandInvocation> {
 
-    @Arguments()
+    @Arguments(converter = PropertyResolverConverter.class)
     private List<String> controller;
 
-    private Exception ex;
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws IOException, InterruptedException {
-        Thread thr = new Thread(() -> {
-            try {
-                String url = controller == null || controller.isEmpty() ? null : controller.get(0);
-                if (url != null) {
-                    url = ArgumentWithValue.resolveValue(url);
-                }
-                commandInvocation.getCommandContext().connectController(url);
-            } catch (Exception ex1) {
-                commandInvocation.print(ex1.getMessage());
-                Connect.this.ex = new RuntimeException(ex1);
-                Thread.currentThread().interrupt();
-            }
-        });
-        thr.start();
         try {
-            // We will be possibly interrupted by console if Ctrl-C typed.
-            thr.join();
+            String url = controller == null || controller.isEmpty() ? null : controller.get(0);
+            commandInvocation.getCommandContext().connectController(url);
         } catch (InterruptedException ex) {
-            commandInvocation.getCommandContext().interruptConnect();
-            thr.interrupt();
             commandInvocation.getCommandContext().exit();
-        }
-        if (ex != null) {
+            Thread.currentThread().interrupt();
+        } catch (CommandLineException ex) {
             throw new RuntimeException(ex);
         }
         return CommandResult.SUCCESS;
