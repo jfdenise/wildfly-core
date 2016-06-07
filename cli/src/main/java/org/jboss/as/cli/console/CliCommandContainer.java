@@ -40,12 +40,12 @@ import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
-import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.command.DMRCommand;
 import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
+import org.jboss.as.cli.impl.CliCommandContextImpl;
 
 /**
  *
@@ -147,14 +147,14 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
     }
 
     private final CommandContext context;
-    private final CliCommandContext commandContext;
+    private final CliCommandContextImpl commandContext;
     private final CommandContainer<Command> container;
     private final CommandLineParser<Command> parser;
     private final AeshCliConsole console;
 
     CliCommandContainer(AeshCliConsole console,
             CommandContext context,
-            CliCommandContext commandContext,
+            CliCommandContextImpl commandContext,
             CommandContainer<Command> container,
             CliResultHandler handler) throws OptionParserException {
         this.context = context;

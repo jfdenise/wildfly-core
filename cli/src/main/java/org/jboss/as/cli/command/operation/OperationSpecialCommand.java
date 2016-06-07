@@ -34,6 +34,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.command.DMRCommand;
 import org.jboss.as.cli.command.batch.BatchCompliantCommand;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
+import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
@@ -47,7 +48,7 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
         BatchCompliantCommand, DMRCommand {
 
     private final CommandContext ctx;
-    private final CliCommandContext commandContext;
+    private final CliCommandContextImpl commandContext;
     private final DefaultOperationCandidatesProvider operationCandidatesProvider
             = new DefaultOperationCandidatesProvider();
     private final DefaultCallbackHandler parser = new DefaultCallbackHandler(false);
@@ -90,7 +91,7 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
         return line.startsWith(":") || line.startsWith(".") || line.startsWith("/");
     }
 
-    public OperationSpecialCommand(CommandContext ctx, CliCommandContext commandContext)
+    public OperationSpecialCommand(CommandContext ctx, CliCommandContextImpl commandContext)
             throws CommandLineParserException {
         this.ctx = ctx;
         this.commandContext = commandContext;
