@@ -40,6 +40,11 @@ public class QuitHandler extends CommandHandlerWithHelp {
 
     @Override
     protected void doHandle(CommandContext ctx) {
+        // This will be replaced by the proper CommandInvocation.exit in the
+        // new QuitHandler.
+        // Must first terminate, because the console is not properly terminated from the
+        // Shutdown hooks.
         ctx.terminateSession();
+        System.exit(0);
     }
 }
