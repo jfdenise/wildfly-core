@@ -58,14 +58,10 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
     @Override
     public CommandContainerResult execute(CommandContext commandContext,
             String originalInput) throws CommandLineException {
-        try {
-            operationParser.reset();
-            operationParser.parse(ctx.getCurrentNodePath(),
-                    originalInput, ctx);
-            this.commandContext.handleOperation(operationParser);
-        } catch (CommandLineException ex) {
-            throw new RuntimeException(ex);
-        }
+        operationParser.reset();
+        operationParser.parse(ctx.getCurrentNodePath(),
+                originalInput, ctx);
+        this.commandContext.handleOperation(operationParser);
 
         return new CommandContainerResult(new NullResultHandler(),
                 CommandResult.SUCCESS);

@@ -25,9 +25,10 @@ import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
-import java.io.IOException;
 import java.util.List;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.converter.PropertyResolverConverter;
 
 @CommandDefinition(name = "connect", description = "Connect to a JBoss Server")
@@ -37,7 +38,7 @@ public class Connect implements Command<CliCommandInvocation>, InteractiveComman
     private List<String> controller;
 
     @Override
-    public CommandResult execute(CliCommandInvocation commandInvocation) throws IOException, InterruptedException {
+    public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         try {
             String url = controller == null || controller.isEmpty() ? null : controller.get(0);
             commandInvocation.getCommandContext().connectController(url);
@@ -45,7 +46,7 @@ public class Connect implements Command<CliCommandInvocation>, InteractiveComman
             commandInvocation.getCommandContext().exit();
             Thread.currentThread().interrupt();
         } catch (CommandLineException ex) {
-            throw new RuntimeException(ex);
+            throw new CommandException(Util.getMessagesFromThrowable(ex));
         }
         return CommandResult.SUCCESS;
     }

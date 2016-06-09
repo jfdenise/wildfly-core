@@ -24,11 +24,8 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
     @Override
     public CommandContainerResult execute(CommandContext commandContext,
             String originalInput) throws CommandLineException {
-        try {
-            ctx.handle(originalInput);
-        } catch (CommandLineException ex) {
-            throw new RuntimeException(ex);
-        }
+
+        ctx.handle(originalInput);
 
         return new CommandContainerResult(new NullResultHandler(),
                 CommandResult.SUCCESS);
