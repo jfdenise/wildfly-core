@@ -558,8 +558,8 @@ class AeshCliConsole implements Console {
     public void executeCommand(String command) throws CommandLineException {
         interactive_execution = false;
         try {
-            // Needed in case we have SSL/AUTH callback
-            if (command.equals("connect")) {
+            // Needed in case we have SSL/AUTH callback or any other user interaction
+            if (commandRegistry.isInteractive(command)) {
                 executeResync(command);
             } else {
                 execute(command);

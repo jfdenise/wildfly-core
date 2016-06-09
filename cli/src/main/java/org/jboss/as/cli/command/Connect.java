@@ -31,7 +31,7 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.aesh.converter.PropertyResolverConverter;
 
 @CommandDefinition(name = "connect", description = "Connect to a JBoss Server")
-public class Connect implements Command<CliCommandInvocation> {
+public class Connect implements Command<CliCommandInvocation>, InteractiveCommand {
 
     @Arguments(converter = PropertyResolverConverter.class)
     private List<String> controller;

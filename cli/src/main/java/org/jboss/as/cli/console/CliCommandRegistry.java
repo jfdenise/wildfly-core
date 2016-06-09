@@ -43,6 +43,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.command.InteractiveCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.logging.Logger;
 
@@ -56,6 +57,7 @@ public class CliCommandRegistry implements CommandRegistry {
     private final MutableCommandRegistry reg = new MutableCommandRegistry();
     private final List<CliSpecialCommand> specials = new ArrayList<>();
     private final Map<String, CliSpecialCommand> legacyHandlers = new HashMap<>();
+    private final Map<String, CommandContainer> interactiveCommands = new HashMap<>();
     private final CommandContext context;
     private final CliCommandContextImpl commandContext;
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
@@ -77,6 +79,10 @@ public class CliCommandRegistry implements CommandRegistry {
 
     private void addCommand(CommandContainer container) throws CommandLineException {
         CliCommandContainer cliContainer;
+        if (container.getParser().getCommand() instanceof InteractiveCommand) {
+            interactiveCommands.put(container.getParser().
+                    getProcessedCommand().getName(), container);
+        }
         try {
             cliContainer = new CliCommandContainer(console,
                     context, commandContext,
@@ -85,6 +91,10 @@ public class CliCommandRegistry implements CommandRegistry {
             throw new CommandLineException(ex);
         }
         reg.addCommand(cliContainer);
+    }
+
+    public boolean isInteractive(String command) {
+        return interactiveCommands.containsKey(command);
     }
 
     public void addCommand(Command command) throws CommandLineException {
