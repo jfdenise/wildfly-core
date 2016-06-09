@@ -288,7 +288,6 @@ public class CliLauncher {
             cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
             ((CommandContextImpl) cmdCtx).getConsole().interact(connect);
         } catch (Exception ex) {
-            System.out.println(Util.getMessagesFromThrowable(ex));
             exitCode = 1;
         } finally {
             if (exitCode != 0) {

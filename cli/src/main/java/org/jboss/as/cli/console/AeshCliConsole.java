@@ -54,6 +54,7 @@ import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.aesh.console.ConsoleOperation;
 import org.jboss.aesh.console.InputProcessor;
 import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.console.settings.FileAccessPermission;
@@ -124,6 +125,18 @@ class AeshCliConsole implements Console {
         public void onValidationFailure(CommandResult result, Exception exception) {
             if (original != null) {
                 original.onValidationFailure(result, exception);
+            }
+            if (need_resync) {
+                wakeup();
+            }
+            commandFailure = true;
+            commandException = exception;
+        }
+
+        @Override
+        public void onExecutionFailure(CommandResult result, CommandException exception) {
+            if (original != null) {
+                original.onExecutionFailure(result, exception);
             }
             if (need_resync) {
                 wakeup();
@@ -570,17 +583,17 @@ class AeshCliConsole implements Console {
     }
 
     // Execute synchronous operation.
-    private void execute(String command) {
+    private void execute(String command) throws CommandLineException {
         if (!command.isEmpty() && command.charAt(0) != '#') {
             try {
                 console.getConsoleCallback().execute(new ConsoleOperation(ControlOperator.APPEND_OUT, command));
                 if (commandFailure) {
-                    RuntimeException ex;
+                    CommandLineException ex;
                     if (commandException != null) {
-                        ex = new RuntimeException("Failure executing " + command,
+                        ex = new CommandLineException("Failure executing " + command,
                                 commandException);
                     } else {
-                        ex = new RuntimeException("Failure executing " + command);
+                        ex = new CommandLineException("Failure executing " + command);
                     }
                     throw ex;
                 }
@@ -594,7 +607,7 @@ class AeshCliConsole implements Console {
     // Command that need to be executed in the AeshConsole thread.
     // This is a workaround for NPE if console started in same thread as prompting
     // (e.g:SSL, AUTH callbacks)
-    private void executeResync(String command) {
+    private void executeResync(String command) throws CommandLineException {
         need_resync = true;
         try {
             if (!console.isRunning()) {
@@ -605,12 +618,12 @@ class AeshCliConsole implements Console {
                 try {
                     wait();
                     if (commandFailure) {
-                        RuntimeException ex;
+                        CommandLineException ex;
                         if (commandException != null) {
-                            ex = new RuntimeException("Failure executing " + command,
+                            ex = new CommandLineException("Failure executing " + command,
                                     commandException);
                         } else {
-                            ex = new RuntimeException("Failure executing " + command);
+                            ex = new CommandLineException("Failure executing " + command);
                         }
                         throw ex;
                     }

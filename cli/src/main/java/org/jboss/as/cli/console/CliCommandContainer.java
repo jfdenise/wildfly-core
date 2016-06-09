@@ -21,7 +21,6 @@
  */
 package org.jboss.as.cli.console;
 
-import java.io.IOException;
 import java.util.List;
 import org.jboss.aesh.cl.CommandLine;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
@@ -35,6 +34,7 @@ import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.InvocationProviders;
 import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
@@ -196,7 +196,8 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             AeshContext aeshContext,
             CommandInvocation commandInvocation)
             throws CommandLineParserException, OptionValidatorException,
-            CommandValidatorException, IOException, InterruptedException {
+            CommandValidatorException, CommandException, InterruptedException {
+        boolean error = false;
         try {
             if (context.isBatchMode()) {
                 Command c = container.getParser().getCommand();
@@ -211,9 +212,16 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
                     invocationProviders, aeshContext, commandInvocation);
             return res;
         } catch (CommandFormatException ex) {
-            throw new RuntimeException(ex);
+            error = true;
+            throw new CommandException(ex);
+        } catch (CommandLineParserException | OptionValidatorException |
+                CommandValidatorException | CommandException ex) {
+            error = true;
+            throw ex;
         } finally {
-            postExecution(context, commandInvocation);
+            if (!error) {
+                postExecution(context, commandInvocation);
+            }
         }
     }
 

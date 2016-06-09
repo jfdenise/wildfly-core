@@ -21,7 +21,6 @@
  */
 package org.jboss.as.cli.console;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +37,7 @@ import org.jboss.aesh.complete.CompleteOperation;
 import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.InvocationProviders;
 import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
@@ -73,7 +73,7 @@ public class CliSpecialCommand {
     private static class CommandImpl implements Command {
 
         @Override
-        public CommandResult execute(CommandInvocation commandInvocation) throws IOException, InterruptedException {
+        public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
             throw new UnsupportedOperationException("Bridge Command can't be called directly.");
         }
     }
@@ -214,13 +214,13 @@ public class CliSpecialCommand {
                 AeshContext aeshContext,
                 CommandInvocation commandInvocation)
                 throws CommandLineParserException, OptionValidatorException,
-                CommandValidatorException, IOException, InterruptedException {
+                CommandValidatorException, CommandException, InterruptedException {
 
             try {
                 CommandContainerResult res = executor.execute(commandContext, line.getOriginalInput());
                 return res;
             } catch (CommandLineException ex) {
-                throw new RuntimeException(ex);
+                throw new CommandException(ex);
             }
         }
 
