@@ -22,6 +22,7 @@
 package org.jboss.as.cli.console;
 
 import java.util.Objects;
+import org.jboss.aesh.cl.activation.CommandActivator;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
@@ -36,6 +37,7 @@ class CliSpecialCommandBuilder {
     private CommandContext commandContext;
     private String name;
     private CliSpecialExecutor executor;
+    private CommandActivator activator;
     private CliResultHandler handler;
     CliSpecialCommandBuilder name(String name) {
         this.name = name;
@@ -52,6 +54,11 @@ class CliSpecialCommandBuilder {
         return this;
     }
 
+    public CliSpecialCommandBuilder activator(CommandActivator activator) {
+        this.activator = activator;
+        return this;
+    }
+
     public CliSpecialCommandBuilder resultHandler(CliResultHandler handler) {
         this.handler = handler;
         return this;
@@ -62,7 +69,7 @@ class CliSpecialCommandBuilder {
         Objects.requireNonNull(commandContext);
         Objects.requireNonNull(executor);
 
-        return new CliSpecialCommand(name, executor, commandContext, handler);
+        return new CliSpecialCommand(name, activator, executor, commandContext, handler);
     }
 
 }
