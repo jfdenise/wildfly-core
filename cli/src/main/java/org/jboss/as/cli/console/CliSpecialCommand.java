@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.jboss.aesh.cl.CommandLine;
+import org.jboss.aesh.cl.activation.CommandActivator;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.cl.internal.ProcessedCommandBuilder;
 import org.jboss.aesh.cl.parser.CommandLineCompletionParser;
@@ -114,7 +115,7 @@ public class CliSpecialCommand {
                 command = new CommandImpl();
             }
             cmd = new ProcessedCommandBuilder().command(command).name(name).
-                    resultHandler(handler).create();
+                    activator(activator).resultHandler(handler).create();
         }
 
         @Override
@@ -248,8 +249,10 @@ public class CliSpecialCommand {
     private final CliSpecialCommandContainer container;
     private final CliSpecialExecutor executor;
     private final CliResultHandler handler;
+    private final CommandActivator activator;
 
     CliSpecialCommand(String name,
+            CommandActivator activator,
             CliSpecialExecutor executor,
             CommandContext commandContext,
             CliResultHandler handler)
@@ -257,6 +260,7 @@ public class CliSpecialCommand {
         this.commandContext = commandContext;
         this.executor = executor;
         this.handler = handler;
+        this.activator = activator;
         container = new CliSpecialCommandContainer(name);
     }
 

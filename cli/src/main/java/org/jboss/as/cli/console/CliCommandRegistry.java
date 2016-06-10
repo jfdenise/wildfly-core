@@ -178,6 +178,7 @@ public class CliCommandRegistry implements CommandRegistry {
                         context);
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
+                    activator(() -> handler.isAvailable(context)).
                     executor(bridge).resultHandler(console.newResultHandler()).create();
             addCommand(cmd.getCommandContainer());
             legacyHandlers.put(n, cmd);
@@ -202,5 +203,10 @@ public class CliCommandRegistry implements CommandRegistry {
             }
         }
         return p.getCommand();
+    }
+
+    @Override
+    public CommandContainer getCommandByAlias(String alias) throws CommandNotFoundException {
+        return reg.getCommandByAlias(alias);
     }
 }

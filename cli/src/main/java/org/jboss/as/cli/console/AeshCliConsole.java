@@ -68,7 +68,9 @@ import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandRegistry;
+import org.jboss.as.cli.aesh.provider.CliCommandActivatorProvider;
 import org.jboss.as.cli.command.Connect;
+import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.command.operation.OperationSpecialCommand;
 import org.jboss.as.cli.impl.CLIPrintStream;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
@@ -268,11 +270,14 @@ class AeshCliConsole implements Console {
         commandRegistry.addSpecialCommand(new CliSpecialCommandBuilder().name(":").
                 context(ctx).
                 resultHandler(newResultHandler()).
+                activator(() -> ctx.getModelControllerClient() != null).
                 executor(new OperationSpecialCommand(ctx, commandContext)).create());
 
         registerExtraCommands();
 
         CliOptionActivatorProvider activatorProvider = new CliOptionActivatorProvider(commandContext);
+
+        CliCommandActivatorProvider cmdActivatorProvider = new CliCommandActivatorProvider(commandContext);
 
         console = new AeshConsoleBuilder()
                 .commandRegistry(commandRegistry)
@@ -282,6 +287,7 @@ class AeshCliConsole implements Console {
                 .commandNotFoundHandler(new CliCommandNotFound(newResultHandler()))
                 .converterInvocationProvider(new CliConverterInvocationProvider(commandContext))
                 .optionActivatorProvider(activatorProvider)
+                .commandActivatorProvider(cmdActivatorProvider)
                 .validatorInvocationProvider(new CliValidatorInvocationProvider(commandContext))
                 .manProvider(new CliManProvider())
                 .create();
@@ -333,6 +339,7 @@ class AeshCliConsole implements Console {
         CliCommandRegistry clireg = new CliCommandRegistry(this,
                 ctx, commandContext);
         clireg.addCommand(new Connect());
+        clireg.addCommand(new Quit());
         return clireg;
     }
 

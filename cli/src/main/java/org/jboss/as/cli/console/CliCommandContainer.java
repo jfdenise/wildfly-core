@@ -59,10 +59,12 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
         CliCommandParser(CliResultHandler handler) throws OptionParserException {
             ProcessedCommand<Command> p = container.getParser().getProcessedCommand();
             handler.setResultHandler(p.getResultHandler());
-            cmd = new ProcessedCommand<>(p.getName(), p.getCommand(), p.getDescription(),
+            cmd = new ProcessedCommand<>(p.getName(), p.getAliases(),
+                    p.getCommand(), p.getDescription(),
                     p.getValidator(),
                     handler,
-                    p.getArgument(), p.getOptions(), p.getCommandPopulator());
+                    p.getArgument(), p.getOptions(), p.getCommandPopulator(),
+                    p.getActivator());
         }
 
         @Override

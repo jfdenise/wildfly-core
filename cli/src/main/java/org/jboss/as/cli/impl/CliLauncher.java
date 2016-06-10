@@ -288,6 +288,10 @@ public class CliLauncher {
             cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
             ((CommandContextImpl) cmdCtx).getConsole().interact(connect);
         } catch (Exception ex) {
+            // When the console is properly started, error messages are displayed by the console.
+            if(cmdCtx == null || !((CommandContextImpl) cmdCtx).getConsole().running()) {
+                System.out.println(Util.getMessagesFromThrowable(ex));
+            }
             exitCode = 1;
         } finally {
             if (exitCode != 0) {

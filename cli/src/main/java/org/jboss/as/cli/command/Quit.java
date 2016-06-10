@@ -21,13 +21,21 @@
  */
 package org.jboss.as.cli.command;
 
+import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
+
 /**
  *
- * Impliment this interface to advertise to Command runtime that your Command
- * will interact with users (e.g.: prompt for input).
- *
- * @author jdenise@redhat.com
+ * @author jfdenise
  */
-public interface InteractiveCommand {
+@CommandDefinition(name = "quit", description = "exit the cli", aliases = {"exit", "q"})
+public class Quit implements Command<CliCommandInvocation> {
 
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
+        commandInvocation.getCommandContext().exit();
+        return CommandResult.SUCCESS;
+    }
 }

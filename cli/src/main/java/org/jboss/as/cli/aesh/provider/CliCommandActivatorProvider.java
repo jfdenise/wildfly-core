@@ -19,15 +19,30 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command;
+package org.jboss.as.cli.aesh.provider;
+
+import org.jboss.aesh.cl.activation.CommandActivator;
+import org.jboss.aesh.console.command.activator.CommandActivatorProvider;
+import org.jboss.as.cli.CliCommandContext;
+import org.jboss.as.cli.aesh.activator.CliOptionActivator;
 
 /**
- *
- * Impliment this interface to advertise to Command runtime that your Command
- * will interact with users (e.g.: prompt for input).
- *
  * @author jdenise@redhat.com
  */
-public interface InteractiveCommand {
+public class CliCommandActivatorProvider implements CommandActivatorProvider {
 
+    private final CliCommandContext commandContext;
+
+    public CliCommandActivatorProvider(CliCommandContext commandContext) {
+        this.commandContext = commandContext;
+    }
+
+    @Override
+    public CommandActivator enhanceCommandActivator(CommandActivator commandActivator) {
+
+        if(commandActivator instanceof CliOptionActivator)
+            ((CliOptionActivator) commandActivator).setCommandContext(commandContext);
+
+        return commandActivator;
+    }
 }
