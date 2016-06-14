@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import org.jboss.as.cli.Attachements;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -172,6 +173,16 @@ public class BatchRunHandler extends BaseOperationCommand {
         }
 
         throw new CommandFormatException("Without arguments the command can be executed only in the batch mode.");
+    }
+
+    @Override
+    public Attachements getAttachements(CommandContext ctx) {
+        final BatchManager batchManager = ctx.getBatchManager();
+        if (batchManager.isBatchActive()) {
+            final Batch batch = batchManager.getActiveBatch();
+            return batch.getAttachements();
+        }
+        return new Attachements();
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -21,16 +21,32 @@
  */
 package org.jboss.as.cli;
 
+import java.util.List;
+import java.util.Objects;
 import org.jboss.dmr.ModelNode;
 
 /**
  *
- * @author Alexey Loubyansky
+ * @author jdenise@redhat.com
  */
-public interface OperationCommand extends CommandHandler {
+public final class RequestWithAttachements {
 
-    ModelNode buildRequest(CommandContext ctx) throws CommandFormatException;
-    default ModelNode buildRequest(CommandContext ctx, Attachements attachements) throws CommandFormatException {
-        return buildRequest(ctx);
+    private final Attachements attachements;
+    private final ModelNode request;
+
+    public RequestWithAttachements(ModelNode request, Attachements attachements) {
+        Objects.requireNonNull(request);
+        Objects.requireNonNull(attachements);
+
+        this.request = request;
+        this.attachements = attachements;
+    }
+
+    public ModelNode getRequest() {
+        return request;
+    }
+
+    public List<String> getAttachedFiles() {
+        return attachements.getAttachedFiles();
     }
 }
