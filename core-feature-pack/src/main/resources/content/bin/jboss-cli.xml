@@ -3,7 +3,7 @@
 <!--
    WildFly Command-line Interface configuration.
 -->
-<jboss-cli xmlns="urn:jboss:cli:2.0">
+<jboss-cli xmlns="urn:jboss:cli:3.1">
 
     <default-protocol use-legacy-override="true">http-remoting</default-protocol>
 
@@ -44,4 +44,7 @@
 
     <!-- Whether to filter out commands and attributes based on user's permissions -->
     <access-control>false</access-control>
+
+    <!-- display the prompt and command for each command executed from a file or from a list of commands-->
+    <echo-command>false</echo-command>
 </jboss-cli>

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -29,6 +29,7 @@ import java.io.File;
 import org.apache.commons.io.FileUtils;
 import org.jboss.as.test.shared.TestSuiteEnvironment;
 import org.junit.Assert;
+import static org.junit.Assert.assertFalse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.core.testrunner.WildflyTestRunner;
@@ -132,5 +133,26 @@ public class CliArgumentsTestCase {
 
         int exitCode = cli.getProcessExitValue();
         assertTrue(exitCode != 0);
+    }
+
+    @Test
+    public void testEchoCommand() throws Exception {
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .addCliArgument("--echo-command")
+                .addCliArgument("--command=version");
+        final String result = cli.executeNonInteractive();
+        assertNotNull(result);
+        assertTrue(result, result.contains("[disconnected /] version"));
+        assertTrue(result, result.contains("JBoss AS release"));
+    }
+
+    @Test
+    public void testNoEchoCommand() throws Exception {
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .addCliArgument("--command=version");
+        final String result = cli.executeNonInteractive();
+        assertNotNull(result);
+        assertFalse(result, result.contains("[disconnected /] version"));
+        assertTrue(result, result.contains("JBoss AS release"));
     }
 }
