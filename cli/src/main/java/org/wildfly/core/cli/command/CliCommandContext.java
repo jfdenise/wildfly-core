@@ -19,29 +19,23 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.aesh.converter;
+package org.wildfly.core.cli.command;
 
-import org.jboss.aesh.cl.converter.Converter;
-import org.jboss.aesh.cl.validator.OptionValidatorException;
-import org.jboss.as.cli.CommandFormatException;
-import org.jboss.as.cli.Util;
-import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
-import org.jboss.as.cli.impl.ArgumentWithValue;
+import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.controller.client.ModelControllerClient;
 
 /**
- * Resolve properties that could be embedded in value.
  *
- * @author jdenise@redhat.com
+ * @author Alexey Loubyansky, jdenise
  */
-public class PropertyResolverConverter implements Converter<String, CliConverterInvocation> {
+public interface CliCommandContext {
 
-    @Override
-    public String convert(CliConverterInvocation converterInvocation) throws OptionValidatorException {
-        try {
-            return ArgumentWithValue.resolveValue(converterInvocation.getInput());
-        } catch (CommandFormatException ex) {
-            throw new OptionValidatorException(Util.getMessagesFromThrowable(ex));
-        }
-    }
+    boolean isDomainMode();
 
+    void connectController(String url)
+            throws CommandLineException, InterruptedException;
+
+    ModelControllerClient getModelControllerClient();
+
+    void exit();
 }

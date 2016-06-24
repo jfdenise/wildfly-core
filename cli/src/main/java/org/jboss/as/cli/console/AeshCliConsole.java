@@ -60,7 +60,7 @@ import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
 import org.jboss.aesh.parser.Parser;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandHandler;

@@ -4,7 +4,7 @@
  * Licensed under the Eclipse Public License version 1.0, available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.jboss.as.cli.command;
+package org.wildfly.core.cli.command;
 
 import java.util.Collection;
 import org.jboss.aesh.console.AeshContext;
@@ -14,7 +14,6 @@ import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.terminal.Shell;
-import org.jboss.as.cli.CliCommandContext;
 import org.jboss.as.cli.impl.Console;
 
 /**

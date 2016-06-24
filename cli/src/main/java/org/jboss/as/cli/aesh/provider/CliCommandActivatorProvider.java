@@ -23,8 +23,8 @@ package org.jboss.as.cli.aesh.provider;
 
 import org.jboss.aesh.cl.activation.CommandActivator;
 import org.jboss.aesh.console.command.activator.CommandActivatorProvider;
-import org.jboss.as.cli.CliCommandContext;
-import org.jboss.as.cli.aesh.activator.CliOptionActivator;
+import org.wildfly.core.cli.command.CliCommandActivator;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  * @author jdenise@redhat.com
@@ -40,8 +40,9 @@ public class CliCommandActivatorProvider implements CommandActivatorProvider {
     @Override
     public CommandActivator enhanceCommandActivator(CommandActivator commandActivator) {
 
-        if(commandActivator instanceof CliOptionActivator)
-            ((CliOptionActivator) commandActivator).setCommandContext(commandContext);
+        if (commandActivator instanceof CliCommandActivator) {
+            ((CliCommandActivator) commandActivator).setCommandContext(commandContext);
+        }
 
         return commandActivator;
     }

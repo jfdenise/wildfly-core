@@ -19,15 +19,12 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command;
+package org.wildfly.core.cli.command;
 
 /**
- *
- * Impliment this interface to advertise to Command runtime that your Command
- * will interact with users (e.g.: prompt for input).
- *
+ * Make your Command to implement this interface when it can be added to batch.
  * @author jdenise@redhat.com
  */
-public interface InteractiveCommand {
+public interface BatchCompliantCommand extends DMRCommand {
 
 }

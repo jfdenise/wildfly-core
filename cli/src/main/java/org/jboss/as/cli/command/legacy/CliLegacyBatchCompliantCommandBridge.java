@@ -24,7 +24,7 @@ package org.jboss.as.cli.command.legacy;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.OperationCommand;
-import org.jboss.as.cli.command.batch.BatchCompliantCommand;
+import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 
 /**

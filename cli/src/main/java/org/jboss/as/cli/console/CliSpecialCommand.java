@@ -45,12 +45,12 @@ import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.command.DMRCommand;
-import org.jboss.as.cli.command.batch.BatchCompliantCommand;
+import org.wildfly.core.cli.command.DMRCommand;
+import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.dmr.ModelNode;
 

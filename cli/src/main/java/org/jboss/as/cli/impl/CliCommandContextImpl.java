@@ -23,7 +23,7 @@ package org.jboss.as.cli.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -62,7 +62,7 @@ public class CliCommandContextImpl implements CliCommandContext {
         List<CommandLineException> holder = new ArrayList<>();
         Thread thr = new Thread(() -> {
             try {
-                context.connectController(url, context.getConsole());
+                context.connectController(url);
             } catch (CommandLineException ex) {
                 holder.add(ex);
             }

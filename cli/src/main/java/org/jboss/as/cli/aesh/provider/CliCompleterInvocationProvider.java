@@ -9,7 +9,7 @@ package org.jboss.as.cli.aesh.provider;
 import org.jboss.aesh.console.command.completer.CompleterInvocation;
 import org.jboss.aesh.console.command.completer.CompleterInvocationProvider;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>

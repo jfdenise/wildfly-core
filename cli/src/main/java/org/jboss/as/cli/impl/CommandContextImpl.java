@@ -837,7 +837,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     }
 
     @Override
-    @Deprecated
     public void connectController(String controller) throws CommandLineException {
         connectController(controller, getConsole());
     }
@@ -849,7 +848,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         sslContext.interruptConnectCallback();
     }
 
-    public void connectController(String controller, Console cons) throws CommandLineException {
+    private void connectController(String controller, Console cons) throws CommandLineException {
 
         ControllerAddress address = addressResolver.resolveAddress(controller);
 

@@ -8,7 +8,7 @@ package org.jboss.as.cli.aesh.provider;
 
 import org.jboss.aesh.console.command.converter.ConverterInvocation;
 import org.jboss.aesh.console.command.converter.ConverterInvocationProvider;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
