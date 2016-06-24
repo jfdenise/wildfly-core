@@ -22,12 +22,13 @@ package org.jboss.as.cli.impl;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.wildfly.core.cli.WildFlyCLIConfiguration;
 
 /**
  *
  * @author <a href="mailto:ehugonne@redhat.com">Emmanuel Hugonnet</a> (c) 2014 Red Hat, inc.
  */
-public class CommandContextConfiguration {
+public class CommandContextConfiguration implements WildFlyCLIConfiguration {
     private final String controller;
     private final String username;
     private final char[] password;

@@ -6,8 +6,9 @@
  */
 package org.jboss.as.cli.aesh.activator;
 
+import org.wildfly.core.cli.command.CliOptionActivator;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>

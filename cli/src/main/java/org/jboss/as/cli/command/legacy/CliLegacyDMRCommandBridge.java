@@ -22,11 +22,11 @@
 package org.jboss.as.cli.command.legacy;
 
 import org.jboss.aesh.cl.parser.CommandLineParserException;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.OperationCommand;
-import org.jboss.as.cli.command.DMRCommand;
+import org.wildfly.core.cli.command.DMRCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.dmr.ModelNode;

@@ -43,7 +43,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
-import org.jboss.as.cli.command.InteractiveCommand;
+import org.wildfly.core.cli.command.InteractiveCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.logging.Logger;
 

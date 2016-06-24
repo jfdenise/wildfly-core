@@ -19,22 +19,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli;
+package org.wildfly.core.cli.command;
 
-import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.aesh.cl.activation.CommandActivator;
 
 /**
  *
- * @author Alexey Loubyansky, jdenise
+ * @author jfdenise
  */
-public interface CliCommandContext {
+public interface CliCommandActivator extends CommandActivator {
 
-    boolean isDomainMode();
+    void setCommandContext(CliCommandContext commandContext);
 
-    void connectController(String url)
-            throws CommandLineException, InterruptedException;
+    CliCommandContext getCommandContext();
 
-    ModelControllerClient getModelControllerClient();
-
-    void exit();
 }
