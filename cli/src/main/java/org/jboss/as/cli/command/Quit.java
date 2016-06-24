@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.command;
 
+import org.wildfly.core.cli.command.CliCommandInvocation;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;

@@ -14,7 +14,7 @@ import org.jboss.aesh.terminal.TerminalString;
 
 import java.util.List;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>

@@ -8,8 +8,8 @@ package org.jboss.as.cli.aesh.provider;
 
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.invocation.CommandInvocationProvider;
-import org.jboss.as.cli.CliCommandContext;
-import org.jboss.as.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 import org.jboss.as.cli.impl.Console;
 
 /**

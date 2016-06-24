@@ -19,8 +19,9 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli;
+package org.wildfly.core.cli.command;
 
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 /**

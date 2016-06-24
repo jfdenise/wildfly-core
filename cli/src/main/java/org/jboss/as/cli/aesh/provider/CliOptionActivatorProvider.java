@@ -8,7 +8,7 @@ package org.jboss.as.cli.aesh.provider;
 
 import org.jboss.aesh.cl.activation.OptionActivator;
 import org.jboss.aesh.console.command.activator.OptionActivatorProvider;
-import org.jboss.as.cli.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.aesh.activator.CliOptionActivator;
 
 /**
