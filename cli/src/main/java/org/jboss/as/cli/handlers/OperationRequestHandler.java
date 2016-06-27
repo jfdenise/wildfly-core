@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.handlers;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -34,9 +35,12 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.RequestWithAttachements;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.Operation;
+import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -63,11 +67,17 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
                     " Type 'connect' to connect to the server" +
                     " or 'help' for the list of supported commands.");
         }
-
-        ModelNode request = (ModelNode) ctx.get(Scope.REQUEST, "OP_REQ");
-        if(request == null) {
+        RequestWithAttachements reqWithAttachements
+                = (RequestWithAttachements) ctx.get(Scope.REQUEST, "OP_REQ");
+        if (reqWithAttachements == null) {
             throw new CommandLineException("Parsed request isn't available.");
         }
+        ModelNode request = reqWithAttachements.getRequest();
+        OperationBuilder opBuilder = new OperationBuilder(request, true);
+        for (String path : reqWithAttachements.getAttachedFiles()) {
+            opBuilder.addFileAsAttachment(new File(path));
+        }
+        Operation op = opBuilder.build();
 
         if(ctx.getConfig().isValidateOperationRequests()) {
             ModelNode opDescOutcome = Util.validateRequest(ctx, request);
@@ -77,7 +87,7 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
         }
 
         try {
-            final ModelNode result = client.execute(request);
+            final ModelNode result = client.execute(op);
             if(Util.isSuccess(result)) {
                 ctx.printLine(result.toString());
             } else {
