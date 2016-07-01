@@ -56,6 +56,7 @@ import org.jboss.aesh.console.InputProcessor;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.aesh.console.command.container.AeshCommandContainer;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
@@ -68,14 +69,22 @@ import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandRegistry;
+import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.completer.RolloutPlanCompleter;
+import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.aesh.provider.CliCommandActivatorProvider;
+import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Quit;
+import org.jboss.as.cli.command.generic.MainCommandParser;
+import org.jboss.as.cli.command.generic.NodeType;
 import org.jboss.as.cli.command.operation.OperationSpecialCommand;
+import org.jboss.as.cli.handlers.jca.JDBCDriverNameProvider;
 import org.jboss.as.cli.impl.CLIPrintStream;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.Console;
+import org.jboss.as.cli.impl.DefaultCompleter;
 import org.jboss.as.protocol.StreamUtils;
 
 /**
@@ -339,7 +348,49 @@ class AeshCliConsole implements Console {
         CliCommandRegistry clireg = new CliCommandRegistry(this,
                 ctx, commandContext);
         clireg.addCommand(new Connect());
+        clireg.addCommand(new CommandCommand());
         clireg.addCommand(new Quit());
+
+        try {
+            // Add some Generic commands
+            MainCommandParser dataSourceParser = new MainCommandParser("data-source",
+                    new NodeType("/subsystem=datasources/data-source"),
+                    null,
+                    ctx,
+                    false);
+            final DefaultCompleter driverNameCompleter = new DefaultCompleter(JDBCDriverNameProvider.INSTANCE);
+            dataSourceParser.addCustomCompleter(Util.DRIVER_NAME,
+                    new org.jboss.as.cli.aesh.completer.DefaultCompleter(driverNameCompleter));
+            // XXX JFDENISE TODO
+            //dataSourceParser.addCustomSubCommand(new DataSourceAddCompositeSubCommand(Util.ADD,
+            //        new NodeType("/subsystem=datasources/data-source"), null));
+            clireg.addCommand(new AeshCommandContainer(dataSourceParser));
+
+            MainCommandParser xdataSourceParser = new MainCommandParser("xa-data-source",
+                    new NodeType("/subsystem=datasources/xa-data-source"),
+                    null,
+                    ctx,
+                    false);
+            xdataSourceParser.addCustomCompleter(Util.DRIVER_NAME,
+                    new org.jboss.as.cli.aesh.completer.DefaultCompleter(driverNameCompleter));
+            // XXX JFDENISE TODO
+            //dataSourceParser.addCustomSubCommand(new XADataSourceAddCompositeSubCommand(Util.ADD,
+            //        new NodeType("/subsystem=datasources/data-source"), null));
+            clireg.addCommand(new AeshCommandContainer(xdataSourceParser));
+
+            MainCommandParser rolloutParser = new MainCommandParser("rollout-plan",
+                    new NodeType("/management-client-content=rollout-plans/rollout-plan"),
+                    null,
+                    ctx,
+                    false);
+            rolloutParser.addCustomConverter("content", HeadersConverter.INSTANCE);
+            rolloutParser.addCustomCompleter("content", RolloutPlanCompleter.INSTANCE);
+            clireg.addCommand(new AeshCommandContainer(rolloutParser));
+
+        } catch (CommandLineParserException ex) {
+            throw new RuntimeException(ex);
+        }
+
         return clireg;
     }
 

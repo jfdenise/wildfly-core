@@ -23,6 +23,7 @@ package org.jboss.as.cli.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jboss.as.cli.CommandContext;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
@@ -92,6 +93,11 @@ public class CliCommandContextImpl implements CliCommandContext {
         // in shutdown handler.
         context.terminateSession();
         System.exit(1);
+    }
+
+    @Override
+    public CommandContext getLegacyCommandContext() {
+        return context;
     }
 
 }

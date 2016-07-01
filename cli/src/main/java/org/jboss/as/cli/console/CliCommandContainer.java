@@ -227,6 +227,10 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
         }
     }
 
+    public CommandContainer getWrappedContainer() {
+        return container;
+    }
+
     private void postExecution(CommandContext context, CommandInvocation commandInvocation) {
         console.setPrompt(context.getPrompt());
     }

@@ -19,27 +19,35 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.core.cli.command;
+package org.jboss.as.cli.aesh.activator;
 
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.controller.client.ModelControllerClient;
+import java.util.HashSet;
+import java.util.Set;
+import org.jboss.aesh.cl.activation.OptionActivator;
 
 /**
  *
- * @author Alexey Loubyansky, jdenise
+ * Builder for Presence activator.
+ *
+ * @author jdenise@redhat.com
  */
-public interface CliCommandContext {
+public class PresenceOptionsActivatorBuilder {
 
-    boolean isDomainMode();
+    private final Set<String> expected = new HashSet<>();
+    private final Set<String> notExpected = new HashSet<>();
 
-    void connectController(String url)
-            throws CommandLineException, InterruptedException;
+    public PresenceOptionsActivatorBuilder expected(String expected) {
+        this.expected.add(expected);
+        return this;
+    }
 
-    ModelControllerClient getModelControllerClient();
+    public PresenceOptionsActivatorBuilder notExpected(String notExpected) {
+        this.notExpected.add(notExpected);
+        return this;
+    }
 
-    void exit();
-
-    CommandContext getLegacyCommandContext();
+    public OptionActivator create() {
+        return new PresenceOptionsActivator(expected, notExpected);
+    }
 
 }

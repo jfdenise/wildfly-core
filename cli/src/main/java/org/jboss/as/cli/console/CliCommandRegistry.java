@@ -25,6 +25,7 @@ import org.jboss.as.cli.command.legacy.CliLegacyCommandBridge;
 import org.jboss.as.cli.command.legacy.CliLegacyBatchCompliantCommandBridge;
 import org.jboss.as.cli.command.legacy.CliLegacyDMRCommandBridge;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.wildfly.core.cli.command.InteractiveCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.logging.Logger;
@@ -74,10 +76,10 @@ public class CliCommandRegistry implements CommandRegistry {
     public void addSpecialCommand(CliSpecialCommand special)
             throws CommandLineException {
         specials.add(special);
-        addCommand(special.getCommandContainer());
+        addCommandContainer(special.getCommandContainer());
     }
 
-    private void addCommand(CommandContainer container) throws CommandLineException {
+    private void addCommandContainer(CommandContainer container) throws CommandLineException {
         CliCommandContainer cliContainer;
         if (container.getParser().getCommand() instanceof InteractiveCommand) {
             interactiveCommands.put(container.getParser().
@@ -99,6 +101,10 @@ public class CliCommandRegistry implements CommandRegistry {
 
     public void addCommand(Command command) throws CommandLineException {
         CommandContainer container = containerBuilder.create(command);
+        addCommand(container);
+    }
+
+    public void addCommand(CommandContainer container) throws CommandLineException {
         // If a legacy handler exists, just remove it.
         String name = container.getParser().getProcessedCommand().getName();
         if (legacyHandlers.containsKey(name)) {
@@ -106,7 +112,7 @@ public class CliCommandRegistry implements CommandRegistry {
             log.info("Legacy handler " + name
                     + "remved, new one registered.");
         }
-        addCommand(container);
+        addCommandContainer(container);
     }
 
     @Override
@@ -180,7 +186,7 @@ public class CliCommandRegistry implements CommandRegistry {
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
                     activator(() -> handler.isAvailable(context)).
                     executor(bridge).resultHandler(console.newResultHandler()).create();
-            addCommand(cmd.getCommandContainer());
+            addCommandContainer(cmd.getCommandContainer());
             legacyHandlers.put(n, cmd);
         }
     }
@@ -208,5 +214,42 @@ public class CliCommandRegistry implements CommandRegistry {
     @Override
     public CommandContainer getCommandByAlias(String alias) throws CommandNotFoundException {
         return reg.getCommandByAlias(alias);
+    }
+
+    public Collection<String> getRemovableGenericCommandNames() {
+        List<String> lst = new ArrayList<>();
+        for (String name : getAllCommandNames()) {
+            CommandContainer container;
+            try {
+                container = getCommand(name, null);
+            } catch (CommandNotFoundException ex) {
+                continue;
+            }
+            if (container != null && container instanceof CliCommandContainer) {
+                CommandContainer cc = ((CliCommandContainer) container).getWrappedContainer();
+                if (cc.getParser() instanceof MainCommandParser) {
+                    if (((MainCommandParser) cc.getParser()).isRemovable()) {
+                        lst.add(name);
+                    }
+                }
+            }
+        }
+        return lst;
+    }
+
+    public void removeGenericCommand(String name) throws Exception {
+        CommandContainer container = getCommand(name, null);
+        if (container != null && container instanceof CliCommandContainer) {
+            CommandLineParser p = ((CliCommandContainer) container).getWrappedContainer().getParser();
+            if (p instanceof MainCommandParser) {
+                if (((MainCommandParser) p).isRemovable()) {
+                    reg.removeCommand(name);
+                } else {
+                    throw new Exception(name + " can't be removed");
+                }
+            } else {
+                throw new Exception("Invalid command " + name);
+            }
+        }
     }
 }

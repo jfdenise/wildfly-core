@@ -19,27 +19,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.core.cli.command;
+package org.jboss.as.cli.aesh.activator;
 
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.aesh.cl.activation.OptionActivator;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
 
 /**
  *
- * @author Alexey Loubyansky, jdenise
+ * Hides an option otherwise delegates to the provided Activator.
+ *
+ * @author jdenise@redhat.com
  */
-public interface CliCommandContext {
+public class HiddenActivator implements OptionActivator {
 
-    boolean isDomainMode();
+    private static class HideActivator implements OptionActivator {
 
-    void connectController(String url)
-            throws CommandLineException, InterruptedException;
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            return false;
+        }
+    }
 
-    ModelControllerClient getModelControllerClient();
+    private final OptionActivator activator;
 
-    void exit();
+    public HiddenActivator() {
+        this(true, null);
+    }
 
-    CommandContext getLegacyCommandContext();
+    public HiddenActivator(boolean hidden, OptionActivator activator) {
+        this.activator = hidden ? new HideActivator() : activator;
+    }
+
+    @Override
+    public boolean isActivated(ProcessedCommand processedCommand) {
+        return activator.isActivated(processedCommand);
+    }
 
 }
