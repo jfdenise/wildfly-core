@@ -252,4 +252,9 @@ public class CliCommandRegistry implements CommandRegistry {
             }
         }
     }
+
+    @Override
+    public List<CommandLineParser<?>> getChildCommandParsers(String parent) throws CommandNotFoundException {
+        return reg.getChildCommandParsers(parent);
+    }
 }

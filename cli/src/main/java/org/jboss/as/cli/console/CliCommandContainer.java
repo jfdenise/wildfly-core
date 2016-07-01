@@ -199,7 +199,6 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             CommandInvocation commandInvocation)
             throws CommandLineParserException, OptionValidatorException,
             CommandValidatorException, CommandException, InterruptedException {
-        boolean error = false;
         try {
             if (context.isBatchMode()) {
                 Command c = container.getParser().getCommand();
@@ -214,16 +213,12 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
                     invocationProviders, aeshContext, commandInvocation);
             return res;
         } catch (CommandFormatException ex) {
-            error = true;
             throw new CommandException(ex);
         } catch (CommandLineParserException | OptionValidatorException |
                 CommandValidatorException | CommandException ex) {
-            error = true;
             throw ex;
         } finally {
-            if (!error) {
-                postExecution(context, commandInvocation);
-            }
+            postExecution(context, commandInvocation);
         }
     }
 
