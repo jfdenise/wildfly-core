@@ -76,6 +76,7 @@ import org.jboss.as.cli.aesh.provider.CliCommandActivatorProvider;
 import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Quit;
+import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.jboss.as.cli.command.generic.NodeType;
 import org.jboss.as.cli.command.operation.OperationSpecialCommand;
@@ -347,6 +348,7 @@ class AeshCliConsole implements Console {
     private CliCommandRegistry createCommandRegistry() throws CommandLineException {
         CliCommandRegistry clireg = new CliCommandRegistry(this,
                 ctx, commandContext);
+        clireg.addCommand(new BatchCommand());
         clireg.addCommand(new Connect());
         clireg.addCommand(new CommandCommand());
         clireg.addCommand(new Quit());
