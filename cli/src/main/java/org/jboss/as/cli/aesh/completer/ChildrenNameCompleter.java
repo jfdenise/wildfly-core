@@ -19,27 +19,39 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.core.cli.command;
+package org.jboss.as.cli.aesh.completer;
 
+import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.cli.Util;
+import org.jboss.as.cli.command.generic.NodeType;
+import org.jboss.as.cli.operation.OperationRequestAddress;
+import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 
 /**
  *
- * @author Alexey Loubyansky, jdenise
+ * Completes properties of a resource type.
+ *
+ * @author jdenise
  */
-public interface CliCommandContext {
+public class ChildrenNameCompleter implements OptionCompleter<CliCompleterInvocation> {
 
-    boolean isDomainMode();
+    private final CommandContext context;
+    private final NodeType type;
+    private final OperationRequestAddress address;
 
-    void connectController(String url)
-            throws CommandLineException, InterruptedException;
+    public ChildrenNameCompleter(CommandContext context,
+            OperationRequestAddress address, NodeType type) {
+        this.context = context;
+        this.address = address;
+        this.type = type;
+    }
 
-    ModelControllerClient getModelControllerClient();
+    @Override
+    public void complete(CliCompleterInvocation cliCompleterInvocation) {
+        cliCompleterInvocation.
+                addAllCompleterValues(Util.getNodeNames(context.getModelControllerClient(),
+                        address, type.getType()));
 
-    void exit();
-
-    CommandContext getLegacyCommandContext();
-
+    }
 }

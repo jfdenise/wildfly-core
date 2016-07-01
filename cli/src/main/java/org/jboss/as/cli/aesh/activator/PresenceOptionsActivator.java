@@ -19,27 +19,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.core.cli.command;
+package org.jboss.as.cli.aesh.activator;
 
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.controller.client.ModelControllerClient;
+import java.util.Set;
+import org.jboss.aesh.cl.activation.OptionActivator;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
 
 /**
+ * Search for a set of options, activate the option if all expected options are
+ * found and all not expected are not found.
  *
- * @author Alexey Loubyansky, jdenise
+ * @author jdenise@redhat.com
  */
-public interface CliCommandContext {
+public class PresenceOptionsActivator implements OptionActivator {
 
-    boolean isDomainMode();
+    private final ExpectedOptionsActivator exist;
+    private final NotExpectedOptionsActivator notExist;
 
-    void connectController(String url)
-            throws CommandLineException, InterruptedException;
+    public PresenceOptionsActivator(Set<String> expected, Set<String> notExpected) {
+        this.exist = new ExpectedOptionsActivator(expected);
+        this.notExist = new NotExpectedOptionsActivator(notExpected);
+    }
 
-    ModelControllerClient getModelControllerClient();
-
-    void exit();
-
-    CommandContext getLegacyCommandContext();
-
+    @Override
+    public boolean isActivated(ProcessedCommand processedCommand) {
+        return exist.isActivated(processedCommand)
+                && notExist.isActivated(processedCommand);
+    }
 }
