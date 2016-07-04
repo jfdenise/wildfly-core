@@ -73,6 +73,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.completer.RolloutPlanCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.aesh.provider.CliCommandActivatorProvider;
+import org.jboss.as.cli.command.CdCommand;
 import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Quit;
@@ -356,6 +357,7 @@ class AeshCliConsole implements Console {
         CliCommandRegistry clireg = new CliCommandRegistry(this,
                 ctx, commandContext);
         clireg.addCommand(new BatchCommand());
+        clireg.addCommand(new CdCommand());
         clireg.addCommand(new Connect());
         clireg.addCommand(new CommandCommand());
         clireg.addCommand(new Quit());

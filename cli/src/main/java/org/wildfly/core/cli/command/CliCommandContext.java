@@ -23,6 +23,7 @@ package org.wildfly.core.cli.command;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 /**
@@ -41,5 +42,9 @@ public interface CliCommandContext {
     void exit();
 
     CommandContext getLegacyCommandContext();
+
+    void setCurrentNodePath(OperationRequestAddress get);
+
+    boolean isConnected();
 
 }

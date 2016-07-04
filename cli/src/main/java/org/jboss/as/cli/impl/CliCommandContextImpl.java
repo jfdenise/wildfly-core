@@ -26,6 +26,7 @@ import java.util.List;
 import org.jboss.as.cli.CommandContext;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
@@ -100,4 +101,13 @@ public class CliCommandContextImpl implements CliCommandContext {
         return context;
     }
 
+    @Override
+    public void setCurrentNodePath(OperationRequestAddress address) {
+        context.setCurrentNodePath(address);
+    }
+
+    @Override
+    public boolean isConnected() {
+        return context.getModelControllerClient() != null;
+    }
 }

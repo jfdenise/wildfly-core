@@ -223,7 +223,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     /** various key/value pairs */
     private Map<Scope, Map<String, Object>> map = new HashMap<>();
     /** operation request address prefix */
-    private final OperationRequestAddress prefix = new DefaultOperationRequestAddress();
+    private OperationRequestAddress prefix = new DefaultOperationRequestAddress();
     /** the prefix formatter */
     private final NodePathFormatter prefixFormatter = DefaultPrefixFormatter.INSTANCE;
     /** provider of operation request candidates for tab-completion */
@@ -1376,6 +1376,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } catch (CliInitializationException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    void setCurrentNodePath(OperationRequestAddress address) {
+        this.prefix = address;
     }
 
     private class JaasConfigurationWrapper extends Configuration {
