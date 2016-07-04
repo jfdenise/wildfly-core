@@ -77,6 +77,7 @@ import org.jboss.as.cli.command.CdCommand;
 import org.jboss.as.cli.command.ClearCommand;
 import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
+import org.jboss.as.cli.command.EchoCommand;
 import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.compat.ClearBatch;
@@ -362,6 +363,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new ClearCommand());
         clireg.addCommand(new Connect());
         clireg.addCommand(new CommandCommand());
+        clireg.addCommand(new EchoCommand());
         clireg.addCommand(new Quit());
 
         // Add deprecated, for BWCompat only
