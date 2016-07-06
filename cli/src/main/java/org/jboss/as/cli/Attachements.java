@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -21,16 +21,39 @@
  */
 package org.jboss.as.cli;
 
-import org.jboss.dmr.ModelNode;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
- * @author Alexey Loubyansky
+ * @author jdenise@redhat.com
  */
-public interface OperationCommand extends CommandHandler {
+public final class Attachements {
 
-    ModelNode buildRequest(CommandContext ctx) throws CommandFormatException;
-    default ModelNode buildRequest(CommandContext ctx, Attachements attachements) throws CommandFormatException {
-        return buildRequest(ctx);
+    public static final Attachements IMMUTABLE_ATTACHEMENTS = new Attachements(true);
+
+    private final boolean immutable;
+    private final List<String> paths = new ArrayList<>();
+
+    private Attachements(boolean immutable) {
+        this.immutable = immutable;
+    }
+
+    public Attachements() {
+        this(false);
+    }
+
+    public int addFileAttachement(String path) {
+        if (immutable) {
+            throw new UnsupportedOperationException("Attachements can't be muted");
+        }
+
+        paths.add(path);
+        return paths.size() - 1;
+    }
+
+    public List<String> getAttachedFiles() {
+        return Collections.unmodifiableList(paths);
     }
 }

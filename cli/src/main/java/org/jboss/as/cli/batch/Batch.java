@@ -22,6 +22,7 @@
 package org.jboss.as.cli.batch;
 
 import java.util.List;
+import org.jboss.as.cli.Attachements;
 
 import org.jboss.dmr.ModelNode;
 
@@ -84,4 +85,8 @@ public interface Batch {
      * @return  operation request that includes all the commands and operations in the batch
      */
     ModelNode toRequest();
+
+    default Attachements getAttachements() {
+        return Attachements.IMMUTABLE_ATTACHEMENTS;
+    }
 }

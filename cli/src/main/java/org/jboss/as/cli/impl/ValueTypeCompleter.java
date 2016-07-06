@@ -33,6 +33,8 @@ import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.handlers.DefaultFilenameTabCompleter;
 import org.jboss.as.cli.handlers.WindowsFilenameTabCompleter;
+import org.jboss.as.cli.operation.OperationRequestAddress;
+import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
@@ -292,12 +294,18 @@ public class ValueTypeCompleter implements CommandLineCompleter {
     private final ModelNode propDescr;
     private Instance currentInstance;
     private CommandContext ctx;
+    private final OperationRequestAddress address;
 
     public ValueTypeCompleter(ModelNode propDescr) {
+        this(propDescr, new DefaultOperationRequestAddress());
+    }
+
+    public ValueTypeCompleter(ModelNode propDescr, OperationRequestAddress address) {
         if(propDescr == null || !propDescr.isDefined()) {
             throw new IllegalArgumentException("property description is null or undefined.");
         }
         this.propDescr = propDescr;
+        this.address = address;
     }
 
     @Override
@@ -354,8 +362,8 @@ public class ValueTypeCompleter implements CommandLineCompleter {
             this.logging = logging;
         }
 
-        private List<String> getFileSystemPath(ModelNode propType, String path) {
-
+        private List<String> getCandidatesFromMetadata(ModelNode propType,
+                String path) {
             List<String> candidates = null;
             if (propType.has(Util.FILESYSTEM_PATH)
                     && propType.get(Util.FILESYSTEM_PATH).asBoolean()) {
@@ -368,6 +376,12 @@ public class ValueTypeCompleter implements CommandLineCompleter {
                 // We need to keep the radical and do the replacement after it
                 // valLength is used when computing the replacement index.
                 valLength = path.lastIndexOf(File.separator) + 1;
+            } else if (propType.has(Util.RELATIVE_TO)
+                    && propType.get(Util.RELATIVE_TO).asBoolean()) {
+                DeploymentItemCompleter completer
+                        = new DeploymentItemCompleter(address);
+                candidates = new ArrayList<>();
+                valLength = completer.complete(ctx, path, offset, candidates);
             }
             return candidates;
         }
@@ -491,7 +505,8 @@ public class ValueTypeCompleter implements CommandLineCompleter {
                 if (isBoolean(propType)) {
                     allowed = BOOLEAN_LIST;
                 } else {
-                    List<String> candidates = getFileSystemPath(propType, radical);
+                    List<String> candidates = getCandidatesFromMetadata(propType,
+                            radical);
                     if (candidates != null) {
                         return candidates;
                     }
@@ -526,7 +541,8 @@ public class ValueTypeCompleter implements CommandLineCompleter {
                         Collections.sort(candidates);
                         return candidates;
                     } else {
-                        List<String> candidates = getFileSystemPath(propType, "");
+                        List<String> candidates = getCandidatesFromMetadata(propType,
+                                "");
                         if (candidates != null) {
                             return candidates;
                         }
