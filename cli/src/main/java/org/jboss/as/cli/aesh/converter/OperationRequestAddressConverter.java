@@ -8,6 +8,7 @@ package org.jboss.as.cli.aesh.converter;
 
 import org.jboss.aesh.cl.converter.Converter;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
+import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
 import org.jboss.as.cli.operation.OperationRequestAddress;
@@ -20,14 +21,16 @@ public class OperationRequestAddressConverter implements Converter<OperationRequ
 
     @Override
     public OperationRequestAddress convert(CliConverterInvocation converterInvocation) throws OptionValidatorException {
+        return convert(converterInvocation.getInput(),
+                converterInvocation.getCommandContext().getLegacyCommandContext());
+    }
+
+    public static OperationRequestAddress convert(String path, CommandContext ctx) throws OptionValidatorException {
         final DefaultCallbackHandler parsedOp = new DefaultCallbackHandler();
         try {
-            parsedOp.parseOperation(converterInvocation.getCommandContext().
-                    getLegacyCommandContext().getCurrentNodePath(),
-                    converterInvocation.getInput());
+            parsedOp.parseOperation(ctx.getCurrentNodePath(), path);
             return parsedOp.getAddress();
-        }
-        catch (CommandFormatException e) {
+        } catch (CommandFormatException e) {
             throw new OptionValidatorException(e.toString());
         }
     }

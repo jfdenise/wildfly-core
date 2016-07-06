@@ -50,12 +50,12 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 public class CdCommand implements Command<CliCommandInvocation> {
 
     @Arguments(completer = PathOptionCompleter.class,
-            converter = OperationRequestAddressConverter.class)
+            converter = OperationRequestAddressConverter.class, valueSeparator = ',')
     // XXX jfdenise when we have ON/OFF for validation
     //validator = ChangeNodeValidator.class)
     private List<OperationRequestAddress> arguments;
 
-    @Option(name = "no-validation")
+    @Option(name = "no-validation", hasValue = false)
     private boolean noValidation;
 
     @Option(hasValue = false)

@@ -45,6 +45,7 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.ServiceLoader;
+import org.jboss.aesh.cl.parser.AeshCommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.result.ResultHandler;
 import org.jboss.aesh.console.AeshConsoleBufferBuilder;
@@ -57,6 +58,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.AeshCommandContainer;
+import org.jboss.aesh.console.command.map.MapCommand;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
@@ -78,6 +80,7 @@ import org.jboss.as.cli.command.ClearCommand;
 import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.EchoCommand;
+import org.jboss.as.cli.command.LsMapCommand;
 import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.compat.ClearBatch;
@@ -355,7 +358,8 @@ class AeshCliConsole implements Console {
         return settings.create();
     }
 
-    private CliCommandRegistry createCommandRegistry() throws CommandLineException {
+    private CliCommandRegistry createCommandRegistry()
+            throws CommandLineException, CommandLineParserException {
         CliCommandRegistry clireg = new CliCommandRegistry(this,
                 ctx, commandContext);
         clireg.addCommand(new BatchCommand());
@@ -364,6 +368,10 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new Connect());
         clireg.addCommand(new CommandCommand());
         clireg.addCommand(new EchoCommand());
+        // ls is a dynamic command
+        clireg.addCommand(new AeshCommandContainer(
+                new AeshCommandLineParser<MapCommand>(
+                        new LsMapCommand().getProcessedCommand(ctx))));
         clireg.addCommand(new Quit());
 
         // Add deprecated, for BWCompat only
