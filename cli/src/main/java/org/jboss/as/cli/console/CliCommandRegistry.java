@@ -209,4 +209,9 @@ public class CliCommandRegistry implements CommandRegistry {
     public CommandContainer getCommandByAlias(String alias) throws CommandNotFoundException {
         return reg.getCommandByAlias(alias);
     }
+
+    @Override
+    public List<CommandLineParser<?>> getChildCommandParsers(String parent) throws CommandNotFoundException {
+        return reg.getChildCommandParsers(parent);
+    }
 }
