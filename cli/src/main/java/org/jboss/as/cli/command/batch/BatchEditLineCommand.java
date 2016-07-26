@@ -60,7 +60,7 @@ public class BatchEditLineCommand implements Command<CliCommandInvocation> {
         if (help) {
             commandInvocation.println("Aesh should have "
                     + "hooks for help!");
-            return null;
+            return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.
                 getCommandContext().getLegacyCommandContext();
@@ -116,7 +116,7 @@ public class BatchEditLineCommand implements Command<CliCommandInvocation> {
         } catch (CommandFormatException ex) {
             throw new CommandException(ex);
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     private static class CommandCompleter implements OptionCompleter<CliCompleterInvocation> {

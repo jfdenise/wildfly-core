@@ -27,6 +27,7 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
 import org.jboss.aesh.console.ConsoleCallback;
+import org.jboss.aesh.console.command.CommandException;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandHistory;
@@ -117,9 +118,9 @@ public interface Console {
 
     void interact(boolean connect) throws CliInitializationException;
 
-    void process(List<String> commands, boolean connect) throws CommandLineException;
+    void process(List<String> commands, boolean connect) throws CommandException;
 
-    void processFile(File file, boolean connect) throws CommandLineException;
+    void processFile(File file, boolean connect) throws CommandException;
 
     String promptForInput(String prompt, Character mask)
             throws IOException, InterruptedException, CommandLineException;
@@ -132,7 +133,7 @@ public interface Console {
     CommandRegistry getLegacyCommandRegistry();
     CliCommandRegistry getCommandRegistry();
 
-    void executeCommand(String command) throws CommandLineException;
+    void executeCommand(String command) throws CommandException;
 
     CliCommandContext getCliCommandContext();
 

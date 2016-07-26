@@ -45,7 +45,7 @@ public class BatchDiscardCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println(commandInvocation.getHelpInfo("batch discard"));
-            return null;
+            return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         boolean result = ctx.getBatchManager().discardActiveBatch();
@@ -53,7 +53,7 @@ public class BatchDiscardCommand implements Command<CliCommandInvocation> {
             throw new CommandException("There is no active batch to discard.");
         }
 
-        return null;
+        return CommandResult.SUCCESS;
     }
 
 }

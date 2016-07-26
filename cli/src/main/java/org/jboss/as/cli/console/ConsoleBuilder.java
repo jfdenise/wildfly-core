@@ -41,6 +41,12 @@ public class ConsoleBuilder {
     private Settings aeshSettings;
     private InputStream consoleInput;
     private OutputStream consoleOutput;
+    private boolean echoCommand;
+
+    public ConsoleBuilder setEchoCommand(boolean echoCommand) {
+        this.echoCommand = echoCommand;
+        return this;
+    }
 
     public ConsoleBuilder setConsoleInputStream(InputStream consoleInput) {
         this.consoleInput = consoleInput;
@@ -78,7 +84,7 @@ public class ConsoleBuilder {
         }
 
         return new AeshCliConsole(context, silent, errorOnInteract, aeshSettings,
-                consoleInput, consoleOutput);
+                consoleInput, consoleOutput, echoCommand);
     }
 
 }

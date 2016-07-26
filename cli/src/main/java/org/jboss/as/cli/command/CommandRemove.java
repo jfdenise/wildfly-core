@@ -65,7 +65,7 @@ public class CommandRemove implements Command<CliCommandInvocation> {
         CliCommandRegistry reg = (CliCommandRegistry) commandInvocation.getCommandRegistry();
         // Should be handled at the aesh level.
         if ((commandName == null || commandName.isEmpty()) && legacyCommandName == null) {
-            return null;
+            return CommandResult.SUCCESS;
         }
         String cmd = (commandName == null || commandName.isEmpty()) ? legacyCommandName : commandName.get(0);
         try {
@@ -73,7 +73,7 @@ public class CommandRemove implements Command<CliCommandInvocation> {
         } catch (Exception ex) {
             throw new CommandException(ex.getMessage(), ex);
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     public class DynamicCommandCompleter implements OptionCompleter<CliCompleterInvocation> {

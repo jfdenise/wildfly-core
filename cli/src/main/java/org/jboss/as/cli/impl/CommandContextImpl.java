@@ -171,16 +171,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     private static final byte TERMINATING = 1;
     private static final byte TERMINATED = 2;
 
-    /**
-     * State Tracking
-     *
-     * Interact             - Interactive UI
-     *
-     * Silent               - Only send input. No output.
-     * Error On Interact    - If non-interactive mode requests user interaction, throw an error.
-     */
-    private boolean INTERACT          = false;
-
     /** the cli configuration */
     private final CliConfig config;
     private final ControllerAddressResolver addressResolver;
@@ -306,6 +296,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         configTimeout = config.getCommandTimeout() == null ? DEFAULT_TIMEOUT : config.getCommandTimeout();
         setCommandTimeout(configTimeout);
         this.console = new ConsoleBuilder().setContext(this).
+                setEchoCommand(config.isEchoCommand()).
                 setConsoleInputStream(configuration.getConsoleInput()).
                 setConsoleOutputStream(configuration.getConsoleOutput()).
                 setErrorOnInteract(config.isErrorOnInteract()).
@@ -510,8 +501,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 break;
             }
         }
-        String echoLine = line;
-        if(line.charAt(i) == '\\') {
+        if (line.charAt(i) == '\\') {
             if(lineBuffer == null) {
                 lineBuffer = new StringBuilder();
                 origLineBuffer = new StringBuilder();
@@ -524,18 +514,13 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } else if(lineBuffer != null) {
             lineBuffer.append(line);
             origLineBuffer.append(line);
-            echoLine = origLineBuffer.toString();
             line = lineBuffer.toString();
             lineBuffer = null;
         }
 
-        if (echoCommand && !INTERACT && redirection == null) {
-            printLine(getPrompt() + echoLine);
-        }
-
         resetArgs(line);
         try {
-            if(redirection != null) {
+            if (redirection != null) {
                 redirection.target.handle(this);
             } else if (parsedCmd.getFormat() == OperationFormat.INSTANCE) {
                 handleOperation(parsedCmd);
@@ -569,8 +554,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                     }
                 } else {
                     throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
-                    }
                 }
+            }
         } catch (CommandLineException e) {
             throw e;
         } catch (Throwable t) {
@@ -1370,7 +1355,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     @Override
     @Deprecated
     public void interact() {
-        INTERACT = true;
         try {
             console.interact(true);
         } catch (CliInitializationException ex) {

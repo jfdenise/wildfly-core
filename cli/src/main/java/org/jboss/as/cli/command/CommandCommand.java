@@ -46,7 +46,7 @@ public class CommandCommand implements Command<CliCommandInvocation> {
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println(commandInvocation.getHelpInfo("command"));
-            return null;
+            return CommandResult.SUCCESS;
         }
         throw new CommandException("Command action is missing.");
     }

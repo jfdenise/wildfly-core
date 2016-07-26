@@ -59,7 +59,7 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
         } else {
             commandInvocation.println("Missing the command or operation to translate to DMR.");
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     private void echoDMR(CliCommandInvocation commandInvocation)

@@ -31,6 +31,6 @@ public class ClearCommand implements Command<CliCommandInvocation> {
         } catch (IOException ex) {
             throw new CommandException(ex.getMessage(), ex);
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 }

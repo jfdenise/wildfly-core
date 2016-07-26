@@ -61,7 +61,7 @@ public class EchoCommand implements Command<CliCommandInvocation> {
         } else {
             printVariableList(commandInvocation);
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     private void echo(CliCommandInvocation commandInvocation)

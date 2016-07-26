@@ -19,11 +19,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.aesh.activator;
+package org.jboss.as.cli.command.trycatch;
 
-public class BatchActivator extends DefaultActivator {
+import org.jboss.as.cli.aesh.activator.ConnectedActivator;
+
+/**
+ *
+ * @author jdenise@redhat.com
+ */
+public class TryActivator extends ConnectedActivator {
+
     @Override
     public boolean isActivated() {
-        return getCommandContext().getLegacyCommandContext().isBatchMode();
+        if (TryCatchFinallyRedirection.get(getCommandContext().getLegacyCommandContext()) != null
+                || getCommandContext().getLegacyCommandContext().getBatchManager().isBatchActive()) {
+            return false;
+        }
+        return super.isActivated();
     }
 }

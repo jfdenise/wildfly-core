@@ -19,6 +19,7 @@
 package org.wildfly.core.cli;
 
 import java.io.IOException;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContextFactory;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandContextConfiguration;
@@ -164,7 +165,7 @@ public final class WildFlyCLI {
                 context.getConsole().executeCommand(cmd);
                 return new Result(cmd);
             }
-        } catch (CommandLineException cfe) {
+        } catch (CommandException | CommandLineException cfe) {
             throw new IllegalArgumentException("Error handling command: "
                     + cmd, cfe);
         } catch (IOException ioe) {

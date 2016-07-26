@@ -19,57 +19,46 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command.batch;
+package org.jboss.as.cli.command.trycatch;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import org.jboss.aesh.cl.GroupCommandDefinition;
+import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.as.cli.aesh.activator.BatchActivator;
+import org.jboss.as.cli.CommandLineException;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
- * @author jdenise@redhat.com
+ * @author jfdenise
  */
-@GroupCommandDefinition(name = "list", description = "", activator = BatchActivator.class)
-public class BatchListCommand implements Command<CliCommandInvocation> {
+@CommandDefinition(name = "finally", description = "", activator = FinallyActivator.class)
+public class FinallyCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Option(hasValue = false)
     private boolean help;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println("Aesh should have hooks for help!");
+            commandInvocation.println(commandInvocation.getHelpInfo("finally"));
             return CommandResult.SUCCESS;
         }
-
-        return handle(commandInvocation);
-
-    }
-
-    public static CommandResult handle(CliCommandInvocation commandInvocation) {
-        final Set<String> heldbackNames = commandInvocation.
-                getCommandContext().getLegacyCommandContext().
-                getBatchManager().getHeldbackNames();
-        if (!heldbackNames.isEmpty()) {
-            List<String> names = new ArrayList<>(heldbackNames.size());
-            for (String heldbackName : heldbackNames) {
-                names.add(heldbackName == null ? "<unnamed>" : heldbackName);
-            }
-            Collections.sort(names);
-            for (String heldbackName : names) {
-                commandInvocation.getShell().out().println(heldbackName);
-            }
+        final TryCatchFinallyRedirection flow
+                = TryCatchFinallyRedirection.get(commandInvocation.getCommandContext().getLegacyCommandContext());
+        if (flow == null) {
+            throw new CommandException("finally is available only in try-catch-finally control flow");
         }
-        return null;
+        if (flow.isInFinally()) {
+            throw new CommandException("Already in finally");
+        }
+        try {
+            flow.moveToFinally();
+        } catch (CommandLineException ex) {
+            throw new CommandException(ex);
+        }
+        return CommandResult.SUCCESS;
     }
-
 }

@@ -23,6 +23,7 @@ package org.jboss.as.cli.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandLineException;
@@ -30,6 +31,8 @@ import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.CommandRedirection;
+import org.wildfly.core.cli.command.CommandRedirection.Registration;
 
 /**
  *
@@ -37,7 +40,10 @@ import org.jboss.dmr.ModelNode;
  */
 // XXX JFDENISE, is public for now, will be package when moved to right package
 public class CliCommandContextImpl implements CliCommandContext {
+
     private final CommandContextImpl context;
+    private Registration registration;
+
     public CliCommandContextImpl(CommandContextImpl context) {
         this.context = context;
     }
@@ -109,5 +115,49 @@ public class CliCommandContextImpl implements CliCommandContext {
     @Override
     public boolean isConnected() {
         return context.getModelControllerClient() != null;
+    }
+
+    @Override
+    public void executeCommand(String line) throws CommandException {
+        context.getConsole().executeCommand(line);
+    }
+
+    @Override
+    public void registerRedirection(CommandRedirection redirection) throws CommandException {
+        if (registration != null) {
+            throw new CommandException("Another redirection is currently active.");
+        }
+        registration = new Registration() {
+            @Override
+            public boolean isActive() {
+                return registration == this;
+            }
+
+            @Override
+            public void unregister() throws CommandException {
+                ensureActive();
+                registration = null;
+            }
+
+            private void ensureActive() throws CommandException {
+                if (!isActive()) {
+                    throw new CommandException("The redirection is not registered any more.");
+                }
+            }
+
+            @Override
+            public CommandRedirection getRedirection() {
+                return redirection;
+            }
+
+        };
+        redirection.set(registration);
+    }
+
+    public CommandRedirection getCommandRedirection() {
+        if (registration != null) {
+            return registration.getRedirection();
+        }
+        return null;
     }
 }

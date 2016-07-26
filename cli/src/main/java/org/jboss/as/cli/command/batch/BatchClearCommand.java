@@ -46,7 +46,7 @@ public class BatchClearCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println("Aesh should have hooks for help!");
-            return null;
+            return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         Batch batch = ctx.getBatchManager().getActiveBatch();
@@ -55,7 +55,7 @@ public class BatchClearCommand implements Command<CliCommandInvocation> {
         }
         batch.clear();
 
-        return null;
+        return CommandResult.SUCCESS;
     }
 
 }

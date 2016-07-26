@@ -233,7 +233,7 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
         }
         ModelNode response = execute(request, ctx);
         handleResponse(commandInvocation, response, Util.COMPOSITE.equals(request.get(Util.OPERATION).asString()));
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     private static void retrieveDescription(OperationRequestAddress address,

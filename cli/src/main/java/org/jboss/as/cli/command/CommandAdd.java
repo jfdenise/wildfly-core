@@ -67,7 +67,7 @@ public class CommandAdd implements Command<CliCommandInvocation> {
 
         if (help) {
             commandInvocation.println(commandInvocation.getHelpInfo("command add"));
-            return null;
+            return CommandResult.SUCCESS;
         }
 
         CliCommandRegistry reg
@@ -82,7 +82,7 @@ public class CommandAdd implements Command<CliCommandInvocation> {
         } catch (CommandLineParserException | CommandLineException ex) {
             throw new CommandException(ex);
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     public class NodeTypeActivator implements OptionActivator {

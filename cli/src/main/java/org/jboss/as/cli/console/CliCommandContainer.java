@@ -35,17 +35,19 @@ import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.InvocationProviders;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  *
@@ -192,6 +194,8 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
         return super.printHelp(childCommandName);
     }
 
+    private int redirectionDepth;
+
     @Override
     public CommandContainerResult executeCommand(AeshLine line,
             InvocationProviders invocationProviders,
@@ -200,19 +204,30 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             throws CommandLineParserException, OptionValidatorException,
             CommandValidatorException, CommandException, InterruptedException {
         try {
+            CommandRedirection redirection = commandContext.getCommandRedirection();
+            if (redirection != null && redirectionDepth == 0) {
+                redirectionDepth += 1;
+                try {
+                    redirection.handle(commandContext, line);
+                } finally {
+                    redirectionDepth--;
+                }
+                return new CommandContainerResult(null, CommandResult.SUCCESS);
+            }
+
             if (context.isBatchMode()) {
                 Command c = container.getParser().getCommand();
                 if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
                     commandContext.addBatchOperation(((DMRCommand) c).
                             buildRequest(line.getOriginalInput(), commandContext),
                             line.getOriginalInput());
-                    return null;
+                    return new CommandContainerResult(null, CommandResult.SUCCESS);
                 }
             }
             CommandContainerResult res = container.executeCommand(line,
                     invocationProviders, aeshContext, commandInvocation);
             return res;
-        } catch (CommandFormatException ex) {
+        } catch (CommandLineException ex) {
             throw new CommandException(ex);
         } catch (CommandLineParserException | OptionValidatorException |
                 CommandValidatorException | CommandException ex) {

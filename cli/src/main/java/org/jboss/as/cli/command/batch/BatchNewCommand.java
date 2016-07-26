@@ -44,7 +44,7 @@ public class BatchNewCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println("Aesh should have hooks for help!");
-            return null;
+            return CommandResult.SUCCESS;
         }
         return handle(commandInvocation);
     }
@@ -59,7 +59,7 @@ public class BatchNewCommand implements Command<CliCommandInvocation> {
             // that's more like illegal state
             throw new CommandException("Failed to activate batch.");
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
 }

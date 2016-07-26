@@ -93,6 +93,10 @@ import org.jboss.as.cli.command.compat.RunBatch;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.jboss.as.cli.command.generic.NodeType;
 import org.jboss.as.cli.command.operation.OperationSpecialCommand;
+import org.jboss.as.cli.command.trycatch.CatchCommand;
+import org.jboss.as.cli.command.trycatch.EndTryCommand;
+import org.jboss.as.cli.command.trycatch.FinallyCommand;
+import org.jboss.as.cli.command.trycatch.TryCommand;
 import org.jboss.as.cli.handlers.jca.JDBCDriverNameProvider;
 import org.jboss.as.cli.impl.CLIPrintStream;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
@@ -174,7 +178,7 @@ class AeshCliConsole implements Console {
 
     private interface CommandProcessor {
 
-        void process() throws CommandLineException;
+        void process() throws CommandException;
     }
 
     private static class SilentPrintStream extends PrintStream {
@@ -245,10 +249,11 @@ class AeshCliConsole implements Console {
     private boolean commandFailure;
     private Exception commandException;
     private boolean interactive_connect;
+    private final boolean echoCommand;
 
     AeshCliConsole(CommandContextImpl commandContext, boolean silent,
             Boolean errorOnInteract, Settings aeshSettings,
-            InputStream consoleInput, OutputStream consoleOutput)
+            InputStream consoleInput, OutputStream consoleOutput, boolean echoCommand)
             throws CommandLineParserException, CommandLineException {
         this.ctx = commandContext;
         this.commandContext = new CliCommandContextImpl(ctx);
@@ -261,6 +266,7 @@ class AeshCliConsole implements Console {
                         consoleInput,
                         printStream) : aeshSettings;
         setupConsole(settings);
+        this.echoCommand = echoCommand;
     }
 
     @Override
@@ -292,6 +298,7 @@ class AeshCliConsole implements Console {
 
         commandRegistry.addSpecialCommand(new CliSpecialCommandBuilder().name(":").
                 context(ctx).
+                registry(commandRegistry).
                 resultHandler(newResultHandler()).
                 activator(() -> ctx.getModelControllerClient() != null).
                 executor(new OperationSpecialCommand(ctx, commandContext)).create());
@@ -373,6 +380,12 @@ class AeshCliConsole implements Console {
                 new AeshCommandLineParser<MapCommand>(
                         new LsMapCommand().getProcessedCommand(ctx))));
         clireg.addCommand(new Quit());
+
+        // try catch
+        clireg.addCommand(new TryCommand());
+        clireg.addCommand(new CatchCommand());
+        clireg.addCommand(new FinallyCommand());
+        clireg.addCommand(new EndTryCommand());
 
         // Add deprecated, for BWCompat only
         clireg.addCommand(new ClearBatch());
@@ -592,7 +605,7 @@ class AeshCliConsole implements Console {
                     interactive_connect = false;
                 }
                 startInteractiveConsole();
-            } catch (CommandLineException ex) {
+            } catch (CommandException ex) {
                 throw new CliInitializationException("Failed to connect to the controller", ex);
             }
         } else if (ctx.getConnectionInfo() == null) {
@@ -657,33 +670,80 @@ class AeshCliConsole implements Console {
         return commandRegistry;
     }
 
+    private StringBuilder lineBuffer;
+    private StringBuilder origLineBuffer;
+    private boolean connect;
+
     @Override
-    public void executeCommand(String command) throws CommandLineException {
+    public void executeCommand(String line) throws CommandException {
         interactive_execution = false;
+        commandException = null;
+        commandFailure = false;
         try {
+            if (line.isEmpty() || line.charAt(0) == '#') {
+                return; // ignore comments
+            }
+
+            int i = line.length() - 1;
+            while (i > 0 && line.charAt(i) <= ' ') {
+                if (line.charAt(--i) == '\\') {
+                    break;
+                }
+            }
+            String echoLine = line;
+            if (line.charAt(i) == '\\') {
+                if (lineBuffer == null) {
+                    lineBuffer = new StringBuilder();
+                    origLineBuffer = new StringBuilder();
+                }
+                lineBuffer.append(line, 0, i);
+                lineBuffer.append(' ');
+                origLineBuffer.append(line, 0, i);
+                origLineBuffer.append('\n');
+                return;
+            } else if (lineBuffer != null) {
+                lineBuffer.append(line);
+                origLineBuffer.append(line);
+                echoLine = origLineBuffer.toString();
+                line = lineBuffer.toString();
+                lineBuffer = null;
+            }
+
+            // XXX Bridged commands have no output...
+            if (echoCommand && !connect
+                    && !commandContext.getLegacyCommandContext().isWorkflowMode()) {
+                println(commandContext.getLegacyCommandContext().getPrompt() + echoLine);
+            }
+
             // Needed in case we have SSL/AUTH callback or any other user interaction
-            if (commandRegistry.isInteractive(command)) {
-                executeResync(command);
+            if (commandRegistry.isInteractive(line)) {
+                executeResync(line);
             } else {
-                execute(command);
+                execute(line);
             }
         } finally {
             interactive_execution = true;
+            commandException = null;
+            commandFailure = false;
         }
     }
 
     // Execute synchronous operation.
-    private void execute(String command) throws CommandLineException {
+    private void execute(String command) throws CommandException {
         if (!command.isEmpty() && command.charAt(0) != '#') {
             try {
                 console.getConsoleCallback().execute(new ConsoleOperation(ControlOperator.APPEND_OUT, command));
                 if (commandFailure) {
-                    CommandLineException ex;
+                    CommandException ex;
                     if (commandException != null) {
-                        ex = new CommandLineException("Failure executing " + command,
-                                commandException);
+                        if (commandException instanceof CommandException) {
+                            ex = (CommandException) commandException;
+                        } else {
+                            ex = new CommandException(commandException.getMessage(),
+                                    commandException);
+                        }
                     } else {
-                        ex = new CommandLineException("Failure executing " + command);
+                        ex = new CommandException("Failure executing " + command);
                     }
                     throw ex;
                 }
@@ -697,7 +757,7 @@ class AeshCliConsole implements Console {
     // Command that need to be executed in the AeshConsole thread.
     // This is a workaround for NPE if console started in same thread as prompting
     // (e.g:SSL, AUTH callbacks)
-    private void executeResync(String command) throws CommandLineException {
+    private void executeResync(String command) throws CommandException {
         need_resync = true;
         try {
             if (!console.isRunning()) {
@@ -708,12 +768,16 @@ class AeshCliConsole implements Console {
                 try {
                     wait();
                     if (commandFailure) {
-                        CommandLineException ex;
+                        CommandException ex;
                         if (commandException != null) {
-                            ex = new CommandLineException("Failure executing " + command,
-                                    commandException);
+                            if (commandException instanceof CommandException) {
+                                ex = (CommandException) commandException;
+                            } else {
+                                ex = new CommandException(commandException.getMessage(),
+                                        commandException);
+                            }
                         } else {
-                            ex = new CommandLineException("Failure executing " + command);
+                            ex = new CommandException("Failure executing " + command);
                         }
                         throw ex;
                     }
@@ -727,12 +791,17 @@ class AeshCliConsole implements Console {
         }
     }
 
-    private void connect() throws CommandLineException {
-        executeCommand("connect");
+    private void connect() throws CommandException {
+        try {
+            connect = true;
+            executeCommand("connect");
+        } finally {
+            connect = false;
+        }
     }
 
     @Override
-    public void process(List<String> commands, boolean connect) throws CommandLineException {
+    public void process(List<String> commands, boolean connect) throws CommandException {
         processNonInteractive(() -> {
             for (String command : commands) {
                 executeCommand(command);
@@ -756,7 +825,7 @@ class AeshCliConsole implements Console {
         }
     }
 
-    private void processNonInteractive(CommandProcessor processor, boolean connect) throws CommandLineException {
+    private void processNonInteractive(CommandProcessor processor, boolean connect) throws CommandException {
         if (connect) {
             connect();
         }
@@ -769,7 +838,7 @@ class AeshCliConsole implements Console {
     }
 
     @Override
-    public void processFile(File file, boolean connect) throws CommandLineException {
+    public void processFile(File file, boolean connect) throws CommandException {
         processNonInteractive(() -> {
             BufferedReader reader = null;
             try {

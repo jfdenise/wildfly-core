@@ -21,9 +21,26 @@
  */
 package org.jboss.as.cli.aesh.activator;
 
-public class BatchActivator extends DefaultActivator {
+import org.wildfly.core.cli.command.CliCommandActivator;
+import org.wildfly.core.cli.command.CliCommandContext;
+
+/**
+ *
+ * @author jfdenise
+ */
+public abstract class DefaultActivator implements CliCommandActivator {
+     private CliCommandContext ctx;
+
+    protected DefaultActivator() {
+    }
+
     @Override
-    public boolean isActivated() {
-        return getCommandContext().getLegacyCommandContext().isBatchMode();
+    public void setCommandContext(CliCommandContext commandContext) {
+        this.ctx = commandContext;
+    }
+
+    @Override
+    public CliCommandContext getCommandContext() {
+        return ctx;
     }
 }

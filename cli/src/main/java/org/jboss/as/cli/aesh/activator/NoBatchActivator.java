@@ -21,28 +21,10 @@
  */
 package org.jboss.as.cli.aesh.activator;
 
-import org.wildfly.core.cli.command.CliCommandActivator;
-import org.wildfly.core.cli.command.CliCommandContext;
-
-public class NoBatchActivator implements CliCommandActivator {
-
-    private CliCommandContext ctx;
-
-    public NoBatchActivator() {
-    }
+public class NoBatchActivator extends DefaultActivator {
 
     @Override
     public boolean isActivated() {
-        return !ctx.getLegacyCommandContext().isBatchMode();
-    }
-
-    @Override
-    public void setCommandContext(CliCommandContext commandContext) {
-        this.ctx = commandContext;
-    }
-
-    @Override
-    public CliCommandContext getCommandContext() {
-        return ctx;
+        return !getCommandContext().getLegacyCommandContext().isBatchMode();
     }
 }

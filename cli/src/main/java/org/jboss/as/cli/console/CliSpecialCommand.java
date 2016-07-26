@@ -246,7 +246,7 @@ public class CliSpecialCommand {
     }
 
     private final CommandContext commandContext;
-    private final CliSpecialCommandContainer container;
+    private final CommandContainer container;
     private final CliSpecialExecutor executor;
     private final CliResultHandler handler;
     private final CommandActivator activator;
@@ -255,13 +255,14 @@ public class CliSpecialCommand {
             CommandActivator activator,
             CliSpecialExecutor executor,
             CommandContext commandContext,
-            CliResultHandler handler)
+            CliResultHandler handler,
+            CliCommandRegistry registry)
             throws CommandLineParserException {
         this.commandContext = commandContext;
         this.executor = executor;
         this.handler = handler;
         this.activator = activator;
-        container = new CliSpecialCommandContainer(name);
+        container = registry.wrapContainer(new CliSpecialCommandContainer(name));
     }
 
     public CommandContainer commandFor(String line) {

@@ -75,7 +75,7 @@ public class BatchCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("batch"));
-            return null;
+            return CommandResult.SUCCESS;
         }
         if (commandInvocation.getCommandContext().
                 getLegacyCommandContext().getBatchManager().isBatchActive()) {

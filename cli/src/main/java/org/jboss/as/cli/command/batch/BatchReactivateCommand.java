@@ -59,7 +59,7 @@ public class BatchReactivateCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println("Aesh should have hooks for help!");
-            return null;
+            return CommandResult.SUCCESS;
         }
         return handle(commandInvocation, name);
     }
@@ -94,7 +94,7 @@ public class BatchReactivateCommand implements Command<CliCommandInvocation> {
             throw new CommandException("'" + name
                     + "' not found among the held back batches.");
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     private class BatchNameCompleter implements OptionCompleter<CliCompleterInvocation> {

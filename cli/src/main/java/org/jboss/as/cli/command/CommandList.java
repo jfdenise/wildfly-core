@@ -51,6 +51,6 @@ public class CommandList implements Command<CliCommandInvocation> {
 
         CliCommandRegistry reg = (CliCommandRegistry) commandInvocation.getCommandRegistry();
         commandInvocation.printColumns(reg.getRemovableGenericCommandNames());
-        return null;
+        return CommandResult.SUCCESS;
     }
 }

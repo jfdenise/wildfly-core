@@ -39,6 +39,8 @@ class CliSpecialCommandBuilder {
     private CliSpecialExecutor executor;
     private CommandActivator activator;
     private CliResultHandler handler;
+    private CliCommandRegistry commandRegistry;
+
     CliSpecialCommandBuilder name(String name) {
         this.name = name;
         return this;
@@ -64,12 +66,19 @@ class CliSpecialCommandBuilder {
         return this;
     }
 
+    public CliSpecialCommandBuilder registry(CliCommandRegistry commandRegistry) {
+        this.commandRegistry = commandRegistry;
+        return this;
+    }
+
     public CliSpecialCommand create() throws CommandLineParserException {
         Objects.requireNonNull(name);
         Objects.requireNonNull(commandContext);
         Objects.requireNonNull(executor);
+        Objects.requireNonNull(commandRegistry);
 
-        return new CliSpecialCommand(name, activator, executor, commandContext, handler);
+        return new CliSpecialCommand(name, activator, executor,
+                commandContext, handler, commandRegistry);
     }
 
 }

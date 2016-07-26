@@ -60,7 +60,7 @@ public class BatchLoadFileCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println("Aesh should have hooks for help!");
-            return null;
+            return CommandResult.SUCCESS;
         }
         if (commandInvocation.getCommandContext().getLegacyCommandContext().
                 getBatchManager().isBatchActive()) {
@@ -117,6 +117,6 @@ public class BatchLoadFileCommand implements Command<CliCommandInvocation> {
                 }
             }
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 }

@@ -21,6 +21,7 @@
  */
 package org.wildfly.core.cli.command;
 
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
@@ -46,5 +47,9 @@ public interface CliCommandContext {
     void setCurrentNodePath(OperationRequestAddress get);
 
     boolean isConnected();
+
+    void executeCommand(String line) throws CommandException;
+
+    void registerRedirection(CommandRedirection redirection) throws CommandException;
 
 }

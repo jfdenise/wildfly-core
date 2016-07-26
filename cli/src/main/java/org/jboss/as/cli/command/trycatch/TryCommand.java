@@ -19,57 +19,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command.batch;
+package org.jboss.as.cli.command.trycatch;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import org.jboss.aesh.cl.GroupCommandDefinition;
+import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.as.cli.aesh.activator.BatchActivator;
+import org.jboss.as.cli.batch.BatchManager;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "list", description = "", activator = BatchActivator.class)
-public class BatchListCommand implements Command<CliCommandInvocation> {
+@CommandDefinition(name = "try", description = "", activator = TryActivator.class)
+public class TryCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Option(hasValue = false)
     private boolean help;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println("Aesh should have hooks for help!");
+            commandInvocation.println(commandInvocation.getHelpInfo("try"));
             return CommandResult.SUCCESS;
         }
-
-        return handle(commandInvocation);
-
-    }
-
-    public static CommandResult handle(CliCommandInvocation commandInvocation) {
-        final Set<String> heldbackNames = commandInvocation.
-                getCommandContext().getLegacyCommandContext().
-                getBatchManager().getHeldbackNames();
-        if (!heldbackNames.isEmpty()) {
-            List<String> names = new ArrayList<>(heldbackNames.size());
-            for (String heldbackName : heldbackNames) {
-                names.add(heldbackName == null ? "<unnamed>" : heldbackName);
-            }
-            Collections.sort(names);
-            for (String heldbackName : names) {
-                commandInvocation.getShell().out().println(heldbackName);
-            }
+        final BatchManager batchManager = commandInvocation.getCommandContext().
+                getLegacyCommandContext().getBatchManager();
+        if (batchManager.isBatchActive()) {
+            throw new CommandException("try is not allowed while in batch mode.");
         }
-        return null;
+        if (TryCatchFinallyRedirection.get(commandInvocation.getCommandContext().getLegacyCommandContext()) != null) {
+            throw new CommandException("try is not allowed while in try mode.");
+        }
+        commandInvocation.getCommandContext().
+                registerRedirection(new TryCatchFinallyRedirection(commandInvocation.getCommandContext()));
+        return CommandResult.SUCCESS;
     }
-
 }

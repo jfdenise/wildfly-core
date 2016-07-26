@@ -86,13 +86,17 @@ public class CliCommandRegistry implements CommandRegistry {
                     getProcessedCommand().getName(), container);
         }
         try {
-            cliContainer = new CliCommandContainer(console,
-                    context, commandContext,
-                    container, console.newResultHandler());
+            cliContainer = wrapContainer(container);
         } catch (OptionParserException ex) {
             throw new CommandLineException(ex);
         }
         reg.addCommand(cliContainer);
+    }
+
+    CliCommandContainer wrapContainer(CommandContainer commandContainer) throws OptionParserException {
+        return new CliCommandContainer(console,
+                context, commandContext,
+                commandContainer, console.newResultHandler());
     }
 
     public boolean isInteractive(String command) {
@@ -185,6 +189,7 @@ public class CliCommandRegistry implements CommandRegistry {
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
                     activator(() -> handler.isAvailable(context)).
+                    registry(this).
                     executor(bridge).resultHandler(console.newResultHandler()).create();
             addCommandContainer(cmd.getCommandContainer());
             legacyHandlers.put(n, cmd);

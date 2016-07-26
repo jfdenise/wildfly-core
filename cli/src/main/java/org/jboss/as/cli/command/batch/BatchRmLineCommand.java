@@ -57,7 +57,7 @@ public class BatchRmLineCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println("Aesh should have hooks for help!");
-            return null;
+            return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.getCommandContext().
                 getLegacyCommandContext();
@@ -86,7 +86,7 @@ public class BatchRmLineCommand implements Command<CliCommandInvocation> {
         }
 
         batch.remove(l - 1);
-        return null;
+        return CommandResult.SUCCESS;
     }
 
 }

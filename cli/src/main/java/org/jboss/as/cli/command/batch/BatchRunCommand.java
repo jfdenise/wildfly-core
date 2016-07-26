@@ -67,7 +67,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println("Aesh should have hooks for help!");
-            return null;
+            return CommandResult.SUCCESS;
         }
         boolean failed = false;
         ModelNode response;
@@ -109,7 +109,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
             commandInvocation.getShell().out().println("The batch executed successfully");
             CommandUtil.displayResponseHeaders(commandInvocation.getShell(), response);
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     public ModelNode newRequest(CommandContext context) throws CommandLineException {

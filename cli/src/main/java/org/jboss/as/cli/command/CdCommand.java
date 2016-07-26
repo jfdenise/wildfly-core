@@ -81,7 +81,7 @@ public class CdCommand implements Command<CliCommandInvocation> {
             }
             commandInvocation.getCommandContext().setCurrentNodePath(arguments.get(0));
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     public static void assertValid(CommandContext ctx, OperationRequestAddress addr) throws CommandLineException {

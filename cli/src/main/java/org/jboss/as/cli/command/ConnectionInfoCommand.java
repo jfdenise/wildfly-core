@@ -35,7 +35,7 @@ public class ConnectionInfoCommand implements Command<CliCommandInvocation> {
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         printConnectionInfo(commandInvocation);
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     private void printConnectionInfo(CliCommandInvocation commandInvocation) {
