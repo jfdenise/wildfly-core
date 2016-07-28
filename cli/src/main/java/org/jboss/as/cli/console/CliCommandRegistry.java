@@ -86,7 +86,11 @@ public class CliCommandRegistry implements CommandRegistry {
                     getProcessedCommand().getName(), container);
         }
         try {
-            cliContainer = wrapContainer(container);
+            if (container instanceof CliCommandContainer) {
+                cliContainer = (CliCommandContainer) container;
+            } else {
+                cliContainer = wrapContainer(container);
+            }
         } catch (OptionParserException ex) {
             throw new CommandLineException(ex);
         }

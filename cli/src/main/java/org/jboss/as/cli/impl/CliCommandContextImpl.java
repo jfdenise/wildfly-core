@@ -154,6 +154,7 @@ public class CliCommandContextImpl implements CliCommandContext {
         redirection.set(registration);
     }
 
+    @Override
     public CommandRedirection getCommandRedirection() {
         if (registration != null) {
             return registration.getRedirection();

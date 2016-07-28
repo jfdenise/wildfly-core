@@ -22,6 +22,7 @@
 package org.jboss.as.cli.command.trycatch;
 
 import org.jboss.as.cli.aesh.activator.ConnectedActivator;
+import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  *
@@ -31,7 +32,8 @@ public class TryActivator extends ConnectedActivator {
 
     @Override
     public boolean isActivated() {
-        if (TryCatchFinallyRedirection.get(getCommandContext().getLegacyCommandContext()) != null
+        CommandRedirection flow = getCommandContext().getCommandRedirection();
+        if (flow instanceof TryCatchFinallyRedirection
                 || getCommandContext().getLegacyCommandContext().getBatchManager().isBatchActive()) {
             return false;
         }

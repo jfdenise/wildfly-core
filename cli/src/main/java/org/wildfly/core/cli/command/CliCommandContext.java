@@ -52,4 +52,5 @@ public interface CliCommandContext {
 
     void registerRedirection(CommandRedirection redirection) throws CommandException;
 
+    CommandRedirection getCommandRedirection();
 }

@@ -22,6 +22,7 @@
 package org.jboss.as.cli.command.trycatch;
 
 import org.jboss.as.cli.aesh.activator.DefaultActivator;
+import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  *
@@ -31,8 +32,10 @@ public class FinallyActivator extends DefaultActivator {
 
     @Override
     public boolean isActivated() {
-        final TryCatchFinallyRedirection flow
-                = TryCatchFinallyRedirection.get(getCommandContext().getLegacyCommandContext());
-        return flow != null && !flow.isInFinally();
+        CommandRedirection flow = getCommandContext().getCommandRedirection();
+        if (flow instanceof TryCatchFinallyRedirection) {
+            return !((TryCatchFinallyRedirection) flow).isInFinally();
+        }
+        return false;
     }
 }

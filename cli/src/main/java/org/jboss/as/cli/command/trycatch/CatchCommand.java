@@ -27,6 +27,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  *
@@ -45,9 +46,12 @@ public class CatchCommand implements Command<CliCommandInvocation> {
             commandInvocation.println(commandInvocation.getHelpInfo("catch"));
             return CommandResult.SUCCESS;
         }
-        final TryCatchFinallyRedirection flow
-                = TryCatchFinallyRedirection.get(commandInvocation.getCommandContext().getLegacyCommandContext());
-        if (flow == null) {
+        CommandRedirection redirection = commandInvocation.getCommandContext().getCommandRedirection();
+
+        TryCatchFinallyRedirection flow = null;
+        if (redirection instanceof TryCatchFinallyRedirection) {
+            flow = (TryCatchFinallyRedirection) redirection;
+        } else {
             throw new CommandException("catch is available only in try-catch-finally control flow");
         }
         if (flow.isInTry()) {

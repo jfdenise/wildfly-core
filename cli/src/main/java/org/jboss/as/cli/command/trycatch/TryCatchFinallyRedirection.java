@@ -26,8 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.parser.AeshLine;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandContext.Scope;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -41,26 +39,24 @@ import org.wildfly.core.cli.command.CommandRedirection;
  *
  * @author jfdenise
  */
-class TryCatchFinallyRedirection implements CommandRedirection {
+class TryCatchFinallyRedirection extends CommandRedirection {
     private static final String CTX_KEY = "TRY";
 
     private static final int IN_TRY = 0;
     private static final int IN_CATCH = 1;
     private static final int IN_FINALLY = 2;
 
-    static TryCatchFinallyRedirection get(CommandContext ctx) {
-        return (TryCatchFinallyRedirection) ctx.get(Scope.CONTEXT, CTX_KEY);
-    }
+//    static TryCatchFinallyRedirection get(CommandContext ctx) {
+//        return (TryCatchFinallyRedirection) ctx.get(Scope.CONTEXT, CTX_KEY);
+//    }
 
     private List<String> tryList;
     private List<String> catchList;
     private List<String> finallyList;
     private int state;
 
-    private Registration registration;
-
     TryCatchFinallyRedirection(CliCommandContext ctx) {
-        ctx.getLegacyCommandContext().set(Scope.CONTEXT, CTX_KEY, this);
+        // ctx.getLegacyCommandContext().set(Scope.CONTEXT, CTX_KEY, this);
     }
 
     @Override
@@ -147,7 +143,7 @@ class TryCatchFinallyRedirection implements CommandRedirection {
                 throw new CommandException("The connection to the controller has not been established.");
             }
 
-            registration.unregister();
+            getRegistration().unregister();
 
             CommandException error = null;
 
@@ -179,10 +175,10 @@ class TryCatchFinallyRedirection implements CommandRedirection {
                 throw error;
             }
         } finally {
-            if (registration.isActive()) {
-                registration.unregister();
+            if (getRegistration().isActive()) {
+                getRegistration().unregister();
             }
-            ctx.getLegacyCommandContext().remove(Scope.CONTEXT, CTX_KEY);
+            //ctx.getLegacyCommandContext().remove(Scope.CONTEXT, CTX_KEY);
         }
     }
 
@@ -202,10 +198,5 @@ class TryCatchFinallyRedirection implements CommandRedirection {
                 }
             }
         }
-    }
-
-    @Override
-    public void set(Registration registration) {
-        this.registration = registration;
     }
 }

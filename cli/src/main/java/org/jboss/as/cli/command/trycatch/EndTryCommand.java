@@ -27,6 +27,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  *
@@ -45,13 +46,16 @@ public class EndTryCommand implements Command<CliCommandInvocation> {
             commandInvocation.println(commandInvocation.getHelpInfo("end-try"));
             return CommandResult.SUCCESS;
         }
-        final TryCatchFinallyRedirection flow
-                = TryCatchFinallyRedirection.get(commandInvocation.getCommandContext().getLegacyCommandContext());
-        if (flow == null) {
-            throw new CommandException("end-if may appear only at the end of try-catch-finally control flow");
+        CommandRedirection redirection = commandInvocation.getCommandContext().getCommandRedirection();
+        TryCatchFinallyRedirection flow = null;
+        if (redirection instanceof TryCatchFinallyRedirection) {
+            flow = (TryCatchFinallyRedirection) redirection;
+        } else {
+            throw new CommandException("end-try may appear only at the end of try-catch-finally control flow");
         }
+
         if (flow.isInTry()) {
-            throw new CommandException("end-if may appear only after catch or finally");
+            throw new CommandException("end-try may appear only after catch or finally");
         }
         flow.run(commandInvocation.getCommandContext());
         return CommandResult.SUCCESS;

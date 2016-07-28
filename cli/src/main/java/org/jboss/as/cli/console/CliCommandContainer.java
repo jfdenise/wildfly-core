@@ -204,14 +204,24 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             throws CommandLineParserException, OptionValidatorException,
             CommandValidatorException, CommandException, InterruptedException {
         try {
+            // New redirection API.
             CommandRedirection redirection = commandContext.getCommandRedirection();
             if (redirection != null && redirectionDepth == 0) {
+                // RedirectionDepth allows redirection to executeCommands directly
+                // and not to loop in itself.
+                // For example, try redirection executing catch command
                 redirectionDepth += 1;
                 try {
                     redirection.handle(commandContext, line);
                 } finally {
                     redirectionDepth--;
                 }
+                return new CommandContainerResult(null, CommandResult.SUCCESS);
+            }
+
+            // Compatibility with legacy redirection
+            if (commandContext.getLegacyCommandContext().isWorkflowMode()) {
+                commandContext.getLegacyCommandContext().handle(line.getOriginalInput());
                 return new CommandContainerResult(null, CommandResult.SUCCESS);
             }
 

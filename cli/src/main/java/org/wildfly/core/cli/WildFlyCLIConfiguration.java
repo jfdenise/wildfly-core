@@ -105,6 +105,11 @@ public interface WildFlyCLIConfiguration {
             builder.setErrorOnInteract(errorOnInteract);
             return this;
         }
+
+        public Builder setEchoCommand(boolean echoCommand) {
+            builder.setEchoCommand(echoCommand);
+            return this;
+        }
     }
 
     String getController();
@@ -126,4 +131,6 @@ public interface WildFlyCLIConfiguration {
     boolean isSilent();
 
     Boolean isErrorOnInteract();
+
+    boolean isEchoCommand();
 }

@@ -9,9 +9,11 @@ import org.jboss.aesh.parser.AeshLine;
  *
  * @author jdenise
  */
-public interface CommandRedirection {
+public abstract class CommandRedirection {
 
-    interface Registration {
+    private Registration registration;
+
+    public interface Registration {
 
         boolean isActive();
 
@@ -20,9 +22,9 @@ public interface CommandRedirection {
         CommandRedirection getRedirection();
     }
 
-    List<String> getRedirectionCommands();
+    public abstract List<String> getRedirectionCommands();
 
-    default void handle(CliCommandContext ctx, AeshLine line) throws CommandException {
+    public void handle(CliCommandContext ctx, AeshLine line) throws CommandException {
         if (getRedirectionCommands().contains(line.getWords().get(0))
                 || line.getWords().contains("--help")
                 || line.getWords().contains("-h")) {
@@ -32,7 +34,13 @@ public interface CommandRedirection {
         addCommand(ctx, line);
     }
 
-    void addCommand(CliCommandContext ctx, AeshLine line);
+    public abstract void addCommand(CliCommandContext ctx, AeshLine line);
 
-    void set(Registration registration);
+    public void set(Registration registration) {
+        this.registration = registration;
+    }
+
+    public Registration getRegistration() {
+        return registration;
+    }
 }

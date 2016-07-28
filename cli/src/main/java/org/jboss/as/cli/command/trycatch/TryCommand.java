@@ -28,6 +28,7 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.batch.BatchManager;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  *
@@ -51,7 +52,9 @@ public class TryCommand implements Command<CliCommandInvocation> {
         if (batchManager.isBatchActive()) {
             throw new CommandException("try is not allowed while in batch mode.");
         }
-        if (TryCatchFinallyRedirection.get(commandInvocation.getCommandContext().getLegacyCommandContext()) != null) {
+        CommandRedirection redirection = commandInvocation.getCommandContext().getCommandRedirection();
+        TryCatchFinallyRedirection flow = null;
+        if (redirection instanceof TryCatchFinallyRedirection) {
             throw new CommandException("try is not allowed while in try mode.");
         }
         commandInvocation.getCommandContext().
