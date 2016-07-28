@@ -44,7 +44,7 @@ public class CliLegacyDMRCommandBridge extends CliLegacyCommandBridge implements
     private final CommandContext ctx;
     public CliLegacyDMRCommandBridge(String name,
             CommandContext ctx, CliCommandContextImpl commandContext, OperationCommand handler) throws CommandLineParserException {
-        super(name, ctx);
+        super(name, commandContext);
         this.handler = handler;
         this.commandContext = commandContext;
         this.ctx = ctx;

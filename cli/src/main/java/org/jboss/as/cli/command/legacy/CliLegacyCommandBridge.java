@@ -11,8 +11,11 @@ import org.jboss.aesh.cl.result.NullResultHandler;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
+import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 
 /**
  * A Class to bridge legacy CommandHandler with Aesh Command.
@@ -25,16 +28,17 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
     public CommandContainerResult execute(CommandContext commandContext,
             String originalInput) throws CommandLineException {
 
-        ctx.handle(originalInput);
+        commandContext.handle(originalInput);
 
         return new CommandContainerResult(new NullResultHandler(),
                 CommandResult.SUCCESS);
     }
 
-    private final CommandContext ctx;
+    private final CliCommandContextImpl ctx;
     private final String name;
+    private final DefaultCallbackHandler line = new DefaultCallbackHandler(false);
 
-    public CliLegacyCommandBridge(String name, CommandContext ctx)
+    public CliLegacyCommandBridge(String name, CliCommandContextImpl ctx)
             throws CommandLineParserException {
         this.ctx = ctx;
         this.name = name;
@@ -42,8 +46,18 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
 
     @Override
     public int complete(CommandContext commandContext, String buffer, int i, List<String> candidates) {
-        return ctx.getDefaultCommandCompleter().complete(ctx,
-                buffer, 0, candidates);
+        line.reset();
+        try {
+            line.parse(ctx.getLegacyCommandContext().getCurrentNodePath(),
+                    buffer, ctx.getLegacyCommandContext());
+        } catch (CommandFormatException ex) {
+            // XXX OK, no completion.
+            return -1;
+        }
+        ctx.setParsedCommandLine(line);
+        return ctx.getLegacyCommandContext().getDefaultCommandCompleter().
+                complete(ctx.getLegacyCommandContext(),
+                        buffer, buffer.length(), candidates);
     }
 
     @Override

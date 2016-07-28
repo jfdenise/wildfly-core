@@ -185,7 +185,7 @@ public class CliCommandRegistry implements CommandRegistry {
                 }
             } else {
                 bridge = new CliLegacyCommandBridge(n,
-                        context);
+                        commandContext);
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
                     activator(() -> handler.isAvailable(context)).
