@@ -92,6 +92,9 @@ import org.jboss.as.cli.command.compat.RemoveLineBatch;
 import org.jboss.as.cli.command.compat.RunBatch;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.jboss.as.cli.command.generic.NodeType;
+import org.jboss.as.cli.command.ifelse.ElseCommand;
+import org.jboss.as.cli.command.ifelse.EndIfCommand;
+import org.jboss.as.cli.command.ifelse.IfCommand;
 import org.jboss.as.cli.command.operation.OperationSpecialCommand;
 import org.jboss.as.cli.command.trycatch.CatchCommand;
 import org.jboss.as.cli.command.trycatch.EndTryCommand;
@@ -386,6 +389,11 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new CatchCommand());
         clireg.addCommand(new FinallyCommand());
         clireg.addCommand(new EndTryCommand());
+
+        // if
+        clireg.addCommand(new IfCommand());
+        clireg.addCommand(new ElseCommand());
+        clireg.addCommand(new EndIfCommand());
 
         // Add deprecated, for BWCompat only
         clireg.addCommand(new ClearBatch());

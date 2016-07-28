@@ -220,8 +220,10 @@ public class ConditionArgument extends ArgumentWithValue {
             return null;
         }
 
-        //System.out.println("PARSING '" + value + "'");
+        return resolveOperation(value);
+    }
 
+    public Operation resolveOperation(String value) throws CommandFormatException {
         final ConditionOperationCallback callback = new ConditionOperationCallback();
         StateParser.parse(value, callback, initialState);
         return callback.expr.getExpression();

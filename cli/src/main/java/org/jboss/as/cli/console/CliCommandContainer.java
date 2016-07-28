@@ -204,6 +204,12 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             throws CommandLineParserException, OptionValidatorException,
             CommandValidatorException, CommandException, InterruptedException {
         try {
+            // Compatibility with legacy redirection
+            if (commandContext.getLegacyCommandContext().isWorkflowMode()) {
+                commandContext.getLegacyCommandContext().handle(line.getOriginalInput());
+                return new CommandContainerResult(null, CommandResult.SUCCESS);
+            }
+
             // New redirection API.
             CommandRedirection redirection = commandContext.getCommandRedirection();
             if (redirection != null && redirectionDepth == 0) {
@@ -216,12 +222,6 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
                 } finally {
                     redirectionDepth--;
                 }
-                return new CommandContainerResult(null, CommandResult.SUCCESS);
-            }
-
-            // Compatibility with legacy redirection
-            if (commandContext.getLegacyCommandContext().isWorkflowMode()) {
-                commandContext.getLegacyCommandContext().handle(line.getOriginalInput());
                 return new CommandContainerResult(null, CommandResult.SUCCESS);
             }
 
