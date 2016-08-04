@@ -21,6 +21,8 @@
  */
 package org.jboss.as.cli.aesh.activator;
 
+import org.jboss.aesh.cl.internal.ProcessedCommand;
+
 /**
  *
  * @author jdenise@redhat.com
@@ -28,7 +30,7 @@ package org.jboss.as.cli.aesh.activator;
 public class ConnectedActivator extends DefaultActivator {
 
     @Override
-    public boolean isActivated() {
+    public boolean isActivated(ProcessedCommand cmd) {
         return getCommandContext().isConnected();
     }
 }

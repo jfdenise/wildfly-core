@@ -31,7 +31,6 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.aesh.activator.CompatActivator;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -39,7 +38,7 @@ import org.jboss.as.cli.command.batch.BatchRunFileCommand;
 import org.jboss.dmr.ModelNode;
 
 @Deprecated
-@GroupCommandDefinition(name = "run-batch", description = "", activator = CompatActivator.class)
+@GroupCommandDefinition(name = "run-batch", description = "", activator = CompatNoBatchActivator.class)
 public class RunBatch extends BatchRunFileCommand {
 
     @Override

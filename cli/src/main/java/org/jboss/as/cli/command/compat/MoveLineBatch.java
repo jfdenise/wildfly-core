@@ -22,10 +22,9 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.as.cli.aesh.activator.CompatActivator;
 import org.jboss.as.cli.command.batch.BatchMvLineCommand;
 
 @Deprecated
-@GroupCommandDefinition(name = "move-batch-line", description = "", activator = CompatActivator.class)
+@GroupCommandDefinition(name = "move-batch-line", description = "", activator = CompatBatchActivator.class)
 public class MoveLineBatch extends BatchMvLineCommand {
 }

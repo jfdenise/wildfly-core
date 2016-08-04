@@ -29,6 +29,7 @@ import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.GroupCommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.cl.completer.OptionCompleter;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
@@ -144,7 +145,7 @@ public class BatchReactivateCommand implements Command<CliCommandInvocation> {
         }
 
         @Override
-        public boolean isActivated() {
+        public boolean isActivated(ProcessedCommand cmd) {
             return !ctx.getLegacyCommandContext().isBatchMode()
                     && !ctx.getLegacyCommandContext().getBatchManager().getHeldbackNames().isEmpty();
         }

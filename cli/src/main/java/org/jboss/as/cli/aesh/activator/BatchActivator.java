@@ -21,9 +21,11 @@
  */
 package org.jboss.as.cli.aesh.activator;
 
+import org.jboss.aesh.cl.internal.ProcessedCommand;
+
 public class BatchActivator extends DefaultActivator {
     @Override
-    public boolean isActivated() {
+    public boolean isActivated(ProcessedCommand cmd) {
         return getCommandContext().getLegacyCommandContext().isBatchMode();
     }
 }

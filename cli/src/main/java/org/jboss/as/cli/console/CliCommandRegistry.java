@@ -192,7 +192,7 @@ public class CliCommandRegistry implements CommandRegistry {
                         commandContext);
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
-                    activator(() -> handler.isAvailable(context)).
+                    activator((c) -> handler.isAvailable(context)).
                     registry(this).
                     executor(bridge).resultHandler(console.newResultHandler()).create();
             addCommandContainer(cmd.getCommandContainer());

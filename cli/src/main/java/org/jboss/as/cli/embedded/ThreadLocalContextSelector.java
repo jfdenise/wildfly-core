@@ -33,14 +33,14 @@ import org.jboss.stdio.StdioContextSelector;
  *
  * @author Brian Stansberry (c) 2015 Red Hat Inc.
  */
-class ThreadLocalContextSelector implements LogContextSelector, StdioContextSelector {
+public class ThreadLocalContextSelector implements LogContextSelector, StdioContextSelector {
 
     private final InheritableThreadLocal<Contexts> threadLocal = new InheritableThreadLocal<>();
 
     private final Contexts localContexts;
     private final Contexts defaultContexts;
 
-    ThreadLocalContextSelector(Contexts local, Contexts defaults) {
+    public ThreadLocalContextSelector(Contexts local, Contexts defaults) {
         assert local != null;
         assert local.getLogContext() != null; // local.stdioContext can be null
         assert defaults != null;
@@ -50,13 +50,13 @@ class ThreadLocalContextSelector implements LogContextSelector, StdioContextSele
         this.defaultContexts = defaults;
     }
 
-    Contexts pushLocal() {
+    public Contexts pushLocal() {
         Contexts result = threadLocal.get();
         threadLocal.set(localContexts);
         return result;
     }
 
-    void restore(Contexts toRestore) {
+    public void restore(Contexts toRestore) {
         threadLocal.set(toRestore);
     }
 

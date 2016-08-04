@@ -33,14 +33,14 @@ import org.wildfly.security.manager.WildFlySecurityManager;
  *
  * @author Brian Stansberry (c) 2015 Red Hat Inc.
  */
-class EnvironmentRestorer {
+public class EnvironmentRestorer {
 
     private final String jbossHome = WildFlySecurityManager.getPropertyPrivileged("jboss.home.dir", null);
     private final String bootLog = WildFlySecurityManager.getPropertyPrivileged("org.jboss.boot.log.file", null);
     private final Contexts defaultContexts = new Contexts(LogContext.getLogContext(), StdioContext.getStdioContext());
     private boolean logContextSelectorRestored;
 
-    Contexts getDefaultContexts() {
+    public Contexts getDefaultContexts() {
         return defaultContexts;
     }
 
@@ -62,7 +62,7 @@ class EnvironmentRestorer {
         }
     }
 
-    void restoreEnvironment() {
+    public void restoreEnvironment() {
         if (jbossHome == null) {
             WildFlySecurityManager.clearPropertyPrivileged("jboss.home.dir");
         } else {

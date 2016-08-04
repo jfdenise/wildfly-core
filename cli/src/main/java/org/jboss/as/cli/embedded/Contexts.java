@@ -31,12 +31,12 @@ import org.jboss.stdio.StdioContext;
  *
  * @author Brian Stansberry (c) 2015 Red Hat Inc.
  */
-class Contexts {
+public class Contexts {
 
     private final LogContext logContext;
     private final StdioContext stdioContext;
 
-    Contexts(LogContext logContext, StdioContext stdioContext) {
+    public Contexts(LogContext logContext, StdioContext stdioContext) {
         this.logContext = logContext;
         this.stdioContext = stdioContext;
     }
@@ -45,7 +45,7 @@ class Contexts {
         return logContext;
     }
 
-    StdioContext getStdioContext() {
+    public StdioContext getStdioContext() {
         return stdioContext;
     }
 }

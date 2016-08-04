@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.command.trycatch;
 
+import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.as.cli.aesh.activator.DefaultActivator;
 import org.wildfly.core.cli.command.CommandRedirection;
 
@@ -31,7 +32,7 @@ import org.wildfly.core.cli.command.CommandRedirection;
 public class CatchActivator extends DefaultActivator {
 
     @Override
-    public boolean isActivated() {
+    public boolean isActivated(ProcessedCommand cmd) {
         CommandRedirection flow = getCommandContext().getCommandRedirection();
         if (flow instanceof TryCatchFinallyRedirection) {
             return ((TryCatchFinallyRedirection) flow).isInTry();

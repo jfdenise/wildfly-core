@@ -266,6 +266,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
     private AuthenticationCallbackHandler cbh;
 
+    private final AtomicReference<EmbeddedProcessLaunch> embeddedServerLaunch = new AtomicReference<>();
+
     /**
      * Version mode - only used when --version is called from the command line.
      *
@@ -441,7 +443,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         // supported but hidden from tab-completion until stable implementation
         cmdRegistry.registerHandler(new ArchiveHandler(this), false, "archive");
 
-        final AtomicReference<EmbeddedProcessLaunch> embeddedServerLaunch = EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(cmdRegistry, this);
+        EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(cmdRegistry, this, embeddedServerLaunch);
         cmdRegistry.registerHandler(new ReloadHandler(this, embeddedServerLaunch), "reload");
         cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
         registerExtraHandlers();
@@ -1563,5 +1565,11 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } else {
             throw new CommandLineException("Not an operation");
         }
+    }
+
+    // This is required in order to share the server reference between the legacy commands
+    // This could be removed when the legacy commands are removed.
+    public AtomicReference<EmbeddedProcessLaunch> getEmbeddedServerReference() {
+        return embeddedServerLaunch;
     }
 }

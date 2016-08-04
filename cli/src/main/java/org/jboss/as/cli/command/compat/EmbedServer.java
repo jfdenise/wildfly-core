@@ -19,20 +19,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command.ifelse;
+package org.jboss.as.cli.command.compat;
 
-import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.as.cli.aesh.activator.ConnectedActivator;
+import java.util.concurrent.atomic.AtomicReference;
+import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.as.cli.command.embedded.EmbedServerCommand;
+import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class IfActivator extends ConnectedActivator {
+@Deprecated
+@CommandDefinition(name = "embed-server", description = "", activator = CompatEmbedServerActivator.class)
+public class EmbedServer extends EmbedServerCommand {
 
-    @Override
-    public boolean isActivated(ProcessedCommand cmd) {
-        return getCommandContext().getCommandRedirection() == null
-                && getCommandContext().getLegacyCommandContext().getBatchManager().isBatchActive();
+    public EmbedServer(AtomicReference<EmbeddedProcessLaunch> serverReference, boolean modular) {
+        super(serverReference, modular);
     }
 }

@@ -36,13 +36,13 @@ public class EmbeddedProcessLaunch {
     private final EnvironmentRestorer restorer;
     private final boolean hostController;
 
-    EmbeddedProcessLaunch(EmbeddedManagedProcess process, EnvironmentRestorer restorer, boolean hostController) {
+    public EmbeddedProcessLaunch(EmbeddedManagedProcess process, EnvironmentRestorer restorer, boolean hostController) {
         this.process = process;
         this.restorer = restorer;
         this.hostController = hostController;
     }
 
-    EnvironmentRestorer getEnvironmentRestorer() {
+    public EnvironmentRestorer getEnvironmentRestorer() {
         return restorer;
     }
 

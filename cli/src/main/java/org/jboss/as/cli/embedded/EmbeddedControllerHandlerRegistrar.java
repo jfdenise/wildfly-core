@@ -28,6 +28,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandRegistry;
+import org.jboss.as.cli.command.compat.EmbedHostController;
+import org.jboss.as.cli.command.compat.EmbedServer;
+import org.jboss.as.cli.command.compat.StopEmbeddedHostController;
+import org.jboss.as.cli.command.compat.StopEmbeddedServer;
+import org.jboss.as.cli.command.embedded.EmbedCommand;
+import org.jboss.as.cli.console.CliCommandRegistry;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -83,8 +89,9 @@ public class EmbeddedControllerHandlerRegistrar {
         modular = obj != null;
     }
 
-    public static final AtomicReference<EmbeddedProcessLaunch> registerEmbeddedCommands(CommandRegistry commandRegistry, CommandContext ctx) throws CommandLineException {
-        AtomicReference<EmbeddedProcessLaunch> serverReference = new AtomicReference<>();
+    public static final AtomicReference<EmbeddedProcessLaunch> registerEmbeddedCommands(CommandRegistry commandRegistry,
+            CommandContext ctx,
+            AtomicReference<EmbeddedProcessLaunch> serverReference) throws CommandLineException {
         if (hasModules) {
             commandRegistry.registerHandler(EmbedServerHandler.create(serverReference, ctx, modular), "embed-server");
             commandRegistry.registerHandler(new StopEmbeddedServerHandler(serverReference), "stop-embedded-server");
@@ -94,4 +101,17 @@ public class EmbeddedControllerHandlerRegistrar {
         return serverReference;
     }
 
+    public static final AtomicReference<EmbeddedProcessLaunch> registerEmbeddedCommands(CliCommandRegistry commandRegistry, AtomicReference<EmbeddedProcessLaunch> serverReference) throws CommandLineException {
+        if (hasModules) {
+            commandRegistry.addCommand(new EmbedCommand(serverReference, modular));
+
+            //deprecated
+            commandRegistry.addCommand(new EmbedServer(serverReference, modular));
+            commandRegistry.addCommand(new EmbedHostController(serverReference, modular));
+            commandRegistry.addCommand(new StopEmbeddedHostController(serverReference));
+            commandRegistry.addCommand(new StopEmbeddedServer(serverReference));
+
+        }
+        return serverReference;
+    }
 }

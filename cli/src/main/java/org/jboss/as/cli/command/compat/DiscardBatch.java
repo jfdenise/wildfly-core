@@ -22,10 +22,9 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.as.cli.aesh.activator.CompatActivator;
 import org.jboss.as.cli.command.batch.BatchDiscardCommand;
 
 @Deprecated
-@GroupCommandDefinition(name = "discard-batch", description = "", activator = CompatActivator.class)
+@GroupCommandDefinition(name = "discard-batch", description = "", activator = CompatBatchActivator.class)
 public class DiscardBatch extends BatchDiscardCommand {
 }

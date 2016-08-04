@@ -45,7 +45,7 @@ import org.wildfly.security.manager.WildFlySecurityManager;
  *
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
-class EmbeddedLogContext {
+public class EmbeddedLogContext {
 
     private static class Holder {
         static final LogContext LOG_CONTEXT = LogContext.create();
@@ -61,7 +61,7 @@ class EmbeddedLogContext {
      *
      * @return the configured log context
      */
-    static synchronized LogContext configureLogContext(final File baseDir, final String defaultLogFileName, final CommandContext ctx) {
+    public static synchronized LogContext configureLogContext(final File baseDir, final String defaultLogFileName, final CommandContext ctx) {
         final LogContext embeddedLogContext = Holder.LOG_CONTEXT;
         final Path bootLog = baseDir.toPath().resolve(Paths.get("log", defaultLogFileName));
         final Path loggingProperties = baseDir.toPath().resolve(Paths.get("configuration", "logging.properties"));

@@ -22,10 +22,9 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.as.cli.aesh.activator.CompatActivator;
 import org.jboss.as.cli.command.batch.BatchClearCommand;
 
 @Deprecated
-@GroupCommandDefinition(name = "clear-batch", description = "", activator = CompatActivator.class)
+@GroupCommandDefinition(name = "clear-batch", description = "", activator = CompatBatchActivator.class)
 public class ClearBatch extends BatchClearCommand {
 }

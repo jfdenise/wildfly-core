@@ -44,6 +44,7 @@ import org.jboss.aesh.console.command.map.MapProcessedCommandBuilder;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.activator.DefaultActivator;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
@@ -68,6 +69,14 @@ import org.wildfly.core.cli.command.DMRCommand;
  * @author jdenise@redhat.com
  */
 public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DMRCommand {
+
+    public static class LsActivator extends DefaultActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand command) {
+            return getCommandContext().getModelControllerClient() != null;
+        }
+    }
 
     private class DynamicOptionsProvider implements MapProcessedCommandBuilder.ProcessedOptionProvider {
 
@@ -152,8 +161,13 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
             try {
                 ModelNode op = new ModelNode();
                 CommandContext ctx = commandContext.getLegacyCommandContext();
+                String path = processedCommand.getArgument().getValue();
+                // Workaround for Aesh parser bug.
+                if ("--".equals(path)) {
+                    path = "";
+                }
                 OperationRequestAddress address = OperationRequestAddressConverter.
-                        convert(processedCommand.getArgument().getValue(), ctx);
+                        convert(path, ctx);
                 List<Boolean> resHolder = new ArrayList<>();
                 retrieveDescription(address, ctx, (val) -> {
                     resHolder.add(val);
@@ -194,6 +208,7 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
                         type(List.class).
                         optionType(OptionType.ARGUMENT).
                         converter(OperationRequestAddressConverter.class).create()).
+                activator(new LsActivator()).
                 command(this).create();
         return p;
     }

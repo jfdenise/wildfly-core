@@ -39,13 +39,13 @@ import org.jboss.threads.AsyncFuture;
 *
 * @author Brian Stansberry (c) 2015 Red Hat Inc.
 */
-class ThreadContextsModelControllerClient implements ModelControllerClient {
+public class ThreadContextsModelControllerClient implements ModelControllerClient {
 
     private final ModelControllerClient delegate;
     private final ThreadLocalContextSelector contextSelector;
 
-    ThreadContextsModelControllerClient(ModelControllerClient delegate,
-                                        ThreadLocalContextSelector contextSelector) {
+    public ThreadContextsModelControllerClient(ModelControllerClient delegate,
+            ThreadLocalContextSelector contextSelector) {
         assert delegate != null;
         assert contextSelector != null;
         this.delegate = delegate;

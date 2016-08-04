@@ -53,7 +53,6 @@ public class BooleanCompleter implements OptionCompleter<CliCompleterInvocation>
                 cliCompleterInvocation.getGivenCompleteValue(), pos, candidates);
         cliCompleterInvocation.addAllCompleterValues(candidates);
         cliCompleterInvocation.setOffset(cliCompleterInvocation.getGivenCompleteValue().length() - cursor);
-        cliCompleterInvocation.setAppendSpace(false);
     }
 
 }

@@ -23,6 +23,7 @@ package org.jboss.as.cli.console;
 
 import java.util.List;
 import org.jboss.aesh.cl.CommandLine;
+import org.jboss.aesh.cl.activation.CommandActivator;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.cl.parser.CommandLineCompletionParser;
 import org.jboss.aesh.cl.parser.CommandLineParser;
@@ -43,6 +44,7 @@ import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.command.compat.CompatActivator;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
@@ -225,8 +227,10 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
                 return new CommandContainerResult(null, CommandResult.SUCCESS);
             }
 
+            // This is required to see sub commands.
+            CommandLine commandLine = container.getParser().parse(line, false);
             if (context.isBatchMode()) {
-                Command c = container.getParser().getCommand();
+                Command c = commandLine.getParser().getCommand();
                 if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
                     commandContext.addBatchOperation(((DMRCommand) c).
                             buildRequest(line.getOriginalInput(), commandContext),
@@ -234,7 +238,26 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
                     return new CommandContainerResult(null, CommandResult.SUCCESS);
                 }
             }
-            CommandContainerResult res = container.executeCommand(line,
+
+            // Inactive commands are hidden. This is required for legacy to not show up
+            // in completion. The problem is that we don't want to execute inactive
+            // commands that are inactive for good reasons (not connected...)
+            CommandActivator activator = commandLine.getParser().getProcessedCommand().getActivator();
+            if (!activator.isActivated(commandLine.getParser().getProcessedCommand())) {
+                boolean shouldThrow;
+                if (activator instanceof CompatActivator) {
+                    CompatActivator compat = (CompatActivator) activator;
+                    shouldThrow = !compat.isActuallyActivated(commandLine.getParser().getProcessedCommand());
+                } else {
+                    shouldThrow = true;
+                }
+                if (shouldThrow) {
+                    throw new CommandException("The command is not available in the "
+                            + "current context (e.g. required subsystems or connection to the controller might be unavailable).");
+                }
+            }
+
+            CommandContainerResult res = container.executeCommand(commandLine,
                     invocationProviders, aeshContext, commandInvocation);
             return res;
         } catch (CommandLineException ex) {

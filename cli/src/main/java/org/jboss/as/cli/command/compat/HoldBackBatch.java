@@ -22,10 +22,9 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.as.cli.aesh.activator.CompatActivator;
 import org.jboss.as.cli.command.batch.BatchHoldbackCommand;
 
 @Deprecated
-@GroupCommandDefinition(name = "holdback-batch", description = "", activator = CompatActivator.class)
+@GroupCommandDefinition(name = "holdback-batch", description = "", activator = CompatBatchActivator.class)
 public class HoldBackBatch extends BatchHoldbackCommand {
 }

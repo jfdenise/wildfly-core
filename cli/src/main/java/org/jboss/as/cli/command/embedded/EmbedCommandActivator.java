@@ -19,20 +19,21 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command.ifelse;
+package org.jboss.as.cli.command.embedded;
 
 import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.as.cli.aesh.activator.ConnectedActivator;
+import org.jboss.as.cli.aesh.activator.DefaultActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class IfActivator extends ConnectedActivator {
+public class EmbedCommandActivator extends DefaultActivator {
 
     @Override
-    public boolean isActivated(ProcessedCommand cmd) {
-        return getCommandContext().getCommandRedirection() == null
-                && getCommandContext().getLegacyCommandContext().getBatchManager().isBatchActive();
+    public boolean isActivated(ProcessedCommand command) {
+        EmbedCommand cmd = (EmbedCommand) command.getCommand();
+        return cmd.getServerReference().get() != null
+                || getCommandContext().getModelControllerClient() == null;
     }
 }

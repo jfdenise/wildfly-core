@@ -19,20 +19,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.aesh.activator;
+package org.jboss.as.cli.command.compat;
 
-import org.jboss.aesh.cl.activation.CommandActivator;
+import org.jboss.as.cli.aesh.activator.BatchActivator;
 
 /**
  *
- * Never proposed in completion.
- *
- * @author jdenise@readhat.com
+ * @author jdenise@redhat.com
  */
-public class CompatActivator implements CommandActivator {
+public class CompatBatchActivator extends CompatActivator {
 
-    @Override
-    public boolean isActivated() {
-        return false;
+    public CompatBatchActivator() {
+        super(new BatchActivator());
     }
+
 }

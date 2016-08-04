@@ -100,6 +100,7 @@ import org.jboss.as.cli.command.trycatch.CatchCommand;
 import org.jboss.as.cli.command.trycatch.EndTryCommand;
 import org.jboss.as.cli.command.trycatch.FinallyCommand;
 import org.jboss.as.cli.command.trycatch.TryCommand;
+import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
 import org.jboss.as.cli.handlers.jca.JDBCDriverNameProvider;
 import org.jboss.as.cli.impl.CLIPrintStream;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
@@ -303,7 +304,7 @@ class AeshCliConsole implements Console {
                 context(ctx).
                 registry(commandRegistry).
                 resultHandler(newResultHandler()).
-                activator(() -> ctx.getModelControllerClient() != null).
+                activator((c) -> ctx.getModelControllerClient() != null).
                 executor(new OperationSpecialCommand(ctx, commandContext)).create());
 
         registerExtraCommands();
@@ -383,6 +384,10 @@ class AeshCliConsole implements Console {
                 new AeshCommandLineParser<MapCommand>(
                         new LsMapCommand().getProcessedCommand(ctx))));
         clireg.addCommand(new Quit());
+
+        //embedded
+        EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(clireg,
+                ctx.getEmbeddedServerReference());
 
         // try catch
         clireg.addCommand(new TryCommand());
