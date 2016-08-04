@@ -35,7 +35,7 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = "read", description = "", groupCommands
-        = {ReadAttributeCommand.class}, activator = ConnectedActivator.class)
+        = {ReadAttributeCommand.class, ReadOperationCommand.class}, activator = ConnectedActivator.class)
 public class ReadCommand implements Command<CliCommandInvocation> {
 
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)

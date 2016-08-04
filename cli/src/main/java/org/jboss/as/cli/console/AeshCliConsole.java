@@ -89,6 +89,7 @@ import org.jboss.as.cli.command.compat.EditLineBatch;
 import org.jboss.as.cli.command.compat.HoldBackBatch;
 import org.jboss.as.cli.command.compat.MoveLineBatch;
 import org.jboss.as.cli.command.compat.ReadAttribute;
+import org.jboss.as.cli.command.compat.ReadOperation;
 import org.jboss.as.cli.command.compat.RemoveLineBatch;
 import org.jboss.as.cli.command.compat.RunBatch;
 import org.jboss.as.cli.command.generic.MainCommandParser;
@@ -408,6 +409,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new HoldBackBatch());
         clireg.addCommand(new MoveLineBatch());
         clireg.addCommand(new ReadAttribute());
+        clireg.addCommand(new ReadOperation());
         clireg.addCommand(new RemoveLineBatch());
         clireg.addCommand(new RunBatch());
 
