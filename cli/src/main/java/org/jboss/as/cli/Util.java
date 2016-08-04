@@ -1372,4 +1372,29 @@ public class Util {
                 && mn.has(ATTACHED_STREAMS)
                 && mn.get(ATTACHED_STREAMS).asBoolean();
     }
+
+    public static ModelNode getAddressNode(CommandContext ctx,
+            OperationRequestAddress address, ModelNode op) throws CommandFormatException {
+        ModelNode addressNode = op.get(Util.ADDRESS);
+
+        if (address.isEmpty()) {
+            addressNode.setEmptyList();
+        } else {
+            Iterator<OperationRequestAddress.Node> iterator = address.iterator();
+            while (iterator.hasNext()) {
+                OperationRequestAddress.Node node = iterator.next();
+                if (node.getName() != null) {
+                    addressNode.add(node.getType(), node.getName());
+                } else if (iterator.hasNext()) {
+                    throw new OperationFormatException(
+                            "Expected a node name for type '"
+                            + node.getType()
+                            + "' in path '"
+                            + ctx.getNodePathFormatter().format(
+                                    address) + "'");
+                }
+            }
+        }
+        return op;
+    }
 }

@@ -5,9 +5,14 @@
  */
 package org.jboss.as.cli.command;
 
+import java.io.IOException;
 import java.util.Set;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.terminal.Shell;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.Util;
 import org.jboss.as.cli.util.SimpleTable;
+import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -27,6 +32,19 @@ public class CommandUtil {
             final StringBuilder buf = new StringBuilder();
             table.append(buf, true);
             shell.out().println(buf.toString());
+        }
+    }
+
+    public static ModelNode execute(ModelNode request, CommandContext ctx) throws CommandException {
+        final ModelControllerClient client = ctx.getModelControllerClient();
+        try {
+            ModelNode response = client.execute(request);
+            if (!Util.isSuccess(response)) {
+                throw new CommandException(Util.getFailureDescription(response));
+            }
+            return response;
+        } catch (IOException | CommandException e) {
+            throw new CommandException(e.getMessage(), e);
         }
     }
 }

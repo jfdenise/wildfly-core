@@ -21,15 +21,12 @@
  */
 package org.jboss.as.cli.command;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 import org.jboss.aesh.cl.internal.OptionType;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.cl.internal.ProcessedOption;
@@ -45,6 +42,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.activator.DefaultActivator;
+import org.jboss.as.cli.aesh.activator.ResolveExpressionActivator;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
@@ -54,12 +52,10 @@ import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.cli.util.SimpleTable;
-import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
-import org.wildfly.core.cli.command.CliOptionActivator;
 import org.wildfly.core.cli.command.DMRCommand;
 
 /**
@@ -139,46 +135,6 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
         }
     }
 
-    public static class ResolveActivator implements CliOptionActivator {
-
-        private CliCommandContext commandContext;
-
-        public ResolveActivator() {
-        }
-
-        @Override
-        public void setCommandContext(CliCommandContext commandContext) {
-            this.commandContext = commandContext;
-        }
-
-        @Override
-        public CliCommandContext getCommandContext() {
-            return commandContext;
-        }
-
-        @Override
-        public boolean isActivated(ProcessedCommand processedCommand) {
-            try {
-                ModelNode op = new ModelNode();
-                CommandContext ctx = commandContext.getLegacyCommandContext();
-                String path = processedCommand.getArgument().getValue();
-                // Workaround for Aesh parser bug.
-                if ("--".equals(path)) {
-                    path = "";
-                }
-                OperationRequestAddress address = OperationRequestAddressConverter.
-                        convert(path, ctx);
-                List<Boolean> resHolder = new ArrayList<>();
-                retrieveDescription(address, ctx, (val) -> {
-                    resHolder.add(val);
-                });
-                return resHolder.get(0);
-            } catch (CommandFormatException | OptionValidatorException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        }
-    }
-
     private static final String PATH_ARGUMENT_NAME = "lspathargument";
 
     public ProcessedCommand getProcessedCommand(CommandContext ctx) throws OptionParserException, CommandLineParserException {
@@ -193,7 +149,7 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
                 addOption(new ProcessedOptionBuilder().name("resolve-expressions").
                         hasValue(false).
                         type(Boolean.class).
-                        activator(ResolveActivator.class).
+                        activator(ResolveExpressionActivator.class).
                         create()
                 ).
                 addOption(new ProcessedOptionBuilder().name("headers").
@@ -224,7 +180,7 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
         if (contains("resolve")) {
             List<Boolean> resHolder = new ArrayList<>();
             try {
-                retrieveDescription(address, ctx, (val) -> {
+                ResolveExpressionActivator.retrieveDescription(address, ctx, (val) -> {
                     resHolder.add(val);
                 });
             } catch (CommandFormatException ex) {
@@ -246,71 +202,9 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
             ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
             opHeaders.set(headers);
         }
-        ModelNode response = execute(request, ctx);
+        ModelNode response = CommandUtil.execute(request, ctx);
         handleResponse(commandInvocation, response, Util.COMPOSITE.equals(request.get(Util.OPERATION).asString()));
         return CommandResult.SUCCESS;
-    }
-
-    private static void retrieveDescription(OperationRequestAddress address,
-            CommandContext ctx, Consumer<Boolean> consumer) throws CommandFormatException {
-        ModelNode op = new ModelNode();
-        op.get("operation").set("read-operation-description");
-        op.get("name").set("read-attribute");
-        op = getAddressNode(ctx, address, op);
-
-        ModelNode returnVal = new ModelNode();
-        try {
-            returnVal = ctx.getModelControllerClient().execute(op);
-        } catch (IOException e) {
-            throw new CommandFormatException("Failed to read resource: "
-                    + e.getLocalizedMessage(), e);
-        }
-
-        if (returnVal.hasDefined("outcome") && returnVal.get("outcome").asString().equals("success")) {
-            ModelNode result = returnVal.get("result");
-            if (result.hasDefined("request-properties")) {
-                ModelNode properties = result.get("request-properties");
-                consumer.accept(properties.hasDefined("resolve-expressions"));
-            }
-        }
-    }
-
-    private static ModelNode getAddressNode(CommandContext ctx,
-            OperationRequestAddress address, ModelNode op) throws CommandFormatException {
-        ModelNode addressNode = op.get(Util.ADDRESS);
-
-        if (address.isEmpty()) {
-            addressNode.setEmptyList();
-        } else {
-            Iterator<OperationRequestAddress.Node> iterator = address.iterator();
-            while (iterator.hasNext()) {
-                OperationRequestAddress.Node node = iterator.next();
-                if (node.getName() != null) {
-                    addressNode.add(node.getType(), node.getName());
-                } else if (iterator.hasNext()) {
-                    throw new OperationFormatException(
-                            "Expected a node name for type '"
-                            + node.getType()
-                            + "' in path '"
-                            + ctx.getNodePathFormatter().format(
-                                    address) + "'");
-                }
-            }
-        }
-        return op;
-    }
-
-    private ModelNode execute(ModelNode request, CommandContext ctx) throws CommandException {
-        final ModelControllerClient client = ctx.getModelControllerClient();
-        try {
-            ModelNode response = client.execute(request);
-            if (!Util.isSuccess(response)) {
-                throw new CommandException(Util.getFailureDescription(response));
-            }
-            return response;
-        } catch (IOException | CommandException e) {
-            throw new CommandException(e.getMessage(), e);
-        }
     }
 
     @Override
@@ -348,14 +242,14 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
         {
             ModelNode typesRequest = new ModelNode();
             typesRequest.get(Util.OPERATION).set(Util.READ_CHILDREN_TYPES);
-            typesRequest = getAddressNode(ctx, address, typesRequest);
+            typesRequest = Util.getAddressNode(ctx, address, typesRequest);
             steps.add(typesRequest);
         }
 
         {
             ModelNode resourceRequest = new ModelNode();
             resourceRequest.get(Util.OPERATION).set(Util.READ_RESOURCE);
-            resourceRequest = getAddressNode(ctx, address, resourceRequest);
+            resourceRequest = Util.getAddressNode(ctx, address, resourceRequest);
             resourceRequest.get(Util.INCLUDE_RUNTIME).set(Util.TRUE);
             if (contains("resolve")) {
                 resourceRequest.get(Util.RESOLVE_EXPRESSIONS).set(Util.TRUE);

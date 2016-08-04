@@ -58,7 +58,6 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.AeshCommandContainer;
-import org.jboss.aesh.console.command.map.MapCommand;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
@@ -82,12 +81,14 @@ import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.EchoCommand;
 import org.jboss.as.cli.command.LsMapCommand;
 import org.jboss.as.cli.command.Quit;
+import org.jboss.as.cli.command.ReadCommand;
 import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.compat.ClearBatch;
 import org.jboss.as.cli.command.compat.DiscardBatch;
 import org.jboss.as.cli.command.compat.EditLineBatch;
 import org.jboss.as.cli.command.compat.HoldBackBatch;
 import org.jboss.as.cli.command.compat.MoveLineBatch;
+import org.jboss.as.cli.command.compat.ReadAttribute;
 import org.jboss.as.cli.command.compat.RemoveLineBatch;
 import org.jboss.as.cli.command.compat.RunBatch;
 import org.jboss.as.cli.command.generic.MainCommandParser;
@@ -381,10 +382,10 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new EchoCommand());
         // ls is a dynamic command
         clireg.addCommand(new AeshCommandContainer(
-                new AeshCommandLineParser<MapCommand>(
+                new AeshCommandLineParser<>(
                         new LsMapCommand().getProcessedCommand(ctx))));
         clireg.addCommand(new Quit());
-
+        clireg.addCommand(new ReadCommand());
         //embedded
         EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(clireg,
                 ctx.getEmbeddedServerReference());
@@ -406,6 +407,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new EditLineBatch());
         clireg.addCommand(new HoldBackBatch());
         clireg.addCommand(new MoveLineBatch());
+        clireg.addCommand(new ReadAttribute());
         clireg.addCommand(new RemoveLineBatch());
         clireg.addCommand(new RunBatch());
 

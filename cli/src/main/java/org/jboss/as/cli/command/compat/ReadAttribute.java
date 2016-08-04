@@ -21,31 +21,14 @@
  */
 package org.jboss.as.cli.command.compat;
 
-import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.as.cli.aesh.activator.DefaultActivator;
-import org.wildfly.core.cli.command.CliCommandActivator;
+import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.as.cli.command.ReadAttributeCommand;
 
 /**
  *
- * Never proposed in completion.
- *
- * @author jdenise@readhat.com
+ * @author jdenise@redhat.com
  */
-public class CompatActivator extends DefaultActivator {
-
-    private final CliCommandActivator activator;
-
-    protected CompatActivator(CliCommandActivator activator) {
-        this.activator = activator;
-    }
-
-    @Override
-    public boolean isActivated(ProcessedCommand cmd) {
-        return false;
-    }
-
-    public boolean isActuallyActivated(ProcessedCommand cmd) {
-        activator.setCommandContext(getCommandContext());
-        return activator.isActivated(cmd);
-    }
+@Deprecated
+@CommandDefinition(name = "read-attribute", description = "", activator = ReadAttributeActivator.class)
+public class ReadAttribute extends ReadAttributeCommand {
 }
