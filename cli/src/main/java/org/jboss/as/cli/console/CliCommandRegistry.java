@@ -166,7 +166,7 @@ public class CliCommandRegistry implements CommandRegistry {
             throws CommandLineParserException, CommandLineException {
         for (String name : names) {
             try {
-                Command c = findCommand(name, null);
+                CommandLineParser c = findCommand(name, null);
                 if (c != null) {
                     // Do not register legacy command when new one already present.
                     log.info("Not registering legacy handler " + name
@@ -205,7 +205,7 @@ public class CliCommandRegistry implements CommandRegistry {
         legacyHandlers.remove(cmdName);
     }
 
-    public Command findCommand(String name, String line) throws CommandNotFoundException {
+    public CommandLineParser findCommand(String name, String line) throws CommandNotFoundException {
         // XXX JFDENISE, Aesh should offer this logic.
         CommandContainer c = getCommand(name, line);
         CommandLineParser p = c.getParser();
@@ -217,7 +217,7 @@ public class CliCommandRegistry implements CommandRegistry {
                 p = child;
             }
         }
-        return p.getCommand();
+        return p;
     }
 
     @Override

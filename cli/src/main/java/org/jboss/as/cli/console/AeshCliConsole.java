@@ -79,6 +79,7 @@ import org.jboss.as.cli.command.ClearCommand;
 import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.EchoCommand;
+import org.jboss.as.cli.command.EchoDMRCommand;
 import org.jboss.as.cli.command.HistoryCommand;
 import org.jboss.as.cli.command.LsMapCommand;
 import org.jboss.as.cli.command.PwdCommand;
@@ -304,7 +305,8 @@ class AeshCliConsole implements Console {
             CommandLineException {
 
         CommandInvocationServices services = new CommandInvocationServices();
-        services.registerProvider(PROVIDER, new CliCommandInvocationProvider(commandContext, this));
+        CliCommandInvocationProvider prov = new CliCommandInvocationProvider(commandContext, this);
+        services.registerProvider(PROVIDER, prov);
 
         commandRegistry = createCommandRegistry();
 
@@ -387,6 +389,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new Connect());
         clireg.addCommand(new CommandCommand());
         clireg.addCommand(new EchoCommand());
+        clireg.addCommand(new EchoDMRCommand());
         clireg.addCommand(new HistoryCommand());
         // ls is a dynamic command
         clireg.addCommand(new AeshCommandContainer(

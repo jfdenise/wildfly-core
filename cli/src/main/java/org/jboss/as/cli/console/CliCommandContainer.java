@@ -235,6 +235,11 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             CommandLineParser<Command> cmdParser = commandLine == null ? getParser()
                     : commandLine.getParser();
             if (context.isBatchMode()) {
+                // Must populate in order to inject options in proper command
+                if (commandLine != null) {
+                    cmdParser.getCommandPopulator().populateObject(commandLine,
+                            invocationProviders, aeshContext, true);
+                }
                 Command c = cmdParser.getCommand();
                 if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
                     commandContext.addBatchOperation(((DMRCommand) c).

@@ -26,8 +26,12 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
+import org.jboss.aesh.cl.parser.CommandLineParser;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandNotFoundException;
+import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.console.CliCommandRegistry;
 import org.jboss.dmr.ModelNode;
@@ -37,7 +41,8 @@ import org.wildfly.core.cli.command.DMRCommand;
 /**
  * A Command to echo variables. This is not activated, we are missing a proper
  * completer and options handling, eg: echo-dmr ls -l is badly handled.
- * *
+ *
+ *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "echo-dmr", description = "")
@@ -53,7 +58,8 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
         if (cmd != null && cmd.size() > 0) {
             try {
                 echoDMR(commandInvocation);
-            } catch (CommandFormatException | CommandNotFoundException ex) {
+            } catch (CommandFormatException | CommandNotFoundException |
+                    CommandLineParserException | OptionValidatorException ex) {
                 throw new CommandException(ex);
             }
         } else {
@@ -64,7 +70,7 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
 
     private void echoDMR(CliCommandInvocation commandInvocation)
             throws CommandException, CommandNotFoundException,
-            InterruptedException, CommandFormatException {
+            InterruptedException, CommandFormatException, CommandLineParserException, OptionValidatorException {
         StringBuilder builder = new StringBuilder();
         for (String s : cmd) {
             builder.append(s).append(" ");
@@ -75,17 +81,30 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
 
     private ModelNode retrieveRequest(String opName, String originalInput,
             CliCommandInvocation commandInvocation)
-            throws CommandNotFoundException, InterruptedException, CommandException, CommandFormatException {
-        final Command handler = ((CliCommandRegistry) commandInvocation.getCommandRegistry()).
-                findCommand(opName, originalInput);
-        if (handler == null) {
-            throw new CommandException("No command handler for '" + opName + "'.");
+            throws CommandNotFoundException, InterruptedException, CommandException, CommandFormatException, CommandLineParserException, OptionValidatorException {
+
+        Command command = null;
+        try {
+            command = commandInvocation.getPopulatedCommand(originalInput);
+        } catch (CommandException ex) {
+            // Fall back for Operation and Bridges
+            final CommandContainer<Command> container = ((CliCommandRegistry) commandInvocation.getCommandRegistry()).
+                    getCommand(opName, originalInput);
+            CommandLineParser<Command> cmdParser = container.getParser();
+            if (!(cmdParser.getCommand() instanceof DMRCommand)) {
+                throw new CommandException("The command does not translate to an operation request.");
+            }
+            DMRCommand c = (DMRCommand) cmdParser.getCommand();
+            return c.buildRequest(originalInput, commandInvocation.getCommandContext());
         }
 
-        if (!(handler instanceof DMRCommand)) {
+        // XXX JFDENISE, separate DMRCommand and InternalDMRCommand.
+        // Only InternalDMRCommand needs the input string.
+        // For now this is a simple code dup.
+        if (!(command instanceof DMRCommand)) {
             throw new CommandException("The command does not translate to an operation request.");
         }
-
-        return ((DMRCommand) handler).buildRequest(originalInput, commandInvocation.getCommandContext());
+        DMRCommand c = (DMRCommand) command;
+        return c.buildRequest(null, commandInvocation.getCommandContext());
     }
 }

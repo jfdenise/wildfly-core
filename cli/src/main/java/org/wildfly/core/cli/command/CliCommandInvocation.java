@@ -7,8 +7,13 @@
 package org.wildfly.core.cli.command;
 
 import java.util.Collection;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.Prompt;
+import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandNotFoundException;
 import org.jboss.aesh.console.command.CommandOperation;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
@@ -131,6 +136,12 @@ public class CliCommandInvocation implements CommandInvocation {
     @Override
     public void setEcho(boolean interactive) {
         commandInvocation.setEcho(interactive);
+    }
+
+    @Override
+    public Command getPopulatedCommand(String commandLine) throws CommandNotFoundException,
+            CommandException, CommandLineParserException, OptionValidatorException {
+        return commandInvocation.getPopulatedCommand(commandLine);
     }
 
 }
