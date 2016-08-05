@@ -58,6 +58,7 @@ import org.wildfly.core.cli.command.CommandRedirection;
 class CliCommandContainer extends DefaultCommandContainer<Command> {
 
     private class CliCommandParser implements CommandLineParser<Command> {
+
         private final ProcessedCommand<Command> cmd;
 
         CliCommandParser(CliResultHandler handler) throws OptionParserException {
@@ -228,9 +229,13 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             }
 
             // This is required to see sub commands.
+            // A null commandLine means that it is not parsed by Aesh (legacy bridge
+            // and operation.
             CommandLine commandLine = container.getParser().parse(line, false);
+            CommandLineParser<Command> cmdParser = commandLine == null ? getParser()
+                    : commandLine.getParser();
             if (context.isBatchMode()) {
-                Command c = commandLine.getParser().getCommand();
+                Command c = cmdParser.getCommand();
                 if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
                     commandContext.addBatchOperation(((DMRCommand) c).
                             buildRequest(line.getOriginalInput(), commandContext),
@@ -242,12 +247,12 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             // Inactive commands are hidden. This is required for legacy to not show up
             // in completion. The problem is that we don't want to execute inactive
             // commands that are inactive for good reasons (not connected...)
-            CommandActivator activator = commandLine.getParser().getProcessedCommand().getActivator();
-            if (!activator.isActivated(commandLine.getParser().getProcessedCommand())) {
+            CommandActivator activator = cmdParser.getProcessedCommand().getActivator();
+            if (!activator.isActivated(cmdParser.getProcessedCommand())) {
                 boolean shouldThrow;
                 if (activator instanceof CompatActivator) {
                     CompatActivator compat = (CompatActivator) activator;
-                    shouldThrow = !compat.isActuallyActivated(commandLine.getParser().getProcessedCommand());
+                    shouldThrow = !compat.isActuallyActivated(cmdParser.getProcessedCommand());
                 } else {
                     shouldThrow = true;
                 }
@@ -257,8 +262,10 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
                 }
             }
 
-            CommandContainerResult res = container.executeCommand(commandLine,
-                    invocationProviders, aeshContext, commandInvocation);
+            CommandContainerResult res = commandLine == null ? container.executeCommand(line,
+                    invocationProviders, aeshContext, commandInvocation)
+                    : container.executeCommand(commandLine,
+                            invocationProviders, aeshContext, commandInvocation);
             return res;
         } catch (CommandLineException ex) {
             throw new CommandException(ex);

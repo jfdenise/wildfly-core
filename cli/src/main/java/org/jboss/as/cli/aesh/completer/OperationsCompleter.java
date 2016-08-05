@@ -46,45 +46,43 @@ public class OperationsCompleter implements OptionCompleter<CliCompleterInvocati
 
     @Override
     public void complete(CliCompleterInvocation cliCompleterInvocation) {
-        CommandContext ctx = cliCompleterInvocation.getCommandContext().getLegacyCommandContext();
         List<String> candidates = new ArrayList<>();
-        int cursor = 0;
+        int pos = 0;
         if (cliCompleterInvocation.getGivenCompleteValue() != null) {
-            org.jboss.as.cli.impl.DefaultCompleter defaultCompleter
-                    = new org.jboss.as.cli.impl.DefaultCompleter((CommandContext ctx1) -> {
-                        ReadOperationCommand c = (ReadOperationCommand) cliCompleterInvocation.getCommand();
-                        OperationRequestAddress address = c.getNode();
-                        final ModelNode req = new ModelNode();
-                        if (address == null || address.isEmpty()) {
-                            req.get(Util.ADDRESS).setEmptyList();
-                        } else {
-                            if (address.endsOnType()) {
-                                return Collections.emptyList();
-                            }
-                            final ModelNode addrNode = req.get(Util.ADDRESS);
-                            for (OperationRequestAddress.Node node : address) {
-                                addrNode.add(node.getType(), node.getName());
-                            }
-                        }
-                        req.get(Util.OPERATION).set(Util.READ_OPERATION_NAMES);
-                        if (ctx1.getConfig().isAccessControl()) {
-                            req.get(Util.ACCESS_CONTROL).set(true);
-                        }
-                        try {
-                            final ModelNode response = ctx1.getModelControllerClient().execute(req);
-                            return Util.getList(response);
-                        } catch (IOException e) {
-                            // XXX OK
-                        }
-                        return Collections.emptyList();
-                    });
-            cursor = defaultCompleter.
-                    complete(cliCompleterInvocation.getCommandContext().getLegacyCommandContext(),
-                            cliCompleterInvocation.getGivenCompleteValue(),
-                            cliCompleterInvocation.getGivenCompleteValue().length(), candidates);
+            pos = cliCompleterInvocation.getGivenCompleteValue().length();
         }
+        org.jboss.as.cli.impl.DefaultCompleter defaultCompleter = new org.jboss.as.cli.impl.DefaultCompleter((CommandContext ctx1) -> {
+            ReadOperationCommand c = (ReadOperationCommand) cliCompleterInvocation.getCommand();
+            OperationRequestAddress address = c.getNode();
+            final ModelNode req = new ModelNode();
+            if (address == null || address.isEmpty()) {
+                req.get(Util.ADDRESS).setEmptyList();
+            } else {
+                if (address.endsOnType()) {
+                    return Collections.emptyList();
+                }
+                final ModelNode addrNode = req.get(Util.ADDRESS);
+                for (OperationRequestAddress.Node node : address) {
+                    addrNode.add(node.getType(), node.getName());
+                }
+            }
+            req.get(Util.OPERATION).set(Util.READ_OPERATION_NAMES);
+            if (ctx1.getConfig().isAccessControl()) {
+                req.get(Util.ACCESS_CONTROL).set(true);
+            }
+            try {
+                final ModelNode response = ctx1.getModelControllerClient().execute(req);
+                return Util.getList(response);
+            } catch (IOException e) {
+                // XXX OK
+            }
+            return Collections.emptyList();
+        });
+        int cursor = defaultCompleter.complete(cliCompleterInvocation.getCommandContext().getLegacyCommandContext(),
+                cliCompleterInvocation.getGivenCompleteValue(),
+                pos, candidates);
 
         cliCompleterInvocation.addAllCompleterValues(candidates);
-        cliCompleterInvocation.setOffset(cliCompleterInvocation.getGivenCompleteValue().length() - cursor);
+        cliCompleterInvocation.setOffset(pos - cursor);
     }
 }

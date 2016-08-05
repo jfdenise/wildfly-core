@@ -24,7 +24,10 @@ package org.jboss.as.cli.aesh.completer;
 import java.util.ArrayList;
 import java.util.List;
 import org.jboss.aesh.cl.completer.OptionCompleter;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
+import org.jboss.as.cli.operation.OperationRequestCompleter;
+import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 
 /**
  *
@@ -33,6 +36,7 @@ import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
  * @author jdenise
  */
 public class HeadersCompleter implements OptionCompleter<CliCompleterInvocation> {
+    private final DefaultCallbackHandler handler = new DefaultCallbackHandler();
 
     @Override
     public void complete(CliCompleterInvocation cliCompleterInvocation) {
@@ -41,10 +45,17 @@ public class HeadersCompleter implements OptionCompleter<CliCompleterInvocation>
         if (cliCompleterInvocation.getGivenCompleteValue() != null) {
             pos = cliCompleterInvocation.getGivenCompleteValue().length();
         }
-        int cursor = org.jboss.as.cli.operation.impl.HeadersCompleter.INSTANCE.
-                complete(cliCompleterInvocation.
-                        getCommandContext().getLegacyCommandContext(),
-                        cliCompleterInvocation.getGivenCompleteValue(), pos, candidates);
+        try {
+            handler.parseOperation(null, cliCompleterInvocation.getGivenCompleteValue());
+        } catch (CommandFormatException e) {
+            //e.printStackTrace();
+            return;
+        }
+        int cursor = 0;
+        if (handler.endsOnHeaderListStart() || handler.hasHeaders()) {
+            cursor = OperationRequestCompleter.INSTANCE.complete(cliCompleterInvocation.
+                    getCommandContext().getLegacyCommandContext(), handler, cliCompleterInvocation.getGivenCompleteValue(), pos, candidates);
+        }
         cliCompleterInvocation.addAllCompleterValues(candidates);
         cliCompleterInvocation.setOffset(cliCompleterInvocation.getGivenCompleteValue().length() - cursor);
         cliCompleterInvocation.setAppendSpace(false);

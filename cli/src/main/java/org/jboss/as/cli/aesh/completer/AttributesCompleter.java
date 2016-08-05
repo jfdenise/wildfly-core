@@ -48,40 +48,43 @@ public class AttributesCompleter implements OptionCompleter<CliCompleterInvocati
     public void complete(CliCompleterInvocation cliCompleterInvocation) {
         List<String> candidates = new ArrayList<>();
         int cursor = 0;
+        int pos = 0;
         if (cliCompleterInvocation.getGivenCompleteValue() != null) {
-            ReadAttributeCommand c = (ReadAttributeCommand) cliCompleterInvocation.getCommand();
-            OperationRequestAddress address = c.getNode();
-            final ModelNode req = new ModelNode();
-            if (address == null || address.isEmpty()) {
-                req.get(Util.ADDRESS).setEmptyList();
-            } else {
-                if (address.endsOnType()) {
-                    return;
-                }
-                final ModelNode addrNode = req.get(Util.ADDRESS);
-                for (OperationRequestAddress.Node node : address) {
-                    addrNode.add(node.getType(), node.getName());
-                }
+            pos = cliCompleterInvocation.getGivenCompleteValue().length();
+        }
+
+        ReadAttributeCommand c = (ReadAttributeCommand) cliCompleterInvocation.getCommand();
+        OperationRequestAddress address = c.getNode();
+        final ModelNode req = new ModelNode();
+        if (address == null || address.isEmpty()) {
+            req.get(Util.ADDRESS).setEmptyList();
+        } else {
+            if (address.endsOnType()) {
+                return;
             }
-            req.get(Util.OPERATION).set(Util.READ_RESOURCE_DESCRIPTION);
-            try {
-                final ModelNode response = cliCompleterInvocation.
-                        getCommandContext().getModelControllerClient().execute(req);
-                if (Util.isSuccess(response)) {
-                    if (response.hasDefined(Util.RESULT)) {
-                        final ModelNode result = response.get(Util.RESULT);
-                        if (result.hasDefined(Util.ATTRIBUTES)) {
-                            cursor = AttributeNamePathCompleter.INSTANCE.
-                                    complete(cliCompleterInvocation.getGivenCompleteValue(),
-                                            candidates, result.get(Util.ATTRIBUTES));
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                // XXX OK.
+            final ModelNode addrNode = req.get(Util.ADDRESS);
+            for (OperationRequestAddress.Node node : address) {
+                addrNode.add(node.getType(), node.getName());
             }
         }
+        req.get(Util.OPERATION).set(Util.READ_RESOURCE_DESCRIPTION);
+        try {
+            final ModelNode response = cliCompleterInvocation.
+                    getCommandContext().getModelControllerClient().execute(req);
+            if (Util.isSuccess(response)) {
+                if (response.hasDefined(Util.RESULT)) {
+                    final ModelNode result = response.get(Util.RESULT);
+                    if (result.hasDefined(Util.ATTRIBUTES)) {
+                        cursor = AttributeNamePathCompleter.INSTANCE.
+                                complete(cliCompleterInvocation.getGivenCompleteValue(),
+                                        candidates, result.get(Util.ATTRIBUTES));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // XXX OK.
+        }
         cliCompleterInvocation.addAllCompleterValues(candidates);
-        cliCompleterInvocation.setOffset(cliCompleterInvocation.getGivenCompleteValue().length() - cursor);
+        cliCompleterInvocation.setOffset(pos - cursor);
     }
 }
