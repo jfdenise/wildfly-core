@@ -85,7 +85,9 @@ import org.jboss.as.cli.command.PwdCommand;
 import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.command.ReadCommand;
 import org.jboss.as.cli.command.SetVariableCommand;
+import org.jboss.as.cli.command.ShutdownCommand;
 import org.jboss.as.cli.command.UnsetVariableCommand;
+import org.jboss.as.cli.command.VersionCommand;
 import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.compat.ClearBatch;
 import org.jboss.as.cli.command.compat.DiscardBatch;
@@ -394,7 +396,9 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new Quit());
         clireg.addCommand(new ReadCommand());
         clireg.addCommand(new SetVariableCommand());
+        clireg.addCommand(new ShutdownCommand(ctx, ctx.getEmbeddedServerReference()));
         clireg.addCommand(new UnsetVariableCommand());
+        clireg.addCommand(new VersionCommand());
 
         //embedded
         EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(clireg,
