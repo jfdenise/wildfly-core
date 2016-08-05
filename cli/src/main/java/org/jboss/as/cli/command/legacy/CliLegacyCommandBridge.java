@@ -62,7 +62,7 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
 
     @Override
     public boolean accept(String line) {
-        return line.startsWith(name);
+        return line.startsWith(name) && name.length() >= line.length();
     }
 
 }

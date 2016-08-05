@@ -79,9 +79,13 @@ import org.jboss.as.cli.command.ClearCommand;
 import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.EchoCommand;
+import org.jboss.as.cli.command.HistoryCommand;
 import org.jboss.as.cli.command.LsMapCommand;
+import org.jboss.as.cli.command.PwdCommand;
 import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.command.ReadCommand;
+import org.jboss.as.cli.command.SetVariableCommand;
+import org.jboss.as.cli.command.UnsetVariableCommand;
 import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.compat.ClearBatch;
 import org.jboss.as.cli.command.compat.DiscardBatch;
@@ -381,12 +385,17 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new Connect());
         clireg.addCommand(new CommandCommand());
         clireg.addCommand(new EchoCommand());
+        clireg.addCommand(new HistoryCommand());
         // ls is a dynamic command
         clireg.addCommand(new AeshCommandContainer(
                 new AeshCommandLineParser<>(
                         new LsMapCommand().getProcessedCommand(ctx))));
+        clireg.addCommand(new PwdCommand());
         clireg.addCommand(new Quit());
         clireg.addCommand(new ReadCommand());
+        clireg.addCommand(new SetVariableCommand());
+        clireg.addCommand(new UnsetVariableCommand());
+
         //embedded
         EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(clireg,
                 ctx.getEmbeddedServerReference());
