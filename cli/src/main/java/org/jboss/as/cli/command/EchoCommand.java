@@ -27,10 +27,12 @@ import org.jboss.aesh.console.command.CommandResult;
 import java.util.ArrayList;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
+import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.util.CLIExpressionResolver;
@@ -44,6 +46,10 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "echo", description = "")
 public class EchoCommand implements Command<CliCommandInvocation> {
 
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
+    private boolean help;
+
     @Arguments(completer = VariableCompleter.class)
     private List<String> arguments;
 
@@ -52,6 +58,12 @@ public class EchoCommand implements Command<CliCommandInvocation> {
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
+
+        if (help) {
+            commandInvocation.println(commandInvocation.getHelpInfo("echo"));
+            return CommandResult.SUCCESS;
+        }
+
         if (arguments != null && arguments.size() > 0) {
             try {
                 echo(commandInvocation);

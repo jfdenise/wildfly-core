@@ -36,7 +36,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "disable", description = "")
 public class DisableHistoryCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

@@ -45,6 +45,7 @@ import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
+import org.jboss.as.cli.impl.HelpSupport;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
@@ -55,19 +56,19 @@ import org.jboss.dmr.Property;
  */
 class ResourceOperationSubCommand extends AbstractOperationSubCommand {
 
-    private final List<ProcessedOption> commonOptions;
     private final Map<String, OptionCompleter<CliCompleterInvocation>> customCompleters;
     private final Map<String, Converter<ModelNode, CliConverterInvocation>> customConverters;
-    ResourceOperationSubCommand(String operationName,
+    private final MainCommandParser parser;
+
+    ResourceOperationSubCommand(MainCommandParser parser, String operationName, String opDescription,
             NodeType nodeType,
             String propertyId,
-            List<ProcessedOption> commonOptions,
             Map<String, OptionCompleter<CliCompleterInvocation>> customCompleters,
             Map<String, Converter<ModelNode, CliConverterInvocation>> customConverters) {
-        super(operationName, nodeType, propertyId);
-        this.commonOptions = commonOptions;
+        super(operationName, opDescription, nodeType, propertyId);
         this.customCompleters = customCompleters;
         this.customConverters = customConverters;
+        this.parser = parser;
     }
 
     @Override
@@ -124,12 +125,18 @@ class ResourceOperationSubCommand extends AbstractOperationSubCommand {
             throws CommandLineParserException {
         return new MapProcessedCommandBuilder().
                 name(getOperationName()).
-                addOptions(commonOptions).
+                description(getDescription()).
                 command(this).
                 optionProvider(new MapProcessedCommandBuilder.ProcessedOptionProvider() {
                     @Override
-                    public List<ProcessedOption> getOptions() {
+            public List<ProcessedOption> getOptions() {
+
                         List<ProcessedOption> allOptions = new ArrayList<>();
+                        try {
+                            allOptions.addAll(parser.getCommonOptions());
+                        } catch (OptionParserException | CommandFormatException ex) {
+                            // XXX OK, forget them.
+                        }
                         try {
                             final ModelNode descr
                                     = org.jboss.as.cli.command.generic.Util.
@@ -140,6 +147,10 @@ class ResourceOperationSubCommand extends AbstractOperationSubCommand {
                             if (descr != null && descr.has(org.jboss.as.cli.Util.REQUEST_PROPERTIES)) {
                                 final List<Property> propList = descr.get(org.jboss.as.cli.Util.REQUEST_PROPERTIES).asPropertyList();
                                 for (Property prop : propList) {
+                                    // Do not add it twice.
+                                    if (prop.getName().equals(getPropertyId())) {
+                                        continue;
+                                    }
                                     final ModelNode propDescr = prop.getValue();
                                     OptionCompleter<CliCompleterInvocation> valueCompleter;
                                     Converter<ModelNode, CliConverterInvocation> valueConverter;
@@ -170,16 +181,20 @@ class ResourceOperationSubCommand extends AbstractOperationSubCommand {
                                         allOptions.add(new ProcessedOptionBuilder().
                                                 activator(new ExpectedOptionsActivator(getPropertyId())).
                                                 name(prop.getName()).
+                                                description(prop.getValue().get("type").asString()
+                                                        + ", " + prop.getValue().get("description").asString()).
                                                 converter(valueConverter).
-                                                type(ModelNode.class).
+                                                type(HelpSupport.getClassFromType(propDescr.get("type").asType())).
                                                 create());
                                     } else {
                                         allOptions.add(new ProcessedOptionBuilder().
                                                 activator(new ExpectedOptionsActivator(getPropertyId())).
                                                 completer(valueCompleter).
+                                                description(prop.getValue().get("type").asString()
+                                                        + ", " + prop.getValue().get("description").asString()).
                                                 name(prop.getName()).
                                                 converter(valueConverter).
-                                                type(ModelNode.class).
+                                                type(HelpSupport.getClassFromType(propDescr.get("type").asType())).
                                                 create());
                                     }
                                 }

@@ -40,6 +40,7 @@ import org.jboss.as.cli.CliEvent;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.BooleanCompleter;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.jboss.as.cli.aesh.converter.FileConverter;
@@ -74,11 +75,16 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 @CommandDefinition(name = "server", description = "", activator = EmbedServerActivator.class)
 public class EmbedServerCommand implements Command<CliCommandInvocation> {
 
-    private static final class RemoveExistingActivator implements OptionActivator {
+    public static final class RemoveExistingActivator implements OptionActivator {
+
+        private static final String EMPTY_CONFIG = "empty-config";
+        // In order to advertise the dependencies on other options.
+        // This field is retrieved when help is generated.
+        public static final String[] WF_CLI_EXPECTED_OPTIONS = {EMPTY_CONFIG};
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck("empty-config");
+            ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(EMPTY_CONFIG);
             return processedOption != null && processedOption.getValue() != null;
         }
     }
@@ -104,33 +110,34 @@ public class EmbedServerCommand implements Command<CliCommandInvocation> {
         }
     }
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     private static final String ECHO = "echo";
     private static final String DISCARD_STDOUT = "discard";
 
-    @Option(name = "admin-only", completer = BooleanCompleter.class)
+    @Option(name = "admin-only", completer = BooleanCompleter.class, required = false)
     private boolean adminOnly;
 
     @Option(name = "server-config", completer = FileCompleter.class,
-            converter = FileConverter.class, shortName = 'c')
+            converter = FileConverter.class, shortName = 'c', required = false)
     private File serverConfig;
 
-    @Option(name = "jboss-home", activator = JBossHomeActivator.class)
+    @Option(name = "jboss-home", activator = JBossHomeActivator.class, required = false)
     private File jbossHome;
 
-    @Option(name = "std-out", completer = StdOutCompleter.class)
+    @Option(name = "std-out", completer = StdOutCompleter.class, required = false)
     private String stdOutHandling;
 
-    @Option(hasValue = false, name = "empty-config")
+    @Option(hasValue = false, name = "empty-config", required = false)
     private boolean emptyConfig;
 
     @Option(hasValue = false, name = "remove-existing-config",
-            activator = RemoveExistingActivator.class)
+            activator = RemoveExistingActivator.class, required = false)
     private boolean removeExisting;
 
-    @Option()
+    @Option(required = false)
     private Long timeout;
 
     private final AtomicReference<EmbeddedProcessLaunch> serverReference;
@@ -150,7 +157,7 @@ public class EmbedServerCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         if (help) {
-            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("embed server"));
+            commandInvocation.println(commandInvocation.getHelpInfo("embed server"));
             return CommandResult.SUCCESS;
         }
         if (isModularExecution() && jbossHome != null) {

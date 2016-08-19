@@ -42,10 +42,9 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.activator.DefaultActivator;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.activator.ResolveExpressionActivator;
-import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
-import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.aesh.converter.OperationRequestAddressConverter;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
@@ -137,6 +136,11 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
 
     private static final String PATH_ARGUMENT_NAME = "lspathargument";
 
+    public static class AttrDescPropertyActivator extends HiddenActivator {
+
+        public static final String[] WF_CLI_EXPECTED_OPTIONS = {"l"};
+    }
+
     public ProcessedCommand getProcessedCommand(CommandContext ctx) throws OptionParserException, CommandLineParserException {
         ProcessedCommand p = new MapProcessedCommandBuilder().
                 name("ls").
@@ -152,11 +156,19 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
                         activator(ResolveExpressionActivator.class).
                         create()
                 ).
-                addOption(new ProcessedOptionBuilder().name("headers").
-                        hasValue(true).
+                // For help only
+                addOption(new ProcessedOptionBuilder().name("<attribute-description-property>").
+                        hasValue(false).
                         type(String.class).
-                        completer(HeadersCompleter.class).
-                        converter(HeadersConverter.class).create()).
+                        activator(AttrDescPropertyActivator.class).
+                        create()
+                ).
+                // Useless option but it has actually one.
+                //                addOption(new ProcessedOptionBuilder().name("headers").
+                //                        hasValue(true).
+                //                        type(String.class).
+                //                        completer(HeadersCompleter.class).
+                //                        converter(HeadersConverter.class).create()).
                 argument(new ProcessedOptionBuilder().completer(PathOptionCompleter.class).
                         name(PATH_ARGUMENT_NAME).
                         hasValue(true).

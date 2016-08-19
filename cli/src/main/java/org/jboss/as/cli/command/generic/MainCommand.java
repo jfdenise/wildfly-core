@@ -48,8 +48,6 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
-import org.jboss.as.cli.aesh.activator.NotExpectedOptionsActivator;
-import org.jboss.as.cli.aesh.activator.PresenceOptionsActivatorBuilder;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.completer.InstanceCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
@@ -134,17 +132,19 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
                 cmd.setValue(entry.getKey(), entry.getValue());
             }
             return cmd.execute(commandInvocation);
+        } else {
+            throw new CommandException("Command action is missing.");
         }
-        return null;
     }
 
+    @Deprecated
     private void printHelp(CommandContext ctx,
             Map<String, Object> values) throws CommandLineException {
 
         if (values.containsKey("properties")) {
-            org.jboss.as.cli.command.generic.Util.printProperties(ctx, propertyId,
+            ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperties(ctx, propertyId,
                     org.jboss.as.cli.command.generic.Util.
-                    getAttributeDescriptions(ctx, nodeType));
+                    getAttributeDescriptions(ctx, nodeType)));
             return;
         }
 
@@ -156,6 +156,7 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
         printNodeDescription(ctx);
     }
 
+    @Deprecated
     private void printNodeDescription(CommandContext ctx) throws CommandFormatException {
 
         int offset = 2;
@@ -192,7 +193,7 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
         buf.append("The command is used to manage resources of type ");
         buf.append(this.nodeType);
         buf.append(".");
-        org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset);
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset));
 
         ctx.printLine("\n\nRESOURCE DESCRIPTION\n");
 
@@ -200,11 +201,11 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
             buf.setLength(0);
             buf.append("(Execute '");
             buf.append(commandName).append(" --profile=<profile_name> --help' to include the resource description here.)");
-            org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset);
+            ctx.printLine(org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset));
         } else if (ctx.getModelControllerClient() == null) {
             buf.setLength(0);
             buf.append("(Connection to the controller is required to be able to load the resource description)");
-            org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset);
+            ctx.printLine(org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset));
         } else {
             ModelNode request = org.jboss.as.cli.command.generic.Util.initRequest(ctx, nodeType);
             if (request == null) {
@@ -230,24 +231,24 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
             } else {
                 buf.append("N/A. Please, open a jira issue at https://issues.jboss.org/browse/WFLY to get this fixed. Thanks!");
             }
-            org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset);
+            ctx.printLine(org.jboss.as.cli.command.generic.Util.formatText(ctx, buf, offset));
         }
 
         ctx.printLine("\n\nARGUMENTS\n");
 
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--help", "prints this content.");
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--help", "prints this content."));
 
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--help --properties",
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--help --properties",
                 "prints the list of the resource properties including their access-type "
-                + "(read/write/metric), value type, and the description.");
+                + "(read/write/metric), value type, and the description."));
 
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--help --commands",
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--help --commands",
                 "prints the list of the commands available for the resource."
                 + " To get the complete description of a specific command (including its parameters, "
-                + "their types and descriptions), execute " + commandName + " <command> --help.");
+                + "their types and descriptions), execute " + commandName + " <command> --help."));
 
         if (nodeType.dependsOnProfile() && ctx.isDomainMode()) {
-            org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--profile", "the name of the profile the target resource belongs to.");
+            ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--profile", "the name of the profile the target resource belongs to."));
         }
 
         buf.setLength(0);
@@ -257,25 +258,25 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
             buf.append("corresponds to a property of the resource which ");
         }
         buf.append("is used to identify the resource against which the command should be executed.");
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, propertyId, buf);
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, propertyId, buf));
 
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "<property>",
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "<property>",
                 "property name of the resource whose value should be updated. "
                 + "For a complete list of available property names, their types and descriptions, execute "
-                + commandName + " --help --properties.");
+                + commandName + " --help --properties."));
 
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "<command>",
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "<command>",
                 "command name provided by the resource. For a complete list of available commands execute "
-                + commandName + " --help --commands.");
+                + commandName + " --help --commands."));
 
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "<parameter>",
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "<parameter>",
                 "parameter name of the <command> provided by the resource. "
                 + "For a complete list of available parameter names of a specific <command>, "
-                + "their types and descriptions execute " + commandName + " <command> --help.");
+                + "their types and descriptions execute " + commandName + " <command> --help."));
 
-        org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--headers",
+        ctx.printLine(org.jboss.as.cli.command.generic.Util.formatProperty(ctx, "--headers",
                 "a list of operation headers separated by a semicolon. For the list of supported "
-                + "headers, please, refer to the domain management documentation or use tab-completion.");
+                + "headers, please, refer to the domain management documentation or use tab-completion."));
     }
 
     public ProcessedCommand getProcessedCommand(final CommandContext commandContext) throws CommandLineParserException {
@@ -296,26 +297,23 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
 
         ProcessedCommand p = new MapProcessedCommandBuilder().
                 name(commandName).
+                description("The command is used to manage resources of type " + nodeType).
                 optionProvider(provider).
                 addOption(new ProcessedOptionBuilder().name("help").
                         hasValue(false).
                         type(String.class).
+                        activator(HiddenActivator.class).
                         create()).
                 addOption(new ProcessedOptionBuilder().name("properties").
                         hasValue(false).
                         type(String.class).
-                        activator(new PresenceOptionsActivatorBuilder().
-                                expected("help").
-                                notExpected("commands").
-                                create()).
+                        activator(HiddenActivator.class).
                         create()
                 ).
                 addOption(new ProcessedOptionBuilder().name("commands").
                         hasValue(false).
                         type(String.class).
-                        activator(new PresenceOptionsActivatorBuilder().
-                                expected("help").
-                                notExpected("properties").create()).create()).
+                        activator(HiddenActivator.class).create()).
                 command(this).create();
 
         // This is for backward compatibility.
@@ -338,7 +336,7 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
                             && processedCommand.findLongOption("profile") == null) {
                         return false;
                     }
-                    return new NotExpectedOptionsActivator("help").isActivated(processedCommand);
+                    return true;
                 }
 
             };
@@ -358,7 +356,7 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
                         create());
 
                 WriteAttributesSubCommand subCommand
-                        = new WriteAttributesSubCommand(nodeType,
+                        = new WriteAttributesSubCommand(null, nodeType,
                                 propertyId,
                                 commonOptions,
                                 customCompleters,

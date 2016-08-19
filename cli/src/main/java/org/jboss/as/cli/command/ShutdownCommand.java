@@ -86,7 +86,8 @@ public class ShutdownCommand implements Command<CliCommandInvocation>, DMRComman
         }
     }
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Option

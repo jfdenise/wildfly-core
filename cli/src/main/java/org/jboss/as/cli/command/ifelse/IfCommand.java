@@ -30,6 +30,7 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.command.trycatch.TryActivator;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
@@ -44,7 +45,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "if", description = "", activator = TryActivator.class)
 public class IfCommand implements Command<CliCommandInvocation> {
 
-    @Option(hasValue = false)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Arguments(completer = IfCompleter.class, valueSeparator = '%')

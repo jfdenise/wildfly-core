@@ -55,7 +55,8 @@ import org.wildfly.core.cli.command.DMRCommand;
 @CommandDefinition(name = "operation", description = "")
 public class ReadOperationCommand implements Command<CliCommandInvocation>, DMRCommand {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Option(converter = OperationRequestAddressConverter.class, completer = PathOptionCompleter.class)
@@ -75,7 +76,7 @@ public class ReadOperationCommand implements Command<CliCommandInvocation>, DMRC
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("read attribute"));
+            commandInvocation.println(commandInvocation.getHelpInfo("read operation"));
             return CommandResult.SUCCESS;
         }
         OperationRequestAddress address = node;

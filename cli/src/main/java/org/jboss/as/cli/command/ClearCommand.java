@@ -11,6 +11,7 @@ import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
@@ -20,12 +21,17 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "clear", description = "", aliases = {"cls"})
 public class ClearCommand implements Command<CliCommandInvocation> {
 
-    @Option(hasValue = false)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
+        if (help) {
+            commandInvocation.println(commandInvocation.getHelpInfo("clear"));
+            return CommandResult.SUCCESS;
+        }
         try {
             commandInvocation.getShell().clear();
         } catch (IOException ex) {

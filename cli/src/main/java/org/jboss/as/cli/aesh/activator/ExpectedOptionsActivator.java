@@ -22,6 +22,7 @@
 package org.jboss.as.cli.aesh.activator;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.jboss.aesh.cl.activation.OptionActivator;
@@ -54,5 +55,9 @@ public class ExpectedOptionsActivator implements OptionActivator {
             found &= processedOption != null && processedOption.getValue() != null;
         }
         return found;
+    }
+
+    public Set<String> getExpected() {
+        return Collections.unmodifiableSet(options);
     }
 }

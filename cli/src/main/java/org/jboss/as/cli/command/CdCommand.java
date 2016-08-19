@@ -33,6 +33,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.activator.ConnectedActivator;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
 import org.jboss.as.cli.aesh.converter.OperationRequestAddressConverter;
 import org.jboss.as.cli.operation.OperationRequestAddress;
@@ -58,7 +59,8 @@ public class CdCommand implements Command<CliCommandInvocation> {
     @Option(name = "no-validation", hasValue = false)
     private boolean noValidation;
 
-    @Option(hasValue = false)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override
@@ -66,7 +68,7 @@ public class CdCommand implements Command<CliCommandInvocation> {
             throws CommandException, InterruptedException {
         if (help) {
             commandInvocation.println(commandInvocation.getHelpInfo("cd"));
-            return null;
+            return CommandResult.SUCCESS;
         }
         if (arguments != null && arguments.size() > 0) {
             if (!noValidation) {

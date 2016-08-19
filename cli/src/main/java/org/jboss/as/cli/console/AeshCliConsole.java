@@ -80,6 +80,7 @@ import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.EchoCommand;
 import org.jboss.as.cli.command.EchoDMRCommand;
+import org.jboss.as.cli.command.HelpCommand;
 import org.jboss.as.cli.command.history.HistoryCommand;
 import org.jboss.as.cli.command.LsMapCommand;
 import org.jboss.as.cli.command.PwdCommand;
@@ -355,7 +356,7 @@ class AeshCliConsole implements Console {
                 registry(commandRegistry).
                 resultHandler(newResultHandler()).
                 activator((c) -> ctx.getModelControllerClient() != null).
-                executor(new OperationSpecialCommand(ctx, commandContext)).create());
+                executor(new OperationSpecialCommand(ctx, commandContext, this)).create());
 
         registerExtraCommands();
 
@@ -430,6 +431,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new CommandCommand());
         clireg.addCommand(new EchoCommand());
         clireg.addCommand(new EchoDMRCommand());
+        clireg.addCommand(new HelpCommand(clireg));
         clireg.addCommand(new HistoryCommand());
         // ls is a dynamic command
         clireg.addCommand(new AeshCommandContainer(

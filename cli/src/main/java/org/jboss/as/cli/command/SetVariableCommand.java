@@ -77,7 +77,9 @@ public class SetVariableCommand implements Command<CliCommandInvocation> {
         }
 
     }
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Arguments(valueSeparator = ',', completer = VariablesCompleter.class)
@@ -86,7 +88,7 @@ public class SetVariableCommand implements Command<CliCommandInvocation> {
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("unset"));
+            commandInvocation.println(commandInvocation.getHelpInfo("set"));
             return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();

@@ -38,6 +38,7 @@ import org.jboss.as.cli.CliEvent;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.jboss.as.cli.aesh.converter.FileConverter;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
@@ -92,7 +93,8 @@ public class EmbedHostControllerCommand implements Command<CliCommandInvocation>
         }
     }
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     private static final String ECHO = "echo";
@@ -101,19 +103,19 @@ public class EmbedHostControllerCommand implements Command<CliCommandInvocation>
     private static final String HOST_CONFIG = "--host-config";
 
     @Option(name = "domain-config", completer = FileCompleter.class,
-            converter = FileConverter.class, shortName = 'c')
+            converter = FileConverter.class, shortName = 'c', required = false)
     private File domainConfig;
 
-    @Option(name = "jboss-home", activator = JBossHomeActivator.class)
+    @Option(name = "jboss-home", activator = JBossHomeActivator.class, required = false)
     private File jbossHome;
 
-    @Option(name = "std-out", completer = StdOutCompleter.class)
+    @Option(name = "std-out", completer = StdOutCompleter.class, required = false)
     private String stdOutHandling;
 
-    @Option(name = "host-config")
+    @Option(name = "host-config", required = false)
     private String hostConfig;
 
-    @Option()
+    @Option(required = false)
     private Long timeout;
 
     private final AtomicReference<EmbeddedProcessLaunch> hostControllerReference;
@@ -133,7 +135,7 @@ public class EmbedHostControllerCommand implements Command<CliCommandInvocation>
             throws CommandException, InterruptedException {
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         if (help) {
-            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("embed host-controller"));
+            commandInvocation.println(commandInvocation.getHelpInfo("embed host-controller"));
             return CommandResult.SUCCESS;
         }
         if (isModularExecution() && jbossHome != null) {

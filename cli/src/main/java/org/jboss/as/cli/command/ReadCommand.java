@@ -38,7 +38,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
         = {ReadAttributeCommand.class, ReadOperationCommand.class}, activator = ConnectedActivator.class)
 public class ReadCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

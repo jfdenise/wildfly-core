@@ -15,6 +15,8 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.jboss.as.cli.impl.Console;
+import org.jboss.as.cli.impl.HelpSupport;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 
 /**
@@ -37,11 +39,13 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
     private final CliCommandContextImpl ctx;
     private final String name;
     private final DefaultCallbackHandler line = new DefaultCallbackHandler(false);
+    private final Console console;
 
-    public CliLegacyCommandBridge(String name, CliCommandContextImpl ctx)
+    public CliLegacyCommandBridge(String name, CliCommandContextImpl ctx, Console console)
             throws CommandLineParserException {
         this.ctx = ctx;
         this.name = name;
+        this.console = console;
     }
 
     @Override
@@ -62,7 +66,26 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
 
     @Override
     public boolean accept(String line) {
-        return line.startsWith(name) && name.length() >= line.length();
+        // line ends with the separator.
+        String[] split = line.trim().split(" ");
+        String n = null;
+        for (String s : split) {
+            if (s.isEmpty()) {
+                continue;
+            } else {
+                n = s;
+                break;
+            }
+        }
+        if (n == null) {
+            return false;
+        }
+        return n.startsWith(name) && name.length() >= n.length();
+    }
+
+    @Override
+    public String printHelp(String op) {
+        return HelpSupport.printHelp(console, name);
     }
 
 }

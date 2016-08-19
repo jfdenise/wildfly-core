@@ -30,6 +30,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.GroupCommand;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
@@ -40,7 +41,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @GroupCommandDefinition(name = "embed", description = "", activator = EmbedCommandActivator.class)
 public class EmbedCommand implements GroupCommand<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     private final AtomicReference<EmbeddedProcessLaunch> serverReference;
@@ -59,7 +61,7 @@ public class EmbedCommand implements GroupCommand<CliCommandInvocation> {
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("embed"));
+            commandInvocation.println(commandInvocation.getHelpInfo("embed"));
             return CommandResult.SUCCESS;
         }
         throw new CommandException("Missing target to embed");

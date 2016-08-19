@@ -69,6 +69,8 @@ public class CliSpecialCommand {
 
         int complete(CommandContext commandContext, String buffer, int i, List<String> candidates);
 
+        String printHelp(String op);
+
     }
 
     private static class CommandImpl implements Command {
@@ -101,7 +103,7 @@ public class CliSpecialCommand {
 
     }
 
-    private class CliSpecialParser implements CommandLineParser<Command> {
+    public class CliSpecialParser implements CommandLineParser<Command> {
 
         private final ProcessedCommand cmd;
         private final Command command;
@@ -159,7 +161,11 @@ public class CliSpecialCommand {
 
         @Override
         public String printHelp() {
-            return null;
+            return executor.printHelp(null);
+        }
+
+        public String printHelp(String op) {
+            return executor.printHelp(op);
         }
 
         @Override
@@ -201,7 +207,7 @@ public class CliSpecialCommand {
         }
     }
 
-    private class CliSpecialCommandContainer extends DefaultCommandContainer<Command> {
+    public class CliSpecialCommandContainer extends DefaultCommandContainer<Command> {
 
         private final CliSpecialParser parser;
 

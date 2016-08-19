@@ -37,7 +37,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
         groupCommands = {ClearHistoryCommand.class, DisableHistoryCommand.class, EnableHistoryCommand.class, PrintHistoryCommand.class})
 public class HistoryCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Deprecated

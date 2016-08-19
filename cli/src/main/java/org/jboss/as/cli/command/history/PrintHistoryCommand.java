@@ -38,7 +38,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "print", description = "")
 public class PrintHistoryCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

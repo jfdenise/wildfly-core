@@ -12,11 +12,13 @@ import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Map;
+import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.ConnectionInfo;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.util.FingerprintGenerator;
 import org.jboss.as.cli.util.SimpleTable;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -31,9 +33,19 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "connection-info", description = "")
 public class ConnectionInfoCommand implements Command<CliCommandInvocation> {
 
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
+    private boolean help;
+
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
+
+        if (help) {
+            commandInvocation.println(commandInvocation.getHelpInfo("connection-info"));
+            return CommandResult.SUCCESS;
+        }
+
         printConnectionInfo(commandInvocation);
         return CommandResult.SUCCESS;
     }

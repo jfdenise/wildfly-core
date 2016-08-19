@@ -38,7 +38,7 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "batch", description = "", groupCommands
+@GroupCommandDefinition(name = "batch", description = "Batch main command", groupCommands
         = {BatchClearCommand.class,
             BatchDiscardCommand.class,
             BatchEditLineCommand.class,
@@ -54,7 +54,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
         })
 public class BatchCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Deprecated
@@ -63,18 +64,18 @@ public class BatchCommand implements Command<CliCommandInvocation> {
     private File file;
 
     @Deprecated
-    @Option(name = "l", hasValue = false)
+    @Option(name = "l", hasValue = false, activator = HiddenActivator.class)
     private boolean list;
 
     @Deprecated
     @Arguments(activator = HiddenActivator.class)
-    List<String> name;
+    private List<String> name;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("batch"));
+            commandInvocation.println(commandInvocation.getHelpInfo("batch"));
             return CommandResult.SUCCESS;
         }
         if (commandInvocation.getCommandContext().

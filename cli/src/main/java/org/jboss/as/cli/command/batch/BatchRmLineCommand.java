@@ -39,24 +39,22 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "rm-line", description = "", activator = BatchActivator.class)
+@GroupCommandDefinition(name = "remove-line", description = "", activator = BatchActivator.class)
 public class BatchRmLineCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
-    @Deprecated
+    // XXX JFDENISE AESH-401
     @Arguments(activator = HiddenActivator.class)
     List<Integer> altLine;
-
-    @Option()
-    private Integer line;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println("Aesh should have hooks for help!");
+            commandInvocation.println(commandInvocation.getHelpInfo("batch remove-line"));
             return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.getCommandContext().
@@ -71,11 +69,9 @@ public class BatchRmLineCommand implements Command<CliCommandInvocation> {
         if (batchSize == 0) {
             throw new CommandException("The batch is empty.");
         }
-        Integer l = line == null ? null : line;
-        if (l == null) {
-            if (altLine != null && !altLine.isEmpty()) {
-                l = altLine.get(0);
-            }
+        Integer l = null;
+        if (altLine != null && !altLine.isEmpty()) {
+            l = altLine.get(0);
         }
         if (l == null) {
             throw new CommandException("Missing line number.");

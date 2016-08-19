@@ -26,6 +26,7 @@ import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.activator.NoBatchActivator;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
@@ -36,14 +37,15 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @GroupCommandDefinition(name = "new", description = "", activator = NoBatchActivator.class)
 public class BatchNewCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println("Aesh should have hooks for help!");
+            commandInvocation.println(commandInvocation.getHelpInfo("batch new"));
             return CommandResult.SUCCESS;
         }
         return handle(commandInvocation);

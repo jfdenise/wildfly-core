@@ -34,6 +34,7 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.activator.NoBatchActivator;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
@@ -48,18 +49,20 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @GroupCommandDefinition(name = "load-file", description = "", activator = NoBatchActivator.class)
 public class BatchLoadFileCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
+    // XXX JFDENISE AESH-401
     @Arguments(converter = FileConverter.class,
-            completer = FileCompleter.class)
+            completer = FileCompleter.class) // required = true
     private List<File> files;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println("Aesh should have hooks for help!");
+            commandInvocation.println(commandInvocation.getHelpInfo("batch load-file"));
             return CommandResult.SUCCESS;
         }
         if (commandInvocation.getCommandContext().getLegacyCommandContext().

@@ -28,6 +28,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
@@ -38,7 +39,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "stop", description = "", activator = StopEmbeddedServerActivator.class)
 public class StopEmbeddedServerCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     private final AtomicReference<EmbeddedProcessLaunch> serverReference;
@@ -56,7 +58,7 @@ public class StopEmbeddedServerCommand implements Command<CliCommandInvocation> 
             throws CommandException, InterruptedException {
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         if (help) {
-            commandInvocation.getShell().out().println(commandInvocation.getHelpInfo("embed stop"));
+            commandInvocation.println(commandInvocation.getHelpInfo("embed stop"));
             return CommandResult.SUCCESS;
         }
         if (serverReference.get() != null) {

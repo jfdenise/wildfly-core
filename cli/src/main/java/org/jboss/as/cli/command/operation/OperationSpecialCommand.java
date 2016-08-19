@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.command.operation;
 
+import java.io.IOException;
 import java.util.List;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.result.NullResultHandler;
@@ -34,6 +35,9 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.jboss.as.cli.impl.Console;
+import org.jboss.as.cli.impl.HelpSupport;
+import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
@@ -53,6 +57,8 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
     private final DefaultCallbackHandler parser = new DefaultCallbackHandler(false);
     private final DefaultCallbackHandler operationParser
             = new DefaultCallbackHandler(true);
+    private final Console console;
+    private final DefaultCallbackHandler line = new DefaultCallbackHandler(false);
 
     @Override
     public CommandContainerResult execute(CommandContext commandContext,
@@ -86,10 +92,11 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
         return line.startsWith(":") || line.startsWith(".") || line.startsWith("/");
     }
 
-    public OperationSpecialCommand(CommandContext ctx, CliCommandContextImpl commandContext)
+    public OperationSpecialCommand(CommandContext ctx, CliCommandContextImpl commandContext, Console console)
             throws CommandLineParserException {
         this.ctx = ctx;
         this.commandContext = commandContext;
+        this.console = console;
     }
 
     @Override
@@ -98,6 +105,56 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
         operationParser.parse(ctx.getCurrentNodePath(),
                 command, ctx);
         return Util.toOperationRequest(ctx, operationParser);
+    }
+
+    @Override
+    public String printHelp(String op) {
+        if (op == null) {
+            return HelpSupport.printHelp(console, "wildfly_raw_op");
+        }
+        // Check if the op exists.
+        line.reset();
+        try {
+            line.parse(ctx.getCurrentNodePath(),
+                    op, ctx);
+        } catch (CommandFormatException ex) {
+            return HelpSupport.printHelp(console, "wildfly_raw_op");
+        }
+
+        String opName = line.getOperationName();
+        if (opName == null) {
+            return HelpSupport.printHelp(console, "wildfly_raw_op");
+        }
+
+        OperationRequestAddress address = line.getAddress();
+        ModelNode request = new ModelNode();
+        if (address == null || address.isEmpty()) {
+            request.get(Util.ADDRESS).setEmptyList();
+        } else {
+            if (address.endsOnType()) {
+                return HelpSupport.printHelp(console, "wildfly_raw_op");
+            }
+            final ModelNode addrNode = request.get(Util.ADDRESS);
+            for (OperationRequestAddress.Node node : address) {
+                addrNode.add(node.getType(), node.getName());
+            }
+        }
+        request.get(org.jboss.as.cli.Util.OPERATION).set(org.jboss.as.cli.Util.READ_OPERATION_DESCRIPTION);
+        request.get(org.jboss.as.cli.Util.NAME).set(opName);
+        ModelNode result;
+        try {
+            result = ctx.getModelControllerClient().execute(request);
+        } catch (IOException e) {
+            return HelpSupport.printHelp(console, "wildfly_raw_op");
+        }
+        if (!result.hasDefined(org.jboss.as.cli.Util.RESULT)) {
+            return HelpSupport.printHelp(console, "wildfly_raw_op");
+        }
+        String content = HelpSupport.printHelp(console, result.get(org.jboss.as.cli.Util.RESULT));
+        if (content == null) {
+            return HelpSupport.printHelp(console, "wildfly_raw_op");
+        }
+        return content;
     }
 
 }

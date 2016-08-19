@@ -51,7 +51,8 @@ public class CommandRemove implements Command<CliCommandInvocation> {
     @Arguments(completer = DynamicCommandCompleter.class)
     private List<String> commandName;
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override
@@ -59,7 +60,7 @@ public class CommandRemove implements Command<CliCommandInvocation> {
 
         if (help) {
             commandInvocation.println(commandInvocation.getHelpInfo("command remove"));
-            return null;
+            return CommandResult.SUCCESS;
         }
 
         CliCommandRegistry reg = (CliCommandRegistry) commandInvocation.getCommandRegistry();

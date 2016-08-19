@@ -60,7 +60,6 @@ public class ResolveExpressionActivator implements CliOptionActivator {
     @Override
     public boolean isActivated(ProcessedCommand processedCommand) {
         try {
-            ModelNode op = new ModelNode();
             CommandContext ctx = commandContext.getLegacyCommandContext();
             String path = processedCommand.getArgument().getValue();
             // Workaround for Aesh parser bug.

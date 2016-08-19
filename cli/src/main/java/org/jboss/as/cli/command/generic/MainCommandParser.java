@@ -38,8 +38,10 @@ import org.jboss.aesh.cl.parser.OptionParserException;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.map.MapCommand;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
-import org.jboss.as.cli.aesh.activator.NotExpectedOptionsActivator;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.command.generic.MainCommand.MainCommandProcessedCommand;
 import org.jboss.as.cli.aesh.completer.ChildrenNameCompleter;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
@@ -49,6 +51,7 @@ import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 
 /**
  *
@@ -57,6 +60,25 @@ import org.jboss.dmr.ModelNode;
  */
 public class MainCommandParser extends AeshCommandLineParser<MapCommand> {
 
+    private final class HelpGeneratorParser extends AeshCommandLineParser<MapCommand> {
+
+        private final AbstractOperationSubCommand cmd;
+
+        public HelpGeneratorParser(ProcessedCommand<MapCommand> processedCommand, AbstractOperationSubCommand cmd) {
+            super(processedCommand);
+            this.cmd = cmd;
+        }
+
+        @Override
+        public String printHelp() {
+            try {
+                return cmd.getHelpContent(commandContext);
+            } catch (CommandLineException ex) {
+                return "Exception retrieving help : " + ex.toString();
+            }
+        }
+
+    }
     static final String[] EXCLUDED_OPERATIONS = {"read-attribute",
         "read-children-names",
         "read-children-resources",
@@ -113,30 +135,38 @@ public class MainCommandParser extends AeshCommandLineParser<MapCommand> {
     public List<CommandLineParser<? extends Command>> getChildParsers() {
         List<CommandLineParser<? extends Command>> lst = new ArrayList<>();
         try {
-            final List<ProcessedOption> commonOptions
-                    = commonOptions(commandContext, nodeType, propertyId);
             OperationCompleter completer
                     = new OperationCompleter(nodeType, null, EXCLUDED_OPERATIONS);
             for (final String op : completer.getCandidates(commandContext, null)) {
                 // Add an operation as a subcommand
+
+                // Retrieve Description
+                final ModelNode descr = Util.getOperationDescription(commandContext,
+                        op,
+                        nodeType);
+                String description = "";
+                if (descr.has(org.jboss.as.cli.Util.DESCRIPTION)) {
+                    description = descr.get(org.jboss.as.cli.Util.DESCRIPTION).asString();
+                }
                 AbstractOperationSubCommand subCommand = customSubCommands.get(op);
                 if (subCommand == null) {
-                    subCommand = new ResourceOperationSubCommand(op,
-                            nodeType, propertyId, commonOptions,
+                    subCommand = new ResourceOperationSubCommand(this, op, description,
+                            nodeType, propertyId,
                             customCompleters, customConverters);
                 }
                 AeshCommandLineParser<?> parser
-                        = new AeshCommandLineParser<>(subCommand.
-                                getProcessedCommand(commandContext));
+                        = new HelpGeneratorParser(subCommand.
+                                getProcessedCommand(commandContext), subCommand);
                 parser.setChild(true);
                 lst.add(parser);
             }
+            AbstractOperationSubCommand writeCommand = new WriteAttributesSubCommand(this, nodeType,
+                    propertyId,
+                    null, customCompleters, customConverters, false);
             // Then add write attribute...
             AeshCommandLineParser<?> parser
-                    = new AeshCommandLineParser<>(new WriteAttributesSubCommand(nodeType,
-                            propertyId,
-                            commonOptions, customCompleters, customConverters, false).
-                            getProcessedCommand(commandContext));
+                    = new HelpGeneratorParser(writeCommand.
+                            getProcessedCommand(commandContext), writeCommand);
             parser.setChild(true);
             lst.add(parser);
         } catch (Exception ex) {
@@ -145,54 +175,73 @@ public class MainCommandParser extends AeshCommandLineParser<MapCommand> {
         return lst;
     }
 
-    private static List<ProcessedOption> commonOptions(final CommandContext ctx,
-            final NodeType type, final String propertyId) throws OptionParserException {
+    List<ProcessedOption> getCommonOptions() throws OptionParserException, CommandFormatException {
         final List<ProcessedOption> options = new ArrayList<>();
 
         // instance identifier option
         OptionActivator instanceActivator = new OptionActivator() {
             @Override
             public boolean isActivated(ProcessedCommand processedCommand) {
-                if ((type.dependsOnProfile()
-                        || ctx.isDomainMode())
+                if ((nodeType.dependsOnProfile()
+                        && commandContext.isDomainMode())
                         && processedCommand.findLongOption("profile") == null) {
                     return false;
                 }
-                return new NotExpectedOptionsActivator("help").isActivated(processedCommand);
+                return true;
             }
 
         };
+
+        // We need to retrieve the description of the propertyId (for help).
+        String desc = null;
+        if (commandContext.getModelControllerClient() != null) {
+            List<Property> props = org.jboss.as.cli.command.generic.Util.
+                    getNodeProperties(commandContext, nodeType);
+
+            for (Property p : props) {
+                if (p.getName().equals(propertyId)) {
+                    desc = p.getValue().get("type").asString() + ", "
+                            + p.getValue().get("description").asString();
+                    break;
+                }
+            }
+        }
         options.add(new ProcessedOptionBuilder().name(propertyId).
-                completer(new InstanceCompleter(type)).
+                completer(new InstanceCompleter(nodeType)).
                 type(String.class).
+                description(desc).
+                required(true).
                 activator(instanceActivator).
                 create());
 
         options.add(new ProcessedOptionBuilder().name("headers").
                 completer(new HeadersCompleter()).
-                type(String.class).
+                description("OBJECT, The operation headers.").
+                type(Object.class).
                 converter(HeadersConverter.INSTANCE).
                 activator(new ExpectedOptionsActivator(propertyId)).
                 create());
 
         options.add(new ProcessedOptionBuilder().name("help").
-                activator(new NotExpectedOptionsActivator(propertyId)).
+                activator(HiddenActivator.class).
                 type(String.class).
                 hasValue(false).
                 create());
 
         // profile option
-        ChildrenNameCompleter profileCompleter = new ChildrenNameCompleter(ctx, null, type);
-        OptionActivator profileActivator = new OptionActivator() {
-            @Override
-            public boolean isActivated(ProcessedCommand processedCommand) {
-                return (type.dependsOnProfile() || ctx.isDomainMode())
-                        && new NotExpectedOptionsActivator("help").isActivated(processedCommand);
-            }
+        if (nodeType.dependsOnProfile() && commandContext.isDomainMode()) {
+            ChildrenNameCompleter profileCompleter = new ChildrenNameCompleter(commandContext, null, nodeType);
+            OptionActivator profileActivator = new OptionActivator() {
+                @Override
+                public boolean isActivated(ProcessedCommand processedCommand) {
+                    return nodeType.dependsOnProfile() && commandContext.isDomainMode();
+                }
 
-        };
-        options.add(new ProcessedOptionBuilder().completer(profileCompleter).
-                activator(profileActivator).name("profile").type(String.class).create());
+            };
+            options.add(new ProcessedOptionBuilder().completer(profileCompleter).
+                    description("The name of the profile the target resource belongs to.").
+                    activator(profileActivator).name("profile").type(String.class).create());
+        }
         return options;
     }
 }

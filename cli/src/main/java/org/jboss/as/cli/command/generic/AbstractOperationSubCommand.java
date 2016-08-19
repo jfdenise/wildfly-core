@@ -22,8 +22,8 @@
 package org.jboss.as.cli.command.generic;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.command.CommandException;
@@ -50,11 +50,14 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
     private final String operationName;
     private final NodeType nodeType;
     private final String propertyId;
+    private final String operationDescription;
 
-    public AbstractOperationSubCommand(String operationName, NodeType nodeType, String propertyId) {
+    public AbstractOperationSubCommand(String operationName, String operationDescription,
+            NodeType nodeType, String propertyId) {
         this.operationName = operationName;
         this.nodeType = nodeType;
         this.propertyId = propertyId;
+        this.operationDescription = operationDescription;
     }
 
     public abstract ProcessedCommand getProcessedCommand(final CommandContext commandContext)
@@ -65,7 +68,7 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
         if (contains("help")) {
             try {
                 printHelp(commandInvocation.getCommandContext().
-                        getLegacyCommandContext(), getValues());
+                        getLegacyCommandContext());
             } catch (CommandLineException ex) {
                 throw new RuntimeException(ex);
             }
@@ -148,24 +151,33 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
         return buf;
     }
 
-    private void printHelp(CommandContext ctx,
-            Map<String, Object> values) throws CommandLineException {
+    String getHelpContent(CommandContext ctx) throws CommandLineException {
+        StringBuilder builder = new StringBuilder();
+        navigateHelp(ctx, (s) -> builder.append(s));
+        return builder.toString();
+    }
+
+    void printHelp(CommandContext ctx) throws CommandLineException {
+        navigateHelp(ctx, (s) -> ctx.printLine(s));
+    }
+
+    void navigateHelp(CommandContext ctx, Consumer<String> consumer) throws CommandLineException {
         final ModelNode result = org.jboss.as.cli.command.generic.Util.
                 getOperationDescription(ctx, getOperationName(), getNodeType());
         if (!result.hasDefined(org.jboss.as.cli.Util.DESCRIPTION)) {
             throw new CommandLineException("Operation description is not available.");
         }
 
-        ctx.printLine("\nDESCRIPTION:\n");
-        org.jboss.as.cli.command.generic.Util.formatText(ctx, result.get(org.jboss.as.cli.Util.DESCRIPTION).asString(), 2);
+        consumer.accept("\nDESCRIPTION:\n");
+        consumer.accept(org.jboss.as.cli.command.generic.Util.formatText(ctx, result.get(org.jboss.as.cli.Util.DESCRIPTION).asString(), 2));
 
         if (result.hasDefined(org.jboss.as.cli.Util.REQUEST_PROPERTIES)) {
-            org.jboss.as.cli.command.generic.Util.printProperties(ctx, getPropertyId(),
+            consumer.accept(org.jboss.as.cli.command.generic.Util.formatProperties(ctx, getPropertyId(),
                     org.jboss.as.cli.command.generic.Util.
-                    getAttributeIterator(result.get(org.jboss.as.cli.Util.REQUEST_PROPERTIES).asPropertyList(), null));
+                    getAttributeIterator(result.get(org.jboss.as.cli.Util.REQUEST_PROPERTIES).asPropertyList(), null)));
         } else {
-            org.jboss.as.cli.command.generic.Util.printProperties(ctx, getPropertyId(),
-                    Collections.<AttributeDescription>emptyIterator());
+            consumer.accept(org.jboss.as.cli.command.generic.Util.formatProperties(ctx, getPropertyId(),
+                    Collections.<AttributeDescription>emptyIterator()));
         }
     }
 
@@ -236,5 +248,9 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
      */
     public String getPropertyId() {
         return propertyId;
+    }
+
+    public String getDescription() {
+        return operationDescription;
     }
 }

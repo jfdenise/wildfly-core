@@ -26,6 +26,7 @@ import org.jboss.as.cli.command.legacy.CliLegacyBatchCompliantCommandBridge;
 import org.jboss.as.cli.command.legacy.CliLegacyDMRCommandBridge;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.command.compat.CompatActivator;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.wildfly.core.cli.command.InteractiveCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
@@ -64,6 +66,7 @@ public class CliCommandRegistry implements CommandRegistry {
     private final CliCommandContextImpl commandContext;
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
     private final AeshCliConsole console;
+    private final List<String> exposedCommands = new ArrayList<>();
 
     CliCommandRegistry(AeshCliConsole console, CommandContext context,
             CliCommandContextImpl commandContext)
@@ -80,6 +83,11 @@ public class CliCommandRegistry implements CommandRegistry {
     }
 
     private void addCommandContainer(CommandContainer container) throws CommandLineException {
+        if (container.getParser().getProcessedCommand().getActivator() != null) {
+            if (!(container.getParser().getProcessedCommand().getActivator() instanceof CompatActivator)) {
+                exposedCommands.add(container.getParser().getProcessedCommand().getName());
+            }
+        }
         CliCommandContainer cliContainer;
         if (container.getParser().getCommand() instanceof InteractiveCommand) {
             interactiveCommands.put(container.getParser().
@@ -159,6 +167,9 @@ public class CliCommandRegistry implements CommandRegistry {
 
     @Override
     public void removeCommand(String name) {
+        if (exposedCommands.contains(name)) {
+            exposedCommands.remove(name);
+        }
         reg.removeCommand(name);
     }
 
@@ -182,14 +193,14 @@ public class CliCommandRegistry implements CommandRegistry {
             if (handler instanceof OperationCommand) {
                 if (handler.isBatchMode(context)) {
                     bridge = new CliLegacyBatchCompliantCommandBridge(n,
-                            context, commandContext, (OperationCommand) handler);
+                            context, commandContext, (OperationCommand) handler, console);
                 } else {
                     bridge = new CliLegacyDMRCommandBridge(n,
-                            context, commandContext, (OperationCommand) handler);
+                            context, commandContext, (OperationCommand) handler, console);
                 }
             } else {
                 bridge = new CliLegacyCommandBridge(n,
-                        commandContext);
+                        commandContext, console);
             }
             CliSpecialCommand cmd = new CliSpecialCommandBuilder().name(n).context(context).
                     activator((c) -> handler.isAvailable(context)).
@@ -205,8 +216,11 @@ public class CliCommandRegistry implements CommandRegistry {
         legacyHandlers.remove(cmdName);
     }
 
+    public List<String> getExposedCommands() {
+        return Collections.unmodifiableList(exposedCommands);
+    }
+
     public CommandLineParser findCommand(String name, String line) throws CommandNotFoundException {
-        // XXX JFDENISE, Aesh should offer this logic.
         CommandContainer c = getCommand(name, line);
         CommandLineParser p = c.getParser();
         String[] split = line == null ? new String[0] : line.split(" ");
@@ -214,7 +228,14 @@ public class CliCommandRegistry implements CommandRegistry {
             String sub = split[1];
             CommandLineParser child = c.getParser().getChildParser(sub);
             if (child != null) {
+                // Must make it a CLI thing to properly print the help.
+                if (c instanceof CliCommandContainer) {
+                    CliCommandContainer cli = (CliCommandContainer) c;
+                    child = cli.wrapParser(child);
+                }
                 p = child;
+            } else {
+                throw new CommandNotFoundException("Command not found " + line);
             }
         }
         return p;

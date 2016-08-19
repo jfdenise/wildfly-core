@@ -38,7 +38,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "list", description = "")
 public class CommandList implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override
@@ -46,7 +47,7 @@ public class CommandList implements Command<CliCommandInvocation> {
 
         if (help) {
             commandInvocation.println(commandInvocation.getHelpInfo("command list"));
-            return null;
+            return CommandResult.SUCCESS;
         }
 
         CliCommandRegistry reg = (CliCommandRegistry) commandInvocation.getCommandRegistry();

@@ -48,17 +48,20 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "add", description = "")
 public class CommandAdd implements Command<CliCommandInvocation> {
 
-    @Option(name = "node-type", completer = PathOptionCompleter.class)
+    @Option(name = "node-type", completer = PathOptionCompleter.class,
+            required = true)
     private String nodeType;
 
-    @Option(name = "command-name", activator = NodeTypeActivator.class)
+    @Option(name = "command-name", activator = NodeTypeActivator.class,
+            required = true)
     private String commandName;
 
     @Option(name = "property-id", activator = NodeTypeActivator.class,
-            completer = PropertyCompleter.class)
+            completer = PropertyCompleter.class, required = false)
     private String propertyId;
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override
@@ -85,11 +88,14 @@ public class CommandAdd implements Command<CliCommandInvocation> {
         return CommandResult.SUCCESS;
     }
 
-    public class NodeTypeActivator implements OptionActivator {
+    public static class NodeTypeActivator implements OptionActivator {
+
+        private static final String NODE_TYPE = "node-type";
+        public static final String[] WF_CLI_EXPECTED_OPTIONS = {NODE_TYPE};
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            ProcessedOption processedOption = processedCommand.findLongOption("node-type");
+            ProcessedOption processedOption = processedCommand.findLongOption(NODE_TYPE);
             return processedOption != null && processedOption.getValue() != null;
         }
     }

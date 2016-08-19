@@ -332,7 +332,7 @@ public class Util {
         return result.get(org.jboss.as.cli.Util.RESULT);
     }
 
-    public static void printProperties(CommandContext ctx, String propertyId,
+    public static String formatProperties(CommandContext ctx, String propertyId,
             Iterator<AttributeDescription> props) {
         final Map<String, StringBuilder> requiredProps = new LinkedHashMap<String, StringBuilder>();
         requiredProps.put(propertyId, new StringBuilder().append("Required argument in commands which identifies the instance to execute the command against."));
@@ -380,26 +380,27 @@ public class Util {
                 optionalProps.put("--" + attr.getName(), descr);
             }
         }
-
-        ctx.printLine("\n");
+        StringBuilder builder = new StringBuilder();
+        builder.append("\n\n");
         if (accessType == null) {
-            ctx.printLine("REQUIRED ARGUMENTS:\n");
+            builder.append("REQUIRED ARGUMENTS:\n\n");
         }
         for (String argName : requiredProps.keySet()) {
-            formatProperty(ctx, argName, requiredProps.get(argName));
+            builder.append(formatProperty(ctx, argName, requiredProps.get(argName)));
         }
 
         if (!optionalProps.isEmpty()) {
             if (accessType == null) {
-                ctx.printLine("\n\nOPTIONAL ARGUMENTS:\n");
+                builder.append("\n\nOPTIONAL ARGUMENTS:\n\n");
             }
             for (String argName : optionalProps.keySet()) {
-                formatProperty(ctx, argName, optionalProps.get(argName));
+                builder.append(formatProperty(ctx, argName, optionalProps.get(argName)));
             }
         }
+        return builder.toString();
     }
 
-    public static void formatProperty(CommandContext ctx, String argName, final CharSequence descr) {
+    public static String formatProperty(CommandContext ctx, String argName, final CharSequence descr) {
 
         final StringBuilder prop = new StringBuilder();
         prop.append(' ').append(argName);
@@ -459,10 +460,10 @@ public class Util {
                 ++lineNo;
             }
         }
-        ctx.printLine(prop.toString());
+        return prop.toString();
     }
 
-    public static void formatText(CommandContext ctx, CharSequence text, int offset) {
+    public static String formatText(CommandContext ctx, CharSequence text, int offset) {
         int terminalWidth = ctx.getTerminalWidth();
         if (terminalWidth <= 0) {
             terminalWidth = 80;
@@ -499,6 +500,6 @@ public class Util {
                 }
             }
         }
-        ctx.printLine(target.toString());
+        return target.toString();
     }
 }

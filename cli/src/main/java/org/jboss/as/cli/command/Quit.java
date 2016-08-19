@@ -23,19 +23,29 @@ package org.jboss.as.cli.command;
 
 import org.wildfly.core.cli.command.CliCommandInvocation;
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 
 /**
  *
  * @author jfdenise
  */
-@CommandDefinition(name = "quit", description = "exit the cli", aliases = {"exit", "q"})
+@CommandDefinition(name = "quit", description = "", aliases = {"exit", "q"})
 public class Quit implements Command<CliCommandInvocation> {
+
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
+    private boolean help;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
+        if (help) {
+            commandInvocation.println(commandInvocation.getHelpInfo("quit"));
+            return CommandResult.SUCCESS;
+        }
         commandInvocation.getCommandContext().exit();
         return CommandResult.SUCCESS;
     }

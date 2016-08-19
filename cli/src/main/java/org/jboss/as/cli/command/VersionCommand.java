@@ -41,7 +41,8 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 @CommandDefinition(name = "version", description = "")
 public class VersionCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

@@ -39,28 +39,29 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "mv-line", description = "", activator = BatchActivator.class)
+@GroupCommandDefinition(name = "move-line", description = "", activator = BatchActivator.class)
 public class BatchMvLineCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Deprecated
     @Arguments(activator = HiddenActivator.class)
-    // Can contain current foloowed by new.
+    // Can contain current followed by new.
     List<Integer> altValues;
 
-    @Option()
+    @Option(name="current-line-number", hasValue = true, required = true)
     private Integer currentLine;
 
-    @Option()
+    @Option(name="new-line-number", hasValue = true, required = true)
     private Integer newLine;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println("Aesh should have hooks for help!");
+            commandInvocation.println(commandInvocation.getHelpInfo("batch move-line"));
             return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();

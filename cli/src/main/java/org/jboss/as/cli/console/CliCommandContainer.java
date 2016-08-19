@@ -51,15 +51,107 @@ import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.jboss.as.cli.impl.HelpSupport;
 import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  *
  * @author jfdenise
  */
-class CliCommandContainer extends DefaultCommandContainer<Command> {
+public class CliCommandContainer extends DefaultCommandContainer<Command> {
 
-    private class CliCommandParser implements CommandLineParser<Command> {
+    private class WrappedParser implements CommandLineParser<Command> {
+
+        private final CommandLineParser<Command> parser;
+
+        private WrappedParser(CommandLineParser<Command> parser) {
+            this.parser = parser;
+        }
+
+        @Override
+        public ProcessedCommand<Command> getProcessedCommand() {
+            return parser.getProcessedCommand();
+        }
+
+        @Override
+        public Command getCommand() {
+            return parser.getCommand();
+        }
+
+        @Override
+        public CommandLineCompletionParser getCompletionParser() {
+            return parser.getCompletionParser();
+        }
+
+        @Override
+        public List<String> getAllNames() {
+            return parser.getAllNames();
+        }
+
+        @Override
+        public CommandLineParser<? extends Command> getChildParser(String name) {
+            return parser.getChildParser(name);
+        }
+
+        @Override
+        public void addChildParser(CommandLineParser<? extends Command> childParser) {
+            parser.addChildParser(childParser);
+        }
+
+        @Override
+        public List<CommandLineParser<? extends Command>> getAllChildParsers() {
+            return parser.getAllChildParsers();
+        }
+
+        @Override
+        public CommandPopulator getCommandPopulator() {
+            return parser.getCommandPopulator();
+        }
+
+        @Override
+        public String printHelp() {
+            return HelpSupport.getSubCommandHelp(
+                    CliCommandContainer.this.parser.getProcessedCommand().getName(),
+                    parser);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(String line) {
+            return parser.parse(line);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(String line, boolean ignoreRequirements) {
+            return parser.parse(line, ignoreRequirements);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(AeshLine line, boolean ignoreRequirements) {
+            return parser.parse(line, ignoreRequirements);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(List<String> lines, boolean ignoreRequirements) {
+            return parser.parse(lines, ignoreRequirements);
+        }
+
+        @Override
+        public void clear() {
+            parser.clear();
+        }
+
+        @Override
+        public boolean isGroupCommand() {
+            return parser.isGroupCommand();
+        }
+
+        @Override
+        public void setChild(boolean b) {
+            parser.setChild(b);
+        }
+    }
+
+    public class CliCommandParser implements CommandLineParser<Command> {
 
         private final ProcessedCommand<Command> cmd;
 
@@ -72,6 +164,10 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
                     handler,
                     p.getArgument(), p.getOptions(), p.getCommandPopulator(),
                     p.getActivator());
+        }
+
+        public CommandLineParser<Command> getWrappedParser() {
+            return container.getParser();
         }
 
         @Override
@@ -116,7 +212,7 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
 
         @Override
         public String printHelp() {
-            return container.getParser().printHelp();
+            return doPrintHelp();
         }
 
         @Override
@@ -195,8 +291,7 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
 
     @Override
     public String printHelp(String childCommandName) {
-        // XXX JFDENISE retrieve file and enrich help with text...
-        return super.printHelp(childCommandName);
+        return doPrintHelp();
     }
 
     private int redirectionDepth;
@@ -298,7 +393,18 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
         return container;
     }
 
+    public CommandLineParser<Command> wrapParser(CommandLineParser<Command> p) {
+        return new WrappedParser(p);
+    }
+
     private void postExecution(CommandContext context, CommandInvocation commandInvocation) {
         console.setPrompt(context.getPrompt());
+    }
+
+    private String doPrintHelp() {
+        if (container instanceof CliSpecialCommand.CliSpecialCommandContainer) {
+            return container.printHelp(null);
+        }
+        return HelpSupport.getCommandHelp(parser);
     }
 }

@@ -28,6 +28,7 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.aesh.activator.BatchActivator;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
@@ -37,7 +38,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @GroupCommandDefinition(name = "discard", description = "", activator = BatchActivator.class)
 public class BatchDiscardCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

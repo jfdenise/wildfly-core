@@ -50,6 +50,7 @@ import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
 import org.jboss.as.cli.command.generic.Util.AttributeDescription;
+import org.jboss.as.cli.impl.HelpSupport;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -63,15 +64,18 @@ class WriteAttributesSubCommand extends AbstractOperationSubCommand {
     private final Map<String, OptionCompleter<CliCompleterInvocation>> customCompleters;
     private final Map<String, Converter<ModelNode, CliConverterInvocation>> customConverters;
     private final boolean hidden;
-    WriteAttributesSubCommand(NodeType nodeType, String propertyId,
+    private final MainCommandParser parser;
+
+    WriteAttributesSubCommand(MainCommandParser parser, NodeType nodeType, String propertyId,
             List<ProcessedOption> commonOptions,
             Map<String, OptionCompleter<CliCompleterInvocation>> customCompleters,
             Map<String, Converter<ModelNode, CliConverterInvocation>> customConverters, boolean hidden) {
-        super("write-attributes", nodeType, propertyId);
+        super("write-attributes", "Sets the values of the selected attributes", nodeType, propertyId);
         this.commonOptions = commonOptions;
         this.customCompleters = customCompleters;
         this.customConverters = customConverters;
         this.hidden = hidden;
+        this.parser = parser;
     }
 
     @Override
@@ -134,12 +138,22 @@ class WriteAttributesSubCommand extends AbstractOperationSubCommand {
     public ProcessedCommand<MapCommand> getProcessedCommand(final CommandContext commandContext) throws CommandLineParserException {
         return new MapProcessedCommandBuilder().
                 name(getOperationName()).
-                addOptions(commonOptions).
                 command(this).
+                description(getDescription()).
                 optionProvider(new MapProcessedCommandBuilder.ProcessedOptionProvider() {
                     @Override
                     public List<ProcessedOption> getOptions() {
                         final List<ProcessedOption> allOptions = new ArrayList<>();
+                        try {
+                            // Backward compatibility, hidden wrtite attributes
+                            if (commonOptions != null) {
+                                allOptions.addAll(commonOptions);
+                            } else {
+                                allOptions.addAll(parser.getCommonOptions());
+                            }
+                        } catch (OptionParserException | CommandFormatException ex) {
+                            // XXX OK, forget them.
+                        }
                         if (commandContext.getModelControllerClient() == null) {
                             return allOptions;
                         }
@@ -179,18 +193,24 @@ class WriteAttributesSubCommand extends AbstractOperationSubCommand {
                                     }
                                     if (valueCompleter == null) {
                                         allOptions.add(new ProcessedOptionBuilder().
-                                                activator(new HiddenActivator(hidden, new ExpectedOptionsActivator(getPropertyId()))).
+                                                activator(hidden ? new HiddenActivator(hidden,
+                                                        new ExpectedOptionsActivator(getPropertyId()))
+                                                        : new ExpectedOptionsActivator(getPropertyId())).
                                                 name(prop.getName()).
+                                                description(prop.getType().toString() + ", " + prop.getDescription()).
                                                 converter(valueConverter).
-                                                type(ModelNode.class).
+                                                type(HelpSupport.getClassFromType(prop.getType())).
                                                 create());
                                     } else {
                                         allOptions.add(new ProcessedOptionBuilder().
-                                                activator(new HiddenActivator(hidden, new ExpectedOptionsActivator(getPropertyId()))).
+                                                activator(hidden ? new HiddenActivator(hidden,
+                                                        new ExpectedOptionsActivator(getPropertyId()))
+                                                        : new ExpectedOptionsActivator(getPropertyId())).
                                                 completer(valueCompleter).
+                                                description(prop.getType().toString() + ", " + prop.getDescription()).
                                                 name(prop.getName()).
                                                 converter(valueConverter).
-                                                type(ModelNode.class).
+                                                type(HelpSupport.getClassFromType(prop.getType())).
                                                 create());
                                     }
                                 }

@@ -27,6 +27,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 import org.wildfly.core.cli.command.CommandRedirection;
 
@@ -37,7 +38,8 @@ import org.wildfly.core.cli.command.CommandRedirection;
 @CommandDefinition(name = "end-if", description = "", activator = EndIfActivator.class)
 public class EndIfCommand implements Command<CliCommandInvocation> {
 
-    @Option(hasValue = false)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

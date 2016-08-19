@@ -25,8 +25,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
+import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.aesh.cl.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.aesh.activator.NoBatchActivator;
@@ -42,9 +43,10 @@ import org.jboss.dmr.ModelNode;
 @GroupCommandDefinition(name = "run-file", description = "", activator = NoBatchActivator.class)
 public class BatchRunFileCommand extends BatchRunCommand {
 
-    @Option(name = "file", converter = FileConverter.class,
-            completer = FileCompleter.class)
-    protected File file;
+    // XXX JFDENISE AESH-401
+    @Arguments(converter = FileConverter.class,
+            completer = FileCompleter.class) // required = true
+    protected List<File> arg;
 
     @Override
     public ModelNode newRequest(CommandContext ctx) throws CommandLineException {
@@ -52,6 +54,13 @@ public class BatchRunFileCommand extends BatchRunCommand {
         if (batchManager.isBatchActive()) {
             throw new CommandLineException("Batch already active, can't start new batch");
         }
+
+        if(arg == null || arg.isEmpty()) {
+            throw new CommandLineException("No batch file to run");
+        }
+
+        File file = arg.get(0);
+
         if (file == null || !file.exists()) {
             throw new CommandLineException("File " + file.getAbsolutePath() + " does not exist.");
         }

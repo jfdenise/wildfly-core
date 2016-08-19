@@ -26,6 +26,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
+import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
@@ -33,6 +34,7 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandNotFoundException;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.command.legacy.InternalDMRCommand;
 import org.jboss.as.cli.console.CliCommandRegistry;
 import org.jboss.dmr.ModelNode;
@@ -49,6 +51,10 @@ import org.wildfly.core.cli.command.DMRCommand;
 @CommandDefinition(name = "echo-dmr", description = "")
 public class EchoDMRCommand implements Command<CliCommandInvocation> {
 
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
+    private boolean help;
+
     // XXX JFDENISE, NEED A COMPLETER FOR COMMAND.
     @Arguments()
     private List<String> cmd;
@@ -56,6 +62,11 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
+        if (help) {
+            commandInvocation.println(commandInvocation.getHelpInfo("echo-dmr"));
+            return CommandResult.SUCCESS;
+        }
+
         if (cmd != null && cmd.size() > 0) {
             try {
                 echoDMR(commandInvocation);

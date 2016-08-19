@@ -39,7 +39,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
         = {CommandAdd.class, CommandRemove.class, CommandList.class})
 public class CommandCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

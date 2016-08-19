@@ -32,6 +32,7 @@ import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.aesh.activator.BatchActivator;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
@@ -45,21 +46,22 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @GroupCommandDefinition(name = "edit-line", description = "", activator = BatchActivator.class)
 public class BatchEditLineCommand implements Command<CliCommandInvocation> {
 
-    @Option(name = "help", hasValue = false)
+    @Deprecated
+    @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
-    @Arguments(completer = CommandCompleter.class)
+    // XXX JFDENISE AESH-401
+    @Arguments(completer = CommandCompleter.class) // required = true
     List<String> cmd;
 
-    @Option(name = "line-number")
+    @Option(name = "line-number", required = true)
     private Integer line_number;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println("Aesh should have "
-                    + "hooks for help!");
+            commandInvocation.println(commandInvocation.getHelpInfo("batch edit-line"));
             return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.

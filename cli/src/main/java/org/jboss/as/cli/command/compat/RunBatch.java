@@ -27,10 +27,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import org.jboss.aesh.cl.GroupCommandDefinition;
+import org.jboss.aesh.cl.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.completer.FileCompleter;
+import org.jboss.as.cli.aesh.converter.FileConverter;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -40,6 +43,11 @@ import org.jboss.dmr.ModelNode;
 @Deprecated
 @GroupCommandDefinition(name = "run-batch", description = "", activator = CompatNoBatchActivator.class)
 public class RunBatch extends BatchRunFileCommand {
+
+    @Deprecated
+    @Option(name = "file", converter = FileConverter.class,
+            completer = FileCompleter.class)
+    private File file;
 
     @Override
     public ModelNode newRequest(CommandContext ctx) throws CommandLineException {

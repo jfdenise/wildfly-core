@@ -28,9 +28,11 @@ import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
 import java.util.List;
+import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.converter.PropertyResolverConverter;
 
 @CommandDefinition(name = "connect", description = "Connect to a JBoss Server")
@@ -39,8 +41,18 @@ public class Connect implements Command<CliCommandInvocation>, InteractiveComman
     @Arguments(converter = PropertyResolverConverter.class)
     private List<String> controller;
 
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
+    private boolean help;
+
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
+
+        if (help) {
+            commandInvocation.println(commandInvocation.getHelpInfo("connect"));
+            return CommandResult.SUCCESS;
+        }
+
         try {
             String url = controller == null || controller.isEmpty() ? null : controller.get(0);
             commandInvocation.getCommandContext().connectController(url);

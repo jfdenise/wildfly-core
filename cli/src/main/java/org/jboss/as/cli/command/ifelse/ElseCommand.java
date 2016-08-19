@@ -26,6 +26,7 @@ import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 import org.wildfly.core.cli.command.CommandRedirection;
 
@@ -36,7 +37,8 @@ import org.wildfly.core.cli.command.CommandRedirection;
 @CommandDefinition(name = "else", description = "", activator = ElseActivator.class)
 public class ElseCommand implements Command<CliCommandInvocation> {
 
-    @Option(hasValue = false)
+    @Deprecated
+    @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
     @Override

@@ -25,6 +25,7 @@ import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.OperationCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.jboss.as.cli.impl.Console;
 
 /**
  *
@@ -35,7 +36,7 @@ public class CliLegacyBatchCompliantCommandBridge extends
 
     public CliLegacyBatchCompliantCommandBridge(String name,
             CommandContext ctx, CliCommandContextImpl commandContext,
-            OperationCommand handler) throws CommandLineParserException {
-        super(name, ctx, commandContext, handler);
+            OperationCommand handler, Console console) throws CommandLineParserException {
+        super(name, ctx, commandContext, handler, console);
     }
 }
