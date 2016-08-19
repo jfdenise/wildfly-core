@@ -19,13 +19,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command;
+package org.jboss.as.cli.command.history;
 
+import java.util.List;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
@@ -33,8 +35,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "enable", description = "")
-public class EnableHistoryCommand implements Command<CliCommandInvocation> {
+@CommandDefinition(name = "print", description = "")
+public class PrintHistoryCommand implements Command<CliCommandInvocation> {
 
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
@@ -42,10 +44,19 @@ public class EnableHistoryCommand implements Command<CliCommandInvocation> {
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("history enable"));
+            commandInvocation.println(commandInvocation.getHelpInfo("history print"));
             return CommandResult.SUCCESS;
         }
-        commandInvocation.getCommandContext().getLegacyCommandContext().getHistory().setUseHistory(true);
+        printHistory(commandInvocation);
         return CommandResult.SUCCESS;
+    }
+
+    static void printHistory(CliCommandInvocation ctx) {
+        CommandHistory history = ctx.getCommandContext().getLegacyCommandContext().getHistory();
+        List<String> list = history.asList();
+        for (String cmd : list) {
+            ctx.println(cmd);
+        }
+        ctx.println("(The history is currently " + (history.isUseHistory() ? "enabled)" : "disabled)"));
     }
 }

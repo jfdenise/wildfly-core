@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command;
+package org.jboss.as.cli.command.history;
 
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
@@ -33,8 +33,8 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "disable", description = "")
-public class DisableHistoryCommand implements Command<CliCommandInvocation> {
+@CommandDefinition(name = "enable", description = "")
+public class EnableHistoryCommand implements Command<CliCommandInvocation> {
 
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
     private boolean help;
@@ -42,10 +42,10 @@ public class DisableHistoryCommand implements Command<CliCommandInvocation> {
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("history disable"));
+            commandInvocation.println(commandInvocation.getHelpInfo("history enable"));
             return CommandResult.SUCCESS;
         }
-        commandInvocation.getCommandContext().getLegacyCommandContext().getHistory().setUseHistory(false);
+        commandInvocation.getCommandContext().getLegacyCommandContext().getHistory().setUseHistory(true);
         return CommandResult.SUCCESS;
     }
 }

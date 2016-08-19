@@ -80,7 +80,7 @@ import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.EchoCommand;
 import org.jboss.as.cli.command.EchoDMRCommand;
-import org.jboss.as.cli.command.HistoryCommand;
+import org.jboss.as.cli.command.history.HistoryCommand;
 import org.jboss.as.cli.command.LsMapCommand;
 import org.jboss.as.cli.command.PwdCommand;
 import org.jboss.as.cli.command.Quit;
@@ -123,6 +123,46 @@ import org.jboss.as.protocol.StreamUtils;
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
 class AeshCliConsole implements Console {
+
+    private static class HistoryImpl implements CommandHistory {
+
+        private final AeshConsole console;
+        private final Settings settings;
+
+        HistoryImpl(AeshConsole console, Settings settings) {
+            this.console = console;
+            this.settings = settings;
+        }
+
+        @Override
+        public List<String> asList() {
+            return console.getHistory().getAll();
+        }
+
+        @Override
+        public boolean isUseHistory() {
+            return console.getHistory().isEnabled();
+        }
+
+        @Override
+        public void setUseHistory(boolean useHistory) {
+            if (useHistory) {
+                console.getHistory().enable();
+            } else {
+                console.getHistory().disable();
+            }
+        }
+
+        @Override
+        public void clear() {
+            console.getHistory().clear();
+        }
+
+        @Override
+        public int getMaxSize() {
+            return settings.getHistorySize();
+        }
+    }
 
     class CliResultHandler implements ResultHandler {
 
@@ -263,7 +303,7 @@ class AeshCliConsole implements Console {
     private Exception commandException;
     private boolean interactive_connect;
     private final boolean echoCommand;
-
+    private final Settings settings;
     AeshCliConsole(CommandContextImpl commandContext, boolean silent,
             Boolean errorOnInteract, Settings aeshSettings,
             InputStream consoleInput, OutputStream consoleOutput, boolean echoCommand)
@@ -274,7 +314,7 @@ class AeshCliConsole implements Console {
                 : new CLIPrintStream(consoleOutput);
         this.silent = silent;
         this.errorOnInteract = errorOnInteract == null ? false : errorOnInteract;
-        Settings settings = aeshSettings == null
+        settings = aeshSettings == null
                 ? createSettings(commandContext.getConfig(),
                         consoleInput,
                         printStream) : aeshSettings;
@@ -484,7 +524,7 @@ class AeshCliConsole implements Console {
 
     @Override
     public CommandHistory getHistory() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new HistoryImpl(console, settings);
     }
 
     @Override
