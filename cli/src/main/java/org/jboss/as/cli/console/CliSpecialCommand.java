@@ -49,8 +49,8 @@ import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.wildfly.core.cli.command.DMRCommand;
-import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
+import org.jboss.as.cli.command.legacy.InternalDMRCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.dmr.ModelNode;
 
@@ -79,11 +79,11 @@ public class CliSpecialCommand {
         }
     }
 
-    private static class DMR extends CommandImpl implements DMRCommand {
+    private static class DMR extends CommandImpl implements InternalDMRCommand {
 
-        private final DMRCommand cmd;
+        private final InternalDMRCommand cmd;
 
-        DMR(DMRCommand cmd) {
+        DMR(InternalDMRCommand cmd) {
             this.cmd = cmd;
         }
 
@@ -93,9 +93,9 @@ public class CliSpecialCommand {
         }
     }
 
-    private static class Batch extends DMR implements BatchCompliantCommand {
+    private static class Batch extends DMR implements InternalBatchCompliantCommand {
 
-        public Batch(DMRCommand cmd) {
+        public Batch(InternalDMRCommand cmd) {
             super(cmd);
         }
 
@@ -107,10 +107,10 @@ public class CliSpecialCommand {
         private final Command command;
 
         private CliSpecialParser(String name) throws CommandLineParserException {
-            if (executor instanceof BatchCompliantCommand) {
-                command = new Batch((DMRCommand) executor);
-            } else if (executor instanceof DMRCommand) {
-                command = new DMR((DMRCommand) executor);
+            if (executor instanceof InternalBatchCompliantCommand) {
+                command = new Batch((InternalDMRCommand) executor);
+            } else if (executor instanceof InternalDMRCommand) {
+                command = new DMR((InternalDMRCommand) executor);
             } else {
                 command = new CommandImpl();
             }

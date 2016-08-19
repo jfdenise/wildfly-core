@@ -21,21 +21,10 @@
  */
 package org.jboss.as.cli.command.legacy;
 
-import org.jboss.aesh.cl.parser.CommandLineParserException;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.OperationCommand;
-import org.jboss.as.cli.impl.CliCommandContextImpl;
-
 /**
- *
- * @author jfdenise
+ * Make your Command to implement this interface when it can be added to batch.
+ * @author jdenise@redhat.com
  */
-public class CliLegacyBatchCompliantCommandBridge extends
-        CliLegacyDMRCommandBridge implements InternalBatchCompliantCommand {
+public interface InternalBatchCompliantCommand extends InternalDMRCommand {
 
-    public CliLegacyBatchCompliantCommandBridge(String name,
-            CommandContext ctx, CliCommandContextImpl commandContext,
-            OperationCommand handler) throws CommandLineParserException {
-        super(name, ctx, commandContext, handler);
-    }
 }

@@ -45,6 +45,8 @@ import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.compat.CompatActivator;
+import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
+import org.jboss.as.cli.command.legacy.InternalDMRCommand;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
@@ -235,18 +237,28 @@ class CliCommandContainer extends DefaultCommandContainer<Command> {
             CommandLineParser<Command> cmdParser = commandLine == null ? getParser()
                     : commandLine.getParser();
             if (context.isBatchMode()) {
-                // Must populate in order to inject options in proper command
-                if (commandLine != null) {
+                // Legacy bridge and Operation
+                if (commandLine == null) {
+                    Command c = cmdParser.getCommand();
+                    if (c instanceof InternalBatchCompliantCommand) { // Batch compliance implies DMR
+                        commandContext.addBatchOperation(((InternalDMRCommand) c).
+                                buildRequest(line.getOriginalInput(), commandContext),
+                                line.getOriginalInput());
+                        return new CommandContainerResult(null, CommandResult.SUCCESS);
+                    }
+                } else {
+                    // Must populate in order to inject options in proper command
                     cmdParser.getCommandPopulator().populateObject(commandLine,
                             invocationProviders, aeshContext, true);
+                    Command c = cmdParser.getCommand();
+                    if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
+                        commandContext.addBatchOperation(((DMRCommand) c).
+                                buildRequest(commandContext),
+                                line.getOriginalInput());
+                        return new CommandContainerResult(null, CommandResult.SUCCESS);
+                    }
                 }
-                Command c = cmdParser.getCommand();
-                if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
-                    commandContext.addBatchOperation(((DMRCommand) c).
-                            buildRequest(line.getOriginalInput(), commandContext),
-                            line.getOriginalInput());
-                    return new CommandContainerResult(null, CommandResult.SUCCESS);
-                }
+
             }
 
             // Inactive commands are hidden. This is required for legacy to not show up

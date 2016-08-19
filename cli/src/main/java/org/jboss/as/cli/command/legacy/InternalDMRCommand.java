@@ -21,21 +21,15 @@
  */
 package org.jboss.as.cli.command.legacy;
 
-import org.jboss.aesh.cl.parser.CommandLineParserException;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.OperationCommand;
-import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.jboss.as.cli.CommandFormatException;
+import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  *
- * @author jfdenise
+ * @author jdenise@redhat.com
  */
-public class CliLegacyBatchCompliantCommandBridge extends
-        CliLegacyDMRCommandBridge implements InternalBatchCompliantCommand {
+public interface InternalDMRCommand {
 
-    public CliLegacyBatchCompliantCommandBridge(String name,
-            CommandContext ctx, CliCommandContextImpl commandContext,
-            OperationCommand handler) throws CommandLineParserException {
-        super(name, ctx, commandContext, handler);
-    }
+    ModelNode buildRequest(String input, CliCommandContext context) throws CommandFormatException;
 }

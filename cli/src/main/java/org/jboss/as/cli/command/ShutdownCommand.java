@@ -149,7 +149,7 @@ public class ShutdownCommand implements Command<CliCommandInvocation>, DMRComman
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         final ModelNode op;
         try {
-            op = buildRequest(null, commandInvocation.getCommandContext());
+            op = buildRequest(commandInvocation.getCommandContext());
         } catch (CommandFormatException ex) {
             throw new CommandException(ex);
         }
@@ -218,7 +218,7 @@ public class ShutdownCommand implements Command<CliCommandInvocation>, DMRComman
     }
 
     @Override
-    public ModelNode buildRequest(String input, CliCommandContext context) throws CommandFormatException {
+    public ModelNode buildRequest(CliCommandContext context) throws CommandFormatException {
         final ModelNode op = new ModelNode();
         if (context.getLegacyCommandContext().isDomainMode()) {
             if (host == null) {

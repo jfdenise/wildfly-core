@@ -31,8 +31,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
-import org.wildfly.core.cli.command.DMRCommand;
-import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
@@ -45,7 +44,7 @@ import org.jboss.dmr.ModelNode;
  * @author jdenise@redhat.com
  */
 public class OperationSpecialCommand implements CliSpecialExecutor,
-        BatchCompliantCommand, DMRCommand {
+        InternalBatchCompliantCommand {
 
     private final CommandContext ctx;
     private final CliCommandContextImpl commandContext;

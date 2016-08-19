@@ -128,7 +128,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
     }
 
     @Override
-    public ModelNode buildRequest(String input, CliCommandContext context)
+    public ModelNode buildRequest(CliCommandContext context)
             throws CommandFormatException {
         try {
             return newRequest(context.getLegacyCommandContext());

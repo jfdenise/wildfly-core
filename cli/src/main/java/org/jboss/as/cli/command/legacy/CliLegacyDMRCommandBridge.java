@@ -26,7 +26,6 @@ import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.OperationCommand;
-import org.wildfly.core.cli.command.DMRCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.dmr.ModelNode;
@@ -35,7 +34,7 @@ import org.jboss.dmr.ModelNode;
  *
  * @author jfdenise
  */
-public class CliLegacyDMRCommandBridge extends CliLegacyCommandBridge implements DMRCommand {
+public class CliLegacyDMRCommandBridge extends CliLegacyCommandBridge implements InternalDMRCommand {
 
     private final OperationCommand handler;
     private final DefaultCallbackHandler line

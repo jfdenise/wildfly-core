@@ -33,6 +33,7 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandNotFoundException;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.command.legacy.InternalDMRCommand;
 import org.jboss.as.cli.console.CliCommandRegistry;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.CliCommandInvocation;
@@ -91,20 +92,17 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
             final CommandContainer<Command> container = ((CliCommandRegistry) commandInvocation.getCommandRegistry()).
                     getCommand(opName, originalInput);
             CommandLineParser<Command> cmdParser = container.getParser();
-            if (!(cmdParser.getCommand() instanceof DMRCommand)) {
+            if (!(cmdParser.getCommand() instanceof InternalDMRCommand)) {
                 throw new CommandException("The command does not translate to an operation request.");
             }
-            DMRCommand c = (DMRCommand) cmdParser.getCommand();
+            InternalDMRCommand c = (InternalDMRCommand) cmdParser.getCommand();
             return c.buildRequest(originalInput, commandInvocation.getCommandContext());
         }
 
-        // XXX JFDENISE, separate DMRCommand and InternalDMRCommand.
-        // Only InternalDMRCommand needs the input string.
-        // For now this is a simple code dup.
         if (!(command instanceof DMRCommand)) {
             throw new CommandException("The command does not translate to an operation request.");
         }
         DMRCommand c = (DMRCommand) command;
-        return c.buildRequest(null, commandInvocation.getCommandContext());
+        return c.buildRequest(commandInvocation.getCommandContext());
     }
 }

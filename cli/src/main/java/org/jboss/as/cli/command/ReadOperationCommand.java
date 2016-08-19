@@ -101,10 +101,10 @@ public class ReadOperationCommand implements Command<CliCommandInvocation>, DMRC
     }
 
     @Override
-    public ModelNode buildRequest(String input, CliCommandContext context) throws CommandFormatException {
+    public ModelNode buildRequest(CliCommandContext context) throws CommandFormatException {
         try {
             return buildRequest(OperationRequestAddressConverter.
-                    convert(input, context.getLegacyCommandContext()),
+                    convert(null, context.getLegacyCommandContext()),
                     context.getLegacyCommandContext());
         } catch (OptionValidatorException ex) {
             throw new CommandFormatException(ex.getMessage(), ex);
