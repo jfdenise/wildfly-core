@@ -448,7 +448,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
         registerExtraHandlers();
 
-        extLoader = new ExtensionsLoader(cmdRegistry, this);
+        extLoader = new ExtensionsLoader(cmdRegistry, console.getCommandRegistry(), this);
     }
 
     private void registerExtraHandlers() throws CommandLineException {

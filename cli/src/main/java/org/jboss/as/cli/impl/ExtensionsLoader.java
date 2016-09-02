@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
+import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.container.CommandContainer;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandlerProvider;
@@ -35,6 +37,7 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.ControllerAddress;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.console.CliCommandRegistry;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
@@ -53,15 +56,19 @@ class ExtensionsLoader {
     private final ModuleLoader moduleLoader;
     private final CommandContext ctx;
     private final CommandRegistry registry;
+    private final CliCommandRegistry cliRegistry;
 
     /** current address from which the commands are loaded, this could be null */
     private ControllerAddress currentAddress;
     /** commands loaded from the current address*/
     private List<String> loadedCommands = Collections.emptyList();
+    private List<String> loadedNewCommands = Collections.emptyList();
+
     /** error messages collected during loading the commands */
     private List<String> errors = Collections.emptyList();
 
-    ExtensionsLoader(CommandRegistry registry, CommandContext ctx) throws CommandLineException {
+    ExtensionsLoader(CommandRegistry registry, CliCommandRegistry cliRegistry,
+            CommandContext ctx) throws CommandLineException {
         assert registry != null : "command registry is null";
         assert ctx != null : "command context is null";
 
@@ -73,6 +80,7 @@ class ExtensionsLoader {
 
         this.ctx = ctx;
         this.registry = registry;
+        this.cliRegistry = cliRegistry;
 
         registry.registerHandler(new ExtensionCommandsHandler(), false, ExtensionCommandsHandler.NAME);
     }
@@ -142,16 +150,31 @@ class ExtensionsLoader {
                 ModuleClassLoader cl;
                 try {
                     cl = moduleLoader.loadModule(moduleId).getClassLoader();
-                    ServiceLoader<CommandHandlerProvider> loader = ServiceLoader.load(CommandHandlerProvider.class, cl);
-                    for (CommandHandlerProvider provider : loader) {
-                        try {
-                            registry.registerHandler(provider.createCommandHandler(ctx), provider.isTabComplete(), provider.getNames());
-                            addCommands(Arrays.asList(provider.getNames()));
-                        } catch(CommandRegistry.RegisterHandlerException e) {
-                            addError(e.getLocalizedMessage());
-                            final List<String> addedCommands = new ArrayList<String>(Arrays.asList(provider.getNames()));
-                            addedCommands.removeAll(e.getNotAddedNames());
-                            addCommands(addedCommands);
+                    {
+                        ServiceLoader<Command> loader = ServiceLoader.load(Command.class, cl);
+                        for (Command cmd : loader) {
+                            CommandContainer container = null;
+                            try {
+                                container = cliRegistry.addCommand(cmd);
+                                addNewCommand(container.getParser().getProcessedCommand().getName());
+                            } catch (Exception e) {
+                                addError("Exception loading " + cmd.getClass() + ": " + e.getLocalizedMessage());
+                            }
+                        }
+                    }
+
+                    {
+                        ServiceLoader<CommandHandlerProvider> loader = ServiceLoader.load(CommandHandlerProvider.class, cl);
+                        for (CommandHandlerProvider provider : loader) {
+                            try {
+                                registry.registerHandler(provider.createCommandHandler(ctx), provider.isTabComplete(), provider.getNames());
+                                addCommands(Arrays.asList(provider.getNames()));
+                            } catch (CommandRegistry.RegisterHandlerException e) {
+                                addError(e.getLocalizedMessage());
+                                final List<String> addedCommands = new ArrayList<String>(Arrays.asList(provider.getNames()));
+                                addedCommands.removeAll(e.getNotAddedNames());
+                                addCommands(addedCommands);
+                            }
                         }
                     }
                 } catch (ModuleLoadException e) {
@@ -171,6 +194,13 @@ class ExtensionsLoader {
             loadedCommands = new ArrayList<String>();
         }
         loadedCommands.addAll(names);
+    }
+
+    private void addNewCommand(String name) {
+        if (loadedNewCommands.isEmpty()) {
+            loadedNewCommands = new ArrayList<>();
+        }
+        loadedNewCommands.add(name);
     }
 
     private void addError(String msg) {

@@ -31,9 +31,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jboss.aesh.cl.CommandLine;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
+import org.jboss.aesh.cl.internal.ProcessedCommandBuilder;
+import org.jboss.aesh.cl.parser.CommandLineCompletionParser;
 import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.parser.OptionParserException;
+import org.jboss.aesh.cl.populator.CommandPopulator;
 import org.jboss.aesh.complete.CompleteOperation;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandNotFoundException;
@@ -41,6 +46,7 @@ import org.jboss.aesh.console.command.container.AeshCommandContainerBuilder;
 import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.command.registry.MutableCommandRegistry;
+import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
@@ -56,6 +62,101 @@ import org.jboss.logging.Logger;
  * @author jdenise@redhat.com
  */
 public class CliCommandRegistry implements CommandRegistry {
+
+    /**
+     * Wraps an extension command registered as a sub command.
+     */
+    private class ExtSubCommandParser implements CommandLineParser<Command> {
+
+        private final CommandLineParser<Command> parser;
+        private final ProcessedCommand cmd;
+
+        private ExtSubCommandParser(CommandLineParser<Command> parser,
+                ProcessedCommand cmd) {
+            this.parser = parser;
+            this.cmd = cmd;
+        }
+
+        @Override
+        public ProcessedCommand<Command> getProcessedCommand() {
+            return cmd;
+        }
+
+        @Override
+        public Command getCommand() {
+            return parser.getCommand();
+        }
+
+        @Override
+        public CommandLineCompletionParser getCompletionParser() {
+            return parser.getCompletionParser();
+        }
+
+        @Override
+        public List<String> getAllNames() {
+            return parser.getAllNames();
+        }
+
+        @Override
+        public CommandLineParser<? extends Command> getChildParser(String name) {
+            return parser.getChildParser(name);
+        }
+
+        @Override
+        public void addChildParser(CommandLineParser<? extends Command> childParser) {
+            parser.addChildParser(childParser);
+        }
+
+        @Override
+        public List<CommandLineParser<? extends Command>> getAllChildParsers() {
+            return parser.getAllChildParsers();
+        }
+
+        @Override
+        public CommandPopulator getCommandPopulator() {
+            return parser.getCommandPopulator();
+        }
+
+        @Override
+        public String printHelp() {
+            return parser.printHelp();
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(String line) {
+            return parser.parse(line);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(String line, boolean ignoreRequirements) {
+            return parser.parse(line, ignoreRequirements);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(AeshLine line, boolean ignoreRequirements) {
+            return parser.parse(line, ignoreRequirements);
+        }
+
+        @Override
+        public CommandLine<? extends Command> parse(List<String> lines, boolean ignoreRequirements) {
+            return parser.parse(lines, ignoreRequirements);
+        }
+
+        @Override
+        public void clear() {
+            parser.clear();
+        }
+
+        @Override
+        public boolean isGroupCommand() {
+            return parser.isGroupCommand();
+        }
+
+        @Override
+        public void setChild(boolean b) {
+            parser.setChild(b);
+        }
+    }
 
     private static final Logger log = Logger.getLogger(CliCommandRegistry.class);
     private final MutableCommandRegistry reg = new MutableCommandRegistry();
@@ -82,7 +183,7 @@ public class CliCommandRegistry implements CommandRegistry {
         addCommandContainer(special.getCommandContainer());
     }
 
-    private void addCommandContainer(CommandContainer container) throws CommandLineException {
+    private CommandContainer addCommandContainer(CommandContainer container) throws CommandLineException {
         if (container.getParser().getProcessedCommand().getActivator() != null) {
             if (!(container.getParser().getProcessedCommand().getActivator() instanceof CompatActivator)) {
                 exposedCommands.add(container.getParser().getProcessedCommand().getName());
@@ -103,6 +204,8 @@ public class CliCommandRegistry implements CommandRegistry {
             throw new CommandLineException(ex);
         }
         reg.addCommand(cliContainer);
+
+        return cliContainer;
     }
 
     CliCommandContainer wrapContainer(CommandContainer commandContainer) throws OptionParserException {
@@ -115,12 +218,64 @@ public class CliCommandRegistry implements CommandRegistry {
         return interactiveCommands.containsKey(command);
     }
 
-    public void addCommand(Command command) throws CommandLineException {
+    public CommandContainer addCommand(Command command) throws CommandLineException {
         CommandContainer container = containerBuilder.create(command);
-        addCommand(container);
+
+        // Sub command handling
+        String name = container.getParser().getProcessedCommand().getName();
+        int index = name.indexOf("@");
+        if (index >= 0 && index != name.length() - 1) {
+            String parentName = name.substring(index + 1);
+            String childName = name.substring(0, index);
+            if (!parentName.isEmpty()) {
+                try {
+                    CommandLineParser existingParent = findCommand(parentName,
+                            parentName);
+                    // Parent exists.
+                    // If child already exists, we can't register it.
+                    try {
+                        findCommand(parentName, parentName + " " + childName);
+                        throw new CommandLineException("Command "
+                                + parentName + " " + childName
+                                + " already exists. Can't register " + name);
+                    } catch (CommandNotFoundException ex) {
+                        // XXX OK
+                    }
+
+                    try {
+                        // Add sub to existing command.
+                        ProcessedCommand cmd = container.getParser().
+                                getProcessedCommand();
+                        ProcessedCommand sub = new ProcessedCommandBuilder().
+                                activator(cmd.getActivator()).
+                                addOptions(cmd.getOptions()).
+                                aliases(cmd.getAliases()).
+                                argument(cmd.getArgument()).
+                                command(cmd.getCommand()).
+                                description(cmd.getDescription()).
+                                name(childName). // child name
+                                populator(cmd.getCommandPopulator()).
+                                resultHandler(cmd.getResultHandler()).
+                                validator(cmd.getValidator()).
+                                create();
+                        existingParent.
+                                addChildParser(new ExtSubCommandParser(container.getParser(),
+                                        sub));
+                    } catch (CommandLineParserException ex) {
+                        throw new CommandLineException(ex);
+                    }
+                    return getCommand(parentName, parentName + " " + childName);
+                } catch (CommandNotFoundException ex) {
+                    throw new CommandLineException("The parent command "
+                            + parentName + " doesn't exist. Can't register " + name);
+                }
+            }
+        }
+
+        return addCommand(container);
     }
 
-    public void addCommand(CommandContainer container) throws CommandLineException {
+    public CommandContainer addCommand(CommandContainer container) throws CommandLineException {
         // If a legacy handler exists, just remove it.
         String name = container.getParser().getProcessedCommand().getName();
         if (legacyHandlers.containsKey(name)) {
@@ -128,7 +283,7 @@ public class CliCommandRegistry implements CommandRegistry {
             log.info("Legacy handler " + name
                     + "remved, new one registered.");
         }
-        addCommandContainer(container);
+        return addCommandContainer(container);
     }
 
     @Override

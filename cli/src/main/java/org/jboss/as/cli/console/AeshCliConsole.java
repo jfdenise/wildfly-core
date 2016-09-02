@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.console;
 
+import com.sun.istack.internal.logging.Logger;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -305,6 +306,7 @@ class AeshCliConsole implements Console {
     private boolean interactive_connect;
     private final boolean echoCommand;
     private final Settings settings;
+
     AeshCliConsole(CommandContextImpl commandContext, boolean silent,
             Boolean errorOnInteract, Settings aeshSettings,
             InputStream consoleInput, OutputStream consoleOutput, boolean echoCommand)
@@ -379,10 +381,14 @@ class AeshCliConsole implements Console {
         console.setCurrentCommandInvocationProvider(PROVIDER);
     }
 
-    private void registerExtraCommands() throws CommandLineException, CommandLineParserException {
+    private void registerExtraCommands() {
         ServiceLoader<Command> loader = ServiceLoader.load(Command.class);
         for (Command command : loader) {
-            commandRegistry.addCommand(command);
+            try {
+                commandRegistry.addCommand(command);
+            } catch (CommandLineException ex) {
+                Logger.getLogger(AeshCliConsole.class).warning(ex.toString());
+            }
         }
     }
 
