@@ -19,18 +19,12 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.core.cli.command;
-
-import org.jboss.aesh.cl.activation.CommandActivator;
+package org.wildfly.core.cli.command.activator;
 
 /**
  *
- * @author jfdenise
+ * @author jdenise@redhat.com
  */
-public interface CliCommandActivator extends CommandActivator {
-
-    void setCommandContext(CliCommandContext commandContext);
-
-    CliCommandContext getCommandContext();
+public interface StandaloneOptionActivator {
 
 }

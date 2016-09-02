@@ -21,17 +21,18 @@
  */
 package org.jboss.as.cli.command.batch;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import org.jboss.aesh.cl.GroupCommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.aesh.activator.BatchActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
+import org.jboss.as.cli.batch.Batch;
+import org.jboss.as.cli.batch.BatchManager;
+import org.jboss.as.cli.batch.BatchedCommand;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
@@ -57,21 +58,23 @@ public class BatchListCommand implements Command<CliCommandInvocation> {
 
     }
 
-    public static CommandResult handle(CliCommandInvocation commandInvocation) {
-        final Set<String> heldbackNames = commandInvocation.
-                getCommandContext().getLegacyCommandContext().
-                getBatchManager().getHeldbackNames();
-        if (!heldbackNames.isEmpty()) {
-            List<String> names = new ArrayList<>(heldbackNames.size());
-            for (String heldbackName : heldbackNames) {
-                names.add(heldbackName == null ? "<unnamed>" : heldbackName);
-            }
-            Collections.sort(names);
-            for (String heldbackName : names) {
-                commandInvocation.getShell().out().println(heldbackName);
-            }
+    public static CommandResult handle(CliCommandInvocation commandInvocation) throws CommandException {
+        CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
+        BatchManager batchManager = ctx.getBatchManager();
+        if (!batchManager.isBatchActive()) {
+            throw new CommandException("No active batch.");
         }
-        return null;
+        Batch activeBatch = batchManager.getActiveBatch();
+        List<BatchedCommand> commands = activeBatch.getCommands();
+        if (!commands.isEmpty()) {
+            for (int i = 0; i < commands.size(); ++i) {
+                BatchedCommand cmd = commands.get(i);
+                commandInvocation.println("#" + (i + 1) + ' ' + cmd.getCommand());
+            }
+        } else {
+            commandInvocation.println("The batch is empty.");
+        }
+        return CommandResult.SUCCESS;
     }
 
 }

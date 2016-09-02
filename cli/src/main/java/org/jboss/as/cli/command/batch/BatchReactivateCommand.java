@@ -38,7 +38,7 @@ import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
-import org.wildfly.core.cli.command.CliCommandActivator;
+import org.wildfly.core.cli.command.activator.CliCommandActivator;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 

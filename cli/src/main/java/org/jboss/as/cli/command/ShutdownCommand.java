@@ -40,7 +40,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.accesscontrol.PerNodeOperationAccess;
-import org.jboss.as.cli.aesh.activator.DomainOptionActivator;
+import org.wildfly.core.cli.command.activator.DefaultDomainOptionActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
@@ -96,7 +96,7 @@ public class ShutdownCommand implements Command<CliCommandInvocation>, DMRComman
     @Option
     private Integer timeout;
 
-    @Option(activator = DomainOptionActivator.class, completer = HostCompleter.class)
+    @Option(activator = DefaultDomainOptionActivator.class, completer = HostCompleter.class)
     private String host;
 
     private final AtomicReference<EmbeddedProcessLaunch> embeddedServerRef;

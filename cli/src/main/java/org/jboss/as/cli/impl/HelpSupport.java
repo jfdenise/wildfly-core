@@ -64,6 +64,8 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.logging.Logger;
+import org.wildfly.core.cli.command.activator.DomainOptionActivator;
+import org.wildfly.core.cli.command.activator.StandaloneOptionActivator;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -380,13 +382,41 @@ public class HelpSupport {
         builder.append(Config.getLineSeparator());
         String synopsis = getValue(bundle, parentName, commandName, superNames, "synopsis");
         if (synopsis == null) {
-            synopsis = generateSynopsis(bundle, parentName, commandName, opts,
-                    arg, parsers != null && parsers.size() > 0, superNames, isOperation);
+            //Synopsis option tab
+            StringBuilder tabBuilder = new StringBuilder();
+            if (parentName != null) {
+                tabBuilder.append(parentName).append(" ");
+            }
+            tabBuilder.append(commandName).append(" ");
+            StringBuilder synopsisTab = new StringBuilder();
+            for (int i = 0; i < tabBuilder.toString().length() + TAB.length(); i++) {
+                synopsisTab.append(" ");
+            }
+            // 2 cases, standalone and domain
+            List<ProcessedOption> standalone = retrieveStandaloneOptions(opts);
+            if (standalone.size() == opts.size()
+                    && (arg == null || !(arg.getActivator() instanceof DomainOptionActivator))) {
+                synopsis = generateSynopsis(bundle, parentName, commandName, opts,
+                        arg, parsers != null && parsers.size() > 0, superNames, isOperation, false);
+                builder.append(splitAndFormat(synopsis, 80, TAB, 0, synopsisTab.toString()));
+            } else {
+                builder.append("Standalone mode:").append(Config.getLineSeparator());
+                builder.append(Config.getLineSeparator());
+                synopsis = generateSynopsis(bundle, parentName, commandName, standalone,
+                        arg, parsers != null && parsers.size() > 0, superNames, isOperation, false);
+                builder.append(splitAndFormat(synopsis, 80, TAB, 0, synopsisTab.toString()));
+                builder.append(Config.getLineSeparator());
+                builder.append(Config.getLineSeparator());
+                builder.append("Domain mode:").append(Config.getLineSeparator());
+                builder.append(Config.getLineSeparator());
+                List<ProcessedOption> domain = retrieveDomainOptions(opts);
+                synopsis = generateSynopsis(bundle, parentName, commandName, domain,
+                        arg, parsers != null && parsers.size() > 0, superNames, isOperation, true);
+                builder.append(splitAndFormat(synopsis, 80, TAB, 0, synopsisTab.toString()));
+            }
         }
-        builder.append(splitAndFormat(synopsis, 80, TAB, 0, TABTAB));
         builder.append(Config.getLineSeparator());
         builder.append(Config.getLineSeparator());
-
         builder.append("DESCRIPTION").append(Config.getLineSeparator());
         builder.append(Config.getLineSeparator());
         builder.append(HelpSupport.splitAndFormat(pcommand.getDescription(), 80, TAB, 0, TAB));
@@ -523,13 +553,14 @@ public class HelpSupport {
             ProcessedOption arg,
             boolean hasActions,
             List<String> superNames,
-            boolean isOperation) {
+            boolean isOperation, boolean domain) {
 
         // First lookup all dependencies.
         // Key is the option (one for any option),
         // value is the Dependency (contains the list of dependsOn)
         // for the key to be usable.
-        Map<ProcessedOption, Dependency> dependencies = retrieveDependencies(opts, arg);
+        Map<ProcessedOption, Dependency> dependencies
+                = retrieveDependencies(opts, arg, domain);
 
         StringBuilder synopsisBuilder = new StringBuilder();
         if (parentName != null) {
@@ -551,7 +582,7 @@ public class HelpSupport {
             String content = addSynopsisOption(bundle, dependencies,
                     parentName,
                     commandName, superNames, opt, isOperation);
-            synopsisBuilder.append(content);
+            synopsisBuilder.append(content.trim());
             if (isOperation) {
                 if (!dependencies.isEmpty()) {
                     synopsisBuilder.append(",");
@@ -630,11 +661,11 @@ public class HelpSupport {
                 if (dependencies.containsKey(d.option)) {
                     String content = addSynopsisOption(bundle, dependencies,
                             parentName, commandName, superNames, d.option, isOperation);
-                    synopsisBuilder.append(" ");
+                    synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
                     synopsisBuilder.append(content);
-                    synopsisBuilder.append(" ");
                 }
             }
+            synopsisBuilder.append(" ");
         }
         if (!opt.isRequired()) {
             synopsisBuilder.append("[");
@@ -945,11 +976,11 @@ public class HelpSupport {
     }
 
     private static Map<ProcessedOption, Dependency> retrieveDependencies(List<ProcessedOption> opts,
-            ProcessedOption arg) {
+            ProcessedOption arg, boolean domain) {
         Map<ProcessedOption, Dependency> dependencies = new IdentityHashMap<>();
         if (arg != null) {
             List<ProcessedOption> argExpected = retrieveExpected(arg.getActivator(),
-                    opts);
+                    opts, domain);
             Dependency d = new Dependency();
             d.option = arg;
             dependencies.put(arg, d);
@@ -961,7 +992,7 @@ public class HelpSupport {
             }
         }
         for (ProcessedOption opt : opts) {
-            List<ProcessedOption> expected = retrieveExpected(opt.getActivator(), opts);
+            List<ProcessedOption> expected = retrieveExpected(opt.getActivator(), opts, domain);
             Dependency optDep = dependencies.get(opt);
             if (optDep == null) {
                 optDep = new Dependency();
@@ -981,7 +1012,7 @@ public class HelpSupport {
         return dependencies;
     }
 
-    private static List<ProcessedOption> retrieveExpected(OptionActivator activator, List<ProcessedOption> opts) {
+    private static List<ProcessedOption> retrieveExpected(OptionActivator activator, List<ProcessedOption> opts, boolean domain) {
         List<ProcessedOption> expected = new ArrayList<>();
         if (activator == null) {
             return expected;
@@ -991,6 +1022,16 @@ public class HelpSupport {
             for (String s : obj) {
                 for (ProcessedOption opt : opts) {
                     if (s.equals(opt.getName())) {
+                        if (domain) {
+                            // This option is only valid in non domain mode.
+                            if (opt.getActivator() instanceof StandaloneOptionActivator) {
+                                continue;
+                            }
+                        } else // This option is only valid in non domain mode.
+                         if (opt.getActivator() instanceof DomainOptionActivator) {
+                                continue;
+                            }
+
                         expected.add(opt);
                     }
                 }
@@ -998,15 +1039,47 @@ public class HelpSupport {
         } catch (Exception ex) {
             // XXX OK, no field.
         }
+
         if (activator instanceof ExpectedOptionsActivator) {
             for (String s : ((ExpectedOptionsActivator) activator).getExpected()) {
                 for (ProcessedOption opt : opts) {
                     if (s.equals(opt.getName())) {
+                        if (domain) {
+                            // This option is only valid in non domain mode.
+                            if (opt.getActivator() instanceof StandaloneOptionActivator) {
+                                continue;
+                            }
+                        } else // This option is only valid in non domain mode.
+                         if (opt.getActivator() instanceof DomainOptionActivator) {
+                                continue;
+                            }
+
                         expected.add(opt);
                     }
                 }
             }
         }
         return expected;
+    }
+
+    private static List<ProcessedOption> retrieveStandaloneOptions(List<ProcessedOption> opts) {
+        List<ProcessedOption> standalone = new ArrayList<>();
+        for (ProcessedOption opt : opts) {
+            if (!(opt.getActivator() instanceof DomainOptionActivator)) {
+                standalone.add(opt);
+            }
+        }
+        return standalone;
+    }
+
+    private static List<ProcessedOption> retrieveDomainOptions(List<ProcessedOption> opts) {
+        List<ProcessedOption> domain = new ArrayList<>();
+        for (ProcessedOption opt : opts) {
+            if ((opt.getActivator() instanceof DomainOptionActivator
+                    || !(opt.getActivator() instanceof StandaloneOptionActivator))) {
+                domain.add(opt);
+            }
+        }
+        return domain;
     }
 }

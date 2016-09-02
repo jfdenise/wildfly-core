@@ -54,7 +54,7 @@ public class ConnectionInfoCommand implements Command<CliCommandInvocation> {
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         final ModelControllerClient client = ctx.getModelControllerClient();
         if (client == null) {
-            commandInvocation.getShell().out().println("<connect to the controller and re-run the connection-info command to see the connection information>\n");
+            commandInvocation.println("<connect to the controller and re-run the connection-info command to see the connection information>\n");
         } else {
 
             ConnectionInfo connInfo = ctx.getConnectionInfo();
@@ -88,7 +88,7 @@ public class ConnectionInfoCommand implements Command<CliCommandInvocation> {
                         username = "result was not available.";
                     }
                 } else {
-                    commandInvocation.getShell().out().println(Util.getFailureDescription(response));
+                    commandInvocation.println(Util.getFailureDescription(response));
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to get the AS release info: " + e.getLocalizedMessage());
@@ -120,7 +120,7 @@ public class ConnectionInfoCommand implements Command<CliCommandInvocation> {
             } else {
                 st.addLine(new String[]{"Not an SSL connection.", ""});
             }
-            commandInvocation.getShell().out().println(st.toString());
+            commandInvocation.println(st.toString());
         }
     }
 }

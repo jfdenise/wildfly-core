@@ -19,31 +19,24 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.aesh.provider;
+package org.jboss.as.cli.command;
 
-import org.jboss.aesh.cl.activation.CommandActivator;
-import org.jboss.aesh.console.command.activator.CommandActivatorProvider;
-import org.wildfly.core.cli.command.activator.CliCommandActivator;
-import org.wildfly.core.cli.command.CliCommandContext;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.aesh.activator.ConnectedActivator;
 
 /**
+ *
  * @author jdenise@redhat.com
  */
-public class CliCommandActivatorProvider implements CommandActivatorProvider {
-
-    private final CliCommandContext commandContext;
-
-    public CliCommandActivatorProvider(CliCommandContext commandContext) {
-        this.commandContext = commandContext;
-    }
+public class ReloadActivator extends ConnectedActivator {
 
     @Override
-    public CommandActivator enhanceCommandActivator(CommandActivator commandActivator) {
-
-        if (commandActivator instanceof CliCommandActivator) {
-            ((CliCommandActivator) commandActivator).setCommandContext(commandContext);
-        }
-
-        return commandActivator;
+    public boolean isActivated(ProcessedCommand cmd) {
+        ReloadCommand rcmd = (ReloadCommand) cmd.getCommand();
+        CommandContext ctx = getCommandContext().getLegacyCommandContext();
+        return super.isActivated(cmd)
+                && ctx.getConfig().isAccessControl()
+                        ? rcmd.getAccessRequirement().isSatisfied(ctx) : true;
     }
 }

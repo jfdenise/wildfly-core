@@ -34,7 +34,7 @@ import org.jboss.as.cli.aesh.converter.OperationRequestAddressConverter;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.CliCommandContext;
-import org.wildfly.core.cli.command.CliOptionActivator;
+import org.wildfly.core.cli.command.activator.CliOptionActivator;
 
 /**
  *

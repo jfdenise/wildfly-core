@@ -19,31 +19,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.aesh.provider;
+package org.wildfly.core.cli.command.activator;
 
-import org.jboss.aesh.cl.activation.CommandActivator;
-import org.jboss.aesh.console.command.activator.CommandActivatorProvider;
-import org.wildfly.core.cli.command.activator.CliCommandActivator;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
+ *
  * @author jdenise@redhat.com
  */
-public class CliCommandActivatorProvider implements CommandActivatorProvider {
+public class DefaultStandaloneOptionActivator implements CliOptionActivator, StandaloneOptionActivator {
 
-    private final CliCommandContext commandContext;
+    private CliCommandContext commandContext;
 
-    public CliCommandActivatorProvider(CliCommandContext commandContext) {
+    @Override
+    public void setCommandContext(CliCommandContext commandContext) {
         this.commandContext = commandContext;
     }
 
     @Override
-    public CommandActivator enhanceCommandActivator(CommandActivator commandActivator) {
+    public CliCommandContext getCommandContext() {
+        return commandContext;
+    }
 
-        if (commandActivator instanceof CliCommandActivator) {
-            ((CliCommandActivator) commandActivator).setCommandContext(commandContext);
-        }
-
-        return commandActivator;
+    @Override
+    public boolean isActivated(ProcessedCommand processedCommand) {
+        return !commandContext.isDomainMode();
     }
 }

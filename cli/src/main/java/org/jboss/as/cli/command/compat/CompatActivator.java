@@ -23,7 +23,7 @@ package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.as.cli.aesh.activator.DefaultActivator;
-import org.wildfly.core.cli.command.CliCommandActivator;
+import org.wildfly.core.cli.command.activator.CliCommandActivator;
 
 /**
  *

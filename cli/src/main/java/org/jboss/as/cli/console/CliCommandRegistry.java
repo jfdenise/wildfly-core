@@ -266,8 +266,9 @@ public class CliCommandRegistry implements CommandRegistry {
                     }
                     return getCommand(parentName, parentName + " " + childName);
                 } catch (CommandNotFoundException ex) {
-                    throw new CommandLineException("The parent command "
-                            + parentName + " doesn't exist. Can't register " + name);
+                    Logger.getLogger(CliCommandRegistry.class).warn("No parent "
+                            + parentName + " command found. Registering command as "
+                            + name);
                 }
             }
         }

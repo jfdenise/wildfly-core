@@ -59,7 +59,7 @@ import org.jboss.stdio.NullOutputStream;
 import org.jboss.stdio.StdioContext;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
-import org.wildfly.core.cli.command.CliOptionActivator;
+import org.wildfly.core.cli.command.activator.CliOptionActivator;
 import org.wildfly.core.embedded.EmbeddedManagedProcess;
 import org.wildfly.core.embedded.EmbeddedProcessFactory;
 import org.wildfly.core.embedded.EmbeddedProcessStartException;

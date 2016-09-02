@@ -21,7 +21,6 @@
  */
 package org.jboss.as.cli.console;
 
-import com.sun.istack.internal.logging.Logger;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -79,14 +78,17 @@ import org.jboss.as.cli.command.CdCommand;
 import org.jboss.as.cli.command.ClearCommand;
 import org.jboss.as.cli.command.CommandCommand;
 import org.jboss.as.cli.command.Connect;
+import org.jboss.as.cli.command.ConnectionInfoCommand;
 import org.jboss.as.cli.command.EchoCommand;
 import org.jboss.as.cli.command.EchoDMRCommand;
 import org.jboss.as.cli.command.HelpCommand;
+import org.jboss.as.cli.command.JDBCDriverInfoCommand;
 import org.jboss.as.cli.command.history.HistoryCommand;
 import org.jboss.as.cli.command.LsMapCommand;
 import org.jboss.as.cli.command.PwdCommand;
 import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.command.ReadCommand;
+import org.jboss.as.cli.command.ReloadCommand;
 import org.jboss.as.cli.command.SetVariableCommand;
 import org.jboss.as.cli.command.ShutdownCommand;
 import org.jboss.as.cli.command.UnsetVariableCommand;
@@ -96,6 +98,7 @@ import org.jboss.as.cli.command.compat.ClearBatch;
 import org.jboss.as.cli.command.compat.DiscardBatch;
 import org.jboss.as.cli.command.compat.EditLineBatch;
 import org.jboss.as.cli.command.compat.HoldBackBatch;
+import org.jboss.as.cli.command.compat.ListBatch;
 import org.jboss.as.cli.command.compat.MoveLineBatch;
 import org.jboss.as.cli.command.compat.ReadAttribute;
 import org.jboss.as.cli.command.compat.ReadOperation;
@@ -119,6 +122,7 @@ import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.Console;
 import org.jboss.as.cli.impl.DefaultCompleter;
 import org.jboss.as.protocol.StreamUtils;
+import org.jboss.logging.Logger;
 
 /**
  * @author jdenise@redhat.com
@@ -387,7 +391,7 @@ class AeshCliConsole implements Console {
             try {
                 commandRegistry.addCommand(command);
             } catch (CommandLineException ex) {
-                Logger.getLogger(AeshCliConsole.class).warning(ex.toString());
+                Logger.getLogger(AeshCliConsole.class).warn(ex.toString());
             }
         }
     }
@@ -434,11 +438,13 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new CdCommand());
         clireg.addCommand(new ClearCommand());
         clireg.addCommand(new Connect());
+        clireg.addCommand(new ConnectionInfoCommand());
         clireg.addCommand(new CommandCommand());
         clireg.addCommand(new EchoCommand());
         clireg.addCommand(new EchoDMRCommand());
         clireg.addCommand(new HelpCommand(clireg));
         clireg.addCommand(new HistoryCommand());
+        clireg.addCommand(new JDBCDriverInfoCommand(ctx));
         // ls is a dynamic command
         clireg.addCommand(new AeshCommandContainer(
                 new AeshCommandLineParser<>(
@@ -446,6 +452,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new PwdCommand());
         clireg.addCommand(new Quit());
         clireg.addCommand(new ReadCommand());
+        clireg.addCommand(new ReloadCommand(ctx, ctx.getEmbeddedServerReference()));
         clireg.addCommand(new SetVariableCommand());
         clireg.addCommand(new ShutdownCommand(ctx, ctx.getEmbeddedServerReference()));
         clireg.addCommand(new UnsetVariableCommand());
@@ -471,6 +478,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new DiscardBatch());
         clireg.addCommand(new EditLineBatch());
         clireg.addCommand(new HoldBackBatch());
+        clireg.addCommand(new ListBatch());
         clireg.addCommand(new MoveLineBatch());
         clireg.addCommand(new ReadAttribute());
         clireg.addCommand(new ReadOperation());
@@ -487,6 +495,7 @@ class AeshCliConsole implements Console {
             final DefaultCompleter driverNameCompleter = new DefaultCompleter(JDBCDriverNameProvider.INSTANCE);
             dataSourceParser.addCustomCompleter(Util.DRIVER_NAME,
                     new org.jboss.as.cli.aesh.completer.DefaultCompleter(driverNameCompleter));
+
             // XXX JFDENISE TODO
             //dataSourceParser.addCustomSubCommand(new DataSourceAddCompositeSubCommand(Util.ADD,
             //        new NodeType("/subsystem=datasources/data-source"), null));
