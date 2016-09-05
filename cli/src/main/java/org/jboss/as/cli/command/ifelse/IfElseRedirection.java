@@ -80,7 +80,7 @@ public class IfElseRedirection extends CommandRedirection {
 
             ModelNode targetValue;
             try {
-                targetValue = client.execute(ifRequest);
+                targetValue = ctx.execute(ifRequest, "if condition");
             } catch (IOException e) {
                 throw new CommandException("condition request failed", e);
             }

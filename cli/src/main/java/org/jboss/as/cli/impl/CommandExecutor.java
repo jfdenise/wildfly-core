@@ -31,6 +31,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.jboss.aesh.cl.CommandLine;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.cl.validator.CommandValidatorException;
+import org.jboss.aesh.cl.validator.OptionValidatorException;
+import org.jboss.aesh.console.AeshContext;
+import org.jboss.aesh.console.InvocationProviders;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.container.CommandContainerResult;
+import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
@@ -45,6 +54,7 @@ import org.jboss.as.cli.ControllerAddress;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.cli.console.CliCommandContainer;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -56,6 +66,9 @@ import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.as.controller.client.OperationResponse;
 import org.jboss.dmr.ModelNode;
 import org.jboss.threads.AsyncFuture;
+import org.wildfly.core.cli.command.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
  * Implement the timeout logic when executing commands. Public for testing
@@ -65,6 +78,88 @@ import org.jboss.threads.AsyncFuture;
  */
 public class CommandExecutor {
 
+    private class TimeoutCliCommandContext implements CliCommandContext {
+
+        private final TimeoutCommandContext ctx;
+        private final CliCommandContext wrapped;
+
+        TimeoutCliCommandContext(CliCommandContext wrapped,
+                TimeoutCommandContext ctx) {
+            this.wrapped = wrapped;
+            this.ctx = ctx;
+        }
+
+        @Override
+        public boolean isDomainMode() {
+            return wrapped.isDomainMode();
+        }
+
+        @Override
+        public void connectController(String url) throws CommandLineException, InterruptedException {
+            wrapped.connectController(url);
+        }
+
+        @Override
+        public ModelControllerClient getModelControllerClient() {
+            return ctx.getModelControllerClient();
+        }
+
+        @Override
+        public void exit() {
+            wrapped.exit();
+        }
+
+        @Override
+        public CommandContext getLegacyCommandContext() {
+            return ctx;
+        }
+
+        @Override
+        public void setCurrentNodePath(OperationRequestAddress get) {
+            wrapped.setCurrentNodePath(get);
+        }
+
+        @Override
+        public boolean isConnected() {
+            return wrapped.isConnected();
+        }
+
+        @Override
+        public void executeCommand(String line) throws CommandException {
+            wrapped.executeCommand(line);
+        }
+
+        @Override
+        public ModelNode execute(ModelNode mn, String description) throws CommandException, IOException {
+            return wrapped.execute(mn, description);
+        }
+
+        @Override
+        public void registerRedirection(CommandRedirection redirection) throws CommandException {
+            wrapped.registerRedirection(redirection);
+        }
+
+        @Override
+        public CommandRedirection getCommandRedirection() {
+            return wrapped.getCommandRedirection();
+        }
+
+        @Override
+        public int getCommandTimeout() {
+            return wrapped.getCommandTimeout();
+        }
+
+        @Override
+        public void setCommandTimeout(int timeout) {
+            wrapped.setCommandTimeout(timeout);
+        }
+
+        @Override
+        public void resetCommandTimeout(TIMEOUT_RESET_VALUE value) {
+            wrapped.resetCommandTimeout(value);
+        }
+
+    }
     // A wrapper to allow to override ModelControllerClient.
     // Public for testing purpose.
     public class TimeoutCommandContext implements CommandContext {
@@ -676,6 +771,34 @@ public class CommandExecutor {
             });
             try {
                 task.get(timeout, unit);
+            } catch (TimeoutException ex) {
+                task.cancel(true);
+                context.timeout();
+                throw ex;
+            }
+        }
+    }
+
+    // Public for testing purpose.
+    public CommandContainerResult execute(CliCommandContainer handler, CliCommandContext cliCommandContext,
+            CommandInvocation invocation,
+            CommandLine line, InvocationProviders ip, AeshContext ac, Console console,
+            int timeout, TimeUnit unit) throws
+            CommandLineParserException, OptionValidatorException, CommandValidatorException, CommandException,
+            InterruptedException, ExecutionException, TimeoutException {
+        if (timeout <= 0) { //Synchronous
+            return handler.executeCommand(line, ip, ac, invocation);
+        } else { // Guarded execution
+            TimeoutCommandContext context = new TimeoutCommandContext(ctx);
+            TimeoutCliCommandContext cliContext
+                    = new TimeoutCliCommandContext(cliCommandContext,
+                            context);
+            Future<CommandContainerResult> task = executorService.submit(() -> {
+                return handler.executeCommand(line, ip, ac, new CliCommandInvocation(cliContext,
+                        invocation, console));
+            });
+            try {
+                return task.get(timeout, unit);
             } catch (TimeoutException ex) {
                 task.cancel(true);
                 context.timeout();

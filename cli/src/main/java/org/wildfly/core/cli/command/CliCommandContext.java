@@ -21,11 +21,13 @@
  */
 package org.wildfly.core.cli.command;
 
+import java.io.IOException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.dmr.ModelNode;
 
 /**
  *
@@ -49,6 +51,27 @@ public interface CliCommandContext {
     boolean isConnected();
 
     void executeCommand(String line) throws CommandException;
+
+    ModelNode execute(ModelNode mn, String description) throws CommandException, IOException;
+
+    int getCommandTimeout();
+
+    void setCommandTimeout(int timeout);
+
+    /**
+     * The command timeout reset value.
+     */
+    enum TIMEOUT_RESET_VALUE {
+        CONFIG,
+        DEFAULT;
+    }
+
+    /**
+     * Reset the timeout value.
+     *
+     * @param value The enumerated timeout reset value.
+     */
+    void resetCommandTimeout(TIMEOUT_RESET_VALUE value);
 
     void registerRedirection(CommandRedirection redirection) throws CommandException;
 

@@ -600,7 +600,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     }
 
     // Single execute method to handle exceptions.
-    private <T> T execute(Callable<T> c, String msg) throws CommandLineException {
+    // This operation is public because used by the CliCommandContainer.
+    public <T> T execute(Callable<T> c, String msg) throws CommandLineException {
         try {
             return c.call();
         } catch (IOException ex) {
@@ -622,6 +623,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } catch (Exception ex) {
             throw new CommandLineException("Exception for " + msg, ex);
         }
+    }
+
+    CommandExecutor getCommandExecutor() {
+        return executor;
     }
 
     public void handleSafe(String line) {
@@ -1426,25 +1431,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             final String line = parsedLine.getSubstitutedLine();
             try {
                 if (parsedLine.getFormat() == OperationFormat.INSTANCE) {
-                    if (isBatchMode()) {
-                        Batch batch = getBatchManager().getActiveBatch();
-                        final ModelNode request = Util.toOperationRequest(CommandContextImpl.this,
-                                parsedCmd, batch.getAttachments());
-                        StringBuilder op = new StringBuilder();
-                        op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
-                        op.append(line.substring(line.indexOf(':')));
-                        DefaultBatchedCommand batchedCmd
-                                = new DefaultBatchedCommand(CommandContextImpl.this,
-                                        op.toString(), request, null);
-                        batch.add(batchedCmd);
-                    } else {
-                        Attachments attachments = new Attachments();
-                        final ModelNode op = Util.toOperationRequest(CommandContextImpl.this,
-                                parsedCmd, attachments);
-                        RequestWithAttachments req = new RequestWithAttachments(op, attachments);
-                        set(Scope.REQUEST, "OP_REQ", req);
-                        operationHandler.handle(CommandContextImpl.this);
-                    }
+                    handleOperation(parsedLine);
                 } else {
                     final String cmdName = parsedCmd.getOperationName();
                     CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
@@ -1543,9 +1530,9 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
     public void handleOperation(ParsedCommandLine line) throws CommandLineException {
         if (line.getFormat() == OperationFormat.INSTANCE) {
-            final ModelNode request = Util.toOperationRequest(this, line);
-
             if (isBatchMode()) {
+                final ModelNode request = Util.toOperationRequest(this, line,
+                        getBatchManager().getActiveBatch().getAttachments());
                 String str = line.getOriginalLine();
                 StringBuilder op = new StringBuilder();
                 op.append(getNodePathFormatter().format(line.getAddress()));
@@ -1556,7 +1543,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 batch.add(batchedCmd);
             } else {
                 try {
-                    set(Scope.REQUEST, "OP_REQ", request);
+                    Attachments attachments = new Attachments();
+                    final ModelNode op = Util.toOperationRequest(this, line, attachments);
+                    RequestWithAttachments req = new RequestWithAttachments(op, attachments);
+                    set(Scope.REQUEST, "OP_REQ", req);
                     operationHandler.handle(this);
                 } finally {
                     clear(Scope.REQUEST);

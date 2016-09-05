@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.jboss.aesh.console.command.CommandException;
@@ -160,5 +161,48 @@ public class CliCommandContextImpl implements CliCommandContext {
             return registration.getRedirection();
         }
         return null;
+    }
+
+    @Override
+    public ModelNode execute(ModelNode mn, String description) throws CommandException, IOException {
+        try {
+            // XXX JFDENISE, for now delegates to the commandcontext that has a valid timeout handling.
+            // This is only used by the of condition execution.
+            return context.execute(mn, description);
+        } catch (CommandLineException ex) {
+            if (ex.getCause() instanceof CommandException) {
+                throw (CommandException) ex.getCause();
+            } else {
+                throw new CommandException(ex);
+            }
+        }
+    }
+
+    public CommandExecutor getCommandExecutor() {
+        return context.getCommandExecutor();
+    }
+
+    @Override
+    public int getCommandTimeout() {
+        return context.getCommandTimeout();
+    }
+
+    @Override
+    public void setCommandTimeout(int timeout) {
+        context.setCommandTimeout(timeout);
+    }
+
+    /**
+     * Reset the timeout value.
+     *
+     * @param value The enumerated timeout reset value.
+     */
+    @Override
+    public void resetCommandTimeout(TIMEOUT_RESET_VALUE value) {
+        if (value == TIMEOUT_RESET_VALUE.CONFIG) {
+            context.resetTimeout(CommandContext.TIMEOUT_RESET_VALUE.CONFIG);
+        } else if (value == TIMEOUT_RESET_VALUE.DEFAULT) {
+            context.resetTimeout(CommandContext.TIMEOUT_RESET_VALUE.DEFAULT);
+        }
     }
 }

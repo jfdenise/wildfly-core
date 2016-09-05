@@ -22,6 +22,9 @@
 package org.jboss.as.cli.console;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.jboss.aesh.cl.CommandLine;
 import org.jboss.aesh.cl.activation.CommandActivator;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
@@ -50,6 +53,7 @@ import org.jboss.as.cli.command.legacy.InternalDMRCommand;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
+import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialCommandContainer;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.HelpSupport;
 import org.wildfly.core.cli.command.CommandRedirection;
@@ -374,16 +378,31 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
                 }
             }
 
-            CommandContainerResult res = commandLine == null ? container.executeCommand(line,
-                    invocationProviders, aeshContext, commandInvocation)
-                    : container.executeCommand(commandLine,
-                            invocationProviders, aeshContext, commandInvocation);
+            // The timeout is handled for the special commands by the CommandContext, do not timeout it.
+            CommandContainerResult res;
+            if (container instanceof CliSpecialCommandContainer) {
+                res = container.executeCommand(line,
+                        invocationProviders, aeshContext, commandInvocation);
+            } else {
+                res = commandContext.getCommandExecutor().execute(this, commandContext,
+                        commandInvocation, commandLine, invocationProviders,
+                        aeshContext, console, commandContext.getCommandTimeout(), TimeUnit.SECONDS);
+            }
+
             return res;
         } catch (CommandLineException ex) {
             throw new CommandException(ex);
         } catch (CommandLineParserException | OptionValidatorException |
                 CommandValidatorException | CommandException ex) {
             throw ex;
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+            if (cause instanceof CommandException) {
+                throw (CommandException) cause;
+            }
+            throw new CommandException("Execution exception for " + cause.getMessage(), cause);
+        } catch (TimeoutException ex) {
+            throw new CommandException("Execution timeout.");
         } finally {
             postExecution(context, commandInvocation);
         }

@@ -110,6 +110,11 @@ public interface WildFlyCLIConfiguration {
             builder.setEchoCommand(echoCommand);
             return this;
         }
+
+        public Builder setCommandTimeout(int timeout) {
+            builder.setCommandTimeout(timeout);
+            return this;
+        }
     }
 
     String getController();
@@ -133,4 +138,6 @@ public interface WildFlyCLIConfiguration {
     Boolean isErrorOnInteract();
 
     boolean isEchoCommand();
+
+    Integer getCommandTimeout();
 }

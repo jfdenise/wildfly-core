@@ -77,6 +77,7 @@ import org.jboss.as.cli.aesh.provider.CliCommandActivatorProvider;
 import org.jboss.as.cli.command.CdCommand;
 import org.jboss.as.cli.command.ClearCommand;
 import org.jboss.as.cli.command.CommandCommand;
+import org.jboss.as.cli.command.CommandTimeout;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.ConnectionInfoCommand;
 import org.jboss.as.cli.command.EchoCommand;
@@ -437,6 +438,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new BatchCommand());
         clireg.addCommand(new CdCommand());
         clireg.addCommand(new ClearCommand());
+        clireg.addCommand(new CommandTimeout());
         clireg.addCommand(new Connect());
         clireg.addCommand(new ConnectionInfoCommand());
         clireg.addCommand(new CommandCommand());
