@@ -59,7 +59,7 @@ public class CliLauncher {
             boolean connect = false;
             boolean version = false;
             int connectionTimeout = -1;
-
+            boolean isHelp = false;
             final CommandContextConfiguration.Builder ctxBuilder = new CommandContextConfiguration.Builder();
             ctxBuilder.setErrorOnInteract(errorOnInteract);
 
@@ -184,7 +184,7 @@ public class CliLauncher {
                 } else if(arg.startsWith("--bind=")) {
                     ctxBuilder.setClientBindAddress(arg.substring(7));
                 } else if (arg.equals("--help") || arg.equals("-h")) {
-                    commands = Collections.singletonList("help");
+                    isHelp = true;
                 } else if (arg.startsWith("--properties=")) {
                     final String value  = arg.substring(13);
                     final File propertiesFile = new File(value);
@@ -255,6 +255,12 @@ public class CliLauncher {
                 return;
             }
 
+            if (isHelp) {
+                cmdCtx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+                printHelp(((CommandContextImpl) cmdCtx).getConsole());
+                return;
+            }
+
             if (version) {
                 List<String> vers = new ArrayList<>();
                 vers.add("version");
@@ -303,6 +309,10 @@ public class CliLauncher {
                 System.exit(exitCode);
             }
         }
+    }
+
+    private static void printHelp(Console console) {
+        HelpSupport.printHelp(console);
     }
 
     private static void processGui(final CommandContext cmdCtx) {

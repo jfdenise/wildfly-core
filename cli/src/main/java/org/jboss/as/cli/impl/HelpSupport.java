@@ -81,6 +81,10 @@ public class HelpSupport {
     private static final String OPTION_PREFIX = "--";
     private static final String OPTION_SUFFIX = "  - ";
 
+    static void printHelp(Console console) {
+        console.println(printHelp(console, "help"));
+    }
+
     public static String printHelp(Console console, String filename) {
         filename = "help/" + filename + ".txt";
         InputStream helpInput = WildFlySecurityManager.getClassLoaderPrivileged(CommandHandlerWithHelp.class).getResourceAsStream(filename);
@@ -314,9 +318,31 @@ public class HelpSupport {
                 pcommand.addOption(opt);
             }
 
-            return getCommandHelp(null, Collections.emptyList(), null, Collections.emptyList(),
+            String content = getCommandHelp(null, Collections.emptyList(), null, Collections.emptyList(),
                     pcommand.getOptions(), pcommand,
                     null, commandName, pcommand, true);
+            if (mn.hasDefined("reply-properties")) {
+                ModelNode reply = mn.get("reply-properties");
+                // Add response value
+                StringBuilder builder = new StringBuilder();
+                builder.append(content);
+
+                builder.append("RETURN VALUE");
+
+                builder.append(Config.getLineSeparator());
+                builder.append(Config.getLineSeparator());
+
+                if (reply.hasDefined("type")) {
+                    builder.append(reply.get("type").asString()).append(". ");
+                }
+                if (reply.hasDefined("description")) {
+                    builder.append(reply.get("description").asString());
+                }
+                builder.append(Config.getLineSeparator());
+                builder.append(Config.getLineSeparator());
+                content = builder.toString();
+            }
+            return content;
         } catch (Exception ex) {
             // XXX OK.
             return null;
@@ -438,8 +464,8 @@ public class HelpSupport {
                 append(Config.getLineSeparator());
 
         // Sub Commands
-        builder.append(printActions(bundle, parentName, commandName, parsers, superNames)).
-                append(Config.getLineSeparator());
+        builder.append(printActions(bundle, parentName, commandName, parsers,
+                superNames));
         return builder.toString();
     }
 
