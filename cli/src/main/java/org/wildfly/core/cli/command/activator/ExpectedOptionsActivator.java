@@ -19,9 +19,10 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.aesh.activator;
+package org.wildfly.core.cli.command.activator;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.jboss.aesh.cl.activation.OptionActivator;
@@ -29,33 +30,35 @@ import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.cl.internal.ProcessedOption;
 
 /**
- * Search for a set of options, activate the option if none options found.
+ *
+ * Use this activator to make an option available if some options are already
+ * present.
  *
  * @author jdenise@redhat.com
  */
-public class NotExpectedOptionsActivator implements OptionActivator {
+public abstract class ExpectedOptionsActivator implements OptionActivator {
 
     private final Set<String> options;
 
-    public NotExpectedOptionsActivator(Set<String> opts) {
-        options = opts;
+    protected ExpectedOptionsActivator(String... opts) {
+        options = new HashSet<>(Arrays.asList(opts));
     }
 
-    public NotExpectedOptionsActivator(String... opts) {
-        options = new HashSet<>(Arrays.asList(opts));
+    protected ExpectedOptionsActivator(Set<String> opts) {
+        options = opts;
     }
 
     @Override
     public boolean isActivated(ProcessedCommand processedCommand) {
-        boolean found = false;
+        boolean found = true;
         for (String opt : options) {
             ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(opt);
-            if (processedOption != null && processedOption.getValue() != null) {
-                found = true;
-                break;
-            }
-
+            found &= processedOption != null && processedOption.getValue() != null;
         }
-        return !found;
+        return found;
+    }
+
+    public Set<String> getExpected() {
+        return Collections.unmodifiableSet(options);
     }
 }

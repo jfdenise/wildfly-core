@@ -19,35 +19,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.aesh.activator;
+package org.jboss.as.cli.command.generic;
 
-import java.util.HashSet;
-import java.util.Set;
-import org.jboss.aesh.cl.activation.OptionActivator;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 
 /**
  *
- * Builder for Presence activator.
- *
  * @author jdenise@redhat.com
  */
-public class PresenceOptionsActivatorBuilder {
-
-    private final Set<String> expected = new HashSet<>();
-    private final Set<String> notExpected = new HashSet<>();
-
-    public PresenceOptionsActivatorBuilder expected(String expected) {
-        this.expected.add(expected);
-        return this;
+public class GenericExpectedOptionsActivator extends ExpectedOptionsActivator {
+    GenericExpectedOptionsActivator(String... options) {
+        super(options);
     }
-
-    public PresenceOptionsActivatorBuilder notExpected(String notExpected) {
-        this.notExpected.add(notExpected);
-        return this;
-    }
-
-    public OptionActivator create() {
-        return new PresenceOptionsActivator(expected, notExpected);
-    }
-
 }

@@ -35,7 +35,6 @@ import org.jboss.aesh.console.command.map.MapProcessedCommandBuilder;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.completer.BooleanCompleter;
 import org.jboss.as.cli.aesh.converter.DefaultValueConverter;
 import org.jboss.as.cli.aesh.converter.ListConverter;
@@ -179,7 +178,7 @@ class ResourceOperationSubCommand extends AbstractOperationSubCommand {
                                     }
                                     if (valueCompleter == null) {
                                         allOptions.add(new ProcessedOptionBuilder().
-                                                activator(new ExpectedOptionsActivator(getPropertyId())).
+                                                activator(new GenericExpectedOptionsActivator(getPropertyId())).
                                                 name(prop.getName()).
                                                 description(prop.getValue().get("type").asString()
                                                         + ", " + prop.getValue().get("description").asString()).
@@ -188,7 +187,7 @@ class ResourceOperationSubCommand extends AbstractOperationSubCommand {
                                                 create());
                                     } else {
                                         allOptions.add(new ProcessedOptionBuilder().
-                                                activator(new ExpectedOptionsActivator(getPropertyId())).
+                                                activator(new GenericExpectedOptionsActivator(getPropertyId())).
                                                 completer(valueCompleter).
                                                 description(prop.getValue().get("type").asString()
                                                         + ", " + prop.getValue().get("description").asString()).

@@ -40,7 +40,6 @@ import org.jboss.aesh.console.command.map.MapCommand;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.command.generic.MainCommand.MainCommandProcessedCommand;
 import org.jboss.as.cli.aesh.completer.ChildrenNameCompleter;
@@ -219,7 +218,7 @@ public class MainCommandParser extends AeshCommandLineParser<MapCommand> {
                 description("OBJECT, The operation headers.").
                 type(Object.class).
                 converter(HeadersConverter.INSTANCE).
-                activator(new ExpectedOptionsActivator(propertyId)).
+                activator(new GenericExpectedOptionsActivator(propertyId)).
                 create());
 
         options.add(new ProcessedOptionBuilder().name("help").

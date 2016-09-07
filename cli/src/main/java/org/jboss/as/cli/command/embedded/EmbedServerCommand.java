@@ -29,10 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
-import org.jboss.aesh.cl.activation.OptionActivator;
 import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.aesh.cl.internal.ProcessedOption;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
@@ -40,6 +38,7 @@ import org.jboss.as.cli.CliEvent;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.BooleanCompleter;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
@@ -75,17 +74,10 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 @CommandDefinition(name = "server", description = "", activator = EmbedServerActivator.class)
 public class EmbedServerCommand implements Command<CliCommandInvocation> {
 
-    public static final class RemoveExistingActivator implements OptionActivator {
+    public static final class RemoveExistingActivator extends ExpectedOptionsActivator {
 
-        private static final String EMPTY_CONFIG = "empty-config";
-        // In order to advertise the dependencies on other options.
-        // This field is retrieved when help is generated.
-        public static final String[] WF_CLI_EXPECTED_OPTIONS = {EMPTY_CONFIG};
-
-        @Override
-        public boolean isActivated(ProcessedCommand processedCommand) {
-            ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(EMPTY_CONFIG);
-            return processedOption != null && processedOption.getValue() != null;
+        public RemoveExistingActivator() {
+            super("empty-config");
         }
     }
 

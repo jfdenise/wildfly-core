@@ -24,7 +24,7 @@ package org.jboss.as.cli.command;
 import java.io.File;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
-import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.jboss.as.cli.aesh.converter.FileConverter;

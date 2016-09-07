@@ -138,6 +138,7 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
 
     public static class AttrDescPropertyActivator extends HiddenActivator {
 
+        // to be discovered by help.
         public static final String[] WF_CLI_EXPECTED_OPTIONS = {"l"};
     }
 

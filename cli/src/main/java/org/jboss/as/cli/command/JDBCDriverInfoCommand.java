@@ -41,7 +41,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.accesscontrol.HostServerOperationAccess;
-import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.impl.DefaultCompleter;
@@ -121,10 +121,9 @@ public class JDBCDriverInfoCommand implements Command<CliCommandInvocation> {
     public static class ServerActivator extends ExpectedOptionsActivator
             implements CliOptionActivator, DomainOptionActivator {
 
-        public static final String[] WF_CLI_EXPECTED_OPTIONS = {"host"};
         private final DefaultDomainOptionActivator da = new DefaultDomainOptionActivator();
         public ServerActivator() {
-            super(WF_CLI_EXPECTED_OPTIONS);
+            super("host");
         }
 
         @Override
@@ -185,10 +184,8 @@ public class JDBCDriverInfoCommand implements Command<CliCommandInvocation> {
 
     public static class DriverActivator extends ExpectedOptionsActivator {
 
-        public static final String[] WF_CLI_EXPECTED_OPTIONS = {"host", "server"};
-
         public DriverActivator() {
-            super(WF_CLI_EXPECTED_OPTIONS);
+            super("host", "server");
         }
 
     }

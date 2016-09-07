@@ -23,15 +23,13 @@ package org.jboss.as.cli.command;
 
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
-import org.jboss.aesh.cl.activation.OptionActivator;
-import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.aesh.cl.internal.ProcessedOption;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.container.AeshCommandContainer;
 import org.jboss.as.cli.CommandLineException;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.jboss.as.cli.command.generic.NodeType;
@@ -88,15 +86,10 @@ public class CommandAdd implements Command<CliCommandInvocation> {
         return CommandResult.SUCCESS;
     }
 
-    public static class NodeTypeActivator implements OptionActivator {
+    public static class NodeTypeActivator extends ExpectedOptionsActivator {
 
-        private static final String NODE_TYPE = "node-type";
-        public static final String[] WF_CLI_EXPECTED_OPTIONS = {NODE_TYPE};
-
-        @Override
-        public boolean isActivated(ProcessedCommand processedCommand) {
-            ProcessedOption processedOption = processedCommand.findLongOption(NODE_TYPE);
-            return processedOption != null && processedOption.getValue() != null;
+        public NodeTypeActivator() {
+            super("node-type");
         }
     }
 

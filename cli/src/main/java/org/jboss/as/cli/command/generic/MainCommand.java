@@ -46,7 +46,7 @@ import org.jboss.aesh.console.command.map.MapProcessedCommandBuilder.ProcessedOp
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.completer.InstanceCompleter;
@@ -352,7 +352,7 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
                         completer(new HeadersCompleter()).
                         type(String.class).
                         converter(HeadersConverter.INSTANCE).
-                        activator(new HiddenActivator(true, new ExpectedOptionsActivator(propertyId))).
+                        activator(new HiddenActivator(true, new GenericExpectedOptionsActivator(propertyId))).
                         create());
 
                 WriteAttributesSubCommand subCommand

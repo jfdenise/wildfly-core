@@ -37,7 +37,6 @@ import org.jboss.aesh.console.command.map.MapProcessedCommandBuilder;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.BooleanCompleter;
 import org.jboss.as.cli.aesh.converter.DefaultValueConverter;
@@ -194,8 +193,8 @@ class WriteAttributesSubCommand extends AbstractOperationSubCommand {
                                     if (valueCompleter == null) {
                                         allOptions.add(new ProcessedOptionBuilder().
                                                 activator(hidden ? new HiddenActivator(hidden,
-                                                        new ExpectedOptionsActivator(getPropertyId()))
-                                                        : new ExpectedOptionsActivator(getPropertyId())).
+                                                        new GenericExpectedOptionsActivator(getPropertyId()))
+                                                        : new GenericExpectedOptionsActivator(getPropertyId())).
                                                 name(prop.getName()).
                                                 description(prop.getType().toString() + ", " + prop.getDescription()).
                                                 converter(valueConverter).
@@ -204,8 +203,8 @@ class WriteAttributesSubCommand extends AbstractOperationSubCommand {
                                     } else {
                                         allOptions.add(new ProcessedOptionBuilder().
                                                 activator(hidden ? new HiddenActivator(hidden,
-                                                        new ExpectedOptionsActivator(getPropertyId()))
-                                                        : new ExpectedOptionsActivator(getPropertyId())).
+                                                        new GenericExpectedOptionsActivator(getPropertyId()))
+                                                        : new GenericExpectedOptionsActivator(getPropertyId())).
                                                 completer(valueCompleter).
                                                 description(prop.getType().toString() + ", " + prop.getDescription()).
                                                 name(prop.getName()).

@@ -56,7 +56,7 @@ import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.console.Config;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.aesh.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.protocol.StreamUtils;
@@ -75,6 +75,7 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 public class HelpSupport {
 
     // Field name (String[]) that advertises the expected options.
+    // Fallback when Activator can't extend ExpectedOptionsActivator
     public static final String WF_CLI_EXPECTED_OPTIONS = "WF_CLI_EXPECTED_OPTIONS";
     private static final String TAB = "    ";
     private static final String TABTAB = TAB + TAB;
