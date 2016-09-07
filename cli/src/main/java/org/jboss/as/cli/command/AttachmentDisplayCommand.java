@@ -21,8 +21,12 @@
  */
 package org.jboss.as.cli.command;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
+import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
@@ -30,6 +34,10 @@ import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
+import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
+import org.jboss.as.cli.operation.OperationRequestAddress;
+import org.jboss.as.cli.operation.OperationRequestCompleter;
+import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.as.controller.client.OperationMessageHandler;
@@ -46,11 +54,49 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "display", description = "")
 public class AttachmentDisplayCommand implements Command<CliCommandInvocation>, BatchCompliantCommand {
 
+    public static class OperationCompleter implements OptionCompleter<CliCompleterInvocation> {
+
+        private DefaultCallbackHandler parsedCmd = new DefaultCallbackHandler(false);
+
+        @Override
+        public void complete(CliCompleterInvocation completerInvocation) {
+            List<String> candidates = new ArrayList<>();
+            String buff = completerInvocation.getGivenCompleteValue();
+            OperationRequestAddress address = completerInvocation.getCommandContext().
+                    getLegacyCommandContext().getCurrentNodePath();
+            if (buff == null || buff.trim().isEmpty()) {
+                candidates.add(":");
+                if (address == null || address.isEmpty()) {
+                    candidates.add("/");
+                }
+            } else {
+                parsedCmd.reset();
+                try {
+                    parsedCmd.parse(address,
+                            buff, false,
+                            completerInvocation.getCommandContext().getLegacyCommandContext());
+                } catch (CommandFormatException ex) {
+                    // XXX OK.
+                    return;
+                }
+                int offset = OperationRequestCompleter.INSTANCE.
+                        complete(completerInvocation.getCommandContext().getLegacyCommandContext(),
+                                parsedCmd,
+                                buff,
+                                0, candidates);
+                completerInvocation.setOffset(buff.length() - offset);
+            }
+            Collections.sort(candidates);
+            completerInvocation.addAllCompleterValues(candidates);
+            completerInvocation.setAppendSpace(false);
+        }
+    }
+
     @Deprecated
     @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
-    @Option(hasValue = true)
+    @Option(hasValue = true, completer = OperationCompleter.class)
     private String operation;
 
     @Override

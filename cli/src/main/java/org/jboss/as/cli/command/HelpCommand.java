@@ -106,7 +106,8 @@ public class HelpCommand implements Command<CliCommandInvocation> {
 
             // Special case for operations.
             if (completerInvocation.getGivenCompleteValue().startsWith("/")
-                    || completerInvocation.getGivenCompleteValue().startsWith(":")) {
+                    || completerInvocation.getGivenCompleteValue().startsWith(":")
+                    || completerInvocation.getGivenCompleteValue().startsWith(".")) {
                 List<String> candidates = new ArrayList<>();
                 String buff = completerInvocation.getGivenCompleteValue();
                 parsedCmd.reset();

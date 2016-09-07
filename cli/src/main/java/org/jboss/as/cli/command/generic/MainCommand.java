@@ -46,7 +46,6 @@ import org.jboss.aesh.console.command.map.MapProcessedCommandBuilder.ProcessedOp
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.completer.InstanceCompleter;
