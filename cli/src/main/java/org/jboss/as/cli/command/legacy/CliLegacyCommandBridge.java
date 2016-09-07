@@ -48,17 +48,21 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
         this.console = console;
     }
 
+    public void parse(String buffer) throws CommandFormatException {
+        line.reset();
+        line.parse(ctx.getLegacyCommandContext().getCurrentNodePath(),
+                buffer, ctx.getLegacyCommandContext());
+        ctx.setParsedCommandLine(line);
+    }
+
     @Override
     public int complete(CommandContext commandContext, String buffer, int i, List<String> candidates) {
-        line.reset();
         try {
-            line.parse(ctx.getLegacyCommandContext().getCurrentNodePath(),
-                    buffer, ctx.getLegacyCommandContext());
+            parse(buffer);
         } catch (CommandFormatException ex) {
             // XXX OK, no completion.
             return -1;
         }
-        ctx.setParsedCommandLine(line);
         return ctx.getLegacyCommandContext().getDefaultCommandCompleter().
                 complete(ctx.getLegacyCommandContext(),
                         buffer, buffer.length(), candidates);

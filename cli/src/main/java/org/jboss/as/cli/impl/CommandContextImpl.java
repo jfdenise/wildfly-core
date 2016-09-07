@@ -1521,9 +1521,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         parsedCmd = line;
     }
 
-    public void addBatchOperation(ModelNode request, String line) {
+    public void addBatchOperation(String line, HandledRequest req) {
         BatchedCommand batchedCmd
-                = new DefaultBatchedCommand(this, line, request, null);
+                = new DefaultBatchedCommand(this, line, req.getRequest(),
+                        req.getResponseHandler());
         Batch batch = getBatchManager().getActiveBatch();
         batch.add(batchedCmd);
     }

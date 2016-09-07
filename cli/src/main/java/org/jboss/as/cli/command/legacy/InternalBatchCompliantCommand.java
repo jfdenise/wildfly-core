@@ -21,10 +21,17 @@
  */
 package org.jboss.as.cli.command.legacy;
 
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.as.cli.Attachments;
+import org.wildfly.core.cli.command.BatchCompliantCommand.BatchResponseHandler;
+import org.wildfly.core.cli.command.CliCommandContext;
+
 /**
  * Make your Command to implement this interface when it can be added to batch.
  * @author jdenise@redhat.com
  */
 public interface InternalBatchCompliantCommand extends InternalDMRCommand {
 
+    BatchResponseHandler buildBatchResponseHandler(String input, CliCommandContext ctx,
+            Attachments attachments) throws CommandException;
 }

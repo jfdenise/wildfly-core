@@ -22,10 +22,20 @@
 package org.jboss.as.cli.command.legacy;
 
 import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
+import org.jboss.as.cli.OperationCommand.HandledRequest;
+import org.jboss.as.cli.handlers.ResponseHandler;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.Console;
+import org.jboss.as.controller.client.OperationResponse;
+import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.BatchCompliantCommand.BatchResponseHandler;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  *
@@ -39,4 +49,27 @@ public class CliLegacyBatchCompliantCommandBridge extends
             OperationCommand handler, Console console) throws CommandLineParserException {
         super(name, ctx, commandContext, handler, console);
     }
+
+    @Override
+    public BatchResponseHandler buildBatchResponseHandler(String input, CliCommandContext ctx,
+            Attachments attachments) throws CommandException {
+        try {
+            parse(input);
+            HandledRequest req = getHandler().buildHandledRequest(ctx.getLegacyCommandContext(), attachments);
+            return (ModelNode step, OperationResponse response) -> {
+                ResponseHandler h = req.getResponseHandler();
+                if (h != null) {
+                    try {
+                        h.handleResponse(step, response);
+                    } catch (CommandLineException ex) {
+                        throw new CommandException(ex);
+                    }
+                }
+            };
+
+        } catch (CommandFormatException ex) {
+            throw new CommandException(ex);
+        }
+    }
+
 }

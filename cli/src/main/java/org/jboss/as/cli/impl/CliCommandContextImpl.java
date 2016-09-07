@@ -28,10 +28,13 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.OperationCommand.HandledRequest;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.OperationResponse;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.BatchCompliantCommand.BatchResponseHandler;
 import org.wildfly.core.cli.command.CommandRedirection;
 import org.wildfly.core.cli.command.CommandRedirection.Registration;
 
@@ -58,8 +61,17 @@ public class CliCommandContextImpl implements CliCommandContext {
         context.setParsedCommandLine(line);
     }
 
-    public void addBatchOperation(ModelNode buildRequest, String originalInput) {
-        context.addBatchOperation(buildRequest, originalInput);
+    public void addBatchOperation(ModelNode request, String originalInput,
+            BatchResponseHandler handler) {
+        HandledRequest req = new HandledRequest(request, handler == null ? null
+                : (ModelNode step, OperationResponse response) -> {
+                    try {
+                        handler.handleResponse(step, response);
+                    } catch (CommandException ex) {
+                        throw new CommandLineException(ex);
+                    }
+                });
+        context.addBatchOperation(originalInput, req);
     }
 
     public void handleOperation(DefaultCallbackHandler operationParser) throws CommandLineException {

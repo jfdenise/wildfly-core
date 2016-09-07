@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.GroupCommandDefinition;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.aesh.activator.NoBatchActivator;
@@ -35,6 +37,7 @@ import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.jboss.as.cli.aesh.converter.FileConverter;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
@@ -89,7 +92,6 @@ public class BatchRunFileCommand extends BatchRunCommand {
             throw new CommandLineException("Failed to create batch from "
                     + file.getAbsolutePath(), e);
         } finally {
-            batchManager.discardActiveBatch();
             if (baseDir != null) {
                 ctx.setCurrentDir(currentDir);
             }
@@ -99,6 +101,18 @@ public class BatchRunFileCommand extends BatchRunCommand {
                 } catch (IOException e) {
                 }
             }
+        }
+    }
+
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation)
+            throws CommandException, InterruptedException {
+        try {
+        return super.execute(commandInvocation);
+        } finally {
+             BatchManager batchManager = commandInvocation.getCommandContext().
+                     getLegacyCommandContext().getBatchManager();
+            batchManager.discardActiveBatch();
         }
     }
 

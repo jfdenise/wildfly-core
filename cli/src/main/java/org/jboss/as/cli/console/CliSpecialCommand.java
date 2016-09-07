@@ -45,6 +45,7 @@ import org.jboss.aesh.console.command.container.CommandContainerResult;
 import org.jboss.aesh.console.command.container.DefaultCommandContainer;
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
+import org.jboss.as.cli.Attachments;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -53,6 +54,7 @@ import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
 import org.jboss.as.cli.command.legacy.InternalDMRCommand;
 import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.BatchCompliantCommand.BatchResponseHandler;
 
 /**
  *
@@ -97,8 +99,17 @@ public class CliSpecialCommand {
 
     private static class Batch extends DMR implements InternalBatchCompliantCommand {
 
-        public Batch(InternalDMRCommand cmd) {
+        private final InternalBatchCompliantCommand factory;
+
+        public Batch(InternalBatchCompliantCommand cmd) {
             super(cmd);
+            this.factory = cmd;
+        }
+
+        @Override
+        public BatchResponseHandler buildBatchResponseHandler(String line, CliCommandContext commandContext,
+                Attachments attachments) throws CommandException {
+            return factory.buildBatchResponseHandler(line, commandContext, attachments);
         }
 
     }
@@ -110,7 +121,7 @@ public class CliSpecialCommand {
 
         private CliSpecialParser(String name) throws CommandLineParserException {
             if (executor instanceof InternalBatchCompliantCommand) {
-                command = new Batch((InternalDMRCommand) executor);
+                command = new Batch((InternalBatchCompliantCommand) executor);
             } else if (executor instanceof InternalDMRCommand) {
                 command = new DMR((InternalDMRCommand) executor);
             } else {

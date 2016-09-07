@@ -25,8 +25,10 @@ import java.io.IOException;
 import java.util.List;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.result.NullResultHandler;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.CommandContainerResult;
+import org.jboss.as.cli.Attachments;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -42,6 +44,7 @@ import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.BatchCompliantCommand.BatchResponseHandler;
 
 /**
  *
@@ -155,6 +158,12 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
             return HelpSupport.printHelp(console, "wildfly_raw_op");
         }
         return content;
+    }
+
+    @Override
+    public BatchResponseHandler buildBatchResponseHandler(String line, CliCommandContext commandContext,
+            Attachments attachments) throws CommandException {
+        return null;
     }
 
 }

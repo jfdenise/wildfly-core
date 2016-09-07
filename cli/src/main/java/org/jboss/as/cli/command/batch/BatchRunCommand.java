@@ -21,12 +21,14 @@
  */
 package org.jboss.as.cli.command.batch;
 
+import java.io.File;
 import java.util.List;
 import org.jboss.aesh.cl.GroupCommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
@@ -40,6 +42,9 @@ import org.jboss.as.cli.command.CommandUtil;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.OperationBuilder;
+import org.jboss.as.controller.client.OperationMessageHandler;
+import org.jboss.as.controller.client.OperationResponse;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
@@ -72,23 +77,44 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
             return CommandResult.SUCCESS;
         }
         boolean failed = false;
-        ModelNode response;
+        OperationResponse response;
         CommandContext context = commandInvocation.getCommandContext().getLegacyCommandContext();
         try {
             final ModelNode request = newRequest(context);
+            OperationBuilder builder = new OperationBuilder(request, true);
+            for (String path : getAttachments(commandInvocation).getAttachedFiles()) {
+                builder.addFileAsAttachment(new File(path));
+            }
             if (headers != null) {
                 request.get(Util.OPERATION_HEADERS).set(headers);
             }
             final ModelControllerClient client = context.getModelControllerClient();
             try {
-                response = client.execute(request);
+                response = client.executeOperation(builder.build(), OperationMessageHandler.DISCARD);
             } catch (Exception e) {
                 throw new CommandFormatException("Failed to perform operation: "
                         + e.getLocalizedMessage());
             }
-            if (!Util.isSuccess(response)) {
-                throw new CommandFormatException(Util.getFailureDescription(response));
+            if (!Util.isSuccess(response.getResponseNode())) {
+                throw new CommandFormatException(Util.getFailureDescription(response.getResponseNode()));
             }
+
+            ModelNode steps = response.getResponseNode().get(Util.RESULT);
+            if (steps.isDefined()) {
+                // Dispatch to non null response handlers.
+                final Batch batch = commandInvocation.getCommandContext().
+                        getLegacyCommandContext().getBatchManager().getActiveBatch();
+                int i = 1;
+                for (BatchedCommand cmd : batch.getCommands()) {
+                    ModelNode step = steps.get("step-" + i);
+                    if (step.isDefined()) {
+                        if (cmd.getResponseHandler() != null) {
+                            cmd.getResponseHandler().handleResponse(step, response);
+                        }
+                    }
+                }
+            }
+
         } catch (CommandFormatException e) {
             failed = true;
             throw new CommandException("The batch failed with the following error "
@@ -106,10 +132,10 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
             }
         }
         if (verbose) {
-            commandInvocation.getShell().out().println(response.toString());
+            commandInvocation.println(response.getResponseNode().toString());
         } else {
-            commandInvocation.getShell().out().println("The batch executed successfully");
-            CommandUtil.displayResponseHeaders(commandInvocation.getShell(), response);
+            commandInvocation.println("The batch executed successfully");
+            CommandUtil.displayResponseHeaders(commandInvocation.getShell(), response.getResponseNode());
         }
         return CommandResult.SUCCESS;
     }
@@ -139,4 +165,13 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
         }
     }
 
+    private Attachments getAttachments(CliCommandInvocation commandInvocation) {
+        final BatchManager batchManager = commandInvocation.getCommandContext().
+                getLegacyCommandContext().getBatchManager();
+        if (batchManager.isBatchActive()) {
+            final Batch batch = batchManager.getActiveBatch();
+            return batch.getAttachments();
+        }
+        return new Attachments();
+    }
 }

@@ -47,6 +47,7 @@ import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.parser.AeshLine;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.command.compat.CompatActivator;
 import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
 import org.jboss.as.cli.command.legacy.InternalDMRCommand;
@@ -56,6 +57,7 @@ import org.jboss.as.cli.console.AeshCliConsole.CliResultHandler;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialCommandContainer;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.HelpSupport;
+import org.wildfly.core.cli.command.BatchCompliantCommand.BatchResponseHandler;
 import org.wildfly.core.cli.command.CommandRedirection;
 
 /**
@@ -337,12 +339,16 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
                     : commandLine.getParser();
             if (context.isBatchMode()) {
                 // Legacy bridge and Operation
+                Batch batch = context.getBatchManager().getActiveBatch();
                 if (commandLine == null) {
                     Command c = cmdParser.getCommand();
                     if (c instanceof InternalBatchCompliantCommand) { // Batch compliance implies DMR
+                        BatchResponseHandler req = ((InternalBatchCompliantCommand) c).
+                                buildBatchResponseHandler(line.getOriginalInput(),
+                                        commandContext, batch.getAttachments());
                         commandContext.addBatchOperation(((InternalDMRCommand) c).
                                 buildRequest(line.getOriginalInput(), commandContext),
-                                line.getOriginalInput());
+                                line.getOriginalInput(), req);
                         return new CommandContainerResult(null, CommandResult.SUCCESS);
                     }
                 } else {
@@ -351,9 +357,11 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
                             invocationProviders, aeshContext, true);
                     Command c = cmdParser.getCommand();
                     if (c instanceof BatchCompliantCommand) { // Batch compliance implies DMR
+                        BatchResponseHandler req = ((BatchCompliantCommand) c).
+                                buildBatchResponseHandler(commandContext, batch.getAttachments());
                         commandContext.addBatchOperation(((DMRCommand) c).
                                 buildRequest(commandContext),
-                                line.getOriginalInput());
+                                line.getOriginalInput(), req);
                         return new CommandContainerResult(null, CommandResult.SUCCESS);
                     }
                 }
