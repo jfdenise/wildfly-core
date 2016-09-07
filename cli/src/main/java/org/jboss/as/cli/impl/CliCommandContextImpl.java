@@ -217,4 +217,9 @@ public class CliCommandContextImpl implements CliCommandContext {
             context.resetTimeout(CommandContext.TIMEOUT_RESET_VALUE.DEFAULT);
         }
     }
+
+    @Override
+    public void println(String msg) {
+        context.getConsole().println(msg);
+    }
 }

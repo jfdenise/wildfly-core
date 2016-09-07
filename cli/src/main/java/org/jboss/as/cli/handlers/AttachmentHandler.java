@@ -21,21 +21,16 @@
  */
 package org.jboss.as.cli.handlers;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.command.AttachmentResponseHandler;
 import org.jboss.as.cli.impl.ArgumentWithValue;
 import org.jboss.as.cli.impl.ArgumentWithoutValue;
 import org.jboss.as.cli.impl.FileSystemPathArgument;
@@ -241,11 +236,15 @@ public class AttachmentHandler extends BatchModeCommandHandler {
         if (act == null || act.isEmpty()) {
             throw new CommandFormatException("Action is missing");
         }
-        AttachmentResponseHandler handler = new AttachmentResponseHandler(ctx,
-                targetPath,
-                act.equals(SAVE),
-                overwrite.isPresent(ctx.getParsedCommandLine()));
-        handler.handleResponse(result, response);
+        try {
+            new AttachmentResponseHandler((String t) -> {
+                ctx.printLine(t);
+            }, targetPath == null ? null : new File(targetPath),
+                    act.equals(SAVE), overwrite.isPresent(ctx.getParsedCommandLine())).
+                    handleResponse(result, response);
+        } catch (CommandException ex) {
+            throw new CommandLineException(ex);
+        }
     }
 
     @Override
@@ -259,150 +258,6 @@ public class AttachmentHandler extends BatchModeCommandHandler {
         return mn;
     }
 
-    private static class AttachmentResponseHandler implements ResponseHandler {
-
-        private final boolean save;
-        private final String targetPath;
-        private final CommandContext ctx;
-        private final boolean overwrite;
-        private AttachmentResponseHandler(CommandContext ctx, String targetPath,
-                boolean save, boolean overwrite) {
-            this.ctx = ctx;
-            this.targetPath = targetPath;
-            this.save = save;
-            this.overwrite = overwrite;
-        }
-
-        @Override
-        public void handleResponse(ModelNode step, OperationResponse response)
-                throws CommandLineException {
-            //First retrieve all uuid.
-            Set<String> uuids = getStreams(response.getResponseNode());
-            if (uuids.isEmpty()) {
-                return;
-            }
-            //Then lookup the complete data structure for a possible match.
-            Set<String> mystreams = new TreeSet<>();
-
-            // In case of a non composite operation, the headers are located
-            // inside the step ModelNode.
-            // So, although the operation wouldn't return the uuid in the result,
-            // we find the uuid in the headers.
-            // Obviously this would not work in batch mode (composite).
-            retrieveStreams(step, uuids, mystreams);
-
-            int index = 0;
-            for (String uuid : mystreams) {
-                if (save) {
-                    index = saveStream(uuid, response, index);
-                } else {
-                    displayStream(uuid, response);
-                }
-            }
-        }
-
-        private int saveStream(String uuid, OperationResponse response,
-                int index) throws CommandLineException {
-            String target = targetPath == null ? uuid : targetPath;
-            if (index > 0) {
-                target = target + "(" + index + ")";
-            }
-            OperationResponse.StreamEntry entry = response.getInputStream(uuid);
-            File targetFile = new File(target);
-            if (!overwrite) {
-                while (targetFile.exists()) {
-                    String name = targetFile.getName();
-                    int indexed = name.lastIndexOf("(");
-                    if (indexed > 0) {
-                        try {
-                            String num = name.substring(indexed + 1, name.length() - 1);
-                            index = Integer.valueOf(num);
-                            index += 1;
-                        } catch (NumberFormatException ex) {
-                            // XXX OK, not a number.
-                        }
-                    } else {
-                        index += 1;
-                    }
-                    targetFile = new File(targetFile.getAbsolutePath()
-                            + "(" + index + ")");
-                }
-            } else {
-                index += 1;
-            }
-            try {
-                Files.copy(
-                        entry.getStream(),
-                        targetFile.toPath(),
-                        StandardCopyOption.REPLACE_EXISTING);
-                ctx.printLine("File saved to " + targetFile.getCanonicalPath());
-            } catch (IOException ex) {
-                throw new CommandLineException("Exception saving stream ", ex);
-            }
-            return index;
-        }
-
-        private void displayStream(String uuid, OperationResponse response)
-                throws CommandLineException {
-            OperationResponse.StreamEntry entry = response.getInputStream(uuid);
-            byte[] buffer = new byte[8 * 1024];
-            int bytesRead;
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            try {
-                while ((bytesRead = entry.getStream().read(buffer)) != -1) {
-                    out.write(buffer, 0, bytesRead);
-                }
-                ctx.printLine("ATTACHMENT " + uuid + ":");
-                ctx.printLine(new String(out.toByteArray()));
-            } catch (IOException ex) {
-                throw new CommandLineException("Exception reading stream ", ex);
-            }
-        }
-    }
-
-    private static void retrieveStreams(ModelNode step, Set<String> uuids,
-            Set<String> mystreams) {
-        switch (step.getType()) {
-            case STRING: {
-                if (uuids.contains(step.asString())) {
-                    mystreams.add(step.asString());
-                }
-                break;
-            }
-            case OBJECT: {
-                for (String key : step.keys()) {
-                    ModelNode mn = step.get(key);
-                    retrieveStreams(mn, uuids, mystreams);
-                }
-                break;
-            }
-            case LIST: {
-                for (int i = 0; i < step.asInt(); i++) {
-                    ModelNode mn = step.get(i);
-                    retrieveStreams(mn, uuids, mystreams);
-                }
-                break;
-            }
-        }
-    }
-
-    private static Set<String> getStreams(ModelNode response) {
-        Set<String> ret = new HashSet<>();
-        if (response.hasDefined(Util.RESPONSE_HEADERS)) {
-            ModelNode respHeaders = response.get(Util.RESPONSE_HEADERS);
-            if (respHeaders.hasDefined(Util.ATTACHED_STREAMS)) {
-                ModelNode attachments = respHeaders.get(Util.ATTACHED_STREAMS);
-                for (int i = 0; i < attachments.asInt(); i++) {
-                    ModelNode attachment = attachments.get(i);
-                    if (attachment.hasDefined(Util.UUID)) {
-                        ret.add(attachment.get(Util.UUID).asString());
-                    }
-                }
-            }
-        }
-        return ret;
-    }
-
     @Override
     public HandledRequest buildHandledRequest(CommandContext ctx,
             Attachments attachments) throws CommandFormatException {
@@ -411,10 +266,17 @@ public class AttachmentHandler extends BatchModeCommandHandler {
         if (act == null || act.isEmpty()) {
             throw new CommandFormatException("Action is missing");
         }
-        AttachmentResponseHandler handler = new AttachmentResponseHandler(ctx,
-                targetPath,
-                act.equals(SAVE),
-                overwrite.isPresent(ctx.getParsedCommandLine()));
+        ResponseHandler handler = (ModelNode step, OperationResponse response) -> {
+            try {
+                new AttachmentResponseHandler((String t) -> {
+                    ctx.printLine(t);
+                }, targetPath == null ? null : new File(targetPath),
+                        act.equals(SAVE), overwrite.isPresent(ctx.getParsedCommandLine())).
+                        handleResponse(step, response);
+            } catch (CommandException ex) {
+                throw new CommandLineException(ex);
+            }
+        };
         return new HandledRequest(buildRequest(ctx, attachments), handler);
     }
 }

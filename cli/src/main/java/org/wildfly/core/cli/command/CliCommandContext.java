@@ -76,4 +76,6 @@ public interface CliCommandContext {
     void registerRedirection(CommandRedirection redirection) throws CommandException;
 
     CommandRedirection getCommandRedirection();
+
+    void println(String msg);
 }

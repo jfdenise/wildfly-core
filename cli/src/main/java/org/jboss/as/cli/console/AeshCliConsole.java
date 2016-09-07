@@ -74,6 +74,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.completer.RolloutPlanCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.aesh.provider.CliCommandActivatorProvider;
+import org.jboss.as.cli.command.AttachmentCommand;
 import org.jboss.as.cli.command.CdCommand;
 import org.jboss.as.cli.command.ClearCommand;
 import org.jboss.as.cli.command.CommandCommand;
@@ -435,6 +436,7 @@ class AeshCliConsole implements Console {
             throws CommandLineException, CommandLineParserException {
         CliCommandRegistry clireg = new CliCommandRegistry(this,
                 ctx, commandContext);
+        clireg.addCommand(new AttachmentCommand());
         clireg.addCommand(new BatchCommand());
         clireg.addCommand(new CdCommand());
         clireg.addCommand(new ClearCommand());

@@ -159,7 +159,13 @@ public class CommandExecutor {
             wrapped.resetCommandTimeout(value);
         }
 
+        @Override
+        public void println(String msg) {
+            wrapped.println(msg);
+        }
+
     }
+
     // A wrapper to allow to override ModelControllerClient.
     // Public for testing purpose.
     public class TimeoutCommandContext implements CommandContext {
