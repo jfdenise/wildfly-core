@@ -65,6 +65,7 @@ import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.logging.Logger;
 import org.wildfly.core.cli.command.activator.DomainOptionActivator;
+import org.wildfly.core.cli.command.activator.NotExpectedOptionsActivator;
 import org.wildfly.core.cli.command.activator.StandaloneOptionActivator;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
@@ -501,7 +502,7 @@ public class HelpSupport {
                 tabBuilder.append(" ");
             }
             String tab = tabBuilder.toString();
-
+            Collections.sort(actions, (o1, o2) -> o1.getName().compareTo(o2.getName()));
             for (ProcessedCommand pc : actions) {
                 String name = createActionName(pc.getName(), maxActionName);
                 builder.append(name);
@@ -683,6 +684,24 @@ public class HelpSupport {
         StringBuilder synopsisBuilder = new StringBuilder();
         // Do we have dependencies?
         Dependency dep = dependencies.remove(opt);
+        boolean foundConflict = false;
+        if (!dep.conflictWith.isEmpty()) {
+            for (Dependency d : dep.conflictWith) {
+                if (dependencies.containsKey(d.option)) {
+                    if (!foundConflict) {
+                        synopsisBuilder.append(" (");
+                    }
+                    foundConflict = true;
+                    String content = addSynopsisOption(bundle, dependencies,
+                            parentName, commandName, superNames, d.option, isOperation);
+                    synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
+                    synopsisBuilder.append(content);
+                }
+            }
+            if (foundConflict) {
+                synopsisBuilder.append(" | ");
+            }
+        }
         if (!dep.dependsOn.isEmpty()) {
             for (Dependency d : dep.dependsOn) {
                 if (dependencies.containsKey(d.option)) {
@@ -723,6 +742,9 @@ public class HelpSupport {
         }
         if (!opt.isRequired()) {
             synopsisBuilder.append("]");
+        }
+        if (foundConflict) {
+            synopsisBuilder.append(" ) ");
         }
         return synopsisBuilder.toString();
     }
@@ -816,6 +838,7 @@ public class HelpSupport {
                     value = bundle.getString(k);
                 } catch (MissingResourceException ex2) {
                     // Ok, no key.
+                    continue;
                 }
                 break;
             }
@@ -984,6 +1007,7 @@ public class HelpSupport {
 
         private ProcessedOption option;
         private final List<Dependency> dependsOn = new ArrayList<>();
+        private final List<Dependency> conflictWith = new ArrayList<>();
 
         @Override
         public boolean equals(Object other) {
@@ -1017,6 +1041,19 @@ public class HelpSupport {
                 dependencies.put(e, de);
                 d.dependsOn.add(de);
             }
+            List<ProcessedOption> argNotExpected = retrieveNotExpected(arg.getActivator(),
+                    opts, domain);
+            for (ProcessedOption e : argNotExpected) {
+                Dependency depDep = dependencies.get(e);
+                if (depDep == null) {
+                    depDep = new Dependency();
+                    depDep.option = e;
+                    dependencies.put(e, depDep);
+                }
+                depDep.option = e;
+                dependencies.put(e, depDep);
+                d.conflictWith.add(depDep);
+            }
         }
         for (ProcessedOption opt : opts) {
             List<ProcessedOption> expected = retrieveExpected(opt.getActivator(), opts, domain);
@@ -1035,8 +1072,44 @@ public class HelpSupport {
                 }
                 optDep.dependsOn.add(depDep);
             }
+            List<ProcessedOption> notExpected = retrieveNotExpected(opt.getActivator(), opts, domain);
+            for (ProcessedOption e : notExpected) {
+                Dependency depDep = dependencies.get(e);
+                if (depDep == null) {
+                    depDep = new Dependency();
+                    depDep.option = e;
+                    dependencies.put(e, depDep);
+                }
+                optDep.conflictWith.add(depDep);
+            }
         }
         return dependencies;
+    }
+
+    private static List<ProcessedOption> retrieveNotExpected(OptionActivator activator, List<ProcessedOption> opts, boolean domain) {
+        List<ProcessedOption> notExpected = new ArrayList<>();
+        if (activator == null) {
+            return notExpected;
+        }
+        if (activator instanceof NotExpectedOptionsActivator) {
+            for (String s : ((NotExpectedOptionsActivator) activator).getNotExpected()) {
+                for (ProcessedOption opt : opts) {
+                    if (s.equals(opt.getName())) {
+                        if (domain) {
+                            // This option is only valid in non domain mode.
+                            if (opt.getActivator() instanceof StandaloneOptionActivator) {
+                                continue;
+                            }
+                        } else // This option is only valid in non domain mode.
+                         if (opt.getActivator() instanceof DomainOptionActivator) {
+                                continue;
+                            }
+                        notExpected.add(opt);
+                    }
+                }
+            }
+        }
+        return notExpected;
     }
 
     private static List<ProcessedOption> retrieveExpected(OptionActivator activator, List<ProcessedOption> opts, boolean domain) {

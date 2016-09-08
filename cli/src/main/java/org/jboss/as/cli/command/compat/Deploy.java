@@ -21,32 +21,19 @@
  */
 package org.jboss.as.cli.command.compat;
 
-import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.as.cli.aesh.activator.DefaultActivator;
-import org.wildfly.core.cli.command.activator.CliCommandActivator;
+import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.command.deployment.DeploymentCommand;
 
 /**
  *
- * Never proposed in completion.
- *
- * @author jdenise@readhat.com
+ * @author jdenise@redhat.com
  */
 @Deprecated
-public class CompatActivator extends DefaultActivator {
+@CommandDefinition(name = "deploy", description = "", activator = DeployActivator.class)
+public class Deploy extends DeploymentCommand {
 
-    private final CliCommandActivator activator;
-
-    protected CompatActivator(CliCommandActivator activator) {
-        this.activator = activator;
-    }
-
-    @Override
-    public boolean isActivated(ProcessedCommand cmd) {
-        return false;
-    }
-
-    public boolean isActuallyActivated(ProcessedCommand cmd) {
-        activator.setCommandContext(getCommandContext());
-        return activator.isActivated(cmd);
+    public Deploy(CommandContext ctx) {
+        super(ctx);
     }
 }

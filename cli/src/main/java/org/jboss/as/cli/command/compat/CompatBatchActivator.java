@@ -27,6 +27,7 @@ import org.jboss.as.cli.aesh.activator.BatchActivator;
  *
  * @author jdenise@redhat.com
  */
+@Deprecated
 public class CompatBatchActivator extends CompatActivator {
 
     public CompatBatchActivator() {

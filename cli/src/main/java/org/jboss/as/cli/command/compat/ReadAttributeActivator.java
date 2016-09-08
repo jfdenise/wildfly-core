@@ -27,6 +27,7 @@ import org.jboss.as.cli.aesh.activator.ConnectedActivator;
  *
  * @author jdenise@redhat.com
  */
+@Deprecated
 public class ReadAttributeActivator extends CompatActivator {
 
     public ReadAttributeActivator() {

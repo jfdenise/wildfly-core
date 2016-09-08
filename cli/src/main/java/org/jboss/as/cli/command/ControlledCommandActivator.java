@@ -33,27 +33,27 @@ import org.jboss.dmr.ModelNode;
  *
  * @author jdenise@redhat.com
  */
-public class JDBCDriverInfoActivator extends ConnectedActivator {
+public class ControlledCommandActivator extends ConnectedActivator {
 
     @Override
     public boolean isActivated(ProcessedCommand cmd) {
         if (!super.isActivated(cmd)) {
             return false;
         }
-        JDBCDriverInfoCommand jdbc = (JDBCDriverInfoCommand) cmd.getCommand();
+        ControlledCommand controlled = (ControlledCommand) cmd.getCommand();
         CommandContext ctx = getCommandContext().getLegacyCommandContext();
-        if (jdbc.isDependsOnProfile() && ctx.isDomainMode()) { // not checking address in all the profiles
+        if (controlled.isDependsOnProfile() && ctx.isDomainMode()) { // not checking address in all the profiles
             return ctx.getConfig().isAccessControl()
-                    ? jdbc.getAccessRequirement().isSatisfied(ctx) : true;
+                    ? controlled.getAccessRequirement().isSatisfied(ctx) : true;
         }
 
         boolean available;
-        if (jdbc.getRequiredType() == null) {
-            available = isAddressValid(ctx, jdbc.getRequiredAddress());
+        if (controlled.getRequiredType() == null) {
+            available = isAddressValid(ctx, controlled.getRequiredAddress());
         } else {
             final ModelNode request = new ModelNode();
             final ModelNode address = request.get(Util.ADDRESS);
-            for (OperationRequestAddress.Node node : jdbc.getRequiredAddress()) {
+            for (OperationRequestAddress.Node node : controlled.getRequiredAddress()) {
                 address.add(node.getType(), node.getName());
             }
             request.get(Util.OPERATION).set(Util.READ_CHILDREN_TYPES);
@@ -63,11 +63,11 @@ public class JDBCDriverInfoActivator extends ConnectedActivator {
             } catch (IOException e) {
                 return false;
             }
-            available = Util.listContains(result, jdbc.getRequiredType());
+            available = Util.listContains(result, controlled.getRequiredType());
         }
 
         if (ctx.getConfig().isAccessControl()) {
-            available = available && jdbc.getAccessRequirement().isSatisfied(ctx);
+            available = available && controlled.getAccessRequirement().isSatisfied(ctx);
         }
         return available;
     }

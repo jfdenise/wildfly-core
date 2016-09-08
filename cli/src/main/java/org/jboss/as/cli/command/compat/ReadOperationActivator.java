@@ -25,6 +25,7 @@ package org.jboss.as.cli.command.compat;
  *
  * @author jdenise@redhat.com
  */
+@Deprecated
 public class ReadOperationActivator extends ReadAttributeActivator {
 
 }

@@ -19,34 +19,26 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.command.compat;
+package org.jboss.as.cli.command.deployment;
 
-import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.as.cli.aesh.activator.DefaultActivator;
-import org.wildfly.core.cli.command.activator.CliCommandActivator;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.command.ControlledCommand;
 
 /**
  *
- * Never proposed in completion.
- *
- * @author jdenise@readhat.com
+ * @author jdenise@redhat.com
  */
-@Deprecated
-public class CompatActivator extends DefaultActivator {
+public abstract class DeploymentControlledCommand extends ControlledCommand {
 
-    private final CliCommandActivator activator;
+    private final DeploymentPermissions permissions;
 
-    protected CompatActivator(CliCommandActivator activator) {
-        this.activator = activator;
+    DeploymentControlledCommand(CommandContext ctx, DeploymentPermissions permissions) {
+        super(ctx);
+        this.permissions = permissions;
     }
 
-    @Override
-    public boolean isActivated(ProcessedCommand cmd) {
-        return false;
+    public DeploymentPermissions getPermissions() {
+        return permissions;
     }
 
-    public boolean isActuallyActivated(ProcessedCommand cmd) {
-        activator.setCommandContext(getCommandContext());
-        return activator.isActivated(cmd);
-    }
 }

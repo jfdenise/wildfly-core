@@ -27,6 +27,7 @@ import org.jboss.as.cli.command.embedded.EmbedServerActivator;
  *
  * @author jdenise@redhat.com
  */
+@Deprecated
 public class CompatEmbedServerActivator extends CompatActivator {
 
     public CompatEmbedServerActivator() {

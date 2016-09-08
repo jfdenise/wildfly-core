@@ -97,6 +97,8 @@ import org.jboss.as.cli.command.UnsetVariableCommand;
 import org.jboss.as.cli.command.VersionCommand;
 import org.jboss.as.cli.command.batch.BatchCommand;
 import org.jboss.as.cli.command.compat.ClearBatch;
+import org.jboss.as.cli.command.compat.Deploy;
+import org.jboss.as.cli.command.compat.DeploymentInfo;
 import org.jboss.as.cli.command.compat.DiscardBatch;
 import org.jboss.as.cli.command.compat.EditLineBatch;
 import org.jboss.as.cli.command.compat.HoldBackBatch;
@@ -106,6 +108,7 @@ import org.jboss.as.cli.command.compat.ReadAttribute;
 import org.jboss.as.cli.command.compat.ReadOperation;
 import org.jboss.as.cli.command.compat.RemoveLineBatch;
 import org.jboss.as.cli.command.compat.RunBatch;
+import org.jboss.as.cli.command.deployment.DeploymentCommand;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.jboss.as.cli.command.generic.NodeType;
 import org.jboss.as.cli.command.ifelse.ElseCommand;
@@ -436,6 +439,9 @@ class AeshCliConsole implements Console {
             throws CommandLineException, CommandLineParserException {
         CliCommandRegistry clireg = new CliCommandRegistry(this,
                 ctx, commandContext);
+
+        DeploymentCommand deploy = new DeploymentCommand(ctx);
+
         clireg.addCommand(new AttachmentCommand());
         clireg.addCommand(new BatchCommand());
         clireg.addCommand(new CdCommand());
@@ -444,6 +450,7 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new Connect());
         clireg.addCommand(new ConnectionInfoCommand());
         clireg.addCommand(new CommandCommand());
+        clireg.addCommand(deploy);
         clireg.addCommand(new EchoCommand());
         clireg.addCommand(new EchoDMRCommand());
         clireg.addCommand(new HelpCommand(clireg));
@@ -479,6 +486,9 @@ class AeshCliConsole implements Console {
 
         // Add deprecated, for BWCompat only
         clireg.addCommand(new ClearBatch());
+        clireg.addCommand(new Deploy(ctx));
+        clireg.addCommand(new DeploymentInfo(ctx,
+                deploy.getPermissions()));
         clireg.addCommand(new DiscardBatch());
         clireg.addCommand(new EditLineBatch());
         clireg.addCommand(new HoldBackBatch());

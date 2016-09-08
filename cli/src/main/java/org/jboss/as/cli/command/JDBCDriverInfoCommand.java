@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
@@ -36,7 +35,6 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
@@ -45,11 +43,6 @@ import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.impl.DefaultCompleter;
-import org.jboss.as.cli.operation.CommandLineParser;
-import org.jboss.as.cli.operation.OperationRequestAddress;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
-import org.jboss.as.cli.parsing.ParserUtil;
 import org.jboss.as.cli.util.SimpleTable;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
@@ -67,8 +60,8 @@ import org.wildfly.core.cli.command.activator.DomainOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "jdbc-driver-info", description = "",
-        activator = JDBCDriverInfoActivator.class)
-public class JDBCDriverInfoCommand implements Command<CliCommandInvocation> {
+        activator = ControlledCommandActivator.class)
+public class JDBCDriverInfoCommand extends ControlledCommand implements Command<CliCommandInvocation> {
 
     public static class HostCompleter implements OptionCompleter<CliCompleterInvocation> {
 
@@ -191,10 +184,7 @@ public class JDBCDriverInfoCommand implements Command<CliCommandInvocation> {
     }
 
     private final HostServerOperationAccess hostServerPermission;
-    private final AccessRequirement accessRequirement;
-    private OperationRequestAddress requiredAddress;
-    private boolean dependsOnProfile;
-    private String requiredType;
+
 
     @Deprecated
     @Option(hasValue = false, activator = HiddenActivator.class)
@@ -210,9 +200,14 @@ public class JDBCDriverInfoCommand implements Command<CliCommandInvocation> {
     private List<String> name;
 
     public JDBCDriverInfoCommand(CommandContext ctx) {
+        super(ctx);
         addRequiredPath("/subsystem=datasources");
         hostServerPermission = new HostServerOperationAccess(ctx, Util.SUBSYSTEM + '=' + Util.DATASOURCES, Util.INSTALLED_DRIVERS_LIST);
-        accessRequirement = AccessRequirementBuilder.Factory.create(ctx)
+    }
+
+    @Override
+    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
+        return AccessRequirementBuilder.Factory.create(ctx)
                 .any()
                 .operation(Util.SUBSYSTEM + '=' + Util.DATASOURCES, Util.INSTALLED_DRIVERS_LIST)
                 .requirement(hostServerPermission)
@@ -317,62 +312,5 @@ public class JDBCDriverInfoCommand implements Command<CliCommandInvocation> {
         address.add(Util.SUBSYSTEM, Util.DATASOURCES);
         req.get(Util.OPERATION).set(Util.INSTALLED_DRIVERS_LIST);
         return req;
-    }
-
-    private void addRequiredPath(String requiredPath) {
-        if (requiredPath == null) {
-            throw new IllegalArgumentException("Required path can't be null.");
-        }
-        DefaultOperationRequestAddress requiredAddress = new DefaultOperationRequestAddress();
-        CommandLineParser.CallbackHandler handler = new DefaultCallbackHandler(requiredAddress);
-        try {
-            ParserUtil.parseOperationRequest(requiredPath, handler);
-        } catch (CommandFormatException e) {
-            throw new IllegalArgumentException("Failed to parse nodeType: " + e.getMessage());
-        }
-        addRequiredPath(requiredAddress);
-    }
-
-    /**
-     * Adds a node path which is required to exist before the command can be
-     * used.
-     *
-     * @param requiredPath node path which is required to exist before the
-     * command can be used.
-     */
-    private void addRequiredPath(OperationRequestAddress requiredPath) {
-        if (requiredPath == null) {
-            throw new IllegalArgumentException("Required path can't be null.");
-        }
-        // there perhaps could be more but for now only one is allowed
-        if (requiredAddress != null) {
-            throw new IllegalStateException("Only one required address is allowed, atm.");
-        }
-        requiredAddress = requiredPath;
-
-        final Iterator<OperationRequestAddress.Node> iterator = requiredAddress.iterator();
-        if (iterator.hasNext()) {
-            final String firstType = iterator.next().getType();
-            dependsOnProfile = Util.SUBSYSTEM.equals(firstType) || Util.PROFILE.equals(firstType);
-        }
-        if (requiredAddress.endsOnType()) {
-            requiredType = requiredAddress.toParentNode().getType();
-        }
-    }
-
-    OperationRequestAddress getRequiredAddress() {
-        return requiredAddress;
-    }
-
-    boolean isDependsOnProfile() {
-        return dependsOnProfile;
-    }
-
-    AccessRequirement getAccessRequirement() {
-        return accessRequirement;
-    }
-
-    String getRequiredType() {
-        return requiredType;
     }
 }

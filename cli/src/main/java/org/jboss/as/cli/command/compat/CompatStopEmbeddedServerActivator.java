@@ -27,6 +27,7 @@ import org.jboss.as.cli.command.embedded.StopEmbeddedServerActivator;
  *
  * @author jdenise@redhat.com
  */
+@Deprecated
 public class CompatStopEmbeddedServerActivator extends CompatActivator {
 
     public CompatStopEmbeddedServerActivator() {
