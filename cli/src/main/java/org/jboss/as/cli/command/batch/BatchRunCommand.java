@@ -111,6 +111,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
                         if (cmd.getResponseHandler() != null) {
                             cmd.getResponseHandler().handleResponse(step, response);
                         }
+                        i += 1;
                     }
                 }
             }
