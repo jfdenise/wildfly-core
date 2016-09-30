@@ -14,10 +14,10 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
-import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.Console;
 import org.jboss.as.cli.impl.HelpSupport;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  * A Class to bridge legacy CommandHandler with Aesh Command.
@@ -36,12 +36,12 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
                 CommandResult.SUCCESS);
     }
 
-    private final CliCommandContextImpl ctx;
+    private final CliCommandContext ctx;
     private final String name;
     private final DefaultCallbackHandler line = new DefaultCallbackHandler(false);
     private final Console console;
 
-    public CliLegacyCommandBridge(String name, CliCommandContextImpl ctx, Console console)
+    public CliLegacyCommandBridge(String name, CliCommandContext ctx, Console console)
             throws CommandLineParserException {
         this.ctx = ctx;
         this.name = name;
@@ -52,7 +52,6 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
         line.reset();
         line.parse(ctx.getLegacyCommandContext().getCurrentNodePath(),
                 buffer, ctx.getLegacyCommandContext());
-        ctx.setParsedCommandLine(line);
     }
 
     @Override
@@ -64,7 +63,7 @@ public class CliLegacyCommandBridge implements CliSpecialExecutor {
             return -1;
         }
         return ctx.getLegacyCommandContext().getDefaultCommandCompleter().
-                complete(ctx.getLegacyCommandContext(),
+                complete(new CommandContextWrapper(commandContext, line),
                         buffer, buffer.length(), candidates);
     }
 

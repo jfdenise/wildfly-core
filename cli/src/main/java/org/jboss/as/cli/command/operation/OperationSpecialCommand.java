@@ -34,6 +34,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.command.legacy.CommandContextWrapper;
 import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
 import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialExecutor;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
@@ -85,7 +86,7 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
         } catch (CommandFormatException ex) {
             throw new RuntimeException(ex);
         }
-        return OperationRequestCompleter.INSTANCE.complete(ctx,
+        return OperationRequestCompleter.INSTANCE.complete(new CommandContextWrapper(ctx, parser),
                 parser, operationCandidatesProvider,
                 buffer, 0, candidates);
     }

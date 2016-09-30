@@ -53,8 +53,8 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
 import org.jboss.as.cli.command.compat.CompatActivator;
 import org.jboss.as.cli.command.generic.MainCommandParser;
-import org.wildfly.core.cli.command.InteractiveCommand;
 import org.jboss.as.cli.impl.CliCommandContextImpl;
+import org.wildfly.core.cli.command.InteractiveCommand;
 import org.jboss.logging.Logger;
 
 /**

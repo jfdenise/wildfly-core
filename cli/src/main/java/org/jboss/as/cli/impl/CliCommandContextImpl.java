@@ -57,10 +57,6 @@ public class CliCommandContextImpl implements CliCommandContext {
         return context.isDomainMode();
     }
 
-    public void setParsedCommandLine(DefaultCallbackHandler line) {
-        context.setParsedCommandLine(line);
-    }
-
     public void addBatchOperation(ModelNode request, String originalInput,
             BatchResponseHandler handler) {
         HandledRequest req = new HandledRequest(request, handler == null ? null

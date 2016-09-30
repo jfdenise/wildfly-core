@@ -26,7 +26,6 @@ import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.OperationCommand;
-import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.Console;
 import org.jboss.dmr.ModelNode;
 
@@ -38,7 +37,7 @@ public class CliLegacyDMRCommandBridge extends CliLegacyCommandBridge implements
 
     private final OperationCommand handler;
     public CliLegacyDMRCommandBridge(String name,
-            CommandContext ctx, CliCommandContextImpl commandContext, OperationCommand handler, Console console) throws CommandLineParserException {
+            CommandContext ctx, CliCommandContext commandContext, OperationCommand handler, Console console) throws CommandLineParserException {
         super(name, commandContext, console);
         this.handler = handler;
     }

@@ -30,7 +30,6 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.OperationCommand;
 import org.jboss.as.cli.OperationCommand.HandledRequest;
 import org.jboss.as.cli.handlers.ResponseHandler;
-import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.Console;
 import org.jboss.as.controller.client.OperationResponse;
 import org.jboss.dmr.ModelNode;
@@ -45,7 +44,7 @@ public class CliLegacyBatchCompliantCommandBridge extends
         CliLegacyDMRCommandBridge implements InternalBatchCompliantCommand {
 
     public CliLegacyBatchCompliantCommandBridge(String name,
-            CommandContext ctx, CliCommandContextImpl commandContext,
+            CommandContext ctx, CliCommandContext commandContext,
             OperationCommand handler, Console console) throws CommandLineParserException {
         super(name, ctx, commandContext, handler, console);
     }
