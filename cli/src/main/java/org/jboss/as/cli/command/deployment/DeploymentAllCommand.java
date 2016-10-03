@@ -39,13 +39,14 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-all", description = "")
-public class DeploymentAllCommand extends DeploymentAbstractSubCommand {
+public class DeploymentAllCommand extends DeploymentAbstractSubCommand implements DMRCommand {
 
     @Deprecated
     @Option(hasValue = false, activator = HiddenActivator.class)

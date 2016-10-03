@@ -33,6 +33,7 @@ import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
@@ -49,14 +50,16 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.helpers.ClientConstants;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "reload", description = "", activator = ReloadActivator.class)
-public class ReloadCommand implements Command<CliCommandInvocation> {
+public class ReloadCommand implements Command<CliCommandInvocation>, DMRCommand {
 
     public static class HostCompleter implements OptionCompleter<CliCompleterInvocation> {
 
@@ -253,6 +256,15 @@ public class ReloadCommand implements Command<CliCommandInvocation> {
                 ctx.disconnectController();
                 throw new CommandException("Interrupted while pausing before reconnecting.", e);
             }
+        }
+    }
+
+    @Override
+    public ModelNode buildRequest(CliCommandContext context) throws CommandFormatException {
+        try {
+            return buildRequest(context.getLegacyCommandContext());
+        } catch (CommandException ex) {
+            throw new CommandFormatException(ex);
         }
     }
 

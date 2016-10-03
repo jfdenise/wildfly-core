@@ -42,13 +42,14 @@ import org.jboss.as.cli.command.deployment.DeploymentActivators.NameActivator;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-name", description = "")
-public class DeploymentNameCommand extends DeploymentAbstractSubCommand {
+public class DeploymentNameCommand extends DeploymentAbstractSubCommand implements DMRCommand {
 
     public static class NameCompleter
             implements OptionCompleter<CliCompleterInvocation> {

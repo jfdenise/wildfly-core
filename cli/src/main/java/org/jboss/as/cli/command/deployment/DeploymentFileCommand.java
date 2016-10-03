@@ -50,13 +50,14 @@ import org.jboss.vfs.VFS;
 import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.spi.MountHandle;
 import org.wildfly.core.cli.command.CliCommandContext;
+import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-file", description = "")
-public class DeploymentFileCommand extends DeploymentContentSubCommand {
+public class DeploymentFileCommand extends DeploymentContentSubCommand implements DMRCommand {
 
     private static final String CLI_ARCHIVE_SUFFIX = ".cli";
 

@@ -33,7 +33,6 @@ import org.jboss.aesh.cl.internal.ProcessedOption;
 import org.jboss.aesh.cl.internal.ProcessedOptionBuilder;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.parser.OptionParserException;
-import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.map.MapCommand;
@@ -222,13 +221,12 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
 
     @Override
     public ModelNode buildRequest(CliCommandContext context) throws CommandFormatException {
-        try {
-            return buildRequest(OperationRequestAddressConverter.
-                    convert(null, context.getLegacyCommandContext()),
-                    context.getLegacyCommandContext());
-        } catch (OptionValidatorException ex) {
-            throw new CommandFormatException(ex.getMessage(), ex);
+        OperationRequestAddress address = (OperationRequestAddress) getValue(PATH_ARGUMENT_NAME);
+        if (address == null) {
+            address = new DefaultOperationRequestAddress(context.getLegacyCommandContext().getCurrentNodePath());
         }
+        return buildRequest(address,
+                context.getLegacyCommandContext());
     }
 
     public ModelNode buildRequest(OperationRequestAddress address,

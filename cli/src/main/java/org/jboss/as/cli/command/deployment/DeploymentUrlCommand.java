@@ -36,13 +36,14 @@ import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.UrlActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-url", description = "")
-public class DeploymentUrlCommand extends DeploymentContentSubCommand {
+public class DeploymentUrlCommand extends DeploymentContentSubCommand implements DMRCommand {
 
     public static class UrlConverter implements Converter<URL, CliConverterInvocation> {
 

@@ -49,6 +49,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  *
@@ -56,7 +57,7 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  */
 @CommandDefinition(name = "info", description = "")
 public class DeploymentInfoCommand extends DeploymentControlledCommand
-        implements Command<CliCommandInvocation> {
+        implements Command<CliCommandInvocation>, DMRCommand {
 
     private static final String ADDED = "added";
     private static final String ENABLED = "ENABLED";
