@@ -24,11 +24,13 @@ package org.jboss.as.cli.command;
 import java.io.File;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
 import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
-import org.jboss.as.cli.aesh.converter.FileConverter;
 import org.wildfly.core.cli.command.CliCommandContext;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
@@ -55,16 +57,25 @@ public class AttachmentSaveCommand extends AttachmentDisplayCommand {
     @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
-    @Option(hasValue = true, completer = FileCompleter.class, converter = FileConverter.class, activator = FileActivator.class)
-    private File file;
+    @Option(hasValue = true, completer = FileCompleter.class, activator = FileActivator.class)
+    private String file;
 
     @Option(hasValue = false, activator = OverwriteActivator.class)
     private boolean overwrite;
 
     @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
+        if (help) {
+            commandInvocation.println(commandInvocation.getHelpInfo("attachment save"));
+            return CommandResult.SUCCESS;
+        }
+        return super.execute(commandInvocation);
+    }
+
+    @Override
     AttachmentResponseHandler buildHandler(CliCommandContext commandContext) {
         return new AttachmentResponseHandler((String t) -> {
             commandContext.println(t);
-        }, file, true, overwrite);
+        }, new File(file), true, overwrite);
     }
 }
