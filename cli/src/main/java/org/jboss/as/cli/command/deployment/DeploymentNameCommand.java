@@ -111,11 +111,7 @@ public class DeploymentNameCommand extends DeploymentAbstractSubCommand implemen
             throws CommandException {
         try {
             ModelNode request = buildRequest(commandInvocation.getCommandContext(),
-                    name, allServerGroups, serverGroups);
-            if (headers != null) {
-                ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
-                opHeaders.set(headers);
-            }
+                    name, allServerGroups, serverGroups, headers);
             final ModelNode result = commandInvocation.getCommandContext().
                     getModelControllerClient().execute(request);
             if (!Util.isSuccess(result)) {
@@ -131,11 +127,12 @@ public class DeploymentNameCommand extends DeploymentAbstractSubCommand implemen
     @Override
     public ModelNode buildRequest(CliCommandContext context)
             throws CommandFormatException {
-        return buildRequest(context, name.get(0), allServerGroups, serverGroups);
+        return buildRequest(context, name.get(0), allServerGroups,
+                serverGroups, headers);
     }
 
     private static ModelNode buildRequest(CliCommandContext context, String name,
-            boolean allServerGroups, String serverGroups) throws CommandFormatException {
+            boolean allServerGroups, String serverGroups, ModelNode headers) throws CommandFormatException {
         CommandContext ctx = context.getLegacyCommandContext();
         ModelNode deployRequest = new ModelNode();
         if (ctx.isDomainMode()) {
@@ -167,7 +164,10 @@ public class DeploymentNameCommand extends DeploymentAbstractSubCommand implemen
             throw new CommandFormatException("'" + name + "' is not found among "
                     + "the registered deployments.");
         }
-
+        if (headers != null) {
+            ModelNode opHeaders = deployRequest.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
+        }
         return deployRequest;
     }
 

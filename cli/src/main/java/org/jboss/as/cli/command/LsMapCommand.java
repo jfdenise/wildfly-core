@@ -209,11 +209,6 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
         } catch (CommandFormatException ex) {
             throw new CommandException(ex.getMessage(), ex);
         }
-        ModelNode headers = (ModelNode) getValue("headers");
-        if (headers != null) {
-            ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
-            opHeaders.set(headers);
-        }
         ModelNode response = CommandUtil.execute(request, ctx);
         handleResponse(commandInvocation, response, Util.COMPOSITE.equals(request.get(Util.OPERATION).asString()));
         return CommandResult.SUCCESS;
@@ -231,7 +226,7 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
 
     public ModelNode buildRequest(OperationRequestAddress address,
             CommandContext ctx) throws CommandFormatException {
-
+        ModelNode request;
         if (address.endsOnType()) {
             final String type = address.getNodeType();
             address.toParentNode();
@@ -239,39 +234,46 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
             try {
                 builder.setOperationName(Util.READ_CHILDREN_NAMES);
                 builder.addProperty(Util.CHILD_TYPE, type);
-                return builder.buildRequest();
+                request = builder.buildRequest();
             } catch (OperationFormatException e) {
                 throw new IllegalStateException("Failed to build operation", e);
             }
-        }
+        } else {
 
-        final ModelNode composite = new ModelNode();
-        composite.get(Util.OPERATION).set(Util.COMPOSITE);
-        composite.get(Util.ADDRESS).setEmptyList();
-        final ModelNode steps = composite.get(Util.STEPS);
+            final ModelNode composite = new ModelNode();
+            composite.get(Util.OPERATION).set(Util.COMPOSITE);
+            composite.get(Util.ADDRESS).setEmptyList();
+            final ModelNode steps = composite.get(Util.STEPS);
 
-        {
-            ModelNode typesRequest = new ModelNode();
-            typesRequest.get(Util.OPERATION).set(Util.READ_CHILDREN_TYPES);
-            typesRequest = Util.getAddressNode(ctx, address, typesRequest);
-            steps.add(typesRequest);
-        }
-
-        {
-            ModelNode resourceRequest = new ModelNode();
-            resourceRequest.get(Util.OPERATION).set(Util.READ_RESOURCE);
-            resourceRequest = Util.getAddressNode(ctx, address, resourceRequest);
-            resourceRequest.get(Util.INCLUDE_RUNTIME).set(Util.TRUE);
-            if (contains("resolve")) {
-                resourceRequest.get(Util.RESOLVE_EXPRESSIONS).set(Util.TRUE);
+            {
+                ModelNode typesRequest = new ModelNode();
+                typesRequest.get(Util.OPERATION).set(Util.READ_CHILDREN_TYPES);
+                typesRequest = Util.getAddressNode(ctx, address, typesRequest);
+                steps.add(typesRequest);
             }
-            steps.add(resourceRequest);
-        }
 
-        if (contains("l")) {
-            steps.add(Util.buildRequest(ctx, address, Util.READ_RESOURCE_DESCRIPTION));
+            {
+                ModelNode resourceRequest = new ModelNode();
+                resourceRequest.get(Util.OPERATION).set(Util.READ_RESOURCE);
+                resourceRequest = Util.getAddressNode(ctx, address, resourceRequest);
+                resourceRequest.get(Util.INCLUDE_RUNTIME).set(Util.TRUE);
+                if (contains("resolve")) {
+                    resourceRequest.get(Util.RESOLVE_EXPRESSIONS).set(Util.TRUE);
+                }
+                steps.add(resourceRequest);
+            }
+
+            if (contains("l")) {
+                steps.add(Util.buildRequest(ctx, address, Util.READ_RESOURCE_DESCRIPTION));
+            }
+            request = composite;
         }
-        return composite;
+        ModelNode headers = (ModelNode) getValue("headers");
+        if (headers != null) {
+            ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
+        }
+        return request;
     }
 
     private void handleResponse(CliCommandInvocation invocation, ModelNode outcome, boolean composite) throws CommandException {

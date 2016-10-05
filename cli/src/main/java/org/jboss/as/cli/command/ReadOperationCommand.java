@@ -91,10 +91,6 @@ public class ReadOperationCommand implements Command<CliCommandInvocation>, DMRC
         } catch (CommandFormatException ex) {
             throw new CommandException(ex.getMessage(), ex);
         }
-        if (headers != null) {
-            ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
-            opHeaders.set(headers);
-        }
         ModelNode response = CommandUtil.execute(request, commandInvocation.
                 getCommandContext().getLegacyCommandContext());
         handleResponse(commandInvocation, response, Util.COMPOSITE.equals(request.get(Util.OPERATION).asString()));
@@ -114,17 +110,21 @@ public class ReadOperationCommand implements Command<CliCommandInvocation>, DMRC
 
     private ModelNode buildRequest(OperationRequestAddress address,
             CommandContext ctx) throws CommandFormatException {
+        ModelNode request;
         if (name == null || name.isEmpty()) {
-            final ModelNode request = Util.buildRequest(ctx, address, Util.READ_OPERATION_NAMES);
+            request = Util.buildRequest(ctx, address, Util.READ_OPERATION_NAMES);
             if (ctx.getConfig().isAccessControl()) {
                 request.get(Util.ACCESS_CONTROL).set(true);
             }
-            return request;
+        } else {
+            request = Util.buildRequest(ctx, address, Util.READ_OPERATION_DESCRIPTION);
+            request.get(Util.NAME).set(name.get(0));
         }
-
-        ModelNode req = Util.buildRequest(ctx, address, Util.READ_OPERATION_DESCRIPTION);
-        req.get(Util.NAME).set(name.get(0));
-        return req;
+        if (headers != null) {
+            ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
+        }
+        return request;
     }
 
     private void handleResponse(CliCommandInvocation context, ModelNode response, boolean composite) throws CommandException {

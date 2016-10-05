@@ -118,10 +118,6 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
         }
         try {
             ModelNode request = buildRequest(commandInvocation.getCommandContext());
-            if (headers != null) {
-                ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
-                opHeaders.set(headers);
-            }
             final ModelNode result = commandInvocation.getCommandContext().
                     getModelControllerClient().execute(request);
             if (!Util.isSuccess(result)) {
@@ -163,6 +159,7 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
                 .build();
     }
 
+    @Override
     public ModelNode buildRequest(CliCommandContext context)
             throws CommandFormatException {
         CommandContext ctx = context.getLegacyCommandContext();
@@ -303,6 +300,10 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
             address.add(Util.DEPLOYMENT, deploymentName);
             request.get(Util.OPERATION).set(Util.READ_RESOURCE);
             request.get(Util.INCLUDE_RUNTIME).set(true);
+        }
+        if (headers != null) {
+            ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
         }
         return request;
     }

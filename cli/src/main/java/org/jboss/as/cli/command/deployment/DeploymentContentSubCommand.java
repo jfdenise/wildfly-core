@@ -82,11 +82,6 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
         CommandContext ctx = commandInvocation.getCommandContext().getLegacyCommandContext();
         try {
             ModelNode request = buildRequest(commandInvocation.getCommandContext());
-            if (headers != null) {
-                ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
-                opHeaders.set(headers);
-            }
-
             final ModelNode result = execute(ctx, request);
             if (!Util.isSuccess(result)) {
                 throw new CommandException(Util.getFailureDescription(result));
@@ -118,6 +113,10 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
         }
         final ModelNode content = request.get(Util.CONTENT).get(0);
         addContent(content);
+        if (headers != null) {
+            ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
+        }
         return request;
     }
 
@@ -205,6 +204,10 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
             steps.add(compositeStep);
             steps.add(deployRequest);
             return composite;
+        }
+        if (headers != null) {
+            ModelNode opHeaders = deployRequest.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
         }
         return deployRequest;
     }

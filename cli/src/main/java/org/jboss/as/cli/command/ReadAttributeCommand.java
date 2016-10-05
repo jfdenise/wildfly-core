@@ -117,10 +117,6 @@ public class ReadAttributeCommand implements Command<CliCommandInvocation>, DMRC
         } catch (CommandFormatException ex) {
             throw new CommandException(ex.getMessage(), ex);
         }
-        if (headers != null) {
-            ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
-            opHeaders.set(headers);
-        }
         ModelNode response = CommandUtil.execute(request, commandInvocation.
                 getCommandContext().getLegacyCommandContext());
         handleResponse(commandInvocation, response, Util.COMPOSITE.equals(request.get(Util.OPERATION).asString()));
@@ -163,6 +159,11 @@ public class ReadAttributeCommand implements Command<CliCommandInvocation>, DMRC
             steps.add(req);
             steps.add(Util.buildRequest(ctx, address, Util.READ_RESOURCE_DESCRIPTION));
             req = composite;
+        }
+
+        if (headers != null) {
+            ModelNode opHeaders = req.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
         }
 
         return req;

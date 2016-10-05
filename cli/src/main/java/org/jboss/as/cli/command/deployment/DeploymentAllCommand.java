@@ -72,11 +72,7 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
             String serverGroups, ModelNode headers) throws CommandException {
         try {
             ModelNode request = buildRequest(commandInvocation.getCommandContext(),
-                    allServerGroups, serverGroups);
-            if (headers != null) {
-                ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
-                opHeaders.set(headers);
-            }
+                    allServerGroups, serverGroups, headers);
             final ModelNode result = commandInvocation.getCommandContext().
                     getModelControllerClient().execute(request);
             if (!Util.isSuccess(result)) {
@@ -92,11 +88,11 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
     @Override
     public ModelNode buildRequest(CliCommandContext context)
             throws CommandFormatException {
-        return buildRequest(context, allServerGroups, serverGroups);
+        return buildRequest(context, allServerGroups, serverGroups, headers);
     }
 
     private static ModelNode buildRequest(CliCommandContext context,
-            boolean allServerGroups, String serverGroups)
+            boolean allServerGroups, String serverGroups, ModelNode headers)
             throws CommandFormatException {
         CommandContext ctx = context.getLegacyCommandContext();
         List<String> sgList = DeploymentCommand.getServerGroups(ctx,
@@ -135,6 +131,10 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
         }
         if (empty) {
             throw new CommandFormatException("No disabled deployment to deploy.");
+        }
+        if (headers != null) {
+            ModelNode opHeaders = composite.get(Util.OPERATION_HEADERS);
+            opHeaders.set(headers);
         }
         return composite;
     }
