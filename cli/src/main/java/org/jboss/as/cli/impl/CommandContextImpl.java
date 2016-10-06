@@ -80,7 +80,6 @@ import org.jboss.as.cli.batch.impl.DefaultBatchManager;
 import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
 import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
-import org.jboss.as.cli.handlers.ArchiveHandler;
 import org.jboss.as.cli.handlers.ClearScreenHandler;
 import org.jboss.as.cli.handlers.CommandCommandHandler;
 import org.jboss.as.cli.handlers.ConnectionInfoHandler;
@@ -441,7 +440,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         cmdRegistry.registerHandler(rolloutPlan, "rollout-plan");
 
         // supported but hidden from tab-completion until stable implementation
-        cmdRegistry.registerHandler(new ArchiveHandler(this), false, "archive");
+        //cmdRegistry.registerHandler(new ArchiveHandler(this), false, "archive");
 
         EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(cmdRegistry, this, embeddedServerLaunch);
         cmdRegistry.registerHandler(new ReloadHandler(this, embeddedServerLaunch), "reload");

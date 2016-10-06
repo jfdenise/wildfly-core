@@ -410,7 +410,8 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
             }
             throw new CommandException("Execution exception for " + cause.getMessage(), cause);
         } catch (TimeoutException ex) {
-            throw new CommandException("Execution timeout.");
+            throw new CommandException("Timeout exception for "
+                    + getWrappedContainer().getParser().getProcessedCommand().getName());
         } finally {
             postExecution(context, commandInvocation);
         }

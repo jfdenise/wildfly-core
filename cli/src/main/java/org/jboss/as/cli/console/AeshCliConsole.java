@@ -815,7 +815,8 @@ class AeshCliConsole implements Console {
 
             // XXX Bridged commands have no output...
             if (echoCommand && !connect
-                    && !commandContext.getLegacyCommandContext().isWorkflowMode()) {
+                    && !commandContext.getLegacyCommandContext().isWorkflowMode()
+                    && commandContext.getCommandRedirection() == null) {
                 println(commandContext.getLegacyCommandContext().getPrompt() + echoLine);
             }
 

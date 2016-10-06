@@ -28,7 +28,8 @@ public class CliCommandNotFound implements CommandNotFoundHandler {
         if (line.startsWith("#")) {//we ignore this since batch lines might use it as comments
 
         } else if (handler.isInteractive()) {
-            shell.out().println("Command not found: " + Parser.findFirstWord(line));
+            // Aesh already prints a message.
+            //shell.out().println("Command not found: " + Parser.findFirstWord(line));
         } else {
             handler.onValidationFailure(CommandResult.FAILURE,
                     new RuntimeException("Command not found: " + Parser.findFirstWord(line)));

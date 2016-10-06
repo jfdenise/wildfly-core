@@ -41,7 +41,6 @@ import org.jboss.as.cli.impl.CliCommandContextImpl;
 import org.jboss.as.cli.impl.Console;
 import org.jboss.as.cli.impl.HelpSupport;
 import org.jboss.as.cli.operation.OperationRequestAddress;
-import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
 import org.jboss.dmr.ModelNode;
@@ -86,9 +85,10 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
         } catch (CommandFormatException ex) {
             throw new RuntimeException(ex);
         }
-        return OperationRequestCompleter.INSTANCE.complete(new CommandContextWrapper(ctx, parser),
-                parser, operationCandidatesProvider,
-                buffer, 0, candidates);
+        // We must use this completer instead of the OperationRequestCompleter.INSTANCE
+        // due to $<var> completion that only occurs in it.
+        return ctx.getDefaultCommandCompleter().complete(new CommandContextWrapper(ctx, parser),
+                buffer, buffer.length(), candidates);
     }
 
     @Override

@@ -26,7 +26,11 @@ import java.util.Collections;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.cl.Option;
+import org.jboss.aesh.cl.activation.CommandActivator;
+import org.jboss.aesh.cl.activation.OptionActivator;
 import org.jboss.aesh.cl.completer.OptionCompleter;
+import org.jboss.aesh.cl.internal.ProcessedCommand;
 import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
@@ -40,6 +44,7 @@ import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialParser;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.wildfly.core.cli.command.activator.NotExpectedOptionsActivator;
 
 /**
  *
@@ -48,9 +53,31 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "help", description = "")
 public class HelpCommand implements Command<CliCommandInvocation> {
 
-    @Arguments(completer = HelpCompleter.class)
+    public static class CommandsActivator implements OptionActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand pc) {
+            return ((HelpCommand) pc.getCommand()).command == null
+                    || ((HelpCommand) pc.getCommand()).command.isEmpty();
+        }
+
+    }
+
+    public static class ArgActivator extends NotExpectedOptionsActivator {
+
+        public ArgActivator() {
+            super("commands");
+        }
+    }
+
+    @Arguments(completer = HelpCompleter.class, activator = ArgActivator.class,
+            valueSeparator = ',')
     private List<String> command;
+
     private final CliCommandRegistry registry;
+
+    @Option(hasValue = false, activator = CommandsActivator.class)
+    private boolean commands;
 
     public HelpCommand(CliCommandRegistry registry) {
         this.registry = registry;
@@ -59,8 +86,31 @@ public class HelpCommand implements Command<CliCommandInvocation> {
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (command == null || command.isEmpty()) {
-            commandInvocation.println("help <command name>");
+            if (commands) {
+                List<String> lst = new ArrayList<>();
+                for (String c : registry.getAllCommandNames()) {
+                    CommandLineParser cmdParser;
+                    try {
+                        cmdParser = registry.findCommand(c, null);
+                    } catch (CommandNotFoundException ex) {
+                        continue;
+                    }
+                    CommandActivator activator = cmdParser.getProcessedCommand().getActivator();
+                    if (activator.isActivated(cmdParser.getProcessedCommand())) {
+                        lst.add(c);
+                    }
+                }
+                lst.sort(null);
+                commandInvocation.println("Commands available in the current context:");
+                commandInvocation.printColumns(lst);
+                commandInvocation.println("To read a description of a specific command execute 'help <command name>'.");
+            } else {
+                commandInvocation.println(commandInvocation.getHelpInfo("help"));
+            }
             return CommandResult.SUCCESS;
+        }
+        if (commands) {
+            throw new CommandException("commands action not usable with an argument");
         }
         if (command.size() > 2) {
             throw new CommandException("Command has more than one action");
@@ -90,7 +140,7 @@ public class HelpCommand implements Command<CliCommandInvocation> {
 
     public static class HelpCompleter implements OptionCompleter<CliCompleterInvocation> {
 
-        private DefaultCallbackHandler parsedCmd = new DefaultCallbackHandler(false);
+        private final DefaultCallbackHandler parsedCmd = new DefaultCallbackHandler(false);
 
         @Override
         public void complete(CliCompleterInvocation completerInvocation) {

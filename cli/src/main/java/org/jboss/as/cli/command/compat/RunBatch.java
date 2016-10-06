@@ -41,7 +41,7 @@ import org.jboss.as.cli.command.batch.BatchRunFileCommand;
 import org.jboss.dmr.ModelNode;
 
 @Deprecated
-@GroupCommandDefinition(name = "run-batch", description = "", activator = CompatNoBatchActivator.class)
+@GroupCommandDefinition(name = "run-batch", description = "", activator = CompatBatchActivator.class)
 public class RunBatch extends BatchRunFileCommand {
 
     @Deprecated

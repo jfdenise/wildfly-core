@@ -66,13 +66,15 @@ public class SetVariableCommand implements Command<CliCommandInvocation> {
             }
             // the problem is splitting values with whitespaces, e.g. for command substitution
             final String value = buffer.substring(equals + 1);
+            // XXX JFDENISE, WRONG, WHAT ABOUT NEW COMMANDS?
             CommandContext ctx = cliCompleterInvocation.getCommandContext().getLegacyCommandContext();
-            final int valueIndex = ctx.getDefaultCommandCompleter().complete(ctx, value, pos, candidates);
+            final int valueIndex = ctx.getDefaultCommandCompleter().complete(ctx, value, value.length(), candidates);
             if (valueIndex < 0) {
                 return;
             }
             cliCompleterInvocation.addAllCompleterValues(candidates);
-            cliCompleterInvocation.setOffset(pos - valueIndex);
+            cliCompleterInvocation.setAppendSpace(false);
+            cliCompleterInvocation.setOffset(value.length() - valueIndex);
 
         }
 
