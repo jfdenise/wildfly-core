@@ -22,9 +22,11 @@
 package org.jboss.as.cli.command.generic;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
+import org.jboss.aesh.cl.internal.ProcessedOption;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
@@ -51,6 +53,11 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
     private final NodeType nodeType;
     private final String propertyId;
     private final String operationDescription;
+
+    // XXX JFDENISE, we need to store values because each time
+    // the options are re-built we need to transfer options.
+    // Should be done at the Aesh level.
+    private List<ProcessedOption> previousOptions;
 
     public AbstractOperationSubCommand(String operationName, String operationDescription,
             NodeType nodeType, String propertyId) {
@@ -252,5 +259,20 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
 
     public String getDescription() {
         return operationDescription;
+    }
+
+    void transferValues(List<ProcessedOption> options) {
+        if (previousOptions != null) {
+            for (ProcessedOption popt : previousOptions) {
+                if (popt.getValue() != null) {
+                    for (ProcessedOption opt : options) {
+                        if (opt.getName().equals(popt.getName())) {
+                            opt.addValue(popt.getValue());
+                        }
+                    }
+                }
+            }
+        }
+        previousOptions = options;
     }
 }

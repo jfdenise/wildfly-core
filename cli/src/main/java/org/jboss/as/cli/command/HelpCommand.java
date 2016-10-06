@@ -50,7 +50,7 @@ import org.wildfly.core.cli.command.activator.NotExpectedOptionsActivator;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "help", description = "")
+@CommandDefinition(name = "help", description = "", aliases = {"h"})
 public class HelpCommand implements Command<CliCommandInvocation> {
 
     public static class CommandsActivator implements OptionActivator {
@@ -70,8 +70,7 @@ public class HelpCommand implements Command<CliCommandInvocation> {
         }
     }
 
-    @Arguments(completer = HelpCompleter.class, activator = ArgActivator.class,
-            valueSeparator = ',')
+    @Arguments(completer = HelpCompleter.class, activator = ArgActivator.class)//, valueSeparator = ',')
     private List<String> command;
 
     private final CliCommandRegistry registry;

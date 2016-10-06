@@ -203,6 +203,7 @@ class ResourceOperationSubCommand extends AbstractOperationSubCommand {
                                 OptionParserException ex) {
                             throw new RuntimeException(ex);
                         }
+                        transferValues(allOptions);
                         return allOptions;
                     }
                 }).create();
