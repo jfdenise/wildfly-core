@@ -38,7 +38,6 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.jboss.as.cli.batch.BatchManager;
-import org.jboss.as.cli.command.AttachmentSaveCommand.FileActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.NameActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.UnmanagedActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
@@ -73,7 +72,7 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
     protected String name;
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', activator = FileActivator.class,
+    @Arguments(valueSeparator = ',',
             completer = FileCompleter.class)
     protected List<String> file;
 
