@@ -38,6 +38,7 @@ import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
+import org.jboss.as.cli.command.ControlledCommandActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.NameActivator;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.CliCommandContext;
@@ -45,10 +46,12 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 import org.wildfly.core.cli.command.DMRCommand;
 
 /**
+ * XXX jfdenise, all fields are public to be accessible from legacy view. To be
+ * made private when removed.
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "redeploy", description = "")
+@CommandDefinition(name = "redeploy", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentRedeployCommand extends DeploymentAbstractSubCommand implements DMRCommand {
 
     public static class NameCompleter
@@ -86,9 +89,9 @@ public class DeploymentRedeployCommand extends DeploymentAbstractSubCommand impl
     // Argument comes first, aesh behavior.
     @Arguments(valueSeparator = ',', activator = NameActivator.class,
             completer = NameCompleter.class)
-    protected List<String> name;
+    public List<String> name;
 
-    DeploymentRedeployCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public DeploymentRedeployCommand(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);
     }
 

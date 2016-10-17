@@ -108,6 +108,7 @@ import org.jboss.as.cli.command.compat.ReadAttribute;
 import org.jboss.as.cli.command.compat.ReadOperation;
 import org.jboss.as.cli.command.compat.RemoveLineBatch;
 import org.jboss.as.cli.command.compat.RunBatch;
+import org.jboss.as.cli.command.compat.Undeploy;
 import org.jboss.as.cli.command.deployment.DeploymentCommand;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.jboss.as.cli.command.generic.NodeType;
@@ -488,6 +489,8 @@ class AeshCliConsole implements Console {
         clireg.addCommand(new ClearBatch());
         clireg.addCommand(new Deploy(ctx));
         clireg.addCommand(new DeploymentInfo(ctx,
+                deploy.getPermissions()));
+        clireg.addCommand(new Undeploy(ctx,
                 deploy.getPermissions()));
         clireg.addCommand(new DiscardBatch());
         clireg.addCommand(new EditLineBatch());

@@ -21,7 +21,6 @@
  */
 package org.jboss.as.cli;
 
-import java.util.List;
 import java.util.Objects;
 import org.jboss.dmr.ModelNode;
 
@@ -46,7 +45,7 @@ public final class RequestWithAttachments {
         return request;
     }
 
-    public List<String> getAttachedFiles() {
-        return attachments.getAttachedFiles();
+    public Attachments getAttachments() {
+        return attachments;
     }
 }

@@ -21,62 +21,51 @@
  */
 package org.jboss.as.cli.command.deployment;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Executors;
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.CommandException;
+import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
-import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
-import org.jboss.as.cli.batch.BatchManager;
+import org.jboss.as.cli.aesh.converter.FileConverter;
+import org.jboss.as.cli.command.ControlledCommandActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.NameActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.UnmanagedActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.dmr.ModelNode;
-import org.jboss.vfs.TempFileProvider;
-import org.jboss.vfs.VFS;
-import org.jboss.vfs.VFSUtils;
-import org.jboss.vfs.spi.MountHandle;
-import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.DMRCommand;
 
 /**
+ * XXX jfdenise, all fields are public to be accessible from legacy view. To be
+ * made private when removed.
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "deploy-file", description = "")
+@CommandDefinition(name = "deploy-file", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentFileCommand extends DeploymentContentSubCommand implements DMRCommand {
 
-    private static final String CLI_ARCHIVE_SUFFIX = ".cli";
-
     @Option(hasValue = false, activator = UnmanagedActivator.class, required = false)
-    protected boolean unmanaged;
-
-    @Option(hasValue = true, required = false)
-    protected String script;
+    public boolean unmanaged;
 
     @Option(hasValue = true, required = false, completer
             = DeploymentRedeployCommand.NameCompleter.class,
             activator = NameActivator.class)
-    protected String name;
+    public String name;
 
     // Argument comes first, aesh behavior.
     @Arguments(valueSeparator = ',',
-            completer = FileCompleter.class)
-    protected List<String> file;
+            completer = FileCompleter.class, converter = FileConverter.class)
+    public List<File> file;
 
-    DeploymentFileCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public DeploymentFileCommand(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);
     }
 
@@ -85,7 +74,7 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
         if (file == null || file.isEmpty()) {
             throw new CommandException("No deployment file");
         }
-        File f = new File(file.get(0));
+        File f = file.get(0);
         if (!f.exists()) {
             throw new CommandException("Path " + f.getAbsolutePath()
                     + " doesn't exist.");
@@ -100,16 +89,20 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
         if (name != null) {
             return name;
         }
-        File f = new File(file.get(0));
+        File f = file.get(0);
         return f.getName();
     }
 
     @Override
-    protected void addContent(ModelNode content) throws OperationFormatException {
-        File f = new File(file.get(0));
+    protected void addContent(CommandContext context, ModelNode content) throws OperationFormatException {
+        File f = file.get(0);
         if (unmanaged) {
             content.get(Util.PATH).set(f.getAbsolutePath());
             content.get(Util.ARCHIVE).set(f.isFile());
+        } else if (context.getBatchManager().isBatchActive()) {
+            Attachments attachments = context.getBatchManager().getActiveBatch().getAttachments();
+            int index = attachments.addFileAttachment(f.getAbsolutePath());
+            content.get(Util.INPUT_STREAM_INDEX).set(index);
         } else {
             content.get(Util.INPUT_STREAM_INDEX).set(0);
         }
@@ -119,7 +112,7 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
     protected List<String> getServerGroups(CommandContext ctx)
             throws CommandFormatException {
         return DeploymentCommand.getServerGroups(ctx, ctx.getModelControllerClient(),
-                allServerGroups, serverGroups, new File(file.get(0)));
+                allServerGroups, serverGroups, file.get(0));
     }
 
     @Override
@@ -133,7 +126,7 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
         ModelNode result;
         if (!unmanaged) {
             OperationBuilder op = new OperationBuilder(request);
-            op.addFileAsAttachment(new File(file.get(0)));
+            op.addFileAsAttachment(file.get(0));
             request.get(Util.CONTENT).get(0).get(Util.INPUT_STREAM_INDEX).set(0);
             try (Operation operation = op.build()) {
                 result = ctx.getModelControllerClient().execute(operation);
@@ -142,117 +135,5 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
             result = ctx.getModelControllerClient().execute(request);
         }
         return result;
-    }
-
-    @Override
-    public ModelNode buildRequest(CliCommandContext context)
-            throws CommandFormatException {
-        CommandContext ctx = context.getLegacyCommandContext();
-        File f = new File(file.get(0));
-        boolean isArchive = isCliArchive(f);
-        if (isArchive) {
-            if (force) {
-                throw new CommandFormatException("archive can't be used with --force");
-            }
-            if (disabled) {
-                throw new CommandFormatException("archive can't be used with --disabled");
-            }
-            if (serverGroups != null || allServerGroups) {
-                throw new OperationFormatException("--server-groups and --all-server-groups "
-                        + " can't be used in combination with a CLI archive.");
-            }
-
-            TempFileProvider tempFileProvider;
-            MountHandle root;
-            try {
-                tempFileProvider = TempFileProvider.create("cli",
-                        Executors.newSingleThreadScheduledExecutor(), true);
-                root = extractArchive(f, tempFileProvider);
-            } catch (IOException e) {
-                throw new OperationFormatException("Unable to extract archive '"
-                        + f.getAbsolutePath() + "' to temporary location");
-            }
-
-            final File currentDir = ctx.getCurrentDir();
-            ctx.setCurrentDir(root.getMountSource());
-            String holdbackBatch = activateNewBatch(ctx);
-
-            try {
-                if (script == null) {
-                    script = "deploy.scr";
-                }
-
-                File scriptFile = new File(ctx.getCurrentDir(), script);
-                if (!scriptFile.exists()) {
-                    throw new CommandFormatException("ERROR: script '"
-                            + script + "' not found.");
-                }
-
-                BufferedReader reader = null;
-                try {
-                    reader = new BufferedReader(new FileReader(scriptFile));
-                    String line = reader.readLine();
-                    while (!ctx.isTerminated() && line != null) {
-                        ctx.handle(line);
-                        line = reader.readLine();
-                    }
-                } catch (FileNotFoundException e) {
-                    throw new CommandFormatException("ERROR: script '"
-                            + script + "' not found.");
-                } catch (IOException e) {
-                    throw new CommandFormatException("Failed to read the next command from "
-                            + scriptFile.getName() + ": " + e.getMessage(), e);
-                } catch (CommandLineException e) {
-                    throw new CommandFormatException(e.getMessage(), e);
-                } finally {
-                    if (reader != null) {
-                        try {
-                            reader.close();
-                        } catch (IOException e) {
-                        }
-                    }
-                }
-
-                return ctx.getBatchManager().getActiveBatch().toRequest();
-            } finally {
-                // reset current dir in context
-                ctx.setCurrentDir(currentDir);
-                discardBatch(ctx, holdbackBatch);
-
-                VFSUtils.safeClose(root, tempFileProvider);
-            }
-        }
-
-        return super.buildRequest(context);
-    }
-
-    private boolean isCliArchive(File f) {
-        return !(f == null || f.isDirectory()
-                || !f.getName().endsWith(CLI_ARCHIVE_SUFFIX));
-    }
-
-    private MountHandle extractArchive(File archive,
-            TempFileProvider tempFileProvider) throws IOException {
-        return ((MountHandle) VFS.mountZipExpanded(archive, VFS.getChild("cli"),
-                tempFileProvider));
-    }
-
-    private String activateNewBatch(CommandContext ctx) {
-        String currentBatch = null;
-        BatchManager batchManager = ctx.getBatchManager();
-        if (batchManager.isBatchActive()) {
-            currentBatch = "batch" + System.currentTimeMillis();
-            batchManager.holdbackActiveBatch(currentBatch);
-        }
-        batchManager.activateNewBatch();
-        return currentBatch;
-    }
-
-    private void discardBatch(CommandContext ctx, String holdbackBatch) {
-        BatchManager batchManager = ctx.getBatchManager();
-        batchManager.discardActiveBatch();
-        if (holdbackBatch != null) {
-            batchManager.activateHeldbackBatch(holdbackBatch);
-        }
     }
 }

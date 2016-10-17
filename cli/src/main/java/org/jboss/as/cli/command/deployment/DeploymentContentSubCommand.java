@@ -41,6 +41,8 @@ import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
+ * XXX jfdenise, all fields are public to be accessible from legacy view. To be
+ * made private when removed.
  *
  * @author jdenise@redhat.com
  */
@@ -53,14 +55,14 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
 
     @Option(hasValue = false, required = false, activator = ForceActivator.class,
             shortName = 'f')
-    protected boolean force;
+    public boolean force;
 
     @Option(hasValue = false, required = false)
-    protected boolean disabled;
+    public boolean disabled;
 
     @Option(hasValue = true, name = "runtime-name", required = false, activator
             = RuntimeNameActivator.class)
-    protected String runtimeName;
+    public String runtimeName;
 
     DeploymentContentSubCommand(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);
@@ -115,7 +117,7 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
             request.get(Util.RUNTIME_NAME).set(runtimeName);
         }
         final ModelNode content = request.get(Util.CONTENT).get(0);
-        addContent(content);
+        addContent(ctx, content);
         if (headers != null) {
             ModelNode opHeaders = request.get(Util.OPERATION_HEADERS);
             opHeaders.set(headers);
@@ -123,7 +125,7 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
         return request;
     }
 
-    protected abstract void addContent(ModelNode content)
+    protected abstract void addContent(CommandContext ctx, ModelNode content)
             throws OperationFormatException;
 
     protected abstract String getName();
@@ -131,6 +133,12 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
     @Override
     public ModelNode buildRequest(CliCommandContext context)
             throws CommandFormatException {
+        // In case Batch or DMR call, must check that argument is valid.
+        try {
+            checkArgument();
+        } catch (CommandException ex) {
+            throw new CommandFormatException(ex);
+        }
         CommandContext ctx = context.getLegacyCommandContext();
         String name = getName();
 

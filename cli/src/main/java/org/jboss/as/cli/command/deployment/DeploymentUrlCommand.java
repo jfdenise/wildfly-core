@@ -34,6 +34,7 @@ import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
+import org.jboss.as.cli.command.ControlledCommandActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.NameActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.UrlActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
@@ -41,10 +42,12 @@ import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
 
 /**
+ * XXX jfdenise, all fields are public to be accessible from legacy view. To be
+ * made private when removed.
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "deploy-url", description = "")
+@CommandDefinition(name = "deploy-url", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentUrlCommand extends DeploymentContentSubCommand implements DMRCommand {
 
     public static class UrlConverter implements Converter<URL, CliConverterInvocation> {
@@ -63,14 +66,14 @@ public class DeploymentUrlCommand extends DeploymentContentSubCommand implements
     @Option(hasValue = true, required = false, completer
             = DeploymentRedeployCommand.NameCompleter.class,
             activator = NameActivator.class)
-    private String name;
+    public String name;
 
     // Argument comes first, aesh behavior.
     @Arguments(valueSeparator = ',', activator = UrlActivator.class,
             converter = UrlConverter.class)
-    protected List<URL> url;
+    public List<URL> url;
 
-    DeploymentUrlCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public DeploymentUrlCommand(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);
     }
 
@@ -100,7 +103,7 @@ public class DeploymentUrlCommand extends DeploymentContentSubCommand implements
     }
 
     @Override
-    protected void addContent(ModelNode content) throws OperationFormatException {
+    protected void addContent(CommandContext ctx, ModelNode content) throws OperationFormatException {
         content.get(Util.URL).set(url.get(0).toExternalForm());
     }
 

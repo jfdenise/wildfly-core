@@ -43,6 +43,8 @@ import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
+ * XXX jfdenise, all fields are public to be accessible from legacy view. To be
+ * made private when removed.
  *
  * @author jdenise@redhat.com
  */
@@ -75,15 +77,15 @@ public abstract class DeploymentAbstractSubCommand extends DeploymentControlledC
 
     @Option(name = "server-groups", activator = ServerGroupsActivator.class,
             completer = ServerGroupsCompleter.class, required = false)
-    protected String serverGroups;
+    public String serverGroups;
 
     @Option(name = "all-server-groups", activator = AllServerGroupsActivator.class,
             hasValue = false, required = false)
-    protected boolean allServerGroups;
+    public boolean allServerGroups;
 
     @Option(converter = HeadersConverter.class, completer = HeadersCompleter.class,
             required = false)
-    protected ModelNode headers;
+    public ModelNode headers;
 
     DeploymentAbstractSubCommand(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);

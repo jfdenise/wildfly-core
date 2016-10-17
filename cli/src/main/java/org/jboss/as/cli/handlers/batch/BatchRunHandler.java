@@ -77,10 +77,11 @@ public class BatchRunHandler extends BaseOperationCommand {
         final OperationResponse response;
         boolean failed = false;
         boolean hasFile = file.getValue(ctx.getParsedCommandLine()) != null;
+        Attachments attachments = getAttachments(ctx);
         try {
             final ModelNode request = buildRequest(ctx);
             OperationBuilder builder = new OperationBuilder(request, true);
-            for (String path : getAttachments(ctx).getAttachedFiles()) {
+            for (String path : attachments.getAttachedFiles()) {
                 builder.addFileAsAttachment(new File(path));
             }
             final ModelControllerClient client = ctx.getModelControllerClient();
@@ -118,6 +119,7 @@ public class BatchRunHandler extends BaseOperationCommand {
                         + "(you are remaining in the batch editing mode to have a chance to correct the error)", e);
             }
         } finally {
+            attachments.done();
             // There is a change in behavior between the file and the added command
             // With a file, the batch is discarded, whatever the result.
             if (hasFile) {

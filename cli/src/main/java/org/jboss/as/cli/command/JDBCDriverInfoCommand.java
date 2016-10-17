@@ -39,7 +39,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.accesscontrol.HostServerOperationAccess;
-import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.DefaultExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.impl.DefaultCompleter;
@@ -111,7 +111,7 @@ public class JDBCDriverInfoCommand extends ControlledCommand implements Command<
         }
     }
 
-    public static class ServerActivator extends ExpectedOptionsActivator
+    public static class ServerActivator extends DefaultExpectedOptionsActivator
             implements CliOptionActivator, DomainOptionActivator {
 
         private final DefaultDomainOptionActivator da = new DefaultDomainOptionActivator();
@@ -175,7 +175,7 @@ public class JDBCDriverInfoCommand extends ControlledCommand implements Command<
         }
     }
 
-    public static class DriverActivator extends ExpectedOptionsActivator {
+    public static class DriverActivator extends DefaultExpectedOptionsActivator {
 
         public DriverActivator() {
             super("host", "server");

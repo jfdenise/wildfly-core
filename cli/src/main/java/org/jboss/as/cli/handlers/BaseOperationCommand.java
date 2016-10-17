@@ -240,7 +240,10 @@ public abstract class BaseOperationCommand extends CommandHandlerWithHelp implem
             operationResponse = client.executeOperation(builder.build(), OperationMessageHandler.DISCARD);
         } catch (Exception e) {
             throw new CommandLineException("Failed to perform operation", e);
+        } finally {
+            attachments.done();
         }
+
         try {
             final ModelNode response = operationResponse.getResponseNode();
             if (!Util.isSuccess(response)) {

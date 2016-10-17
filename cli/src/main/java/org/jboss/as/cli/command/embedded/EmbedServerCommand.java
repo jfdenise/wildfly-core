@@ -38,7 +38,7 @@ import org.jboss.as.cli.CliEvent;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
-import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.DefaultExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.BooleanCompleter;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
@@ -74,7 +74,7 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 @CommandDefinition(name = "server", description = "", activator = EmbedServerActivator.class)
 public class EmbedServerCommand implements Command<CliCommandInvocation> {
 
-    public static final class RemoveExistingActivator extends ExpectedOptionsActivator {
+    public static final class RemoveExistingActivator extends DefaultExpectedOptionsActivator {
 
         public RemoveExistingActivator() {
             super("empty-config");

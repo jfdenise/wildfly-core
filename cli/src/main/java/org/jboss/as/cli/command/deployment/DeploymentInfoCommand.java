@@ -40,6 +40,7 @@ import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
+import org.jboss.as.cli.command.ControlledCommandActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.ServerGroupsActivator;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.util.SimpleTable;
@@ -55,7 +56,7 @@ import org.wildfly.core.cli.command.DMRCommand;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "info", description = "")
+@CommandDefinition(name = "info", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentInfoCommand extends DeploymentControlledCommand
         implements Command<CliCommandInvocation>, DMRCommand {
 

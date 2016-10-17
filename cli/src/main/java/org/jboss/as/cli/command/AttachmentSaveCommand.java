@@ -26,7 +26,7 @@ import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
-import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.DefaultExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.wildfly.core.cli.command.CliCommandContext;
@@ -39,14 +39,14 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
 @CommandDefinition(name = "save", description = "")
 public class AttachmentSaveCommand extends AttachmentDisplayCommand {
 
-    public static final class FileActivator extends ExpectedOptionsActivator {
+    public static final class FileActivator extends DefaultExpectedOptionsActivator {
 
         public FileActivator() {
             super("operation");
         }
     }
 
-    public static final class OverwriteActivator extends ExpectedOptionsActivator {
+    public static final class OverwriteActivator extends DefaultExpectedOptionsActivator {
 
         public OverwriteActivator() {
             super("file");

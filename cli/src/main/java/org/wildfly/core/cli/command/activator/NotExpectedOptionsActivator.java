@@ -21,45 +21,13 @@
  */
 package org.wildfly.core.cli.command.activator;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import org.jboss.aesh.cl.activation.OptionActivator;
-import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.aesh.cl.internal.ProcessedOption;
 
 /**
  *
- * Use this activator to make an option available if some options are already
- * present.
- *
  * @author jdenise@redhat.com
  */
-public abstract class NotExpectedOptionsActivator implements OptionActivator {
-
-    private final Set<String> options;
-
-    protected NotExpectedOptionsActivator(String... opts) {
-        options = new HashSet<>(Arrays.asList(opts));
-    }
-
-    protected NotExpectedOptionsActivator(Set<String> opts) {
-        options = opts;
-    }
-
-    @Override
-    public boolean isActivated(ProcessedCommand processedCommand) {
-        for (String opt : options) {
-            ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(opt);
-            if (processedOption != null && processedOption.getValue() != null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public Set<String> getNotExpected() {
-        return Collections.unmodifiableSet(options);
-    }
+public interface NotExpectedOptionsActivator extends OptionActivator {
+    Set<String> getNotExpected();
 }

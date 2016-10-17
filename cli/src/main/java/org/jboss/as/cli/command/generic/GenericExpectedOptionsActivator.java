@@ -21,13 +21,13 @@
  */
 package org.jboss.as.cli.command.generic;
 
-import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.DefaultExpectedOptionsActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class GenericExpectedOptionsActivator extends ExpectedOptionsActivator {
+public class GenericExpectedOptionsActivator extends DefaultExpectedOptionsActivator {
     GenericExpectedOptionsActivator(String... options) {
         super(options);
     }

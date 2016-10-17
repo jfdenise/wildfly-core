@@ -21,10 +21,14 @@
  */
 package org.jboss.as.cli.command.deployment;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.jboss.aesh.cl.activation.OptionActivator;
 import org.jboss.aesh.cl.internal.ProcessedCommand;
+import org.wildfly.core.cli.command.activator.DefaultExpectedAndNotExpectedOptionsActivator;
 import org.wildfly.core.cli.command.activator.DomainOptionActivator;
-import org.wildfly.core.cli.command.activator.NotExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.DefaultNotExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
 
 /**
  *
@@ -51,6 +55,20 @@ public interface DeploymentActivators {
                     isSatisfied(cmd.getCommandContext());
         }
 
+    }
+
+    public static class UndeployNameActivator implements OptionActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand pc) {
+            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            return cmd.getPermissions().getRemoveOrUndeployPermission().
+                    isSatisfied(cmd.getCommandContext());
+        }
+
+    }
+
+    public static class UndeployArchiveActivator extends UndeployNameActivator {
     }
 
     public static class FileActivator implements OptionActivator {
@@ -92,7 +110,7 @@ public interface DeploymentActivators {
                     isSatisfied(cmd.getCommandContext());
         }
     }
-    public static class ServerGroupsActivator extends NotExpectedOptionsActivator
+    public static class ServerGroupsActivator extends DefaultNotExpectedOptionsActivator
             implements DomainOptionActivator {
 
         public ServerGroupsActivator() {
@@ -113,7 +131,7 @@ public interface DeploymentActivators {
         }
     }
 
-    public static class AllServerGroupsActivator extends NotExpectedOptionsActivator
+    public static class AllServerGroupsActivator extends DefaultNotExpectedOptionsActivator
             implements DomainOptionActivator {
 
         public AllServerGroupsActivator() {
@@ -125,6 +143,67 @@ public interface DeploymentActivators {
             DeploymentControlledCommand cmd
                     = (DeploymentControlledCommand) processedCommand.getCommand();
             if (!cmd.getPermissions().getDeployPermission().
+                    isSatisfied(cmd.getCommandContext())) {
+                return false;
+            }
+            if (!cmd.getCommandContext().isDomainMode()) {
+                return false;
+            }
+            return super.isActivated(processedCommand);
+        }
+    }
+
+    public static class AllRelevantServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
+            implements DomainOptionActivator {
+
+        public AllRelevantServerGroupsActivator() {
+            super(EXPECTED, NOT_EXPECTED);
+        }
+
+        private static final Set<String> EXPECTED = new HashSet<>();
+        private static final Set<String> NOT_EXPECTED = new HashSet<>();
+
+        static {
+            // Argument.
+            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            NOT_EXPECTED.add("server-groups");
+        }
+
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            DeploymentControlledCommand cmd
+                    = (DeploymentControlledCommand) processedCommand.getCommand();
+            if (!cmd.getPermissions().getUndeployPermission().
+                    isSatisfied(cmd.getCommandContext())) {
+                return false;
+            }
+            if (!cmd.getCommandContext().isDomainMode()) {
+                return false;
+            }
+            return super.isActivated(processedCommand);
+        }
+    }
+
+    public static class UndeployServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
+            implements DomainOptionActivator {
+
+        public UndeployServerGroupsActivator() {
+            super(EXPECTED, NOT_EXPECTED);
+        }
+
+        private static final Set<String> EXPECTED = new HashSet<>();
+        private static final Set<String> NOT_EXPECTED = new HashSet<>();
+
+        static {
+            // Argument.
+            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            NOT_EXPECTED.add("all-relevant-server-groups");
+        }
+
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            DeploymentControlledCommand cmd = (DeploymentControlledCommand) processedCommand.getCommand();
+            if (!cmd.getPermissions().getUndeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;
             }

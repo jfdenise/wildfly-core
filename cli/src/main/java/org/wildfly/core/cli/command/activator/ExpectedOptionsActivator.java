@@ -21,44 +21,17 @@
  */
 package org.wildfly.core.cli.command.activator;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import org.jboss.aesh.cl.activation.OptionActivator;
-import org.jboss.aesh.cl.internal.ProcessedCommand;
-import org.jboss.aesh.cl.internal.ProcessedOption;
 
 /**
  *
- * Use this activator to make an option available if some options are already
- * present.
- *
  * @author jdenise@redhat.com
  */
-public abstract class ExpectedOptionsActivator implements OptionActivator {
+public interface ExpectedOptionsActivator extends OptionActivator {
 
-    private final Set<String> options;
-
-    protected ExpectedOptionsActivator(String... opts) {
-        options = new HashSet<>(Arrays.asList(opts));
-    }
-
-    protected ExpectedOptionsActivator(Set<String> opts) {
-        options = opts;
-    }
-
-    @Override
-    public boolean isActivated(ProcessedCommand processedCommand) {
-        boolean found = true;
-        for (String opt : options) {
-            ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(opt);
-            found &= processedOption != null && processedOption.getValue() != null;
-        }
-        return found;
-    }
-
-    public Set<String> getExpected() {
-        return Collections.unmodifiableSet(options);
-    }
+    // XXX jfdenise.
+    // Aesh names the arguments that way, this should be part of the spec.
+    String ARGUMENT_NAME = "";
+    Set<String> getExpected();
 }

@@ -44,7 +44,7 @@ import org.jboss.as.cli.console.CliSpecialCommand.CliSpecialParser;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.wildfly.core.cli.command.CliCommandInvocation;
-import org.wildfly.core.cli.command.activator.NotExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.DefaultNotExpectedOptionsActivator;
 
 /**
  *
@@ -63,7 +63,7 @@ public class HelpCommand implements Command<CliCommandInvocation> {
 
     }
 
-    public static class ArgActivator extends NotExpectedOptionsActivator {
+    public static class ArgActivator extends DefaultNotExpectedOptionsActivator {
 
         public ArgActivator() {
             super("commands");

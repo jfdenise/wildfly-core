@@ -21,6 +21,7 @@
  */
 package org.wildfly.core.cli.command;
 
+import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.dmr.ModelNode;
 
@@ -32,4 +33,9 @@ import org.jboss.dmr.ModelNode;
  */
 public interface DMRCommand {
     ModelNode buildRequest(CliCommandContext context) throws CommandFormatException;
+
+    default ModelNode buildRequest(CliCommandContext context,
+            Attachments attachments) throws CommandFormatException {
+        return buildRequest(context);
+    }
 }

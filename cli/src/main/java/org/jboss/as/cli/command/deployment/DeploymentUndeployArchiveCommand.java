@@ -21,30 +21,39 @@
  */
 package org.jboss.as.cli.command.deployment;
 
+import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.Util;
-import org.jboss.as.cli.command.ControlledCommand;
-import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
+import org.jboss.as.cli.accesscontrol.AccessRequirement;
+import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
+import org.jboss.as.cli.command.ControlledCommandActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public abstract class DeploymentControlledCommand extends ControlledCommand {
+@CommandDefinition(name = "undeploy-archive", description = "", activator = ControlledCommandActivator.class)
+public class DeploymentUndeployArchiveCommand extends DeploymentArchiveCommand {
 
-    private final DeploymentPermissions permissions;
-
-    public DeploymentControlledCommand(CommandContext ctx, DeploymentPermissions permissions) {
-        super(ctx);
-        this.permissions = permissions;
-        DefaultOperationRequestAddress requiredAddress
-                = new DefaultOperationRequestAddress();
-        requiredAddress.toNodeType(Util.DEPLOYMENT);
-        addRequiredPath(requiredAddress);
+    public DeploymentUndeployArchiveCommand(CommandContext ctx, DeploymentPermissions permissions) {
+        super(ctx, permissions);
     }
 
-    public DeploymentPermissions getPermissions() {
-        return permissions;
+    @Override
+    protected String getAction() {
+        return "undeploy-archive";
     }
 
+    @Override
+    protected String getDefaultScript() {
+        return "undeploy.scr";
+    }
+
+    @Override
+    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
+        return AccessRequirementBuilder.Factory.create(ctx)
+                .any()
+                .requirement(getPermissions().getMainRemovePermission())
+                .requirement(getPermissions().getUndeployPermission())
+                .build();
+    }
 }

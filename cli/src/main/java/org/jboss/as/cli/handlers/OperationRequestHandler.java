@@ -74,10 +74,11 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
         }
         ModelNode request = reqWithAttachments.getRequest();
         OperationBuilder opBuilder = new OperationBuilder(request, true);
-        for (String path : reqWithAttachments.getAttachedFiles()) {
+        for (String path : reqWithAttachments.getAttachments().getAttachedFiles()) {
             opBuilder.addFileAsAttachment(new File(path));
         }
-        Operation op = opBuilder.build();
+        try {
+            Operation op = opBuilder.build();
 
         if(ctx.getConfig().isValidateOperationRequests()) {
             ModelNode opDescOutcome = Util.validateRequest(ctx, request);
@@ -104,6 +105,10 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
             throw new CommandLineException("Communication error", e);
         } catch (RuntimeException e) {
             throw new CommandLineException("Failed to execute operation.", e);
+            }
+        } finally {
+            reqWithAttachments.getAttachments().done();
+
         }
     }
 

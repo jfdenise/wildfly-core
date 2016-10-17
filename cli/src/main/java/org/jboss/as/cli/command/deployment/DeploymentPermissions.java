@@ -40,6 +40,9 @@ public class DeploymentPermissions {
     private final AccessRequirement addOrReplacePermission;
     private final PerNodeOperationAccess serverGroupAddPermission;
     private final PerNodeOperationAccess sgChildrenResourcesPermission;
+    private final AccessRequirement mainRemovePermission;
+    private final AccessRequirement undeployPermission;
+    private final AccessRequirement removeOrUndeployPermission;
     DeploymentPermissions(CommandContext ctx) {
         listPermission = AccessRequirementBuilder.Factory.create(ctx)
                 .all()
@@ -66,6 +69,23 @@ public class DeploymentPermissions {
                 .any()
                 .requirement(mainAddPermission)
                 .requirement(fullReplacePermission)
+                .build();
+        mainRemovePermission = AccessRequirementBuilder.Factory.create(ctx).
+                any().operation("deployment=?", Util.REMOVE).build();
+
+        undeployPermission = AccessRequirementBuilder.Factory.create(ctx)
+                .any()
+                .operation("deployment=?", Util.UNDEPLOY)
+                .all()
+                .serverGroupOperation("deployment=?", Util.REMOVE)
+                .serverGroupOperation("deployment=?", Util.UNDEPLOY)
+                .parent()
+                .build();
+
+        removeOrUndeployPermission = AccessRequirementBuilder.Factory.create(ctx)
+                .any()
+                .requirement(mainRemovePermission)
+                .requirement(undeployPermission)
                 .build();
     }
 
@@ -116,5 +136,26 @@ public class DeploymentPermissions {
      */
     public PerNodeOperationAccess getSgChildrenResourcesPermission() {
         return sgChildrenResourcesPermission;
+    }
+
+    /**
+     * @return the mainRemovePermission
+     */
+    public AccessRequirement getMainRemovePermission() {
+        return mainRemovePermission;
+    }
+
+    /**
+     * @return the undeployPermission
+     */
+    public AccessRequirement getUndeployPermission() {
+        return undeployPermission;
+    }
+
+    /**
+     * @return the removeOrUndeployPermission
+     */
+    public AccessRequirement getRemoveOrUndeployPermission() {
+        return removeOrUndeployPermission;
     }
 }

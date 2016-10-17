@@ -34,6 +34,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
+import org.jboss.as.cli.command.ControlledCommandActivator;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
@@ -45,14 +46,14 @@ import org.wildfly.core.cli.command.DMRCommand;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "redeploy-all", description = "")
+@CommandDefinition(name = "redeploy-all", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentAllCommand extends DeploymentAbstractSubCommand implements DMRCommand {
 
     @Deprecated
     @Option(hasValue = false, activator = HiddenActivator.class)
     private boolean help;
 
-    DeploymentAllCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public DeploymentAllCommand(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);
     }
 

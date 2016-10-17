@@ -29,7 +29,7 @@ import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.container.AeshCommandContainer;
 import org.jboss.as.cli.CommandLineException;
-import org.wildfly.core.cli.command.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.activator.DefaultExpectedOptionsActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.command.generic.MainCommandParser;
 import org.jboss.as.cli.command.generic.NodeType;
@@ -86,7 +86,7 @@ public class CommandAdd implements Command<CliCommandInvocation> {
         return CommandResult.SUCCESS;
     }
 
-    public static class NodeTypeActivator extends ExpectedOptionsActivator {
+    public static class NodeTypeActivator extends DefaultExpectedOptionsActivator {
 
         public NodeTypeActivator() {
             super("node-type");

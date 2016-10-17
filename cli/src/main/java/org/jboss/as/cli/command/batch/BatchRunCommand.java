@@ -79,10 +79,11 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
         boolean failed = false;
         OperationResponse response;
         CommandContext context = commandInvocation.getCommandContext().getLegacyCommandContext();
+        Attachments attachments = getAttachments(commandInvocation);
         try {
             final ModelNode request = newRequest(context);
             OperationBuilder builder = new OperationBuilder(request, true);
-            for (String path : getAttachments(commandInvocation).getAttachedFiles()) {
+            for (String path : attachments.getAttachedFiles()) {
                 builder.addFileAsAttachment(new File(path));
             }
             if (headers != null) {
@@ -126,6 +127,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
             throw new CommandException("The batch failed with the following error "
                     + e.getMessage(), e);
         } finally {
+            attachments.done();
             if (!failed) {
                 if (context.getBatchManager().isBatchActive()) {
                     context.getBatchManager().discardActiveBatch();

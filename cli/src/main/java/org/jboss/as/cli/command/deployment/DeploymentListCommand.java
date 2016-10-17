@@ -34,6 +34,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
+import org.jboss.as.cli.command.ControlledCommandActivator;
 import org.jboss.as.cli.util.StrictSizeTable;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
@@ -44,7 +45,7 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "list", description = "")
+@CommandDefinition(name = "list", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentListCommand extends DeploymentControlledCommand
         implements Command<CliCommandInvocation> {
 
@@ -70,7 +71,7 @@ public class DeploymentListCommand extends DeploymentControlledCommand
         return CommandResult.SUCCESS;
     }
 
-    static void listDeployments(CliCommandInvocation commandInvocation,
+    public static void listDeployments(CliCommandInvocation commandInvocation,
             boolean l) throws CommandException {
         CommandContext ctx = commandInvocation.getCommandContext().
                 getLegacyCommandContext();
