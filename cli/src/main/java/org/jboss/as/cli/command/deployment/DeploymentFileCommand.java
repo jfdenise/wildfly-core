@@ -67,7 +67,7 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
     protected String script;
 
     @Option(hasValue = true, required = false, completer
-            = DeploymentNameCommand.NameCompleter.class,
+            = DeploymentRedeployCommand.NameCompleter.class,
             activator = NameActivator.class)
     protected String name;
 

@@ -75,7 +75,7 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
     private boolean help;
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', completer = DeploymentNameCommand.NameCompleter.class)
+    @Arguments(valueSeparator = ',', completer = DeploymentRedeployCommand.NameCompleter.class)
     private List<String> name;
 
     // This is for deprecated usage.

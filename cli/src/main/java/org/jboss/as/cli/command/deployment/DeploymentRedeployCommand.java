@@ -48,8 +48,8 @@ import org.wildfly.core.cli.command.DMRCommand;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "deploy-name", description = "")
-public class DeploymentNameCommand extends DeploymentAbstractSubCommand implements DMRCommand {
+@CommandDefinition(name = "redeploy", description = "")
+public class DeploymentRedeployCommand extends DeploymentAbstractSubCommand implements DMRCommand {
 
     public static class NameCompleter
             implements OptionCompleter<CliCompleterInvocation> {
@@ -88,7 +88,7 @@ public class DeploymentNameCommand extends DeploymentAbstractSubCommand implemen
             completer = NameCompleter.class)
     protected List<String> name;
 
-    DeploymentNameCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    DeploymentRedeployCommand(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);
     }
 
@@ -96,7 +96,7 @@ public class DeploymentNameCommand extends DeploymentAbstractSubCommand implemen
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("deployment deploy-name"));
+            commandInvocation.println(commandInvocation.getHelpInfo("deployment redeploy"));
             return CommandResult.SUCCESS;
         }
         if (name == null || name.isEmpty()) {

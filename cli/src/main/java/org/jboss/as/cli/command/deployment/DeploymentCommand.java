@@ -53,8 +53,7 @@ import org.wildfly.core.cli.command.CliCommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "deployment", description = "", groupCommands
-        = {DeploymentNameCommand.class}, activator = ControlledCommandActivator.class)
+@GroupCommandDefinition(name = "deployment", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentCommand extends DeploymentControlledCommand
         implements GroupCommand<CliCommandInvocation>, BatchCompliantCommand {
 
@@ -164,7 +163,7 @@ public class DeploymentCommand extends DeploymentControlledCommand
                 return command.execute(commandInvocation);
 
             } else {
-                DeploymentNameCommand command = new DeploymentNameCommand(getCommandContext(),
+                DeploymentRedeployCommand command = new DeploymentRedeployCommand(getCommandContext(),
                         getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.headers = headers;
@@ -216,7 +215,7 @@ public class DeploymentCommand extends DeploymentControlledCommand
     @Override
     public List<Command> getCommands() {
         List<Command> commands = new ArrayList<>();
-        commands.add(new DeploymentNameCommand(getCommandContext(), getPermissions()));
+        commands.add(new DeploymentRedeployCommand(getCommandContext(), getPermissions()));
         commands.add(new DeploymentAllCommand(getCommandContext(), getPermissions()));
         commands.add(new DeploymentUrlCommand(getCommandContext(), getPermissions()));
         commands.add(new DeploymentFileCommand(getCommandContext(), getPermissions()));
@@ -312,7 +311,7 @@ public class DeploymentCommand extends DeploymentControlledCommand
                 return command.buildRequest(context);
 
             } else {
-                DeploymentNameCommand command = new DeploymentNameCommand(getCommandContext(),
+                DeploymentRedeployCommand command = new DeploymentRedeployCommand(getCommandContext(),
                         getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.headers = headers;

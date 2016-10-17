@@ -429,7 +429,7 @@ public class CliCommandRegistry implements CommandRegistry {
             CommandLineParser p = ((CliCommandContainer) container).getWrappedContainer().getParser();
             if (p instanceof MainCommandParser) {
                 if (((MainCommandParser) p).isRemovable()) {
-                    reg.removeCommand(name);
+                    removeCommand(name);
                 } else {
                     throw new Exception(name + " can't be removed");
                 }

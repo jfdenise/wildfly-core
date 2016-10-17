@@ -45,7 +45,7 @@ import org.wildfly.core.cli.command.DMRCommand;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "deploy-all", description = "")
+@CommandDefinition(name = "redeploy-all", description = "")
 public class DeploymentAllCommand extends DeploymentAbstractSubCommand implements DMRCommand {
 
     @Deprecated
@@ -60,7 +60,7 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("deployment deploy-all"));
+            commandInvocation.println(commandInvocation.getHelpInfo("deployment redeploy-all"));
             return CommandResult.SUCCESS;
         }
         deployAll(commandInvocation, allServerGroups, serverGroups, headers);
@@ -79,7 +79,7 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
                 throw new CommandException(Util.getFailureDescription(result));
             }
         } catch (IOException e) {
-            throw new CommandException("Failed to deploy", e);
+            throw new CommandException("Failed to re-deploy", e);
         } catch (CommandFormatException ex) {
             throw new CommandException(ex);
         }
@@ -130,7 +130,7 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
             }
         }
         if (empty) {
-            throw new CommandFormatException("No disabled deployment to deploy.");
+            throw new CommandFormatException("No disabled deployment to re-deploy.");
         }
         if (headers != null) {
             ModelNode opHeaders = composite.get(Util.OPERATION_HEADERS);

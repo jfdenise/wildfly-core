@@ -27,12 +27,14 @@ import java.net.URL;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.cl.converter.Converter;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
+import org.jboss.as.cli.command.deployment.DeploymentActivators.NameActivator;
 import org.jboss.as.cli.command.deployment.DeploymentActivators.UrlActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
@@ -58,6 +60,11 @@ public class DeploymentUrlCommand extends DeploymentContentSubCommand implements
 
     }
 
+    @Option(hasValue = true, required = false, completer
+            = DeploymentRedeployCommand.NameCompleter.class,
+            activator = NameActivator.class)
+    private String name;
+
     // Argument comes first, aesh behavior.
     @Arguments(valueSeparator = ',', activator = UrlActivator.class,
             converter = UrlConverter.class)
@@ -76,6 +83,9 @@ public class DeploymentUrlCommand extends DeploymentContentSubCommand implements
 
     @Override
     protected String getName() {
+        if (name != null) {
+            return name;
+        }
         URL deploymentUrl = url.get(0);
         String name = deploymentUrl.getPath();
         // strip trailing slash if present
