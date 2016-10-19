@@ -312,7 +312,7 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
         try {
             // Compatibility with legacy redirection
             if (commandContext.getLegacyCommandContext().isWorkflowMode()) {
-                commandContext.getLegacyCommandContext().handle(line.getOriginalInput());
+                commandContext.getCommandContextImpl().handleLegacy(line.getOriginalInput());
                 return new CommandContainerResult(null, CommandResult.SUCCESS);
             }
 
@@ -347,7 +347,8 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
                                 buildBatchResponseHandler(line.getOriginalInput(),
                                         commandContext, batch.getAttachments());
                         commandContext.addBatchOperation(((InternalDMRCommand) c).
-                                buildRequest(line.getOriginalInput(), commandContext),
+                                buildRequest(line.getOriginalInput(), commandContext,
+                                        batch.getAttachments()),
                                 line.getOriginalInput(), req);
                         return new CommandContainerResult(null, CommandResult.SUCCESS);
                     }
@@ -360,7 +361,7 @@ public class CliCommandContainer extends DefaultCommandContainer<Command> {
                         BatchResponseHandler req = ((BatchCompliantCommand) c).
                                 buildBatchResponseHandler(commandContext, batch.getAttachments());
                         commandContext.addBatchOperation(((DMRCommand) c).
-                                buildRequest(commandContext),
+                                buildRequest(commandContext, batch.getAttachments()),
                                 line.getOriginalInput(), req);
                         return new CommandContainerResult(null, CommandResult.SUCCESS);
                     }

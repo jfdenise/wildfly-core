@@ -51,6 +51,8 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.sasl.SaslException;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.console.command.Command;
+import org.jboss.aesh.console.command.CommandException;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -78,6 +80,7 @@ import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
 import org.jboss.as.cli.batch.impl.DefaultBatchManager;
 import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
+import org.jboss.as.cli.command.legacy.InternalBatchCompliantCommand;
 import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
 import org.jboss.as.cli.handlers.ClearScreenHandler;
@@ -152,10 +155,14 @@ import org.jboss.stdio.StdioContext;
 import org.xnio.http.RedirectException;
 import org.jboss.as.cli.console.ConsoleBuilder;
 import org.jboss.as.cli.handlers.ConnectHandler;
+import org.jboss.as.cli.handlers.ResponseHandler;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
 import org.jboss.as.cli.operation.impl.DefaultOperationCandidatesProvider;
 import org.jboss.as.cli.security.AuthenticationCallbackHandler;
 import org.jboss.as.cli.security.CliSSLContext;
+import org.jboss.as.controller.client.OperationResponse;
+import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.wildfly.core.cli.command.BatchCompliantCommand.BatchResponseHandler;
 
 /**
  *
@@ -495,15 +502,29 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         if (line.isEmpty() || line.charAt(0) == '#') {
             return; // ignore comments
         }
+        try {
+            console.executeCommand(line);
+        } catch (CommandException ex) {
+            if (ex.getCause() instanceof CommandLineException) {
+                throw (CommandLineException) ex.getCause();
+            }
+            throw new CommandLineException(ex);
+        }
+    }
+
+    public void handleLegacy(String line) throws CommandLineException {
+        if (line.isEmpty() || line.charAt(0) == '#') {
+            return; // ignore comments
+        }
 
         int i = line.length() - 1;
-        while(i > 0 && line.charAt(i) <= ' ') {
-            if(line.charAt(--i) == '\\') {
+        while (i > 0 && line.charAt(i) <= ' ') {
+            if (line.charAt(--i) == '\\') {
                 break;
             }
         }
         if (line.charAt(i) == '\\') {
-            if(lineBuffer == null) {
+            if (lineBuffer == null) {
                 lineBuffer = new StringBuilder();
                 origLineBuffer = new StringBuilder();
             }
@@ -512,7 +533,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             origLineBuffer.append(line, 0, i);
             origLineBuffer.append('\n');
             return;
-        } else if(lineBuffer != null) {
+        } else if (lineBuffer != null) {
             lineBuffer.append(line);
             origLineBuffer.append(line);
             line = lineBuffer.toString();
@@ -560,7 +581,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } catch (CommandLineException e) {
             throw e;
         } catch (Throwable t) {
-            if(log.isDebugEnabled()) {
+            if (log.isDebugEnabled()) {
                 log.debug("Failed to handle '" + line + "'", t);
             }
             throw new CommandLineException("Failed to handle '" + line + "'", t);
@@ -1190,21 +1211,56 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 return new HandledRequest(request, null);
             }
 
-            final CommandHandler handler = cmdRegistry.getCommandHandler(parsedCmd.getOperationName());
-            if (handler == null) {
+            Command cmd = null;
+            try {
+                cmd = console.getCommand(line, parsedCmd.getOperationName());
+            } catch (Exception ex) {
+                throw new OperationFormatException("Exception retrieving '" + parsedCmd.getOperationName() + "'. " + ex);
+            }
+            if (cmd == null) {
                 throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
             }
-            if(batchMode) {
-                if(!handler.isBatchMode(this)) {
+
+
+            if (batchMode) {
+                Batch batch = getBatchManager().getActiveBatch();
+                BatchResponseHandler hd = null;
+                if (cmd instanceof BatchCompliantCommand) {
+                    BatchCompliantCommand bc = (BatchCompliantCommand) cmd;
+                    try {
+                        hd = bc.buildBatchResponseHandler(console.getCliCommandContext(), batch.getAttachments());
+                    } catch (CommandException ex) {
+                        throw new CommandFormatException(ex);
+                    }
+                }
+
+                if (cmd instanceof InternalBatchCompliantCommand) {
+                    BatchCompliantCommand bc = (BatchCompliantCommand) cmd;
+                    try {
+                        hd = bc.buildBatchResponseHandler(console.getCliCommandContext(), batch.getAttachments());
+                    } catch (CommandException ex) {
+                        throw new CommandFormatException(ex);
+                    }
+                }
+                if (hd == null) {
                     throw new OperationFormatException("The command is not allowed in a batch.");
                 }
-                Batch batch = getBatchManager().getActiveBatch();
-                return ((OperationCommand) handler).buildHandledRequest(this, batch.getAttachments());
-            } else if (!(handler instanceof OperationCommand)) {
-                throw new OperationFormatException("The command does not translate to an operation request.");
+                ModelNode mn = console.getModelNode(cmd, line, batch.getAttachments());
+                BatchResponseHandler fhd = hd;
+                return new HandledRequest(mn, new ResponseHandler() {
+                    @Override
+                    public void handleResponse(ModelNode step, OperationResponse response) throws CommandLineException {
+                        try {
+                            fhd.handleResponse(step, response);
+                        } catch (CommandException ex) {
+                            throw new CommandLineException(ex);
+                        }
+                    }
+                });
+            } else {
+                ModelNode mn = console.getModelNode(cmd, line);
+                return new HandledRequest(mn, null);
             }
-
-            return new HandledRequest(((OperationCommand) handler).buildRequest(this), null);
         } finally {
             clear(Scope.REQUEST);
             this.parsedCmd = originalParsedArguments;
@@ -1480,7 +1536,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     public void captureOutput(PrintStream captor) {
         assert captor != null;
         console.captureOutput(captor);
-}
+    }
 
     @Override
     @Deprecated

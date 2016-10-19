@@ -43,8 +43,10 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.activator.DefaultActivator;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.activator.ResolveExpressionActivator;
+import org.jboss.as.cli.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
 import org.jboss.as.cli.aesh.converter.OperationRequestAddressConverter;
+import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
@@ -160,6 +162,13 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
                         hasValue(false).
                         type(Boolean.class).
                         activator(ResolveExpressionActivator.class).
+                        create()
+                ).
+                addOption(new ProcessedOptionBuilder().name("headers").
+                        hasValue(true).
+                        type(ModelNode.class).
+                        converter(HeadersConverter.class).
+                        completer(HeadersCompleter.class).
                         create()
                 ).
                 // For help only

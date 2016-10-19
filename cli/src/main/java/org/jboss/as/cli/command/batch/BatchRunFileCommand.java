@@ -30,13 +30,14 @@ import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.GroupCommandDefinition;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.activator.NoBatchActivator;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.aesh.completer.FileCompleter;
 import org.jboss.as.cli.aesh.converter.FileConverter;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
@@ -49,11 +50,11 @@ public class BatchRunFileCommand extends BatchRunCommand {
     // XXX JFDENISE AESH-401
     @Arguments(converter = FileConverter.class,
             completer = FileCompleter.class) // required = true
-    protected List<File> arg;
+    public List<File> arg;
 
     @Override
-    public ModelNode newRequest(CommandContext ctx) throws CommandLineException {
-        final BatchManager batchManager = ctx.getBatchManager();
+    public ModelNode newRequest(CliCommandContext ctx) throws CommandLineException {
+        final BatchManager batchManager = ctx.getLegacyCommandContext().getBatchManager();
         if (batchManager.isBatchActive()) {
             throw new CommandLineException("Batch already active, can't start new batch");
         }
@@ -68,10 +69,10 @@ public class BatchRunFileCommand extends BatchRunCommand {
             throw new CommandLineException("File " + file.getAbsolutePath() + " does not exist.");
         }
 
-        final File currentDir = ctx.getCurrentDir();
+        final File currentDir = ctx.getLegacyCommandContext().getCurrentDir();
         final File baseDir = file.getParentFile();
         if (baseDir != null) {
-            ctx.setCurrentDir(baseDir);
+            ctx.getLegacyCommandContext().setCurrentDir(baseDir);
         }
 
         BufferedReader reader = null;
@@ -80,20 +81,23 @@ public class BatchRunFileCommand extends BatchRunCommand {
             String line = reader.readLine();
             batchManager.activateNewBatch();
             while (line != null) {
-                ctx.handle(line);
+                ctx.executeCommand(line);
                 line = reader.readLine();
             }
             final ModelNode request = batchManager.getActiveBatch().toRequest();
+            if (headers != null) {
+                request.get(Util.OPERATION_HEADERS).set(headers);
+            }
             return request;
         } catch (IOException e) {
             throw new CommandLineException("Failed to read file "
                     + file.getAbsolutePath(), e);
-        } catch (CommandLineException e) {
+        } catch (CommandException e) {
             throw new CommandLineException("Failed to create batch from "
                     + file.getAbsolutePath(), e);
         } finally {
             if (baseDir != null) {
-                ctx.setCurrentDir(currentDir);
+                ctx.getLegacyCommandContext().setCurrentDir(currentDir);
             }
             if (reader != null) {
                 try {

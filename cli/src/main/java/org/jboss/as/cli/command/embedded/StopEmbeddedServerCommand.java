@@ -41,7 +41,7 @@ public class StopEmbeddedServerCommand implements Command<CliCommandInvocation> 
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    protected boolean help;
 
     private final AtomicReference<EmbeddedProcessLaunch> serverReference;
 

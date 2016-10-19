@@ -43,7 +43,7 @@ public class BatchHoldbackCommand implements Command<CliCommandInvocation> {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    protected boolean help;
 
     // XXX JFDENISE AESH-401
     @Arguments() // required = true

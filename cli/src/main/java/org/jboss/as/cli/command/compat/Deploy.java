@@ -34,6 +34,7 @@ import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.aesh.converter.FileConverter;
 import org.jboss.as.cli.aesh.converter.HeadersConverter;
@@ -128,7 +129,11 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
     public CommandResult execute(CliCommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("deploy"));
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "deploy");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
             return CommandResult.SUCCESS;
         }
 

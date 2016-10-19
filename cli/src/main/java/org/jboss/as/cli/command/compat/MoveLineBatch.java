@@ -22,9 +22,27 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.GroupCommandDefinition;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.batch.BatchMvLineCommand;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 @Deprecated
 @GroupCommandDefinition(name = "move-batch-line", description = "", activator = CompatBatchActivator.class)
 public class MoveLineBatch extends BatchMvLineCommand {
+
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation)
+            throws CommandException, InterruptedException {
+        if (help) {
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "move-batch-line");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
+            return CommandResult.SUCCESS;
+        }
+        return super.execute(commandInvocation);
+    }
 }

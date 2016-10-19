@@ -95,7 +95,7 @@ public class EmbedHostControllerCommand implements Command<CliCommandInvocation>
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    protected boolean help;
 
     private static final String ECHO = "echo";
     private static final String DISCARD_STDOUT = "discard";

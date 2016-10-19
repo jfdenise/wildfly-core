@@ -23,8 +23,12 @@ package org.jboss.as.cli.command.compat;
 
 import java.util.concurrent.atomic.AtomicReference;
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.embedded.EmbedServerCommand;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
@@ -36,5 +40,19 @@ public class EmbedServer extends EmbedServerCommand {
 
     public EmbedServer(AtomicReference<EmbeddedProcessLaunch> serverReference, boolean modular) {
         super(serverReference, modular);
+    }
+
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation)
+            throws CommandException, InterruptedException {
+        if (help) {
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "embed-server");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
+            return CommandResult.SUCCESS;
+        }
+        return super.execute(commandInvocation);
     }
 }

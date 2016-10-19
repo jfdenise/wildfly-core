@@ -43,6 +43,7 @@ import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.map.MapCommand;
 import org.jboss.aesh.console.command.map.MapProcessedCommandBuilder;
 import org.jboss.aesh.console.command.map.MapProcessedCommandBuilder.ProcessedOptionProvider;
+import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
@@ -53,13 +54,15 @@ import org.jboss.as.cli.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
  * @author jfdenise
  */
-class MainCommand extends MapCommand<CliCommandInvocation> {
+class MainCommand extends MapCommand<CliCommandInvocation> implements BatchCompliantCommand {
 
     // START BACKWARD
     // This is for backward compatibility.
@@ -113,7 +116,7 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
             } catch (CommandLineException ex) {
                 throw new RuntimeException(ex);
             }
-            return null;
+            return CommandResult.SUCCESS;
         }
         // This is the backward behavior, Please remove me.
         if (contains(propertyId)) {
@@ -382,4 +385,30 @@ class MainCommand extends MapCommand<CliCommandInvocation> {
         }
     }
 
+    @Override
+    public BatchResponseHandler buildBatchResponseHandler(CliCommandContext commandContext, Attachments attachments) throws CommandException {
+        return null;
+    }
+
+    @Override
+    public ModelNode buildRequest(CliCommandContext context) throws CommandFormatException {
+        if (contains(propertyId)) {
+            WriteAttributesSubCommand cmd
+                    = getWriteAttributesSubCommand(context.
+                            getLegacyCommandContext());
+            Set<String> keys = new HashSet<>();
+            for (String opt : cmd.getValues().keySet()) {
+                keys.add(opt);
+            }
+            for (String k : keys) {
+                cmd.resetValue(k);
+            }
+            for (Entry<String, Object> entry : getValues().entrySet()) {
+                cmd.setValue(entry.getKey(), entry.getValue());
+            }
+            return cmd.buildRequest(context);
+        } else {
+            throw new CommandFormatException("Command property is missing.");
+        }
+    }
 }

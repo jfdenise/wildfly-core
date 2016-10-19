@@ -21,17 +21,13 @@
  */
 package org.jboss.as.cli.aesh.converter;
 
-import java.util.Collection;
 import org.jboss.aesh.cl.converter.Converter;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.as.cli.CommandFormatException;
-import org.jboss.as.cli.operation.ParsedOperationRequestHeader;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.as.cli.parsing.DefaultParsingState;
-import org.jboss.as.cli.parsing.ParserUtil;
-import org.jboss.as.cli.parsing.operation.HeaderListState;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
+import org.jboss.as.cli.impl.HeadersArgumentValueConverter;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.ModelType;
 
 /**
  *
@@ -41,36 +37,23 @@ public class HeadersConverter implements Converter<ModelNode, CliConverterInvoca
 
     public static HeadersConverter INSTANCE = new HeadersConverter();
 
-    private final DefaultCallbackHandler callback = new DefaultCallbackHandler();
-    private final DefaultParsingState initialState = new DefaultParsingState("INITIAL_STATE");
-
-    {
-        initialState.enterState('{', HeaderListState.INSTANCE);
-    }
-
-    private HeadersConverter() {
+    public HeadersConverter() {
 
     }
 
     @Override
     public ModelNode convert(CliConverterInvocation converterInvocation) throws OptionValidatorException {
-
         try {
-            callback.reset();
-            ParserUtil.parse(converterInvocation.getInput(), callback, initialState);
-            final Collection<ParsedOperationRequestHeader> headers = callback.getHeaders();
-            if (headers.isEmpty()) {
-                throw new OptionValidatorException("'" + converterInvocation.getInput()
-                        + "' doesn't follow format {[rollout server_group_list [rollback-across-groups];] (<header_name>=<header_value>;)*}");
+            ModelNode mn = HeadersArgumentValueConverter.INSTANCE.
+                    fromString(converterInvocation.getCommandContext().
+                            getLegacyCommandContext(),
+                            converterInvocation.getInput());
+            if (!mn.getType().equals(ModelType.OBJECT)) {
+                throw new OptionValidatorException("Invalid headers format " + converterInvocation.getInput());
             }
-            final ModelNode node = new ModelNode();
-            for (ParsedOperationRequestHeader header : headers) {
-                header.addTo(converterInvocation.
-                        getCommandContext().getLegacyCommandContext(), node);
-            }
-            return node;
+            return mn;
         } catch (CommandFormatException ex) {
-            throw new RuntimeException(ex);
+            throw new OptionValidatorException(ex.getLocalizedMessage());
         }
     }
 }

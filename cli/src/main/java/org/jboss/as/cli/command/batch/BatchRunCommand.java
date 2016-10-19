@@ -60,14 +60,14 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    public boolean help;
 
     @Option(name = "verbose", hasValue = false, required=false, shortName = 'v')
-    private boolean verbose;
+    public boolean verbose;
 
     @Option(name = "headers", completer = HeadersCompleter.class,
             converter = HeadersConverter.class, required=false)
-    protected ModelNode headers;
+    public ModelNode headers;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)
@@ -81,13 +81,10 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
         CommandContext context = commandInvocation.getCommandContext().getLegacyCommandContext();
         Attachments attachments = getAttachments(commandInvocation);
         try {
-            final ModelNode request = newRequest(context);
+            final ModelNode request = newRequest(commandInvocation.getCommandContext());
             OperationBuilder builder = new OperationBuilder(request, true);
             for (String path : attachments.getAttachedFiles()) {
                 builder.addFileAsAttachment(new File(path));
-            }
-            if (headers != null) {
-                request.get(Util.OPERATION_HEADERS).set(headers);
             }
             final ModelControllerClient client = context.getModelControllerClient();
             try {
@@ -143,8 +140,8 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
         return CommandResult.SUCCESS;
     }
 
-    public ModelNode newRequest(CommandContext context) throws CommandLineException {
-        final BatchManager batchManager = context.getBatchManager();
+    public ModelNode newRequest(CliCommandContext context) throws CommandLineException {
+        final BatchManager batchManager = context.getLegacyCommandContext().getBatchManager();
         if (batchManager.isBatchActive()) {
             final Batch batch = batchManager.getActiveBatch();
             List<BatchedCommand> currentBatch = batch.getCommands();
@@ -153,6 +150,9 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
                 throw new CommandLineException("The batch is empty.");
             }
             ModelNode request = batch.toRequest();
+            if (headers != null) {
+                request.get(Util.OPERATION_HEADERS).set(headers);
+            }
             return request;
         }
         throw new CommandLineException("Command can be executed only in the batch mode.");
@@ -162,7 +162,7 @@ public class BatchRunCommand implements Command<CliCommandInvocation>, DMRComman
     public ModelNode buildRequest(CliCommandContext context)
             throws CommandFormatException {
         try {
-            return newRequest(context.getLegacyCommandContext());
+            return newRequest(context);
         } catch (CommandLineException ex) {
             throw new CommandFormatException(ex);
         }

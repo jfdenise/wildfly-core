@@ -21,28 +21,16 @@
  */
 package org.jboss.as.cli.command.compat;
 
-import org.jboss.aesh.cl.GroupCommandDefinition;
-import org.jboss.aesh.console.command.CommandException;
-import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.command.batch.BatchRmLineCommand;
-import org.wildfly.core.cli.command.CliCommandInvocation;
+import org.jboss.as.cli.aesh.activator.ConnectedActivator;
 
-@Deprecated
-@GroupCommandDefinition(name = "remove-batch-line", description = "", activator = CompatBatchActivator.class)
-public class RemoveLineBatch extends BatchRmLineCommand {
+/**
+ *
+ * @author jdenise@redhat.com
+ */
+public class RunBatchActivator extends CompatActivator {
 
-    @Override
-    public CommandResult execute(CliCommandInvocation commandInvocation)
-            throws CommandException, InterruptedException {
-        if (help) {
-            try {
-                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "remove-batch-line");
-            } catch (CommandLineException ex) {
-                throw new CommandException(ex);
-            }
-            return CommandResult.SUCCESS;
-        }
-        return super.execute(commandInvocation);
+    public RunBatchActivator() {
+        super(new ConnectedActivator());
     }
+
 }

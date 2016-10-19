@@ -57,6 +57,10 @@ public class CliCommandContextImpl implements CliCommandContext {
         return context.isDomainMode();
     }
 
+    public CommandContextImpl getCommandContextImpl() {
+        return context;
+    }
+
     public void addBatchOperation(ModelNode request, String originalInput,
             BatchResponseHandler handler) {
         HandledRequest req = new HandledRequest(request, handler == null ? null
@@ -128,6 +132,9 @@ public class CliCommandContextImpl implements CliCommandContext {
 
     @Override
     public void executeCommand(String line) throws CommandException {
+        if (line.isEmpty() || line.charAt(0) == '#') {
+            return; // ignore comments
+        }
         context.getConsole().executeCommand(line);
     }
 

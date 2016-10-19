@@ -22,7 +22,11 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.ReadAttributeCommand;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
@@ -31,4 +35,18 @@ import org.jboss.as.cli.command.ReadAttributeCommand;
 @Deprecated
 @CommandDefinition(name = "read-attribute", description = "", activator = ReadAttributeActivator.class)
 public class ReadAttribute extends ReadAttributeCommand {
+
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation)
+            throws CommandException, InterruptedException {
+        if (help) {
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "read-attribute");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
+            return CommandResult.SUCCESS;
+        }
+        return super.execute(commandInvocation);
+    }
 }

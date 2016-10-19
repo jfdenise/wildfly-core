@@ -26,15 +26,22 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
+import org.jboss.aesh.cl.parser.CommandLineParserException;
+import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.ConsoleCallback;
+import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandNotFoundException;
+import org.jboss.as.cli.Attachments;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CliInitializationException;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.console.CliCommandRegistry;
+import org.jboss.dmr.ModelNode;
 
 /**
  *
@@ -136,5 +143,14 @@ public interface Console {
     void executeCommand(String command) throws CommandException;
 
     CliCommandContext getCliCommandContext();
+
+    ModelNode getModelNode(String originalInput, String opName);
+
+    Command getCommand(String originalInput, String opName) throws CommandNotFoundException,
+            CommandException, CommandLineParserException, OptionValidatorException;
+
+    ModelNode getModelNode(Command command, String originalInput) throws CommandFormatException;
+
+    ModelNode getModelNode(Command command, String originalInput, Attachments attachments) throws CommandFormatException;
 
 }

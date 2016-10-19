@@ -44,7 +44,7 @@ public class BatchMvLineCommand implements Command<CliCommandInvocation> {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    protected boolean help;
 
     @Deprecated
     @Arguments(activator = HiddenActivator.class)

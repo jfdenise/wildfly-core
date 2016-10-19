@@ -52,6 +52,7 @@ import org.jboss.as.cli.command.generic.Util.AttributeDescription;
 import org.jboss.as.cli.impl.HelpSupport;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
+import org.wildfly.core.cli.command.CliCommandContext;
 
 /**
  *
@@ -78,7 +79,7 @@ class WriteAttributesSubCommand extends AbstractOperationSubCommand {
     }
 
     @Override
-    public ModelNode buildRequest(CommandContext ctx) throws CommandFormatException {
+    public ModelNode buildRequest(CliCommandContext ctx) throws CommandFormatException {
 
         final ModelNode composite = new ModelNode();
         composite.get(org.jboss.as.cli.Util.OPERATION).set(org.jboss.as.cli.Util.COMPOSITE);

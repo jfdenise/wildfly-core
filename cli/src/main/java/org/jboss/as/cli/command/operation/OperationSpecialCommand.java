@@ -105,10 +105,19 @@ public class OperationSpecialCommand implements CliSpecialExecutor,
 
     @Override
     public ModelNode buildRequest(String command, CliCommandContext context) throws CommandFormatException {
+        return buildRequest(command, context, null);
+    }
+
+    @Override
+    public ModelNode buildRequest(String command, CliCommandContext context, Attachments attachments) throws CommandFormatException {
         operationParser.reset();
         operationParser.parse(ctx.getCurrentNodePath(),
                 command, ctx);
-        return Util.toOperationRequest(ctx, operationParser);
+        if (attachments == null) {
+            return Util.toOperationRequest(ctx, operationParser);
+        } else {
+            return Util.toOperationRequest(ctx, operationParser, attachments);
+        }
     }
 
     @Override

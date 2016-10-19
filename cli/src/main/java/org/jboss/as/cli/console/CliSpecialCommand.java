@@ -92,6 +92,11 @@ public class CliSpecialCommand {
         }
 
         @Override
+        public ModelNode buildRequest(String input, CliCommandContext context, Attachments attachments) throws CommandFormatException {
+            return cmd.buildRequest(input, context, attachments);
+        }
+
+        @Override
         public ModelNode buildRequest(String input, CliCommandContext context) throws CommandFormatException {
             return cmd.buildRequest(input, context);
         }

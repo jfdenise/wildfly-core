@@ -26,7 +26,6 @@ import java.util.List;
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
-import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
@@ -58,7 +57,7 @@ public class ReadAttributeCommand implements Command<CliCommandInvocation>, DMRC
 
     @Deprecated
     @Option(hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    protected boolean help;
 
     @Option(converter = OperationRequestAddressConverter.class, completer = PathOptionCompleter.class)
     private OperationRequestAddress node;
@@ -112,8 +111,8 @@ public class ReadAttributeCommand implements Command<CliCommandInvocation>, DMRC
         }
         ModelNode request;
         try {
-            request = buildRequest(address, commandInvocation.
-                    getCommandContext().getLegacyCommandContext());
+            request = buildRequest(commandInvocation.
+                    getCommandContext());
         } catch (CommandFormatException ex) {
             throw new CommandException(ex.getMessage(), ex);
         }
@@ -125,13 +124,12 @@ public class ReadAttributeCommand implements Command<CliCommandInvocation>, DMRC
 
     @Override
     public ModelNode buildRequest(CliCommandContext context) throws CommandFormatException {
-        try {
-            return buildRequest(OperationRequestAddressConverter.
-                    convert(null, context.getLegacyCommandContext()),
-                    context.getLegacyCommandContext());
-        } catch (OptionValidatorException ex) {
-            throw new CommandFormatException(ex.getMessage(), ex);
+        OperationRequestAddress address = node;
+        if (address == null) {
+            address = new DefaultOperationRequestAddress(context.getLegacyCommandContext().getCurrentNodePath());
         }
+        return buildRequest(address,
+                context.getLegacyCommandContext());
     }
 
     private ModelNode buildRequest(OperationRequestAddress address,

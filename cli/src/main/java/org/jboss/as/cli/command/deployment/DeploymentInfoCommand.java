@@ -73,7 +73,7 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
 
     @Deprecated
     @Option(hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    protected boolean help;
 
     // Argument comes first, aesh behavior.
     @Arguments(valueSeparator = ',', completer = DeploymentRedeployCommand.NameCompleter.class)

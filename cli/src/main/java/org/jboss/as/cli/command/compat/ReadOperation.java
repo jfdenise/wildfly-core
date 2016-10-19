@@ -22,7 +22,11 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.ReadOperationCommand;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
@@ -31,4 +35,18 @@ import org.jboss.as.cli.command.ReadOperationCommand;
 @Deprecated
 @CommandDefinition(name = "read-operation", description = "", activator = ReadOperationActivator.class)
 public class ReadOperation extends ReadOperationCommand {
+
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation)
+            throws CommandException, InterruptedException {
+        if (help) {
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "read-operation");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
+            return CommandResult.SUCCESS;
+        }
+        return super.execute(commandInvocation);
+    }
 }

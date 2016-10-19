@@ -33,6 +33,7 @@ import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
@@ -104,7 +105,11 @@ public class Undeploy extends DeploymentControlledCommand
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("undeploy"));
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "undeploy");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
             return CommandResult.SUCCESS;
         }
         boolean noOptions = script == null

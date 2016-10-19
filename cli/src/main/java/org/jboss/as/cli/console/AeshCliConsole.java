@@ -46,8 +46,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ServiceLoader;
 import org.jboss.aesh.cl.parser.AeshCommandLineParser;
+import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.result.ResultHandler;
+import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.AeshConsoleBufferBuilder;
 import org.jboss.aesh.console.AeshInputProcessorBuilder;
 import org.jboss.aesh.console.ConsoleBuffer;
@@ -56,15 +58,19 @@ import org.jboss.aesh.console.ConsoleOperation;
 import org.jboss.aesh.console.InputProcessor;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandNotFoundException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.container.AeshCommandContainer;
+import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.console.settings.FileAccessPermission;
 import org.jboss.aesh.edit.actions.Action;
 import org.jboss.aesh.parser.Parser;
+import org.jboss.as.cli.Attachments;
 import org.wildfly.core.cli.command.CliCommandContext;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliInitializationException;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
@@ -115,6 +121,7 @@ import org.jboss.as.cli.command.generic.NodeType;
 import org.jboss.as.cli.command.ifelse.ElseCommand;
 import org.jboss.as.cli.command.ifelse.EndIfCommand;
 import org.jboss.as.cli.command.ifelse.IfCommand;
+import org.jboss.as.cli.command.legacy.InternalDMRCommand;
 import org.jboss.as.cli.command.operation.OperationSpecialCommand;
 import org.jboss.as.cli.command.trycatch.CatchCommand;
 import org.jboss.as.cli.command.trycatch.EndTryCommand;
@@ -128,7 +135,9 @@ import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.Console;
 import org.jboss.as.cli.impl.DefaultCompleter;
 import org.jboss.as.protocol.StreamUtils;
+import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
+import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  * @author jdenise@redhat.com
@@ -424,6 +433,7 @@ class AeshCliConsole implements Console {
         settings.historyFilePermission(permissions);
 
         settings.parseOperators(false);
+        settings.parsingQuotes(false);
 
         settings.interruptHook((org.jboss.aesh.console.Console c, Action action) -> {
             try {
@@ -968,6 +978,68 @@ class AeshCliConsole implements Console {
     @Override
     public CliCommandContext getCliCommandContext() {
         return commandContext;
+    }
+
+    @Override
+    public ModelNode getModelNode(Command command, String originalInput, Attachments attachments) throws CommandFormatException {
+        if (command instanceof DMRCommand) {
+            DMRCommand c = (DMRCommand) command;
+            return c.buildRequest(commandContext);
+        }
+
+        if (command instanceof InternalDMRCommand) {
+            InternalDMRCommand c = (InternalDMRCommand) command;
+            return c.buildRequest(originalInput, commandContext);
+        }
+
+        throw new CommandFormatException("The command does not translate to an operation request.");
+    }
+
+    @Override
+    public ModelNode getModelNode(Command command, String originalInput) throws CommandFormatException {
+        return getModelNode(command, originalInput, null);
+    }
+
+    @Override
+    public Command getCommand(String originalInput, String opName) throws CommandNotFoundException,
+            CommandException, CommandLineParserException, OptionValidatorException {
+        Command command = null;
+        try {
+            command = console.getPopulatedCommand(originalInput);
+        } catch (CommandException ex) {
+            // Fall back for Operation and Bridges
+            final CommandContainer<Command> container = commandRegistry.getCommand(opName, originalInput);
+            CommandLineParser<Command> cmdParser = container.getParser();
+            command = cmdParser.getCommand();
+        }
+        return command;
+    }
+
+    @Override
+    public ModelNode getModelNode(String originalInput, String opName) {
+        Command command = null;
+        try {
+            try {
+                command = console.getPopulatedCommand(originalInput);
+            } catch (CommandException ex) {
+                // Fall back for Operation and Bridges
+                final CommandContainer<Command> container = commandRegistry.getCommand(opName, originalInput);
+                CommandLineParser<Command> cmdParser = container.getParser();
+                if (!(cmdParser.getCommand() instanceof InternalDMRCommand)) {
+                    throw new CommandException("The command does not translate to an operation request.");
+                }
+                InternalDMRCommand c = (InternalDMRCommand) cmdParser.getCommand();
+                return c.buildRequest(originalInput, commandContext);
+            }
+
+            if (!(command instanceof DMRCommand)) {
+                throw new CommandException("The command does not translate to an operation request.");
+            }
+            DMRCommand c = (DMRCommand) command;
+            return c.buildRequest(commandContext);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
 }

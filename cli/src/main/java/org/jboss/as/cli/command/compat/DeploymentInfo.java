@@ -22,9 +22,13 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.deployment.DeploymentInfoCommand;
 import org.jboss.as.cli.command.deployment.DeploymentPermissions;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
@@ -36,5 +40,19 @@ public class DeploymentInfo extends DeploymentInfoCommand {
 
     public DeploymentInfo(CommandContext ctx, DeploymentPermissions permissions) {
         super(ctx, permissions);
+    }
+
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation)
+            throws CommandException, InterruptedException {
+        if (help) {
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "batch clear");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
+            return CommandResult.SUCCESS;
+        }
+        return super.execute(commandInvocation);
     }
 }

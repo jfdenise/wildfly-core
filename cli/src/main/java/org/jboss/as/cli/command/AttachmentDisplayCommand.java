@@ -133,9 +133,9 @@ public class AttachmentDisplayCommand implements Command<CliCommandInvocation>, 
 
     @Override
     public BatchResponseHandler buildBatchResponseHandler(CliCommandContext commandContext, Attachments attachments) throws CommandException {
+        AttachmentResponseHandler handler = buildHandler(commandContext);
         return (ModelNode step, OperationResponse response) -> {
-            buildHandler(commandContext).
-                    handleResponse(response.getResponseNode(), response);
+            handler.handleResponse(step, response);
         };
     }
 

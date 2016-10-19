@@ -22,9 +22,27 @@
 package org.jboss.as.cli.command.compat;
 
 import org.jboss.aesh.cl.GroupCommandDefinition;
+import org.jboss.aesh.console.command.CommandException;
+import org.jboss.aesh.console.command.CommandResult;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.command.batch.BatchClearCommand;
+import org.wildfly.core.cli.command.CliCommandInvocation;
 
 @Deprecated
 @GroupCommandDefinition(name = "clear-batch", description = "", activator = CompatBatchActivator.class)
 public class ClearBatch extends BatchClearCommand {
+
+    @Override
+    public CommandResult execute(CliCommandInvocation commandInvocation)
+            throws CommandException, InterruptedException {
+        if (help) {
+            try {
+                Util.printLegacyHelp(commandInvocation.getCommandContext().getLegacyCommandContext(), "batch clear");
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex);
+            }
+            return CommandResult.SUCCESS;
+        }
+        return super.execute(commandInvocation);
+    }
 }

@@ -27,19 +27,13 @@ import org.jboss.aesh.console.command.CommandResult;
 import java.util.List;
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.Option;
-import org.jboss.aesh.cl.parser.CommandLineParser;
 import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandNotFoundException;
-import org.jboss.aesh.console.command.container.CommandContainer;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.aesh.activator.HiddenActivator;
-import org.jboss.as.cli.command.legacy.InternalDMRCommand;
-import org.jboss.as.cli.console.CliCommandRegistry;
-import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.CliCommandInvocation;
-import org.wildfly.core.cli.command.DMRCommand;
 
 /**
  * A Command to echo variables. This is not activated, we are missing a proper
@@ -87,33 +81,6 @@ public class EchoDMRCommand implements Command<CliCommandInvocation> {
         for (String s : cmd) {
             builder.append(s).append(" ");
         }
-        commandInvocation.println(retrieveRequest(cmd.get(0), builder.toString(),
-                commandInvocation).toString());
-    }
-
-    private ModelNode retrieveRequest(String opName, String originalInput,
-            CliCommandInvocation commandInvocation)
-            throws CommandNotFoundException, InterruptedException, CommandException, CommandFormatException, CommandLineParserException, OptionValidatorException {
-
-        Command command = null;
-        try {
-            command = commandInvocation.getPopulatedCommand(originalInput);
-        } catch (CommandException ex) {
-            // Fall back for Operation and Bridges
-            final CommandContainer<Command> container = ((CliCommandRegistry) commandInvocation.getCommandRegistry()).
-                    getCommand(opName, originalInput);
-            CommandLineParser<Command> cmdParser = container.getParser();
-            if (!(cmdParser.getCommand() instanceof InternalDMRCommand)) {
-                throw new CommandException("The command does not translate to an operation request.");
-            }
-            InternalDMRCommand c = (InternalDMRCommand) cmdParser.getCommand();
-            return c.buildRequest(originalInput, commandInvocation.getCommandContext());
-        }
-
-        if (!(command instanceof DMRCommand)) {
-            throw new CommandException("The command does not translate to an operation request.");
-        }
-        DMRCommand c = (DMRCommand) command;
-        return c.buildRequest(commandInvocation.getCommandContext());
+        commandInvocation.println(commandInvocation.getModelNode(builder.toString(), cmd.get(0)).toString());
     }
 }

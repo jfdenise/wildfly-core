@@ -40,8 +40,6 @@ import org.jboss.as.cli.aesh.converter.DefaultValueConverter;
 import org.jboss.as.cli.aesh.converter.ListConverter;
 import org.jboss.as.cli.aesh.converter.NonObjectConverter;
 import org.jboss.as.cli.aesh.converter.PropertiesConverter;
-import org.jboss.as.cli.operation.OperationFormatException;
-import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.aesh.provider.CliCompleterInvocation;
 import org.jboss.as.cli.aesh.provider.CliConverterInvocation;
 import org.jboss.as.cli.impl.HelpSupport;
@@ -68,55 +66,6 @@ class ResourceOperationSubCommand extends AbstractOperationSubCommand {
         this.customCompleters = customCompleters;
         this.customConverters = customConverters;
         this.parser = parser;
-    }
-
-    @Override
-    ModelNode buildRequest(CommandContext ctx) throws CommandFormatException {
-        final ModelNode request = new ModelNode();
-        final ModelNode address = request.get(org.jboss.as.cli.Util.ADDRESS);
-        if (getNodeType().dependsOnProfile() && ctx.isDomainMode()) {
-            final String profile = (String) getValue("profile");
-            if (profile == null) {
-                throw new OperationFormatException("Required argument --profile is missing.");
-            }
-            address.add(org.jboss.as.cli.Util.PROFILE, profile);
-        }
-
-        for (OperationRequestAddress.Node node : getNodeType().getAddress()) {
-            address.add(node.getType(), node.getName());
-        }
-        address.add(getNodeType().getType(), (String) getValue(getPropertyId()));
-        request.get(org.jboss.as.cli.Util.OPERATION).set(getOperationName());
-
-        for (String argName : getValues().keySet()) {
-            if (getNodeType().dependsOnProfile() && argName.equals("profile")) {
-                continue;
-            }
-            if (argName.equals(getPropertyId())) {
-                continue;
-            }
-
-            // XXX JFDENISE, SHOUDL BE DONE BY THE RUNTIME
-//            final ArgumentWithValue arg = (ArgumentWithValue) this.args.get(argName);
-//            if (arg == null) {
-//                if (argName.equals(GenericTypeOperationHandler.this.name.getFullName())) {
-//                    continue;
-//                }
-//                throw new CommandFormatException("Unrecognized argument " + argName + " for command '" + opName + "'.");
-//            }
-// XXX JFDENISE< WHAT IS THIS?
-//            final String propName;
-//            if (argName.charAt(1) == '-') {
-//                propName = argName.substring(2);
-//            } else {
-//                propName = argName.substring(1);
-//            }
-//                final String valueString = parsedArgs.getPropertyValue(argName);
-//                ModelNode nodeValue = arg.getValueConverter().fromString(ctx, valueString);
-            final ModelNode nodeValue = (ModelNode) getValue(argName);
-            request.get(argName).set(nodeValue);
-        }
-        return request;
     }
 
     @Override

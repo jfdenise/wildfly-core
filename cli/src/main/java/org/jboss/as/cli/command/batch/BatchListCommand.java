@@ -44,7 +44,7 @@ public class BatchListCommand implements Command<CliCommandInvocation> {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HiddenActivator.class)
-    private boolean help;
+    protected boolean help;
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation)

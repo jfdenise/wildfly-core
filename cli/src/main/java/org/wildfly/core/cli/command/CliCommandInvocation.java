@@ -20,6 +20,7 @@ import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.terminal.Shell;
 import org.jboss.as.cli.impl.Console;
+import org.jboss.dmr.ModelNode;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -142,6 +143,10 @@ public class CliCommandInvocation implements CommandInvocation {
     public Command getPopulatedCommand(String commandLine) throws CommandNotFoundException,
             CommandException, CommandLineParserException, OptionValidatorException {
         return commandInvocation.getPopulatedCommand(commandLine);
+    }
+
+    public ModelNode getModelNode(String originalInput, String opName) throws CommandException {
+        return console.getModelNode(originalInput, opName);
     }
 
 }

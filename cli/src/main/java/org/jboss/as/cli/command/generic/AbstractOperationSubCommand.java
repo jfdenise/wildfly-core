@@ -31,6 +31,7 @@ import org.jboss.aesh.cl.parser.CommandLineParserException;
 import org.jboss.aesh.console.command.CommandException;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.aesh.console.command.map.MapCommand;
+import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
@@ -41,13 +42,15 @@ import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.util.SimpleTable;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.wildfly.core.cli.command.CliCommandContext;
 import org.wildfly.core.cli.command.CliCommandInvocation;
 
 /**
  *
  * @author jfdenise
  */
-public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandInvocation> {
+public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandInvocation> implements BatchCompliantCommand {
 
     private final String operationName;
     private final NodeType nodeType;
@@ -83,7 +86,7 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
         }
         ModelNode request = null;
         try {
-            request = buildRequest(commandInvocation.getCommandContext().getLegacyCommandContext());
+            request = buildRequest(commandInvocation.getCommandContext());
         } catch (CommandFormatException ex) {
             throw new RuntimeException(ex);
         }
@@ -116,7 +119,7 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
         if (buf != null) {
             commandInvocation.println(buf.toString());
         }
-        return null;
+        return CommandResult.SUCCESS;
     }
 
     StringBuilder formatResponse(CommandContext ctx, ModelNode opResponse, boolean composite, StringBuilder buf) throws CommandFormatException {
@@ -188,7 +191,14 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
         }
     }
 
-    ModelNode buildRequest(CommandContext ctx) throws CommandFormatException {
+    @Override
+    public BatchResponseHandler buildBatchResponseHandler(CliCommandContext commandContext,
+            Attachments attachments) throws CommandException {
+        return null;
+    }
+
+    @Override
+    public ModelNode buildRequest(CliCommandContext ctx) throws CommandFormatException {
         final ModelNode request = new ModelNode();
         final ModelNode address = request.get(org.jboss.as.cli.Util.ADDRESS);
         if (getNodeType().dependsOnProfile() && ctx.isDomainMode()) {
