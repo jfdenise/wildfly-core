@@ -136,7 +136,6 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
             for (ProcessedOption po : options.values()) {
                 opts.add(po);
             }
-            transferValues(opts);
             return opts;
         }
     }
@@ -473,21 +472,6 @@ public class LsMapCommand extends MapCommand<CliCommandInvocation> implements DM
         if (names != null) {
             printList(invocation, names);
         }
-    }
-
-    private void transferValues(List<ProcessedOption> options) {
-        if (previousOptions != null) {
-            for (ProcessedOption popt : previousOptions) {
-                if (popt.getValue() != null) {
-                    for (ProcessedOption opt : options) {
-                        if (opt.getName().equals(popt.getName())) {
-                            opt.addValue(popt.getValue());
-                        }
-                    }
-                }
-            }
-        }
-        previousOptions = options;
     }
 
     private void printList(CliCommandInvocation ctx, List<String> lst) {

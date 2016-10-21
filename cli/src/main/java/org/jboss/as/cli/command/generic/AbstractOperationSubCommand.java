@@ -270,19 +270,4 @@ public abstract class AbstractOperationSubCommand extends MapCommand<CliCommandI
     public String getDescription() {
         return operationDescription;
     }
-
-    void transferValues(List<ProcessedOption> options) {
-        if (previousOptions != null) {
-            for (ProcessedOption popt : previousOptions) {
-                if (popt.getValue() != null) {
-                    for (ProcessedOption opt : options) {
-                        if (opt.getName().equals(popt.getName())) {
-                            opt.addValue(popt.getValue());
-                        }
-                    }
-                }
-            }
-        }
-        previousOptions = options;
-    }
 }

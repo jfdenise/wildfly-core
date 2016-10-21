@@ -219,7 +219,6 @@ class WriteAttributesSubCommand extends AbstractOperationSubCommand {
                             // XXX JFDENISE, REPLACE WITH LOG...
                             throw new RuntimeException(ex);
                         }
-                        transferValues(allOptions);
                         return allOptions;
                     }
                 }).
