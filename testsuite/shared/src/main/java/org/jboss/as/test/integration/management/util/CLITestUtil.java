@@ -53,7 +53,6 @@ public class CLITestUtil {
     private static final boolean isRemote = Boolean.parseBoolean(System.getProperty("org.jboss.as.test.integration.remote", "false"));
 
     public static CommandContext getCommandContext() throws CliInitializationException {
-        System.setProperty("aesh.terminal","org.jboss.aesh.terminal.TestTerminal");
         setJBossCliConfig();
         return CommandContextFactory.getInstance().newCommandContext(constructUri("remote+http", serverAddr , serverPort), isRemote ? username : null, isRemote ? password.toCharArray() : null);
     }
@@ -63,7 +62,6 @@ public class CLITestUtil {
     }
 
     public static CommandContext getCommandContext(WildFlyManagedConfiguration config) throws CliInitializationException {
-        System.setProperty("aesh.terminal","org.jboss.aesh.terminal.TestTerminal");
         setJBossCliConfig();
             return CommandContextFactory.getInstance().newCommandContext(
                     constructUri(config.getHostControllerManagementProtocol(),
@@ -73,32 +71,22 @@ public class CLITestUtil {
 
     public static CommandContext getCommandContext(String address, int port, InputStream in, OutputStream out)
             throws CliInitializationException {
-        // to avoid the need to reset the terminal manually after the tests, e.g. 'stty sane'
-        System.setProperty("aesh.terminal","org.jboss.aesh.terminal.TestTerminal");
         setJBossCliConfig();
         return CommandContextFactory.getInstance().newCommandContext(address + ":" + port, isRemote ? username : null, isRemote ? password.toCharArray() : null, in, out);
     }
 
     public static CommandContext getCommandContext(String protocol, String address, int port)
             throws CliInitializationException {
-        // to avoid the need to reset the terminal manually after the tests, e.g. 'stty sane'
-        System.setProperty("aesh.terminal","org.jboss.aesh.terminal.TestTerminal");
         setJBossCliConfig();
         return CommandContextFactory.getInstance().newCommandContext(constructUri(protocol, address, port), isRemote ? username : null, isRemote ? password.toCharArray() : null);
     }
 
     public static CommandContext getCommandContext(OutputStream out) throws CliInitializationException {
-        // to avoid the need to reset the terminal manually after the tests, e.g. 'stty sane'
-        System.setProperty("aesh.ansi","false");
-        System.setProperty("aesh.terminal","org.jboss.aesh.terminal.TestTerminal");
         setJBossCliConfig();
         return CommandContextFactory.getInstance().newCommandContext(constructUri(null, serverAddr , serverPort), isRemote ? username : null, isRemote ? password.toCharArray() : null, null, out);
     }
 
     public static CommandContext getCommandContext(DomainTestSupport domainTestSupport, InputStream in, OutputStream out) throws CliInitializationException {
-        // to avoid the need to reset the terminal manually after the tests, e.g. 'stty sane'
-        System.setProperty("aesh.ansi", "false");
-        System.setProperty("aesh.terminal", "org.jboss.aesh.terminal.TestTerminal");
         setJBossCliConfig();
         WildFlyManagedConfiguration config = domainTestSupport.getDomainMasterConfiguration();
         return CommandContextFactory.getInstance().
