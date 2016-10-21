@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
-import org.jboss.aesh.console.Config;
+import org.aesh.util.Config;
 import org.jboss.as.cli.Attachments;
 
 import org.jboss.as.cli.CommandContext;
