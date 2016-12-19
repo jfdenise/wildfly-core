@@ -73,8 +73,11 @@ import javax.security.auth.login.Configuration;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslException;
+import org.aesh.command.impl.operator.OutputDelegate;
+import org.aesh.complete.AeshCompleteOperation;
+import org.aesh.readline.Prompt;
+import org.aesh.utils.Config;
 import org.aesh.util.FileAccessPermission;
-
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -106,37 +109,26 @@ import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
 import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
 import org.jboss.as.cli.handlers.ArchiveHandler;
-import org.jboss.as.cli.handlers.AttachmentHandler;
-import org.jboss.as.cli.handlers.ClearScreenHandler;
 import org.jboss.as.cli.handlers.CommandCommandHandler;
-import org.jboss.as.cli.handlers.CommandTimeoutHandler;
-import org.jboss.as.cli.handlers.ConnectHandler;
-import org.jboss.as.cli.handlers.ConnectionInfoHandler;
 import org.jboss.as.cli.handlers.DeployHandler;
 import org.jboss.as.cli.handlers.DeploymentInfoHandler;
 import org.jboss.as.cli.handlers.DeploymentOverlayHandler;
 import org.jboss.as.cli.handlers.EchoDMRHandler;
 import org.jboss.as.cli.handlers.EchoVariableHandler;
 import org.jboss.as.cli.handlers.GenericTypeOperationHandler;
-import org.jboss.as.cli.handlers.HelpHandler;
 import org.jboss.as.cli.handlers.HistoryHandler;
-import org.jboss.as.cli.handlers.LsHandler;
 import org.jboss.as.cli.handlers.OperationRequestHandler;
-import org.jboss.as.cli.handlers.PrefixHandler;
-import org.jboss.as.cli.handlers.PrintWorkingNodeHandler;
-import org.jboss.as.cli.handlers.QuitHandler;
 import org.jboss.as.cli.handlers.ReadAttributeHandler;
 import org.jboss.as.cli.handlers.ReadOperationHandler;
 import org.jboss.as.cli.handlers.ReloadHandler;
 import org.jboss.as.cli.handlers.SetVariableHandler;
 import org.jboss.as.cli.handlers.ShutdownHandler;
+import org.jboss.as.cli.handlers.ResponseHandler;
 import org.jboss.as.cli.handlers.UndeployHandler;
 import org.jboss.as.cli.handlers.UnsetVariableHandler;
-import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.cli.handlers.batch.BatchClearHandler;
 import org.jboss.as.cli.handlers.batch.BatchDiscardHandler;
 import org.jboss.as.cli.handlers.batch.BatchEditLineHandler;
-import org.jboss.as.cli.handlers.batch.BatchHandler;
 import org.jboss.as.cli.handlers.batch.BatchHoldbackHandler;
 import org.jboss.as.cli.handlers.batch.BatchListHandler;
 import org.jboss.as.cli.handlers.batch.BatchMoveLineHandler;
@@ -156,6 +148,24 @@ import org.jboss.as.cli.handlers.trycatch.FinallyHandler;
 import org.jboss.as.cli.handlers.trycatch.TryHandler;
 import org.jboss.as.cli.impl.ReadlineConsole.Settings;
 import org.jboss.as.cli.impl.ReadlineConsole.SettingsBuilder;
+import org.jboss.as.cli.impl.aesh.AeshCommands;
+import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecution;
+import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecutor;
+import org.jboss.as.cli.impl.aesh.commands.AttachmentCommand;
+import org.jboss.as.cli.impl.aesh.commands.CdCommand;
+import org.jboss.as.cli.impl.aesh.commands.ClearCommand;
+import org.jboss.as.cli.impl.aesh.commands.plugins.CommandsCommand;
+import org.jboss.as.cli.impl.aesh.commands.CommandTimeoutCommand;
+import org.jboss.as.cli.impl.aesh.commands.ConnectCommand;
+import org.jboss.as.cli.impl.aesh.commands.ConnectionInfoCommand;
+import org.jboss.as.cli.impl.aesh.commands.HelpCommand;
+import org.jboss.as.cli.impl.aesh.commands.LsCommand;
+import org.jboss.as.cli.impl.aesh.commands.PwdCommand;
+import org.jboss.as.cli.impl.aesh.commands.QuitCommand;
+import org.jboss.as.cli.impl.aesh.commands.VersionCommand;
+import org.jboss.as.cli.impl.aesh.commands.batch.BatchCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentCommand;
+import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -175,13 +185,18 @@ import org.jboss.as.cli.util.FingerprintGenerator;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationBuilder;
+import org.jboss.as.controller.client.OperationResponse;
 import org.jboss.as.protocol.GeneralTimeoutHandler;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
+import org.jboss.modules.ModuleLoadException;
 import org.jboss.stdio.StdioContext;
 import org.wildfly.security.auth.callback.CallbackUtil;
+import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.wildfly.core.cli.command.DMRCommand;
+import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.OptionalNameCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -200,7 +215,7 @@ import org.xnio.http.RedirectException;
  *
  * @author Alexey Loubyansky
  */
-class CommandContextImpl implements CommandContext, ModelControllerClientFactory.ConnectionCloseHandler {
+public class CommandContextImpl implements CommandContext, ModelControllerClientFactory.ConnectionCloseHandler {
 
     private static final Logger log = Logger.getLogger(CommandContext.class);
 
@@ -226,11 +241,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private final ControllerAddressResolver addressResolver;
 
     /** command registry */
-    private final CommandRegistry cmdRegistry = new CommandRegistry();
+    private final CommandRegistry cmdRegistry;
     /** loads command handlers from the domain management model extensions */
     private ExtensionsLoader extLoader;
 
-    private Console console;
+    private ReadlineConsole console;
 
     /** whether the session should be terminated */
     private byte terminate;
@@ -272,7 +287,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** batches */
     private BatchManager batchManager = new DefaultBatchManager();
     /** the default command completer */
-    private final CommandCompleter cmdCompleter;
+    private final CommandLineCompleter cmdCompleter;
     /** the timeout handler */
     private final GeneralTimeoutHandler timeoutHandler = new GeneralTimeoutHandler();
     /** the client bind address */
@@ -317,6 +332,10 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private ControllerAddress connectionAddress;
 
     private boolean redefinedOutput;
+
+    private final AeshCommands aeshCommands;
+    private CLICommandInvocation invocationContext;
+    private final CommandCompleter legacyCmdCompleter;
     /**
      * Version mode - only used when --version is called from the command line.
      *
@@ -326,8 +345,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         this.console = null;
         this.operationCandidatesProvider = null;
         this.cmdCompleter = null;
+        this.legacyCmdCompleter = null;
         operationHandler = new OperationRequestHandler();
         initStdIO();
+        aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
+        cmdRegistry = aeshCommands.getRegistry();
         try {
             initCommands();
         } catch (CommandLineException e) {
@@ -378,26 +400,32 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         // System.out has been captured prior IO been replaced. That is required due to embed-server use case
         // that will replace output.
         initStdIO();
-        try {
-            initCommands();
-        } catch (CommandLineException e) {
-            throw new CliInitializationException("Failed to initialize commands", e);
-        }
-
         initSSLContext();
         initJaasConfig();
         if (configuration.isInitConsole() || configuration.getConsoleInput() != null) {
-            cmdCompleter = new CommandCompleter(cmdRegistry);
             // we don't ask to start the console here because it will start reading the input immediately
             // this will break in case the launching line had input redirection and switch to connect to the controller,
             // e.g. jboss-cli.ch -c < some_file
             // the input will be read before the connection is established
             initBasicConsole(configuration.getConsoleInput(), false);
-            console.addCompleter(cmdCompleter);
+            aeshCommands = new AeshCommands(this, console,
+                    new OperationCommandContainer(this));
+            this.cmdRegistry = aeshCommands.getRegistry();
+            legacyCmdCompleter = new CommandCompleter(cmdRegistry);
+            cmdCompleter = aeshCommands.getCommandCompleter();
             this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
         } else {
+            aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
+            this.cmdRegistry = aeshCommands.getRegistry();
             this.cmdCompleter = null;
+            this.legacyCmdCompleter = null;
             this.operationCandidatesProvider = null;
+        }
+
+        try {
+            initCommands();
+        } catch (CommandLineException e) {
+            throw new CliInitializationException("Failed to initialize commands", e);
         }
 
         addShutdownHook();
@@ -421,7 +449,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         // this method shouldn't be called twice during the session
         assert console == null : "the console has already been initialized";
         Settings settings = createSettings(consoleInput);
-        this.console = Console.Factory.getConsole(this, settings);
+        try {
+            this.console = new ReadlineConsole(settings);
+        } catch (IOException ex) {
+            throw new CliInitializationException(ex);
+        }
         this.console.setActionCallback((line) -> {
             handleSafe(line);
             if (console != null) {
@@ -477,47 +509,65 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     private void initCommands() throws CommandLineException {
-        cmdRegistry.registerHandler(new AttachmentHandler(this), "attachment");
-        cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
-        cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
+
+        try {
+            aeshCommands.getRegistry().addCommand(new AttachmentCommand());
+            aeshCommands.getRegistry().addCommand(new BatchCommand());
+            aeshCommands.getRegistry().addCommand(new CdCommand());
+            aeshCommands.getRegistry().addCommand(new ClearCommand());
+            aeshCommands.getRegistry().addCommand(new CommandTimeoutCommand());
+            aeshCommands.getRegistry().addCommand(new ConnectCommand());
+            aeshCommands.getRegistry().addCommand(new ConnectionInfoCommand());
+            DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
+            aeshCommands.getRegistry().addCommand(new HelpCommand(aeshCommands.getRegistry()));
+            LsCommand.registerLsCommand(this, aeshCommands);
+
+            aeshCommands.getRegistry().addCommand(new PwdCommand());
+            aeshCommands.getRegistry().addCommand(new QuitCommand());
+            aeshCommands.getRegistry().addCommand(new VersionCommand());
+        } catch (CommandLineException ex) {
+            throw new CliInitializationException(ex);
+        }
+        aeshCommands.getRegistry().addCommand(new CommandsCommand(aeshCommands.getRegistry(), this));
+        // Registration in cmdRegistry automaticaly registers the legacy commands
+        // in the Aesh registry.
+        //cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
+        //cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
         cmdRegistry.registerHandler(new CommandCommandHandler(cmdRegistry), "command");
-        cmdRegistry.registerHandler(new ConnectHandler(), "connect");
         cmdRegistry.registerHandler(new EchoDMRHandler(), "echo-dmr");
-        cmdRegistry.registerHandler(new HelpHandler(cmdRegistry), "help", "h");
         cmdRegistry.registerHandler(new HistoryHandler(), "history");
-        cmdRegistry.registerHandler(new LsHandler(this), "ls");
+        //cmdRegistry.registerHandler(new LsHandler(this), "ls");
         cmdRegistry.registerHandler(new ASModuleHandler(this), "module");
-        cmdRegistry.registerHandler(new PrintWorkingNodeHandler(), "pwd", "pwn");
-        cmdRegistry.registerHandler(new QuitHandler(), "quit", "q", "exit");
+        //cmdRegistry.registerHandler(new PrintWorkingNodeHandler(), "pwd", "pwn");
         cmdRegistry.registerHandler(new ReadAttributeHandler(this), "read-attribute");
         cmdRegistry.registerHandler(new ReadOperationHandler(this), "read-operation");
-        cmdRegistry.registerHandler(new VersionHandler(), "version");
-        cmdRegistry.registerHandler(new ConnectionInfoHandler(), "connection-info");
-
-        // command-timeout
-        cmdRegistry.registerHandler(new CommandTimeoutHandler(), "command-timeout");
+        //cmdRegistry.registerHandler(new VersionHandler(), "version");
+        //cmdRegistry.registerHandler(new ConnectionInfoHandler(), "connection-info");
 
         // variables
         cmdRegistry.registerHandler(new SetVariableHandler(), "set");
         cmdRegistry.registerHandler(new EchoVariableHandler(), "echo");
         cmdRegistry.registerHandler(new UnsetVariableHandler(), "unset");
 
-        // deployment
-        cmdRegistry.registerHandler(new DeployHandler(this), "deploy");
-        cmdRegistry.registerHandler(new UndeployHandler(this), "undeploy");
-        cmdRegistry.registerHandler(new DeploymentInfoHandler(this), "deployment-info");
+        // deployment legacy bridge
+        cmdRegistry.registerHandler(new DeployHandler(this), isLegacyMode(), "deploy");
+        cmdRegistry.registerHandler(new UndeployHandler(this), isLegacyMode(), "undeploy");
+        cmdRegistry.registerHandler(new DeploymentInfoHandler(this), isLegacyMode(), "deployment-info");
+
+        // deployment-overlay
         cmdRegistry.registerHandler(new DeploymentOverlayHandler(this), "deployment-overlay");
 
-        // batch commands
-        cmdRegistry.registerHandler(new BatchHandler(this), "batch");
-        cmdRegistry.registerHandler(new BatchDiscardHandler(), "discard-batch");
-        cmdRegistry.registerHandler(new BatchListHandler(), "list-batch");
-        cmdRegistry.registerHandler(new BatchHoldbackHandler(), "holdback-batch");
-        cmdRegistry.registerHandler(new BatchRunHandler(this), "run-batch");
-        cmdRegistry.registerHandler(new BatchClearHandler(), "clear-batch");
-        cmdRegistry.registerHandler(new BatchRemoveLineHandler(), "remove-batch-line");
-        cmdRegistry.registerHandler(new BatchMoveLineHandler(), "move-batch-line");
-        cmdRegistry.registerHandler(new BatchEditLineHandler(), "edit-batch-line");
+        // batch legacy bridge
+        // We can't register the batch legacy command, name clash with new command.
+        //cmdRegistry.registerHandler(new BatchHandler(this), isLegacyMode(), "batch");
+        cmdRegistry.registerHandler(new BatchDiscardHandler(), isLegacyMode(), "discard-batch");
+        cmdRegistry.registerHandler(new BatchListHandler(), isLegacyMode(), "list-batch");
+        cmdRegistry.registerHandler(new BatchHoldbackHandler(), isLegacyMode(), "holdback-batch");
+        cmdRegistry.registerHandler(new BatchRunHandler(this), isLegacyMode(), "run-batch");
+        cmdRegistry.registerHandler(new BatchClearHandler(), isLegacyMode(), "clear-batch");
+        cmdRegistry.registerHandler(new BatchRemoveLineHandler(), isLegacyMode(), "remove-batch-line");
+        cmdRegistry.registerHandler(new BatchMoveLineHandler(), isLegacyMode(), "move-batch-line");
+        cmdRegistry.registerHandler(new BatchEditLineHandler(), isLegacyMode(), "edit-batch-line");
 
         // try-catch
         cmdRegistry.registerHandler(new TryHandler(), "try");
@@ -562,7 +612,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
         registerExtraHandlers();
 
-        extLoader = new ExtensionsLoader(cmdRegistry, this);
+        extLoader = new ExtensionsLoader(cmdRegistry, aeshCommands.getRegistry(), this);
     }
 
     private void registerExtraHandlers() throws CommandLineException {
@@ -570,6 +620,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         for (CommandHandlerProvider provider : loader) {
             cmdRegistry.registerHandler(provider.createCommandHandler(this), provider.isTabComplete(), provider.getNames());
         }
+
+        aeshCommands.registerExtraCommands();
     }
 
     public int getExitCode() {
@@ -725,59 +777,108 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             printLine(getPrompt() + echoLine);
         }
 
-        resetArgs(line);
+        if (!INTERACT) { // special case for builtins and pre-processing.
+            if (console == null) {
+                initBasicConsole(null, false);
+            }
+            boolean b = console.handleBuiltins(line);
+            if (b) {
+                return;
+            }
+            line = console.parse(line);
+        }
+
         try {
-            if(redirection != null) {
+            // Required in all cases to handle substitutions.
+            resetArgs(line);
+            if (redirection != null) {
                 redirection.target.handle(this);
-            } else if (parsedCmd.getFormat() == OperationFormat.INSTANCE) {
-                if (isBatchMode()) {
-                    Batch batch = getBatchManager().getActiveBatch();
-                    final ModelNode request = Util.toOperationRequest(this,
-                            parsedCmd, batch.getAttachments());
-                    StringBuilder op = new StringBuilder();
-                    op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
-                    op.append(line.substring(line.indexOf(':')));
-                    DefaultBatchedCommand batchedCmd
-                            = new DefaultBatchedCommand(this, op.toString(), request, null);
-                    batch.add(batchedCmd);
-                } else {
-                    Attachments attachments = new Attachments();
-                    final ModelNode op = Util.toOperationRequest(this, parsedCmd, attachments);
-                    RequestWithAttachments req = new RequestWithAttachments(op, attachments);
-                    set(Scope.REQUEST, "OP_REQ", req);
-                    operationHandler.handle(this);
-                }
             } else {
-                final String cmdName = parsedCmd.getOperationName();
-                CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
-                if (handler != null) {
-                    if (isBatchMode() && handler.isBatchMode(this)) {
-                        if (!(handler instanceof OperationCommand)) {
-                            throw new CommandLineException("The command is not allowed in a batch.");
-                        } else {
-                            try {
-                                Batch batch = getBatchManager().getActiveBatch();
-                                HandledRequest request = ((OperationCommand) handler).buildHandledRequest(this,
-                                        batch.getAttachments());
-                                BatchedCommand batchedCmd
-                                        = new DefaultBatchedCommand(this, line,
-                                                request.getRequest(), request.getResponseHandler());
-                                batch.add(batchedCmd);
-                            } catch (CommandFormatException e) {
-                                throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
+                line = parsedCmd.getSubstitutedLine();
+                CLIExecutor cliExecutor = aeshCommands.newExecutor(line);
+                if (cliExecutor != null) {
+                    for (CLIExecution exec : cliExecutor.getExecutions()) {
+                        invocationContext = exec.getInvocation();
+                        try {
+                            // Could be an operation.
+                            if (exec.isOperation()) {
+                                String opLine = exec.getLine();
+                                resetArgs(opLine);
+                                if (isBatchMode()) {
+                                    Batch batch = getBatchManager().getActiveBatch();
+                                    final ModelNode request = Util.toOperationRequest(this,
+                                            parsedCmd, batch.getAttachments());
+                                    StringBuilder op = new StringBuilder();
+                                    op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
+                                    op.append(line.substring(opLine.indexOf(':')));
+                                    DefaultBatchedCommand batchedCmd
+                                            = new DefaultBatchedCommand(this, op.toString(), request, null);
+                                    batch.add(batchedCmd);
+                                } else {
+                                    Attachments attachments = new Attachments();
+                                    final ModelNode op = Util.toOperationRequest(this, parsedCmd, attachments);
+                                    RequestWithAttachments req = new RequestWithAttachments(op, attachments);
+                                    set(Scope.REQUEST, "OP_REQ", req);
+                                    operationHandler.handle(this);
+                                }
+                                continue;
                             }
+                            // Could be a legacy command.
+                            CommandHandler handler = exec.getLegacyHandler();
+                            if (handler != null) {
+                                handleLegacyCommand(exec.getLine(), handler);
+                                continue;
+                            }
+                            // Finally an aesh command.
+                            BatchCompliantCommand bc = exec.getBatchCompliant();
+                            if (isBatchMode() && bc != null) {
+                                try {
+                                    Batch batch = getBatchManager().getActiveBatch();
+                                    BatchCompliantCommand.BatchResponseHandler request = bc.buildBatchResponseHandler(this,
+                                            batch.getAttachments());
+
+                                    // Wrap into legacy API.
+                                    ResponseHandler rh = null;
+                                    if (request != null) {
+                                        rh = (ModelNode step, OperationResponse response) -> {
+                                            request.handleResponse(step, response);
+                                        };
+                                    }
+                                    BatchedCommand batchedCmd
+                                            = new DefaultBatchedCommand(this, line,
+                                                    bc.buildRequest(this, batch.getAttachments()), rh);
+                                    batch.add(batchedCmd);
+                                } catch (CommandFormatException e) {
+                                    throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
+                                }
+                            } else {
+                                execute(() -> {
+                                    executor.execute(aeshCommands.newExecutableBuilder(exec),
+                                            timeout, TimeUnit.SECONDS);
+                                    return null;
+
+                                }, line);
+                            }
+                        } finally {
+                            invocationContext = null;
+                            // Operations are handled as aesh command.
+                            clear(Scope.REQUEST);
                         }
-                    } else {
-                        execute(() -> {
-                            executor.execute(handler, timeout, TimeUnit.SECONDS);
-                            return null;
-                        }, line);
                     }
                 } else {
-                    throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
+                    // Deprecated commands for backward compat.
+                    resetArgs(line);
+                    final String cmdName = parsedCmd.getOperationName();
+                    CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
+                    if (handler != null) {
+                        handleLegacyCommand(line, handler);
+                    } else {
+                        throw new CommandLineException("Unexpected command '"
+                                + line + "'. Type 'help --commands' for the list of supported commands.");
+                    }
                 }
             }
-        } catch(CommandLineException e) {
+        } catch (CommandLineException e) {
             throw e;
         } catch (Throwable t) {
             if(log.isDebugEnabled()) {
@@ -788,11 +889,37 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             // so that getArgumentsString() doesn't return this line
             // during the tab-completion of the next command
             cmdLine = null;
+            invocationContext = null;
             clear(Scope.REQUEST);
         }
     }
 
-    // Method called for if condition and low level operation to be guarded by a timeout.
+    private void handleLegacyCommand(String opLine, CommandHandler handler) throws Exception {
+        resetArgs(opLine);
+        if (isBatchMode() && handler.isBatchMode(this)) {
+            if (!(handler instanceof OperationCommand)) {
+                throw new CommandLineException("The command is not allowed in a batch.");
+            } else {
+                try {
+                    Batch batch = getBatchManager().getActiveBatch();
+                    HandledRequest request = ((OperationCommand) handler).buildHandledRequest(this,
+                            batch.getAttachments());
+                    BatchedCommand batchedCmd
+                            = new DefaultBatchedCommand(this, opLine,
+                                    request.getRequest(), request.getResponseHandler());
+                    batch.add(batchedCmd);
+                } catch (CommandFormatException e) {
+                    throw new CommandFormatException("Failed to add to batch '" + opLine + "'", e);
+                }
+            }
+        } else {
+            execute(() -> {
+                executor.execute(handler, timeout, TimeUnit.SECONDS);
+                return null;
+            }, opLine);
+        }
+    }
+
     @Override
     public ModelNode execute(Operation mn, String description) throws CommandLineException, IOException {
         if (client == null) {
@@ -888,22 +1015,37 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         }
     }
 
-    @Override
-    public void printLine(String message) {
+    void print(String message, boolean newLine) {
         final Level logLevel;
-        if(exitCode != 0) {
+        if (exitCode != 0) {
             logLevel = Level.ERROR;
         } else {
             logLevel = Level.INFO;
         }
-        if(log.isEnabled(logLevel)) {
+        if (log.isEnabled(logLevel)) {
             log.log(logLevel, message);
+        }
+
+        // Could be a redirection at the aesh command or operation level
+        if (invocationContext != null && invocationContext.getConfiguration().getOutputRedirection() != null) {
+            OutputDelegate output = invocationContext.getConfiguration().getOutputRedirection();
+            try {
+                output.write(message);
+                if (newLine) {
+                    output.write(Config.getLineSeparator());
+                }
+            } catch (IOException ex) {
+                System.err.println("Failed to print '" + message + "' to the output target: " + ex.getLocalizedMessage());
+            }
+            return;
         }
 
         if (outputTarget != null) {
             try {
                 outputTarget.append(message);
-                outputTarget.newLine();
+                if (newLine) {
+                    outputTarget.newLine();
+                }
                 outputTarget.flush();
             } catch (IOException e) {
                 System.err.println("Failed to print '" + message + "' to the output target: " + e.getLocalizedMessage());
@@ -911,14 +1053,26 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             return;
         }
 
-        if(!SILENT) {
+        if (!SILENT) {
             if (console != null) {
                 console.print(message);
-                console.printNewLine();
+                if (newLine) {
+                    console.printNewLine();
+                }
             } else { // non-interactive mode
                 cliPrintStream.println(message);
             }
         }
+    }
+
+    @Override
+    public void printLine(String message) {
+        print(message, true);
+    }
+
+    @Override
+    public void print(String message) {
+        print(message, false);
     }
 
     /**
@@ -934,7 +1088,18 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         printLine(message);
     }
 
-    private String readLine(String prompt, boolean password) throws CommandLineException {
+    @Override
+    public String readLine(String prompt, boolean password) throws CommandLineException {
+        Prompt pr;
+        if (password) {
+            pr = new Prompt(prompt, (char) 0x00);
+        } else {
+            pr = new Prompt(prompt);
+        }
+        return readLine(pr);
+    }
+
+    String readLine(Prompt prompt) throws CommandLineException {
         // Only fail an interact if we're not in interactive.
         if(!INTERACT && ERROR_ON_INTERACT){
             interactionDisabled();
@@ -944,15 +1109,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             initBasicConsole(null, false);
         }
 
-        try {
-            if (password) {
-                return console.readLine(prompt, (char) 0x00);
-            } else {
-                return console.readLine(prompt);
-            }
-        } catch (IOException ex) {
-            throw new CommandLineException(ex);
-        }
+        return console.readLine(prompt);
 
     }
 
@@ -963,29 +1120,21 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public void printColumns(Collection<String> col) {
-        if(log.isInfoEnabled()) {
+        if (log.isInfoEnabled()) {
             log.info(col);
         }
-        if (outputTarget != null) {
-            try {
-                for (String item : col) {
-                    outputTarget.append(item);
-                    outputTarget.newLine();
-                }
-            } catch (IOException e) {
-                System.err.println("Failed to print columns '" + col + "' to the console: " + e.getLocalizedMessage());
-            }
-            return;
-        }
-
-        if(!SILENT) {
+        String columns = null;
+        if (!SILENT) {
             if (console != null) {
-                console.printColumns(col);
-            } else { // non interactive mode
-                for (String item : col) {
-                    cliPrintStream.println(item);
-                }
+                columns = console.formatColumns(col);
             }
+        }
+        if (columns == null) {
+            for (String s : col) {
+                print(s, true);
+            }
+        } else {
+            print(columns, false);
         }
     }
 
@@ -1066,6 +1215,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public void connectController(String controller) throws CommandLineException {
+        connectController(controller, null);
+    }
+
+    @Override
+    public void connectController(String controller, String clientAddress) throws CommandLineException {
 
         connectionAddress = addressResolver.resolveAddress(controller);
 
@@ -1081,7 +1235,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     log.debug("connecting to " + connectionAddress.getHost() + ':' + connectionAddress.getPort() + " as " + username);
                 }
                 ModelControllerClient tempClient = ModelControllerClientFactory.CUSTOM.getClient(connectionAddress, cbh,
-                        disableLocalAuth, sslContext, defaultSslContext, config.getConnectionTimeout(), this, timeoutHandler, clientBindAddress);
+                        disableLocalAuth, sslContext, defaultSslContext, config.getConnectionTimeout(), this,
+                        timeoutHandler, clientAddress == null ? clientBindAddress : clientAddress);
                 retry = false;
                 connInfoBean = new ConnectionInfoBean();
                 tryConnection(tempClient, connectionAddress);
@@ -1469,27 +1624,67 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 op.append(line.substring(line.indexOf(':')));
                 return new HandledRequest(request, null);
             }
-
-            final CommandHandler handler = cmdRegistry.getCommandHandler(parsedCmd.getOperationName());
-            if (handler == null) {
-                throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
-            }
-            if(batchMode) {
-                if(!handler.isBatchMode(this)) {
-                    throw new OperationFormatException("The command is not allowed in a batch.");
+            CLIExecutor exec = null;
+            try {
+                // The Aesh parser doesn't handle \\n
+                // So remove them all.
+                String[] split = line.split("\\\\" + Util.LINE_SEPARATOR);
+                StringBuilder builder = new StringBuilder();
+                for (String ss : split) {
+                    builder.append(ss);
                 }
-                Batch batch = getBatchManager().getActiveBatch();
-                return ((OperationCommand) handler).buildHandledRequest(this, batch.getAttachments());
-            } else if (!(handler instanceof OperationCommand)) {
-                throw new OperationFormatException("The command does not translate to an operation request.");
+                line = builder.toString();
+                exec = aeshCommands.newExecutor(line);
+            } catch (CommandLineException | IOException ex) {
+                throw new OperationFormatException(ex);
             }
-
-            return new HandledRequest(((OperationCommand) handler).buildRequest(this), null);
+            if (exec != null) {
+                for (CLIExecution execution : exec.getExecutions()) {
+                    CommandHandler handler = execution.getLegacyHandler();
+                    if (handler == null) {
+                        BatchCompliantCommand bc = execution.getBatchCompliant();
+                        if (batchMode) {
+                            if (bc == null) {
+                                throw new OperationFormatException("The command is not allowed in a batch.");
+                            }
+                            Batch batch = getBatchManager().getActiveBatch();
+                            return new HandledRequest(bc.buildRequest(this, batch.getAttachments()), null);
+                        } else {
+                            DMRCommand dmr = execution.getDMRCompliant();
+                            if (dmr == null) {
+                                throw new OperationFormatException("The command does not translate to an operation request.");
+                            }
+                            return new HandledRequest(dmr.buildRequest(this), null);
+                        }
+                    } else {
+                        return buildRequest(batchMode, handler);
+                    }
+                }
+            } else {
+                final CommandHandler handler = cmdRegistry.getCommandHandler(parsedCmd.getOperationName());
+                return buildRequest(batchMode, handler);
+            }
+            throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
         } finally {
             clear(Scope.REQUEST);
             this.parsedCmd = originalParsedArguments;
             this.cmdLine = originalCmdLine;
         }
+    }
+
+    private HandledRequest buildRequest(boolean batchMode, CommandHandler handler)
+            throws OperationFormatException, CommandFormatException {
+        if (batchMode) {
+            if (!handler.isBatchMode(this)) {
+                throw new OperationFormatException("The command is not allowed in a batch.");
+            }
+            Batch batch = getBatchManager().getActiveBatch();
+            return ((OperationCommand) handler).buildHandledRequest(this, batch.getAttachments());
+        } else if (!(handler instanceof OperationCommand)) {
+            throw new OperationFormatException("The command does not translate to an operation request.");
+        }
+
+        return new HandledRequest(((OperationCommand) handler).buildRequest(this), null);
     }
 
     @Override
@@ -1520,6 +1715,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         return config;
     }
 
+    // It is kept for testing puropose.
+    // aesh runtime handles operators.
     protected void setOutputTarget(String filePath) {
         if (filePath == null) {
             this.outputTarget = null;
@@ -1682,6 +1879,22 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     @Override
     public Collection<String> getVariables() {
         return variables == null ? Collections.<String>emptySet() : variables.keySet();
+    }
+
+    public void loadPlugins(File path, String name) throws CommandLineException, ModuleLoadException {
+        aeshCommands.loadPlugins(path, name);
+    }
+
+    public Set<String> getPlugins() {
+        return aeshCommands.getPlugins();
+    }
+
+    public Set<String> getExtensions() {
+        return extLoader.getExtensions();
+    }
+
+    public List<String> getExtensionsErrors() {
+        return extLoader.getExtensionsErrors();
     }
 
     private class AuthenticationCallbackHandler implements CallbackHandler {
@@ -2093,6 +2306,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
             final String line = parsedLine.getSubstitutedLine();
             try {
+                // XXX jfdenise, this code is possibly dead code, no operation as redirection.
                 if (parsedLine.getFormat() == OperationFormat.INSTANCE) {
                     if (isBatchMode()) {
                         Batch batch = getBatchManager().getActiveBatch();
@@ -2138,6 +2352,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                             handler.handle(CommandContextImpl.this);
                         }
                     } else {
+                        // FOR NOW REDIRECTION COMMANDS ARE LEGACY ONES.
+                        // No need to look into aesh commands.
                         throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
                     }
                 }
@@ -2198,5 +2414,30 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 break;
             }
         }
+    }
+
+    // For testing prupose.
+    public AeshCommands getAeshCommands() {
+        return aeshCommands;
+    }
+
+    public void completeOperationAndLegacy(AeshCompleteOperation co) {
+        List<String> candidates = new ArrayList<>();
+        int offset = legacyCmdCompleter.complete(this,
+                co.getBuffer(), co.getCursor(), candidates);
+        co.setOffset(offset);
+        co.setCompletionCandidates(candidates);
+        String buffer = this.getArgumentsString() == null ? co.getBuffer() : this.getArgumentsString() + co.getBuffer();
+        if (co.getCompletionCandidates().size() == 1
+                && co.getCompletionCandidates().get(0).getCharacters().startsWith(buffer)) {
+            co.doAppendSeparator(true);
+        } else {
+            co.doAppendSeparator(false);
+        }
+    }
+
+    // Required to handle timeout.
+    public CommandContext getContextualCommandContext() {
+        return executor.newTimeoutCommandContext(this);
     }
 }

@@ -21,6 +21,7 @@
  */
 package org.jboss.as.test.integration.management.cli;
 
+import java.net.InetAddress;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -44,6 +45,18 @@ public class BasicOpsTestCase {
 
         assertFalse(cli.isConnected());
         cli.sendLine("connect " + TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort());
+        assertTrue(cli.isConnected());
+
+        cli.quit();
+    }
+
+    @Test
+    public void testConnectBind() throws Exception {
+        CLIWrapper cli = new CLIWrapper(false);
+
+        assertFalse(cli.isConnected());
+        cli.sendLine("connect " + TestSuiteEnvironment.getServerAddress() + ":"
+                + TestSuiteEnvironment.getServerPort() + " --bind=" + InetAddress.getLocalHost().getHostAddress());
         assertTrue(cli.isConnected());
 
         cli.quit();
