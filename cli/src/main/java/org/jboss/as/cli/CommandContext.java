@@ -84,6 +84,19 @@ public interface CommandContext {
     void printLine(String message);
 
     /**
+     * Prints a string to the CLI's output.
+     *
+     * @param message the message to print
+     */
+    default void print(String message) {
+        printLine(message);
+    }
+
+    default String readLine(String prompt, boolean password) throws CommandLineException {
+        return null;
+    }
+
+    /**
      * Prints a collection of strings as columns to the CLI's output.
      * @param col  the collection of strings to print as columns.
      */

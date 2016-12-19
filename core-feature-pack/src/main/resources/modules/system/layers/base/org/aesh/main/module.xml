@@ -29,8 +29,9 @@
 
     <resources>
         <artifact name="${org.aesh:aesh-readline}"/>
+        <artifact name="${org.jboss.aesh:aesh}"/>
     </resources>
-
+    
     <dependencies>
         <module name="org.fusesource.jansi" />
     </dependencies>

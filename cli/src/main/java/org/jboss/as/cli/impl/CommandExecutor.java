@@ -36,7 +36,6 @@ import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
-import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
@@ -65,6 +64,15 @@ import org.jboss.threads.AsyncFuture;
  * @author jdenise@redhat.com
  */
 public class CommandExecutor {
+
+    public interface Executable {
+        void execute() throws CommandLineException;
+    }
+
+    public interface ExecutableBuilder {
+
+        Executable build(CommandContext ctx);
+    }
 
     // A wrapper to allow to override ModelControllerClient.
     // Public for testing purpose.
@@ -664,15 +672,18 @@ public class CommandExecutor {
     }
 
     // Public for testing purpose.
-    public void execute(CommandHandler handler, int timeout, TimeUnit unit) throws
+    public void execute(ExecutableBuilder builder,
+            int timeout,
+            TimeUnit unit) throws
             CommandLineException,
             InterruptedException, ExecutionException, TimeoutException {
-        if (timeout <= 0) { //Synchronous
-            handler.handle(ctx);
+        if (timeout <= 0) {
+            //Synchronous
+            builder.build(ctx).execute();
         } else { // Guarded execution
             TimeoutCommandContext context = new TimeoutCommandContext(ctx);
             Future<Void> task = executorService.submit(() -> {
-                handler.handle(context);
+                builder.build(context).execute();
                 return null;
             });
             try {
