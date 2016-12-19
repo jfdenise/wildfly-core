@@ -93,7 +93,7 @@ public class HelpTestCase extends AbstractCliTestBase {
         String help = cli.readOutput();
         assertTrue("Command " + cmd + " help does not have synopsis section.", help.contains("SYNOPSIS"));
         assertTrue("Command " + cmd + " help does not have description section.", help.contains("DESCRIPTION"));
-        assertTrue("Command " + cmd + " help does not have arguments section.", help.contains("ARGUMENTS"));
+        assertTrue("Command " + cmd + " help does not have arguments section.", help.contains("ARGUMENTS") || help.contains("ARGUMENT"));
 
     }
 }

@@ -99,6 +99,11 @@
             <groupId>org.aesh</groupId>
             <artifactId>aesh-readline</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>org.jboss.aesh</groupId>
+            <artifactId>aesh</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.jboss.invocation</groupId>

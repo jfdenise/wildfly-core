@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,27 +19,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.handlers;
+package org.wildfly.core.cli.command.aesh.activator;
 
-import org.jboss.as.cli.CommandContext;
+import org.aesh.cl.activation.OptionActivator;
+import org.aesh.cl.internal.ProcessedCommand;
 
 /**
- * Quit handler.
  *
- * @author Alexey Loubyansky
+ * Hides an option otherwise delegates to the provided Activator.
+ *
+ * @author jdenise@redhat.com
  */
-public class QuitHandler extends CommandHandlerWithHelp {
+public class HiddenActivator implements OptionActivator {
 
-    public QuitHandler() {
-        this("quit");
+    private static class HideActivator implements OptionActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            return false;
+        }
     }
 
-    public QuitHandler(String command) {
-        super(command);
+    private final OptionActivator activator;
+
+    public HiddenActivator() {
+        this(true, null);
+    }
+
+    public HiddenActivator(boolean hidden, OptionActivator activator) {
+        this.activator = hidden ? new HideActivator() : activator;
     }
 
     @Override
-    protected void doHandle(CommandContext ctx) {
-        ctx.terminateSession();
+    public boolean isActivated(ProcessedCommand processedCommand) {
+        return activator.isActivated(processedCommand);
     }
+
 }

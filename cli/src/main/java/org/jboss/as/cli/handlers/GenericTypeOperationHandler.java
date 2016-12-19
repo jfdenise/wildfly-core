@@ -529,7 +529,7 @@ public class GenericTypeOperationHandler extends BatchModeCommandHandler {
     }
 
     @Override
-    protected void printHelp(CommandContext ctx) throws CommandLineException {
+    public void printHelp(CommandContext ctx) throws CommandLineException {
 
         ParsedCommandLine args = ctx.getParsedCommandLine();
         if(helpProperties.isPresent(args)) {
