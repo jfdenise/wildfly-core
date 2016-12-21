@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
+import java.util.ServiceLoader;
 import org.aesh.cl.parser.CommandLineParserException;
 import org.aesh.cl.validator.CommandValidatorException;
 import org.aesh.cl.validator.OptionValidatorException;
@@ -30,6 +31,7 @@ import org.aesh.command.Executor;
 import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.AeshContext;
 import org.aesh.console.Shell;
+import org.aesh.console.command.Command;
 import org.aesh.console.command.CommandException;
 import org.aesh.console.command.CommandNotFoundException;
 import org.aesh.readline.completion.CompleteOperation;
@@ -49,6 +51,7 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  * @author jdenise@redhat.com
  */
 public class AeshCommands {
+
     public class CLIExecutor {
 
         private final Executor executor;
@@ -143,4 +146,10 @@ public class AeshCommands {
         };
     }
 
+    public void registerExtraCommands() throws CommandLineException {
+        ServiceLoader<Command> loader2 = ServiceLoader.load(Command.class);
+        for (Command command : loader2) {
+            getRegistry().addCommand(command);
+        }
+    }
 }

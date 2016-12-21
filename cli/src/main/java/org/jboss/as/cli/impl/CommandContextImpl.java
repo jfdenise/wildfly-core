@@ -579,7 +579,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
         registerExtraHandlers();
 
-        extLoader = new ExtensionsLoader(cmdRegistry, this);
+        extLoader = new ExtensionsLoader(cmdRegistry, aeshCommands.getRegistry(), this);
     }
 
     private void registerExtraHandlers() throws CommandLineException {
@@ -587,6 +587,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         for (CommandHandlerProvider provider : loader) {
             cmdRegistry.registerHandler(provider.createCommandHandler(this), provider.isTabComplete(), provider.getNames());
         }
+
+        aeshCommands.registerExtraCommands();
     }
 
     public int getExitCode() {
