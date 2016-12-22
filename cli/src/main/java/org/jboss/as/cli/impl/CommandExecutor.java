@@ -36,6 +36,7 @@ import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
@@ -669,6 +670,19 @@ public class CommandExecutor {
                 throw ex;
             }
         }
+    }
+
+    public void execute(CommandHandler handler,
+            int timeout,
+            TimeUnit unit) throws
+            CommandLineException,
+            InterruptedException, ExecutionException, TimeoutException {
+        ExecutableBuilder builder = (CommandContext ctx) -> {
+            return (Executable) () -> {
+                handler.handle(ctx);
+            };
+        };
+        execute(builder, timeout, unit);
     }
 
     // Public for testing purpose.
