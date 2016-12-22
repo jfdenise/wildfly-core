@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,22 +19,28 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.parsing;
+package org.jboss.as.cli.impl.aesh.parser;
 
-import org.jboss.as.cli.CommandFormatException;
+import org.aesh.cl.internal.ProcessedOption;
 
 /**
  *
- * @author Alexey Loubyansky
+ * @author jdenise@redhat.com
  */
-public interface ParsingStateCallbackHandler {
+public class Util {
 
-    void enteredState(ParsingContext ctx)throws CommandFormatException;
-
-    void leavingState(ParsingContext ctx) throws CommandFormatException;
-
-    void character(ParsingContext ctx) throws CommandFormatException;
-
-    default void endOfParsing(int location) {
+    public static String updateOptionValue(ProcessedOption option, String line, int offset) {
+        if (offset < 0 || offset > line.length() - 1) {
+            offset = line.length() - 1;
+        }
+        String value = line.substring(0, offset + 1);
+        if (option != null) {
+            option.addValue(value);
+        }
+        if (offset == line.length() - 1) {
+            return "";
+        } else {
+            return line.substring(offset + 1);
+        }
     }
 }

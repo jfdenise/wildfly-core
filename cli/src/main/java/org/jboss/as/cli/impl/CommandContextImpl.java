@@ -151,8 +151,6 @@ import org.jboss.as.cli.handlers.trycatch.CatchHandler;
 import org.jboss.as.cli.handlers.trycatch.EndTryHandler;
 import org.jboss.as.cli.handlers.trycatch.FinallyHandler;
 import org.jboss.as.cli.handlers.trycatch.TryHandler;
-import org.jboss.as.cli.impl.CommandExecutor.Executable;
-import org.jboss.as.cli.impl.CommandExecutor.ExecutableBuilder;
 import org.jboss.as.cli.impl.ReadlineConsole.Settings;
 import org.jboss.as.cli.impl.ReadlineConsole.SettingsBuilder;
 import org.jboss.as.cli.impl.aesh.AeshCommands;
@@ -798,13 +796,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                             }
                         }
                     } else {
-                        ExecutableBuilder builder = (CommandContext ctx) -> {
-                            return (Executable) () -> {
-                                handler.handle(ctx);
-                            };
-                        };
                         execute(() -> {
-                            executor.execute(builder, timeout, TimeUnit.SECONDS);
+                            executor.execute(handler, timeout, TimeUnit.SECONDS);
                             return null;
                         }, line);
                     }

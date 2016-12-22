@@ -219,7 +219,7 @@ class CLICommandInvocationImpl implements CLICommandInvocation {
             CommandLineParserException,
             OptionValidatorException,
             CommandValidatorException,
-            CommandException {
+            CommandException, InterruptedException {
         original.executeCommand(input);
     }
 

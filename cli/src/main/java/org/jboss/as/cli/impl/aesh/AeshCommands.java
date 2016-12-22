@@ -69,7 +69,7 @@ public class AeshCommands {
     }
 
     private final CLICommandInvocationProvider invocationProvider;
-    private final AeshCommandProcessor<CLICommandInvocation> processor;
+    private final AeshCommandProcessor<CLICommandInvocation, AeshCompleteOperation> processor;
     private final CLICommandRegistry registry = new CLICommandRegistry();
     private final CLICompletionHandler completionHandler;
 
