@@ -67,8 +67,7 @@ public class CLICompletion implements Completion<CompleteOperation> {
         if (!candidates.isEmpty()) {
             co.addCompletionCandidates(candidates);
             if (candidates.size() == 1) {
-                // Do not add a space separator if already added.
-                co.doAppendSeparator(!candidates.get(0).endsWith(" "));
+                co.doAppendSeparator(false);
             }
         }
     }
