@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.operation.impl;
 
+import org.jboss.as.cli.operation.impl.completion.CompletionAssociations;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -332,12 +333,12 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
             propCompleter = factory.createCompleter(ctx, address);
         }
         if (propCompleter == null) {
-            propCompleter = getCompleter(prop, ctx, address);
+            propCompleter = getCompleter(prop, ctx, address, operationName);
         }
         return propCompleter;
     }
 
-    static CommandLineCompleter getCompleter(final Property prop, CommandContext ctx, OperationRequestAddress address) {
+    static CommandLineCompleter getCompleter(final Property prop, CommandContext ctx, OperationRequestAddress address, String operationName) {
         ModelNode attrDescr = prop.getValue();
         final ModelNode typeNode = attrDescr.get(Util.TYPE);
         if (typeNode.isDefined() && ModelType.BOOLEAN.equals(typeNode.asType())) {
@@ -378,6 +379,20 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
         if (attrDescr.has(Util.CAPABILITY_REFERENCE)) {
             return new CapabilityReferenceCompleter(address,
                     attrDescr.get(Util.CAPABILITY_REFERENCE).asString());
+        }
+        if (operationName != null) {
+            try {
+                List<String> content = CompletionAssociations.getDefault().
+                        getCompletionContent(ctx, address, operationName, prop.getName());
+                if (content != null) {
+                    String[] array = new String[content.size()];
+                    content.toArray(array);
+                    return new SimpleTabCompleter(array);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                // XXX OK, no completer.
+            }
         }
         return null;
     }
@@ -461,7 +476,7 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
                 }
 
                 Property prop = new Property(propName, attrDescr);
-                return getCompleter(prop, ctx, address);
+                return getCompleter(prop, ctx, address, Util.WRITE_ATTRIBUTE);
             }});
         addGlobalOpPropCompleter(Util.READ_OPERATION_DESCRIPTION, Util.NAME, new CommandLineCompleterFactory(){
             @Override

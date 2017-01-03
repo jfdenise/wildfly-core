@@ -76,7 +76,7 @@ public class DefaultOperationCandidatesProviderTestCase {
         DefaultOperationRequestAddress address = new DefaultOperationRequestAddress();
         {
             Property prop = new Property("arg", ModelNode.fromString(list_content));
-            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address);
+            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address, null);
             List<String> candidates = new ArrayList<>();
             completer.complete(ctx, "", 0, candidates);
             assertEquals(Arrays.asList("["), candidates);
@@ -84,7 +84,7 @@ public class DefaultOperationCandidatesProviderTestCase {
 
         {
             Property prop = new Property("arg", ModelNode.fromString(map_content));
-            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address);
+            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address, null);
             List<String> candidates = new ArrayList<>();
             completer.complete(ctx, "", 0, candidates);
             assertEquals(Arrays.asList("{"), candidates);
@@ -92,7 +92,7 @@ public class DefaultOperationCandidatesProviderTestCase {
 
         {
             Property prop = new Property("arg", ModelNode.fromString(obj_content));
-            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address);
+            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address, null);
             List<String> candidates = new ArrayList<>();
             completer.complete(ctx, "{", 0, candidates);
             assertEquals(Arrays.asList("prop1", "prop2"), candidates);
@@ -100,7 +100,7 @@ public class DefaultOperationCandidatesProviderTestCase {
 
         {
             Property prop = new Property("arg", ModelNode.fromString(boolean_content));
-            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address);
+            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address, null);
             List<String> candidates = new ArrayList<>();
             completer.complete(ctx, "", 0, candidates);
             assertEquals(Arrays.asList("false", "true"), candidates);
@@ -108,7 +108,7 @@ public class DefaultOperationCandidatesProviderTestCase {
 
         {
             Property prop = new Property("arg", ModelNode.fromString(allowed_content));
-            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address);
+            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address, null);
             List<String> candidates = new ArrayList<>();
             completer.complete(ctx, "", 0, candidates);
             assertEquals(Arrays.asList("ALL", "FINER", "FINEST"), candidates);
@@ -116,7 +116,7 @@ public class DefaultOperationCandidatesProviderTestCase {
 
         {
             Property prop = new Property("arg", ModelNode.fromString(string_content));
-            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address);
+            CommandLineCompleter completer = DefaultOperationCandidatesProvider.getCompleter(prop, ctx, address, null);
             assertEquals(null, completer);
         }
     }

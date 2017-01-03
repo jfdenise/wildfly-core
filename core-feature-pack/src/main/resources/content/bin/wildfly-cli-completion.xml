@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<wildfly-cli-completion xmlns="urn:jboss:cli:3.1">
+        <!--
+        <completion>
+            <producers>
+                <producer>A PRODUCER OPERATION, e.g.: /subsystem=logging/logger=*:read-resource().category</producer>
+            </producers>
+            <consumers>
+                <consumer>A CONSUMER OPERATION, e.g.:/interface=*:add(inet-address)</consumer>
+            </consumers>
+        </completion>
+        -->
+    </completions> 
+</wildfly-cli-completion>
