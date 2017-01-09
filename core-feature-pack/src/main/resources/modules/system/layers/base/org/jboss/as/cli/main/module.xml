@@ -65,6 +65,7 @@
         <module name="org.jboss.vfs"/>
         <module name="org.picketbox" optional="true"/>
         <module name="org.wildfly.embedded"/>
+        <module name="org.wildfly.client.config"/>
         <module name="javax.api"/>
         <module name="ibm.jdk" />
         <module name="sun.jdk" />

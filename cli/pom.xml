@@ -194,6 +194,11 @@
             <!-- so it is not included in shaded jar  -->
             <scope>provided</scope>
         </dependency>
+        
+        <dependency>
+            <groupId>org.wildfly.client</groupId>
+            <artifactId>wildfly-client-config</artifactId>
+        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>

@@ -101,7 +101,7 @@ class VaultConfig {
      * @param expectedNs the namespace
      * @return the vault configuration
      */
-    static VaultConfig readVaultElement_3_0(XMLExtendedStreamReader reader, Namespace expectedNs) throws XMLStreamException {
+    static VaultConfig readVaultElement_3_0(XMLStreamReader reader, Namespace expectedNs) throws XMLStreamException {
         final VaultConfig config = new VaultConfig();
 
         final int count = reader.getAttributeCount();
@@ -146,7 +146,7 @@ class VaultConfig {
         options.put(name, value);
     }
 
-    private static void readVaultOptions(XMLExtendedStreamReader reader, VaultConfig config) throws XMLStreamException {
+    private static void readVaultOptions(XMLStreamReader reader, VaultConfig config) throws XMLStreamException {
         boolean done = false;
         while (reader.hasNext() && done == false) {
             int tag = reader.nextTag();

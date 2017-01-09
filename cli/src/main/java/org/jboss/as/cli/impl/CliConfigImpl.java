@@ -29,7 +29,9 @@ import java.io.FileInputStream;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
@@ -48,6 +50,9 @@ import org.jboss.logging.Logger;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 import org.jboss.staxmapper.XMLMapper;
+import org.wildfly.client.config.ClientConfiguration;
+import org.wildfly.client.config.ConfigXMLParseException;
+import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -157,6 +162,32 @@ class CliConfigImpl implements CliConfig {
 
         CliConfigImpl config = new CliConfigImpl();
 
+        // XXX JFDENISE
+        // Actually, the file should be discovered by ClientConfiguration fully.
+        // First try to read it as the wildfly client configuration.
+        ClientConfiguration clientConfig = ClientConfiguration.getInstance(f.toURI());
+        Set<String> recognizedNamespaces = new HashSet<>();
+        for (Namespace current : Namespace.cliValues()) {
+            recognizedNamespaces.add(current.getUriString());
+        }
+        try {
+            ConfigurationXMLStreamReader r = clientConfig.readConfiguration(recognizedNamespaces);
+            // So this is a proper wildfly config, convey it to security/remote layers.
+            // NO the file will be discovered the same way by elytron.
+            WildFlySecurityManager.setPropertyPrivileged("wildfly.config.url", f.getAbsolutePath());
+            // Go to the first CLI element.
+            // That is fine.
+            r.next();
+            new CliConfigReader().readElement(r, config);
+            return config;
+        } catch (ConfigXMLParseException ex) {
+            ex.printStackTrace();
+            // Ok, fallback to legacy format.
+        } catch (XMLStreamException ex) {
+            throw new CliInitializationException(ex);
+        }
+
+        // This is the legacy file format.
         BufferedInputStream input = null;
         try {
             final XMLMapper mapper = XMLMapper.Factory.create();
@@ -164,6 +195,7 @@ class CliConfigImpl implements CliConfig {
             for (Namespace current : Namespace.cliValues()) {
                 mapper.registerRootElement(new QName(current.getUriString(), JBOSS_CLI), reader);
             }
+            mapper.registerRootElement(new QName("configuration"), reader);
             FileInputStream is = new FileInputStream(f);
             input = new BufferedInputStream(is);
             XMLStreamReader streamReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
@@ -415,7 +447,12 @@ class CliConfigImpl implements CliConfig {
 
     static class CliConfigReader implements XMLElementReader<CliConfigImpl> {
 
-        public void readElement(XMLExtendedStreamReader reader, CliConfigImpl config) throws XMLStreamException {
+        @Override
+        public void readElement(XMLExtendedStreamReader reader, CliConfigImpl value) throws XMLStreamException {
+            readElement((XMLStreamReader) reader, value);
+        }
+
+        public void readElement(XMLStreamReader reader, CliConfigImpl config) throws XMLStreamException {
             String localName = reader.getLocalName();
             if (JBOSS_CLI.equals(localName) == false) {
                 throw new XMLStreamException("Unexpected element: " + localName);
@@ -450,7 +487,7 @@ class CliConfigImpl implements CliConfig {
             throw new XMLStreamException("Unexpected element: " + localName);
         }
 
-        public void readCLIElement_1_0(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        public void readCLIElement_1_0(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             boolean jbossCliEnded = false;
             while (reader.hasNext() && jbossCliEnded == false) {
                 int tag = reader.nextTag();
@@ -477,7 +514,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readCLIElement_1_1(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        public void readCLIElement_1_1(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             boolean jbossCliEnded = false;
             while (reader.hasNext() && jbossCliEnded == false) {
                 int tag = reader.nextTag();
@@ -506,7 +543,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readCLIElement_1_2(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        public void readCLIElement_1_2(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             boolean jbossCliEnded = false;
             while (reader.hasNext() && jbossCliEnded == false) {
                 int tag = reader.nextTag();
@@ -551,7 +588,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readCLIElement_2_0(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        public void readCLIElement_2_0(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             boolean jbossCliEnded = false;
             while (reader.hasNext() && jbossCliEnded == false) {
                 int tag = reader.nextTag();
@@ -600,7 +637,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readCLIElement_3_0(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        public void readCLIElement_3_0(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             boolean jbossCliEnded = false;
             while (reader.hasNext() && jbossCliEnded == false) {
                 int tag = reader.nextTag();
@@ -650,7 +687,7 @@ class CliConfigImpl implements CliConfig {
         }
 
         // Added the echo-command element
-        public void readCLIElement_3_1(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        public void readCLIElement_3_1(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             boolean jbossCliEnded = false;
             while (reader.hasNext() && jbossCliEnded == false) {
                 int tag = reader.nextTag();
@@ -703,7 +740,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        private void readDefaultProtocol_2_0(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config)
+        private void readDefaultProtocol_2_0(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config)
                 throws XMLStreamException {
             final int attributes = reader.getAttributeCount();
             for (int i = 0; i < attributes; i++) {
@@ -727,15 +764,15 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        private void readDefaultController_1_0(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        private void readDefaultController_1_0(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             config.defaultController = readController(false, reader, expectedNs);
         }
 
-        private void readDefaultController_2_0(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        private void readDefaultController_2_0(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             config.defaultController = readController(true, reader, expectedNs);
         }
 
-        private ControllerAddress readController(boolean allowProtocol, XMLExtendedStreamReader reader, Namespace expectedNs) throws XMLStreamException {
+        private ControllerAddress readController(boolean allowProtocol, XMLStreamReader reader, Namespace expectedNs) throws XMLStreamException {
             String protocol = null;
             String host = null;
             int port = -1;
@@ -766,7 +803,7 @@ class CliConfigImpl implements CliConfig {
             return new ControllerAddress(protocol, host == null ? "localhost" : host, port);
         }
 
-        private void readControllers_2_0(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        private void readControllers_2_0(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             Map<String, ControllerAddress> aliasedAddresses = new HashMap<String, ControllerAddress>();
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
                 assertExpectedNamespace(reader, expectedNs);
@@ -802,7 +839,7 @@ class CliConfigImpl implements CliConfig {
             config.controllerAliases = Collections.unmodifiableMap(aliasedAddresses);
         }
 
-        private void readHistory(XMLExtendedStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
+        private void readHistory(XMLStreamReader reader, Namespace expectedNs, CliConfigImpl config) throws XMLStreamException {
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
                 assertExpectedNamespace(reader, expectedNs);
                 final String localName = reader.getLocalName();
@@ -825,7 +862,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readSSLElement_1_0(XMLExtendedStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
+        public void readSSLElement_1_0(XMLStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
                 assertExpectedNamespace(reader, expectedNs);
                 final String localName = reader.getLocalName();
@@ -845,7 +882,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readSSLElement_1_1(XMLExtendedStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
+        public void readSSLElement_1_1(XMLStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
                 assertExpectedNamespace(reader, expectedNs);
                 final String localName = reader.getLocalName();
@@ -874,7 +911,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readSSLElement_2_0(XMLExtendedStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
+        public void readSSLElement_2_0(XMLStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
 
             CLIVaultReader vaultReader = null;
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
@@ -941,7 +978,7 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        public void readSSLElement_3_0(XMLExtendedStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
+        public void readSSLElement_3_0(XMLStreamReader reader, Namespace expectedNs, SslConfig config) throws XMLStreamException {
 
             CLIVaultReader vaultReader = null;
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
@@ -989,19 +1026,19 @@ class CliConfigImpl implements CliConfig {
             }
         }
 
-        static void assertExpectedNamespace(XMLExtendedStreamReader reader, Namespace expectedNs) throws XMLStreamException {
+        static void assertExpectedNamespace(XMLStreamReader reader, Namespace expectedNs) throws XMLStreamException {
             if (expectedNs.equals(Namespace.forUri(reader.getNamespaceURI())) == false) {
                 unexpectedElement(reader);
             }
         }
 
-        static void requireNoContent(final XMLExtendedStreamReader reader) throws XMLStreamException {
+        static void requireNoContent(final XMLStreamReader reader) throws XMLStreamException {
             if (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
                 unexpectedElement(reader);
             }
         }
 
-        static void unexpectedElement(XMLExtendedStreamReader reader) throws XMLStreamException {
+        static void unexpectedElement(XMLStreamReader reader) throws XMLStreamException {
             throw new XMLStreamException("Unexpected element " + reader.getName() + " at " + reader.getLocation());
         }
     }
