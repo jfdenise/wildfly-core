@@ -317,18 +317,18 @@ public class DeploymentOverlayHandler extends BatchModeCommandHandler {//Command
                             if(groupsStr != null) {
                                 final String[] groups = groupsStr.split(",+");
                                 if(groups.length == 1) {
-                                    return filterLinks(loadLinkResources(client, overlay, groups[0]));
+                                    return filterLinks(loadLinkResources(client, overlay, groups[0]), groups[0], ctx);
                                 } else if(groups.length > 1) {
                                     final Set<String> commonLinks = new HashSet<String>();
-                                    commonLinks.addAll(filterLinks(loadLinkResources(client, overlay, groups[0])));
+                                    commonLinks.addAll(filterLinks(loadLinkResources(client, overlay, groups[0]), groups[0], ctx));
                                     for(int i = 1; i < groups.length; ++i) {
-                                        commonLinks.retainAll(filterLinks(loadLinkResources(client, overlay, groups[i])));
+                                        commonLinks.retainAll(filterLinks(loadLinkResources(client, overlay, groups[i]), groups[i], ctx));
                                     }
                                     return commonLinks;
                                 }
                             }
                         } else {
-                            return filterLinks(loadLinkResources(client, overlay, null));
+                            return filterLinks(loadLinkResources(client, overlay, null), null, ctx);
                         }
                     } catch(CommandLineException e) {
                     }
@@ -778,7 +778,17 @@ public class DeploymentOverlayHandler extends BatchModeCommandHandler {//Command
         } else {
             final ModelNode linkResources = loadLinkResources(client, name, sgName);
             if (linkResources != null && !linkResources.keys().isEmpty()) {
-                printLine(ctx, linkResources.keys(), sgName);
+                // Need to convert from runtime-name to name
+                List<String> names = new ArrayList<>();
+                for (String rtName : linkResources.keys()) {
+                    String n = Util.getDeploymentName(rtName, sgName, client);
+                    if (n == null) {
+                        throw new CommandLineException("Can't find name for runtime-name " + rtName);
+                    }
+                    names.add(n);
+                }
+                Collections.sort(names);
+                printLine(ctx, names, sgName);
             }
         }
     }
@@ -1085,8 +1095,12 @@ public class DeploymentOverlayHandler extends BatchModeCommandHandler {//Command
             throw new CommandLineException("Failed to load the list of deployments for overlay " + overlay + ": " + response);
         }
         final List<String> contentList = new ArrayList<String>();
-        for(ModelNode node : result.asList()) {
-            contentList.add(node.asString());
+        for (ModelNode node : result.asList()) {
+            String name = Util.getDeploymentName(node.asString(), serverGroup, client);
+            if (name == null) {
+                throw new CommandLineException("Can't find name for runtime name " + node.asString());
+            }
+            contentList.add(name);
         }
         return contentList;
     }
@@ -1178,7 +1192,11 @@ public class DeploymentOverlayHandler extends BatchModeCommandHandler {//Command
                 address.add(Util.SERVER_GROUP, serverGroup);
             }
             address.add(Util.DEPLOYMENT_OVERLAY, overlay);
-            address.add(Util.DEPLOYMENT, link);
+            String n = Util.getDeploymentRuntimeName(link, ctx.getModelControllerClient());
+            if (n == null) {
+                throw new CommandLineException("Can't find runtime-name for " + link);
+            }
+            address.add(Util.DEPLOYMENT, n);
             op.get(Util.OPERATION).set(Util.ADD);
                 steps.add(op);
 
@@ -1229,8 +1247,17 @@ public class DeploymentOverlayHandler extends BatchModeCommandHandler {//Command
 
         if(removeLinks) {
             final Iterator<String> linkNames;
-            if(specifiedLinks != null) {
-                linkNames = specifiedLinks.iterator();
+            if (specifiedLinks != null) {
+                List<String> rtNames = new ArrayList<>();
+                // Get the associated runtime names.
+                for (String n : specifiedLinks) {
+                    String rtName = Util.getDeploymentRuntimeName(n, client);
+                    if (rtName == null) {
+                        throw new CommandLineException("Can't find runtime-name for " + n);
+                    }
+                    rtNames.add(rtName);
+                }
+                linkNames = rtNames.iterator();
             } else {
                 linkNames = linkResources.keys().iterator();
             }
@@ -1259,35 +1286,50 @@ public class DeploymentOverlayHandler extends BatchModeCommandHandler {//Command
         }
 
         // redeploy
-
-        final Iterator<String> linkNames;
-        if(redeploy == REDEPLOY_ALL) {
-            linkNames = linkResources.keys().iterator();
-        } else if(redeploy == REDEPLOY_ONLY_AFFECTED && specifiedLinks != null) {
-            linkNames = specifiedLinks.iterator();
+        // Redeployment is done using name. overlay references deployments using
+        // runtime-name, we need to retrieve the name from the runtime-name.
+        final Iterator<String> deploymentNames;
+        if (redeploy == REDEPLOY_ALL) {
+            // We have runtime-names, we must retrieve names.
+            List<String> names = new ArrayList<>();
+            for (String rtName : linkResources.keys()) {
+                String n = Util.getDeploymentName(rtName, sgName, client);
+                names.add(n);
+            }
+            deploymentNames = names.iterator();
+        } else if (redeploy == REDEPLOY_ONLY_AFFECTED && specifiedLinks != null) {
+            // We must retrieve the runtime-name and check that is is referenced
+            // from the overlay
+            for (String n : specifiedLinks) {
+                String rtName = Util.getDeploymentRuntimeName(n, client);
+                if (rtName == null) {
+                    throw new CommandLineException("Can't find runtime-name for " + n);
+                }
+                final ModelNode link = linkResources.get(rtName);
+                if (!link.isDefined()) {
+                    final StringBuilder buf = new StringBuilder();
+                    buf.append(n);
+                    buf.append(" not found among the registered links ");
+                    if (sgName != null) {
+                        buf.append("for server group ").append(sgName).append(' ');
+                    }
+                    buf.append(linkResources.keys());
+                    throw new CommandFormatException(buf.toString());
+                }
+            }
+            deploymentNames = specifiedLinks.iterator();
         } else {
             return;
         }
 
         final List<String> sgDeployments = Util.getDeployments(client, sgName);
-        while(linkNames.hasNext() && !sgDeployments.isEmpty()) {
-            final String linkName = linkNames.next();
-            final ModelNode link = linkResources.get(linkName);
-            if(!link.isDefined()) {
-                final StringBuilder buf = new StringBuilder();
-                buf.append(linkName);
-                buf.append(" not found among the registered links ");
-                if(sgName != null) {
-                    buf.append("for server group ").append(sgName).append(' ');
-                }
-                buf.append(linkResources.keys());
-                throw new CommandFormatException(buf.toString());
-            }
-            addRedeploySteps(steps, sgName, linkName, link, sgDeployments);
+        while (deploymentNames.hasNext() && !sgDeployments.isEmpty()) {
+            final String linkName = deploymentNames.next();
+            addRedeploySteps(steps, sgName, linkName, sgDeployments);
         }
     }
 
-    protected void addRedeploySteps(ModelNode steps, String serverGroup, String linkName, ModelNode link, List<String> remainingDeployments) {
+    protected void addRedeploySteps(ModelNode steps, String serverGroup, String linkName, List<String> remainingDeployments) {
         final Pattern pattern = Pattern.compile(Util.wildcardToJavaRegex(linkName));
         final Iterator<String> i = remainingDeployments.iterator();
         while (i.hasNext()) {
@@ -1305,12 +1347,16 @@ public class DeploymentOverlayHandler extends BatchModeCommandHandler {//Command
         }
     }
 
-    protected List<String> filterLinks(final ModelNode linkResources) {
+    protected List<String> filterLinks(final ModelNode linkResources, String serverGroup, CommandContext ctx) {
         if(linkResources != null && !linkResources.keys().isEmpty()) {
             final List<Property> links = linkResources.asPropertyList();
             final List<String> linkNames = new ArrayList<String>(links.size());
             for (Property link : links) {
-                linkNames.add(link.getName());
+                // Command exposes names not runtime-names.
+                String name = Util.getDeploymentName(link.getName(), serverGroup, ctx.getModelControllerClient());
+                if (name != null) {
+                    linkNames.add(name);
+                }
             }
             return linkNames;
         }

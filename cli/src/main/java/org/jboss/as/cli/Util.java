@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -502,6 +503,65 @@ public class Util {
             }
         }
         return groupNames;
+    }
+
+    public static String getDeploymentRuntimeName(String deployment, ModelControllerClient client) {
+        Objects.requireNonNull(deployment);
+        Objects.requireNonNull(client);
+        final DefaultOperationRequestBuilder builder = new DefaultOperationRequestBuilder();
+        final ModelNode request;
+        try {
+            builder.setOperationName(Util.READ_ATTRIBUTE);
+            builder.addNode(Util.DEPLOYMENT, deployment);
+            builder.addProperty(Util.NAME, Util.RUNTIME_NAME);
+            request = builder.buildRequest();
+        } catch (OperationFormatException e) {
+            throw new IllegalStateException("Failed to build operation", e);
+        }
+
+        try {
+            final ModelNode outcome = client.execute(request);
+            if (isSuccess(outcome)) {
+                return outcome.get(RESULT).asString();
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public static String getDeploymentName(String rtName, String serverGroup, ModelControllerClient client) {
+        Objects.requireNonNull(rtName);
+        Objects.requireNonNull(client);
+        final DefaultOperationRequestBuilder builder = new DefaultOperationRequestBuilder();
+        final ModelNode request;
+        try {
+            builder.setOperationName(Util.READ_RESOURCE);
+            if (serverGroup != null) {
+                builder.addNode(SERVER_GROUP, serverGroup);
+            }
+            builder.addNode(Util.DEPLOYMENT, "*");
+            request = builder.buildRequest();
+        } catch (OperationFormatException e) {
+            throw new IllegalStateException("Failed to build operation", e);
+        }
+
+        try {
+            final ModelNode outcome = client.execute(request);
+            if (isSuccess(outcome)) {
+                List<ModelNode> deployments = outcome.get(RESULT).asList();
+                for (ModelNode item : deployments) {
+                    ModelNode deployment = item.get(RESULT);
+                    String runtime = deployment.get(RUNTIME_NAME).asString();
+                    if (rtName.equals(runtime)) {
+                        if (deployment.get(ENABLED).asBoolean()) {
+                            return deployment.get(NAME).asString();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return null;
     }
 
     public static List<String> getDeployments(ModelControllerClient client) {
