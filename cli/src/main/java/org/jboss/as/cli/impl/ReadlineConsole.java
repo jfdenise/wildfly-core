@@ -737,4 +737,16 @@ public class ReadlineConsole {
     public Connection getConnection() {
         return connection;
     }
+
+    public boolean handleBuiltins(String line) {
+        return handleAlias(line);
+    }
+
+    public String parse(String line) {
+        Optional<String> out = aliasManager.getAliasName(line);
+        if (out.isPresent()) {
+            line = out.get();
+        }
+        return line;
+    }
 }

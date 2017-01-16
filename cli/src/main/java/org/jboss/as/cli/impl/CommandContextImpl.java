@@ -741,6 +741,17 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             printLine(getPrompt() + echoLine);
         }
 
+        if (!INTERACT) { // special case for builtins and pre-processing.
+            if (console == null) {
+                initBasicConsole(null, false);
+            }
+            boolean b = console.handleBuiltins(line);
+            if (b) {
+                return;
+            }
+            line = console.parse(line);
+        }
+
         resetArgs(line);
         try {
             if(redirection != null) {
