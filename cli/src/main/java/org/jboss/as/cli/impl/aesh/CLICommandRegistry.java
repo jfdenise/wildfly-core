@@ -10,21 +10,24 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.aesh.readline.completion.CompleteOperation;
-import org.aesh.cl.CommandLine;
-import org.aesh.cl.internal.ProcessedCommand;
-import org.aesh.cl.internal.ProcessedCommandBuilder;
-import org.aesh.cl.parser.CommandLineCompletionParser;
-import org.aesh.cl.parser.CommandLineParser;
-import org.aesh.cl.parser.CommandLineParserException;
-import org.aesh.cl.parser.OptionParserException;
-import org.aesh.cl.populator.CommandPopulator;
-import org.aesh.console.command.Command;
-import org.aesh.console.command.CommandNotFoundException;
-import org.aesh.console.command.container.AeshCommandContainerBuilder;
-import org.aesh.console.command.container.CommandContainer;
-import org.aesh.console.command.registry.CommandRegistry;
-import org.aesh.console.command.registry.MutableCommandRegistry;
-import org.aesh.util.ParsedLine;
+import org.aesh.command.impl.internal.ProcessedCommand;
+import org.aesh.command.impl.internal.ProcessedCommandBuilder;
+import org.aesh.command.impl.parser.CommandLineCompletionParser;
+import org.aesh.command.impl.parser.CommandLineParser;
+import org.aesh.command.impl.parser.CommandLineParserException;
+import org.aesh.command.impl.parser.OptionParserException;
+import org.aesh.command.populator.CommandPopulator;
+import org.aesh.command.Command;
+import org.aesh.command.CommandNotFoundException;
+import org.aesh.command.impl.container.AeshCommandContainerBuilder;
+import org.aesh.command.container.CommandContainer;
+import org.aesh.command.impl.internal.ProcessedOption;
+import org.aesh.command.registry.CommandRegistry;
+import org.aesh.command.impl.registry.MutableCommandRegistry;
+import org.aesh.command.invocation.InvocationProviders;
+import org.aesh.command.validator.OptionValidatorException;
+import org.aesh.console.AeshContext;
+import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.logging.Logger;
 
@@ -69,17 +72,17 @@ public class CLICommandRegistry implements CommandRegistry {
         }
 
         @Override
-        public CommandLineParser<? extends Command> getChildParser(String name) {
+        public CommandLineParser<Command> getChildParser(String name) {
             return parser.getChildParser(name);
         }
 
         @Override
-        public void addChildParser(CommandLineParser<? extends Command> childParser) {
+        public void addChildParser(CommandLineParser<Command> childParser) {
             parser.addChildParser(childParser);
         }
 
         @Override
-        public List<CommandLineParser<? extends Command>> getAllChildParsers() {
+        public List<CommandLineParser<Command>> getAllChildParsers() {
             return parser.getAllChildParsers();
         }
 
@@ -94,23 +97,8 @@ public class CLICommandRegistry implements CommandRegistry {
         }
 
         @Override
-        public CommandLine<? extends Command> parse(String line) {
-            return parser.parse(line);
-        }
-
-        @Override
-        public CommandLine<? extends Command> parse(String line, boolean ignoreRequirements) {
-            return parser.parse(line, ignoreRequirements);
-        }
-
-        @Override
-        public CommandLine<? extends Command> parse(ParsedLine line, boolean ignoreRequirements) {
-            return parser.parse(line, ignoreRequirements);
-        }
-
-        @Override
-        public CommandLine<? extends Command> parse(List<String> lines, boolean ignoreRequirements) {
-            return parser.parse(lines, ignoreRequirements);
+        public void parse(String line) {
+            parser.parse(line);
         }
 
         @Override
@@ -127,6 +115,32 @@ public class CLICommandRegistry implements CommandRegistry {
         public void setChild(boolean b) {
             parser.setChild(b);
         }
+
+        @Override
+        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
+            parser.populateObject(line, invocationProviders, aeshContext, validate);
+        }
+
+        @Override
+        public ProcessedOption lastParsedOption() {
+            return parser.lastParsedOption();
+        }
+
+        @Override
+        public void parse(String line, boolean ignoreRequirements) {
+            parser.parse(line, ignoreRequirements);
+        }
+
+        @Override
+        public void parse(ParsedLineIterator iterator, boolean ignoreRequirements) {
+            parser.parse(iterator, ignoreRequirements);
+        }
+
+        @Override
+        public CommandLineParser<Command> parsedCommand() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
     }
 
     private static final Logger log = Logger.getLogger(CLICommandRegistry.class);
@@ -137,7 +151,7 @@ public class CLICommandRegistry implements CommandRegistry {
     private CommandContainer addCommandContainer(CommandContainer container) throws CommandLineException {
         if (container.getParser().getProcessedCommand().getActivator() != null) {
             if (!(container.getParser().getProcessedCommand().getActivator() instanceof CompatActivator)) {
-                exposedCommands.add(container.getParser().getProcessedCommand().getName());
+                exposedCommands.add(container.getParser().getProcessedCommand().name());
             }
         }
         CLICommandContainer cliContainer;
@@ -164,7 +178,7 @@ public class CLICommandRegistry implements CommandRegistry {
         CommandContainer container = containerBuilder.create(command);
 
         // Sub command handling
-        String name = container.getParser().getProcessedCommand().getName();
+        String name = container.getParser().getProcessedCommand().name();
         int index = name.indexOf("@");
         if (index >= 0 && index != name.length() - 1) {
             String parentName = name.substring(index + 1);
@@ -194,11 +208,11 @@ public class CLICommandRegistry implements CommandRegistry {
                                 aliases(cmd.getAliases()).
                                 argument(cmd.getArgument()).
                                 command(cmd.getCommand()).
-                                description(cmd.getDescription()).
+                                description(cmd.description()).
                                 name(childName). // child name
                                 populator(cmd.getCommandPopulator()).
-                                resultHandler(cmd.getResultHandler()).
-                                validator(cmd.getValidator()).
+                                resultHandler(cmd.resultHandler()).
+                                validator(cmd.validator()).
                                 create();
                         existingParent.
                                 addChildParser(new ExtSubCommandParser(container.getParser(),

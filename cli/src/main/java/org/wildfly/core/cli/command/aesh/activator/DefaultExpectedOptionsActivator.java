@@ -25,8 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.aesh.cl.internal.ProcessedCommand;
-import org.aesh.cl.internal.ProcessedOption;
+import org.aesh.command.impl.internal.ProcessedCommand;
+import org.aesh.command.impl.internal.ProcessedOption;
 
 /**
  *

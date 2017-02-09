@@ -22,7 +22,7 @@
 package org.wildfly.core.cli.command.aesh;
 
 import org.aesh.console.AeshContext;
-import org.aesh.console.command.converter.ConverterInvocation;
+import org.aesh.command.converter.ConverterInvocation;
 import org.jboss.as.cli.CommandContext;
 
 /**

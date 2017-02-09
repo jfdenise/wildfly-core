@@ -21,7 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.parser;
 
-import org.aesh.cl.internal.ProcessedOption;
+import org.aesh.command.impl.internal.ProcessedOption;
 
 /**
  *

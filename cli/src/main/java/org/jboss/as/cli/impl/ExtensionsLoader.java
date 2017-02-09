@@ -28,8 +28,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
-import org.aesh.console.command.Command;
-import org.aesh.console.command.container.CommandContainer;
+import org.aesh.command.Command;
+import org.aesh.command.container.CommandContainer;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandlerProvider;
@@ -174,7 +174,7 @@ class ExtensionsLoader {
                     for (Command provider : loader2) {
                         try {
                             CommandContainer container = aeshRegistry.addCommand(provider);
-                            addCommand(container.getParser().getProcessedCommand().getName());
+                            addCommand(container.getParser().getProcessedCommand().name());
                         } catch (CommandLineException e) {
                             addError(e.getLocalizedMessage());
                         }

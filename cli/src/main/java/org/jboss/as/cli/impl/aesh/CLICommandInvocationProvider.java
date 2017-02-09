@@ -21,10 +21,10 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
-import org.aesh.console.Shell;
+import org.aesh.command.Shell;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.aesh.console.command.invocation.CommandInvocation;
-import org.aesh.console.command.invocation.CommandInvocationProvider;
+import org.aesh.command.invocation.CommandInvocation;
+import org.aesh.command.invocation.CommandInvocationProvider;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.impl.ReadlineConsole;
 /**

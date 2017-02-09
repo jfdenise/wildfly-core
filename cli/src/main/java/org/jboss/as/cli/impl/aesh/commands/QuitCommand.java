@@ -21,11 +21,11 @@
  */
 package org.jboss.as.cli.impl.aesh.commands;
 
-import org.aesh.cl.CommandDefinition;
-import org.aesh.cl.Option;
-import org.aesh.console.command.Command;
-import org.aesh.console.command.CommandException;
-import org.aesh.console.command.CommandResult;
+import org.aesh.command.CommandDefinition;
+import org.aesh.command.option.Option;
+import org.aesh.command.Command;
+import org.aesh.command.CommandException;
+import org.aesh.command.CommandResult;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
 

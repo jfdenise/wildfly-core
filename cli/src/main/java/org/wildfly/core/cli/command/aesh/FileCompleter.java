@@ -23,7 +23,7 @@ package org.wildfly.core.cli.command.aesh;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.aesh.cl.completer.OptionCompleter;
+import org.aesh.command.completer.OptionCompleter;
 import org.jboss.as.cli.handlers.FilenameTabCompleter;
 
 /**

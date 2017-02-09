@@ -25,9 +25,9 @@ import java.util.Collection;
 import java.util.List;
 import org.aesh.terminal.formatting.TerminalString;
 import org.aesh.console.AeshContext;
-import org.aesh.console.command.Command;
-import org.aesh.console.command.completer.CompleterInvocation;
-import org.aesh.console.command.registry.CommandRegistry;
+import org.aesh.command.Command;
+import org.aesh.command.completer.CompleterInvocation;
+import org.aesh.command.registry.CommandRegistry;
 import org.jboss.as.cli.CommandContext;
 
 /**

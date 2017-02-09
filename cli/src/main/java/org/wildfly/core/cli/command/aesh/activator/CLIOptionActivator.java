@@ -21,7 +21,7 @@
  */
 package org.wildfly.core.cli.command.aesh.activator;
 
-import org.aesh.cl.activation.OptionActivator;
+import org.aesh.command.activator.OptionActivator;
 import org.jboss.as.cli.CommandContext;
 
 /**

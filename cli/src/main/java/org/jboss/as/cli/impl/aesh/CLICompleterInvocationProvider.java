@@ -22,9 +22,8 @@
 package org.jboss.as.cli.impl.aesh;
 
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
-import org.aesh.console.command.completer.CompleterInvocation;
-import org.aesh.console.command.completer.CompleterInvocationProvider;
-import org.aesh.console.command.registry.CommandRegistry;
+import org.aesh.command.completer.CompleterInvocationProvider;
+import org.aesh.command.registry.CommandRegistry;
 import org.jboss.as.cli.CommandContext;
 
 /**
@@ -43,7 +42,7 @@ public class CLICompleterInvocationProvider implements CompleterInvocationProvid
     }
 
     @Override
-    public CLICompleterInvocation enhanceCompleterInvocation(CompleterInvocation completerInvocation) {
+    public CLICompleterInvocation enhanceCompleterInvocation(CLICompleterInvocation completerInvocation) {
         return new CLICompleterInvocation(completerInvocation, ctx, registry);
     }
 }

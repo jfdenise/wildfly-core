@@ -21,8 +21,8 @@
  */
 package org.wildfly.core.cli.command.aesh;
 
-import org.aesh.console.command.invocation.CommandInvocation;
-import org.aesh.console.command.registry.CommandRegistry;
+import org.aesh.command.invocation.CommandInvocation;
+import org.aesh.command.registry.CommandRegistry;
 import org.jboss.as.cli.CommandContext;
 
 /**

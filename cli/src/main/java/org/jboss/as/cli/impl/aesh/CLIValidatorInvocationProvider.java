@@ -22,8 +22,7 @@
 package org.jboss.as.cli.impl.aesh;
 
 import org.wildfly.core.cli.command.aesh.CLIValidatorInvocation;
-import org.aesh.console.command.validator.ValidatorInvocation;
-import org.aesh.console.command.validator.ValidatorInvocationProvider;
+import org.aesh.command.validator.ValidatorInvocationProvider;
 import org.jboss.as.cli.CommandContext;
 
 /**
@@ -39,7 +38,7 @@ public class CLIValidatorInvocationProvider implements ValidatorInvocationProvid
     }
 
     @Override
-    public CLIValidatorInvocation enhanceValidatorInvocation(ValidatorInvocation validatorInvocation) {
+    public CLIValidatorInvocation enhanceValidatorInvocation(CLIValidatorInvocation validatorInvocation) {
         return new CLIValidatorInvocationImpl(context, validatorInvocation.getValue(),
                 validatorInvocation.getAeshContext(), validatorInvocation.getCommand());
     }

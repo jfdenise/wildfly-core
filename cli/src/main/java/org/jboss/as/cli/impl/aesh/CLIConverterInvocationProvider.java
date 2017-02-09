@@ -22,8 +22,8 @@
 package org.jboss.as.cli.impl.aesh;
 
 import org.wildfly.core.cli.command.aesh.CLIConverterInvocation;
-import org.aesh.console.command.converter.ConverterInvocation;
-import org.aesh.console.command.converter.ConverterInvocationProvider;
+import org.aesh.command.converter.ConverterInvocation;
+import org.aesh.command.converter.ConverterInvocationProvider;
 import org.jboss.as.cli.CommandContext;
 
 /**
