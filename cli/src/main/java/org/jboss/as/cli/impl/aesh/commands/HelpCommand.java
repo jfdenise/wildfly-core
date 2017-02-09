@@ -25,18 +25,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.aesh.cl.Arguments;
-import org.aesh.cl.CommandDefinition;
-import org.aesh.cl.Option;
-import org.aesh.cl.activation.CommandActivator;
-import org.aesh.cl.activation.OptionActivator;
-import org.aesh.cl.completer.OptionCompleter;
-import org.aesh.cl.internal.ProcessedCommand;
-import org.aesh.cl.parser.CommandLineParser;
-import org.aesh.console.command.Command;
-import org.aesh.console.command.CommandException;
-import org.aesh.console.command.CommandNotFoundException;
-import org.aesh.console.command.CommandResult;
+import org.aesh.command.option.Arguments;
+import org.aesh.command.CommandDefinition;
+import org.aesh.command.option.Option;
+import org.aesh.command.activator.CommandActivator;
+import org.aesh.command.activator.OptionActivator;
+import org.aesh.command.completer.OptionCompleter;
+import org.aesh.command.impl.internal.ProcessedCommand;
+import org.aesh.command.impl.parser.CommandLineParser;
+import org.aesh.command.Command;
+import org.aesh.command.CommandException;
+import org.aesh.command.CommandNotFoundException;
+import org.aesh.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
@@ -134,8 +134,8 @@ public class HelpCommand implements Command<CLICommandInvocation> {
                 try {
                     CommandLineParser<? extends Command> p = cmd.aeshRegistry.findCommand(mainCommand, null);
                     for (CommandLineParser child : p.getAllChildParsers()) {
-                        if (child.getProcessedCommand().getName().startsWith(buff)) {
-                            candidates.add(child.getProcessedCommand().getName());
+                        if (child.getProcessedCommand().name().startsWith(buff)) {
+                            candidates.add(child.getProcessedCommand().name());
                         }
                     }
                 } catch (CommandNotFoundException ex) {

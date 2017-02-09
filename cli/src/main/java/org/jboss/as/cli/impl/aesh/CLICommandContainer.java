@@ -22,24 +22,25 @@
 package org.jboss.as.cli.impl.aesh;
 
 import java.util.List;
-import org.aesh.cl.CommandLine;
-import org.aesh.cl.internal.ProcessedCommand;
-import org.aesh.cl.parser.CommandLineCompletionParser;
-import org.aesh.cl.parser.CommandLineParser;
-import org.aesh.cl.parser.CommandLineParserException;
-import org.aesh.cl.parser.OptionParserException;
-import org.aesh.cl.populator.CommandPopulator;
-import org.aesh.cl.validator.CommandValidatorException;
-import org.aesh.cl.validator.OptionValidatorException;
+import org.aesh.command.impl.internal.ProcessedCommand;
+import org.aesh.command.impl.parser.CommandLineCompletionParser;
+import org.aesh.command.impl.parser.CommandLineParser;
+import org.aesh.command.impl.parser.CommandLineParserException;
+import org.aesh.command.impl.parser.OptionParserException;
+import org.aesh.command.populator.CommandPopulator;
+import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.console.AeshContext;
-import org.aesh.console.InvocationProviders;
-import org.aesh.console.command.Command;
-import org.aesh.console.command.CommandException;
-import org.aesh.console.command.container.CommandContainer;
-import org.aesh.console.command.container.CommandContainerResult;
-import org.aesh.console.command.container.DefaultCommandContainer;
-import org.aesh.console.command.invocation.CommandInvocation;
-import org.aesh.util.ParsedLine;
+import org.aesh.command.invocation.InvocationProviders;
+import org.aesh.command.Command;
+import org.aesh.command.CommandException;
+import org.aesh.command.container.CommandContainer;
+import org.aesh.command.container.CommandContainerResult;
+import org.aesh.command.container.DefaultCommandContainer;
+import org.aesh.command.impl.internal.ProcessedOption;
+import org.aesh.command.invocation.CommandInvocation;
+import org.aesh.command.validator.CommandValidatorException;
+import org.aesh.parser.ParsedLineIterator;
+import org.aesh.parser.ParsedLine;
 
 /**
  * Wrapping of container to plug CLI Help support.
@@ -77,17 +78,17 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         }
 
         @Override
-        public CommandLineParser<? extends Command> getChildParser(String name) {
+        public CommandLineParser<Command> getChildParser(String name) {
             return parser.getChildParser(name);
         }
 
         @Override
-        public void addChildParser(CommandLineParser<? extends Command> childParser) {
+        public void addChildParser(CommandLineParser<Command> childParser) {
             parser.addChildParser(childParser);
         }
 
         @Override
-        public List<CommandLineParser<? extends Command>> getAllChildParsers() {
+        public List<CommandLineParser<Command>> getAllChildParsers() {
             return parser.getAllChildParsers();
         }
 
@@ -98,28 +99,23 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
 
         @Override
         public String printHelp() {
-            return HelpSupport.getSubCommandHelp(CLICommandContainer.this.parser.getProcessedCommand().getName(),
+            return HelpSupport.getSubCommandHelp(CLICommandContainer.this.parser.getProcessedCommand().name(),
                     parser);
         }
 
         @Override
-        public CommandLine<? extends Command> parse(String line) {
-            return parser.parse(line);
+        public void parse(String line) {
+            parser.parse(line);
         }
 
         @Override
-        public CommandLine<? extends Command> parse(String line, boolean ignoreRequirements) {
-            return parser.parse(line, ignoreRequirements);
+        public void parse(String line, boolean ignoreRequirements) {
+            parser.parse(line, ignoreRequirements);
         }
 
         @Override
-        public CommandLine<? extends Command> parse(ParsedLine line, boolean ignoreRequirements) {
-            return parser.parse(line, ignoreRequirements);
-        }
-
-        @Override
-        public CommandLine<? extends Command> parse(List<String> lines, boolean ignoreRequirements) {
-            return parser.parse(lines, ignoreRequirements);
+        public void parse(ParsedLineIterator iterator, boolean ignoreRequirements) {
+            parser.parse(iterator, ignoreRequirements);
         }
 
         @Override
@@ -135,6 +131,21 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         @Override
         public void setChild(boolean b) {
             parser.setChild(b);
+        }
+
+        @Override
+        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
+            parser.populateObject(line, invocationProviders, aeshContext, validate);
+        }
+
+        @Override
+        public ProcessedOption lastParsedOption() {
+            return parser.lastParsedOption();
+        }
+
+        @Override
+        public CommandLineParser<Command> parsedCommand() {
+            return parser.parsedCommand();
         }
     }
 
@@ -165,17 +176,17 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         }
 
         @Override
-        public CommandLineParser<? extends Command> getChildParser(String name) {
+        public CommandLineParser<Command> getChildParser(String name) {
             return container.getParser().getChildParser(name);
         }
 
         @Override
-        public void addChildParser(CommandLineParser<? extends Command> childParser) {
+        public void addChildParser(CommandLineParser<Command> childParser) {
             container.getParser().addChildParser(childParser);
         }
 
         @Override
-        public List<CommandLineParser<? extends Command>> getAllChildParsers() {
+        public List<CommandLineParser<Command>> getAllChildParsers() {
             return container.getParser().getAllChildParsers();
         }
 
@@ -190,23 +201,18 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         }
 
         @Override
-        public CommandLine<? extends Command> parse(String line) {
-            return container.getParser().parse(line);
+        public void parse(String line) {
+            container.getParser().parse(line);
         }
 
         @Override
-        public CommandLine<? extends Command> parse(String line, boolean ignoreRequirements) {
-            return container.getParser().parse(line, ignoreRequirements);
+        public void parse(String line, boolean ignoreRequirements) {
+            container.getParser().parse(line, ignoreRequirements);
         }
 
         @Override
-        public CommandLine<? extends Command> parse(ParsedLine line, boolean ignoreRequirements) {
-            return container.getParser().parse(line, ignoreRequirements);
-        }
-
-        @Override
-        public CommandLine<? extends Command> parse(List<String> lines, boolean ignoreRequirements) {
-            return container.getParser().parse(lines, ignoreRequirements);
+        public void parse(ParsedLineIterator iterator, boolean ignoreRequirements) {
+            container.getParser().parse(iterator, ignoreRequirements);
         }
 
         @Override
@@ -222,6 +228,21 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         @Override
         public void setChild(boolean b) {
             container.getParser().setChild(b);
+        }
+
+        @Override
+        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
+            container.getParser().populateObject(line, invocationProviders, aeshContext, validate);
+        }
+
+        @Override
+        public ProcessedOption lastParsedOption() {
+            return container.getParser().lastParsedOption();
+        }
+
+        @Override
+        public CommandLineParser<Command> parsedCommand() {
+            return container.getParser().parsedCommand();
         }
     }
 

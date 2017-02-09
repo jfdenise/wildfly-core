@@ -22,8 +22,8 @@
 package org.jboss.as.cli.impl.aesh;
 
 import org.wildfly.core.cli.command.aesh.activator.CLICommandActivator;
-import org.aesh.cl.activation.CommandActivator;
-import org.aesh.console.command.activator.CommandActivatorProvider;
+import org.aesh.command.activator.CommandActivator;
+import org.aesh.command.activator.CommandActivatorProvider;
 import org.jboss.as.cli.CommandContext;
 
 /**

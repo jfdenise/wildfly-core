@@ -26,7 +26,7 @@ import org.aesh.terminal.Key;
 import org.aesh.tty.Capability;
 import org.aesh.tty.Size;
 import org.aesh.util.Config;
-import org.aesh.console.Shell;
+import org.aesh.command.Shell;
 import org.jboss.as.cli.impl.ReadlineConsole;
 
 /**

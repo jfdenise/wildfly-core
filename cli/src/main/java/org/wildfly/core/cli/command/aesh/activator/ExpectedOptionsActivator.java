@@ -22,7 +22,7 @@
 package org.wildfly.core.cli.command.aesh.activator;
 
 import java.util.Set;
-import org.aesh.cl.activation.OptionActivator;
+import org.aesh.command.activator.OptionActivator;
 
 /**
  *

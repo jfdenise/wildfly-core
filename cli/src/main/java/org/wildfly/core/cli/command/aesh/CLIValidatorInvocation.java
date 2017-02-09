@@ -21,7 +21,7 @@
  */
 package org.wildfly.core.cli.command.aesh;
 
-import org.aesh.console.command.validator.ValidatorInvocation;
+import org.aesh.command.validator.ValidatorInvocation;
 import org.jboss.as.cli.CommandContext;
 
 /**

@@ -44,18 +44,18 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import org.aesh.util.Config;
-import org.aesh.cl.Arguments;
-import org.aesh.cl.CommandDefinition;
-import org.aesh.cl.GroupCommandDefinition;
-import org.aesh.cl.Option;
-import org.aesh.cl.OptionList;
-import org.aesh.cl.activation.OptionActivator;
-import org.aesh.cl.internal.ProcessedCommand;
-import org.aesh.cl.internal.ProcessedCommandBuilder;
-import org.aesh.cl.internal.ProcessedOption;
-import org.aesh.cl.internal.ProcessedOptionBuilder;
-import org.aesh.cl.parser.CommandLineParser;
-import org.aesh.console.command.Command;
+import org.aesh.command.option.Arguments;
+import org.aesh.command.CommandDefinition;
+import org.aesh.command.GroupCommandDefinition;
+import org.aesh.command.option.Option;
+import org.aesh.command.option.OptionList;
+import org.aesh.command.activator.OptionActivator;
+import org.aesh.command.impl.internal.ProcessedCommand;
+import org.aesh.command.impl.internal.ProcessedCommandBuilder;
+import org.aesh.command.impl.internal.ProcessedOption;
+import org.aesh.command.impl.internal.ProcessedOptionBuilder;
+import org.aesh.command.impl.parser.CommandLineParser;
+import org.aesh.command.Command;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
@@ -313,10 +313,10 @@ public class HelpSupport {
                 Class<?> clazz = getClassFromType(p.get(Util.TYPE).asType());
                 String pdesc = p.get(Util.TYPE).asString() + ", "
                         + p.get(Util.DESCRIPTION).asString();
-                ProcessedOption opt = new ProcessedOptionBuilder().name(prop).
+                ProcessedOption opt = ProcessedOptionBuilder.builder().name(prop).
                         required(true).
                         hasValue(true).
-                        description(pdesc).type(clazz).create();
+                        description(pdesc).type(clazz).build();
                 pcommand.addOption(opt);
             }
 
@@ -353,12 +353,12 @@ public class HelpSupport {
 
     public static String getSubCommandHelp(String parentCommand,
             CommandLineParser<Command> parser) {
-        String commandName = parser.getProcessedCommand().getName();
+        String commandName = parser.getProcessedCommand().name();
         return getCommandHelp(parentCommand, commandName, parser);
     }
 
     public static String getCommandHelp(CommandLineParser<Command> parser) {
-        String commandName = parser.getProcessedCommand().getName();
+        String commandName = parser.getProcessedCommand().name();
         return getCommandHelp(null, commandName, parser);
     }
 
@@ -372,7 +372,7 @@ public class HelpSupport {
         retrieveDeprecated(deprecated, parser.getCommand().getClass(), superNames);
         retrieveHidden(deprecated, parser.getProcessedCommand());
 
-        List<CommandLineParser<? extends Command>> parsers = parser.getAllChildParsers();
+        List<CommandLineParser<Command>> parsers = parser.getAllChildParsers();
 
         ResourceBundle bundle = getBundle(parser.getCommand());
 
@@ -381,12 +381,12 @@ public class HelpSupport {
 
         List<ProcessedOption> opts = new ArrayList<>();
         for (ProcessedOption o : pcommand.getOptions()) {
-            if (!deprecated.contains(o.getName())) {
+            if (!deprecated.contains(o.name())) {
                 opts.add(o);
             }
         }
         Collections.sort(opts, (ProcessedOption o1, ProcessedOption o2) -> {
-            return o1.getName().compareTo(o2.getName());
+            return o1.name().compareTo(o2.name());
         });
         ProcessedOption arg = deprecated.contains("") ? null : pcommand.getArgument();
 
@@ -396,7 +396,7 @@ public class HelpSupport {
 
     private static String getCommandHelp(ResourceBundle bundle, List<String> superNames,
             ProcessedOption arg,
-            List<CommandLineParser<? extends Command>> parsers,
+            List<CommandLineParser<Command>> parsers,
             List<ProcessedOption> opts,
             ProcessedCommand<?> pcommand,
             String parentName,
@@ -423,7 +423,7 @@ public class HelpSupport {
             // 2 cases, standalone and domain
             List<ProcessedOption> standalone = retrieveStandaloneOptions(opts);
             if (standalone.size() == opts.size()
-                    && (arg == null || !(arg.getActivator() instanceof DomainOptionActivator))) {
+                    && (arg == null || !(arg.activator() instanceof DomainOptionActivator))) {
                 synopsis = generateSynopsis(bundle, parentName, commandName, opts,
                         arg, parsers != null && parsers.size() > 0, superNames, isOperation, false);
                 builder.append(splitAndFormat(synopsis, 80, TAB, 0, synopsisTab.toString()));
@@ -447,7 +447,7 @@ public class HelpSupport {
         builder.append(Config.getLineSeparator());
         builder.append("DESCRIPTION").append(Config.getLineSeparator());
         builder.append(Config.getLineSeparator());
-        builder.append(HelpSupport.splitAndFormat(pcommand.getDescription(), 80, TAB, 0, TAB));
+        builder.append(HelpSupport.splitAndFormat(pcommand.description(), 80, TAB, 0, TAB));
         builder.append(Config.getLineSeparator());
 
         if (origCommand.getAliases() != null
@@ -474,7 +474,7 @@ public class HelpSupport {
     private static String printActions(ResourceBundle bundle,
             String parentName,
             String commandName,
-            List<CommandLineParser<? extends Command>> parsers,
+            List<CommandLineParser<Command>> parsers,
             List<String> superNames) {
         StringBuilder builder = new StringBuilder();
         if (parsers != null && parsers.size() > 0) {
@@ -492,7 +492,7 @@ public class HelpSupport {
             // Retrieve the tab length
             int maxActionName = 0;
             for (ProcessedCommand pc : actions) {
-                String name = createActionName(pc.getName(), pc.getName().length());
+                String name = createActionName(pc.name(), pc.name().length());
                 if (name.length() > maxActionName) {
                     maxActionName = name.length();
                 }
@@ -502,13 +502,13 @@ public class HelpSupport {
                 tabBuilder.append(" ");
             }
             String tab = tabBuilder.toString();
-            Collections.sort(actions, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+            Collections.sort(actions, (o1, o2) -> o1.name().compareTo(o2.name()));
             for (ProcessedCommand pc : actions) {
-                String name = createActionName(pc.getName(), maxActionName);
+                String name = createActionName(pc.name(), maxActionName);
                 builder.append(name);
                 // Extract first line...
                 int length = 77 - tab.length();
-                String line = extractFirstLine(pc.getDescription(), length);
+                String line = extractFirstLine(pc.description(), length);
                 builder.append(line).append("...").append(Config.getLineSeparator()).
                         append(Config.getLineSeparator());
             }
@@ -517,12 +517,12 @@ public class HelpSupport {
     }
 
     private static void retrieveHidden(Set<String> deprecated, ProcessedCommand<Command> cmd) {
-        if (cmd.getArgument() != null && cmd.getArgument().getActivator() instanceof HiddenActivator) {
+        if (cmd.getArgument() != null && cmd.getArgument().activator() instanceof HiddenActivator) {
             deprecated.add("");
         }
         for (ProcessedOption po : cmd.getOptions()) {
-            if (po.getActivator() instanceof HiddenActivator) {
-                deprecated.add(po.getName());
+            if (po.activator() instanceof HiddenActivator) {
+                deprecated.add(po.name());
             }
         }
     }
@@ -666,12 +666,12 @@ public class HelpSupport {
         }
         // sort options.
         Collections.sort(options, (ProcessedOption o1, ProcessedOption o2) -> {
-            String name = o1.getName();
+            String name = o1.name();
             // headers are last one in synopsis.
             if (name.equals("headers")) {
                 return 1;
             }
-            return o1.getName().compareTo(o2.getName());
+            return o1.name().compareTo(o2.name());
         });
         return options.get(0);
     }
@@ -684,7 +684,7 @@ public class HelpSupport {
             ProcessedOption opt,
             boolean isOperation) {
         if (!dependencies.containsKey(opt)) {
-            throw new IllegalArgumentException("Option " + opt.getName() + " already treated");
+            throw new IllegalArgumentException("Option " + opt.name() + " already treated");
         }
         StringBuilder synopsisBuilder = new StringBuilder();
         // Do we have dependencies?
@@ -721,23 +721,23 @@ public class HelpSupport {
         if (!opt.isRequired()) {
             synopsisBuilder.append("[");
         }
-        if (opt.getName().equals("")) {
+        if (opt.name().equals("")) {
             String value = getValue(bundle, parentName, commandName, superNames, "arguments.value");
             synopsisBuilder.append(value == null ? "argument" : value);
         } else {
             if (isOperation) {
-                synopsisBuilder.append(opt.getName()).append("=");
+                synopsisBuilder.append(opt.name()).append("=");
             } else {
-                synopsisBuilder.append("--").append(opt.getName());
+                synopsisBuilder.append("--").append(opt.name());
             }
             if (opt.hasValue()) {
                 String val;
                 if (isOperation) {
-                    val = VALUES.get(opt.getType());
+                    val = VALUES.get(opt.type());
                 } else {
                     val = getValue(bundle, parentName, commandName, superNames, "option."
-                            + opt.getName() + ".value");
-                    val = val == null ? VALUES.get(opt.getType()) : val;
+                            + opt.name() + ".value");
+                    val = val == null ? VALUES.get(opt.type()) : val;
                     synopsisBuilder.append(" ");
                 }
 
@@ -765,7 +765,7 @@ public class HelpSupport {
         // Retrieve the tab length
         int maxOptionName = 0;
         for (ProcessedOption o : opts) {
-            String name = createOptionName(o.getName(), o.getName().length(), o.getShortName(), isOperation);
+            String name = createOptionName(o.name(), o.name().length(), o.shortName(), isOperation);
             if (name.length() > maxOptionName) {
                 maxOptionName = name.length();
             }
@@ -776,15 +776,15 @@ public class HelpSupport {
         }
         String tab = builder.toString();
         for (ProcessedOption o : opts) {
-            String name = createOptionName(o.getName(), maxOptionName, o.getShortName(), isOperation);
+            String name = createOptionName(o.name(), maxOptionName, o.shortName(), isOperation);
             sb.append(name);
-            sb.append(HelpSupport.splitAndFormat(o.getDescription(), width, "", name.length(), tab));
+            sb.append(HelpSupport.splitAndFormat(o.description(), width, "", name.length(), tab));
             sb.append(Config.getLineSeparator());
         }
         if (arg != null) {
             sb.append(Config.getLineSeparator()).append("ARGUMENT").append(Config.getLineSeparator());
             sb.append(Config.getLineSeparator());
-            sb.append(HelpSupport.splitAndFormat(arg.getDescription(), width, HelpSupport.TAB, 0, HelpSupport.TAB));
+            sb.append(HelpSupport.splitAndFormat(arg.description(), width, HelpSupport.TAB, 0, HelpSupport.TAB));
         }
         return sb.toString();
     }
@@ -858,42 +858,42 @@ public class HelpSupport {
             if (bundle == null) {
                 return pc;
             }
-            String desc = pc.getDescription();
-            String bdesc = getValue(bundle, parentName, pc.getName(), superNames, "description");
+            String desc = pc.description();
+            String bdesc = getValue(bundle, parentName, pc.name(), superNames, "description");
             if (bdesc != null) {
                 desc = bdesc;
             }
-            ProcessedCommandBuilder builder = new ProcessedCommandBuilder().name(pc.getName()).description(desc);
+            ProcessedCommandBuilder builder = new ProcessedCommandBuilder().name(pc.name()).description(desc);
 
             if (pc.getArgument() != null) {
-                String argDesc = pc.getArgument().getDescription();
-                String bargDesc = getValue(bundle, parentName, pc.getName(), superNames, "arguments.description");
+                String argDesc = pc.getArgument().description();
+                String bargDesc = getValue(bundle, parentName, pc.name(), superNames, "arguments.description");
                 if (bargDesc != null) {
                     argDesc = bargDesc;
                 }
-                ProcessedOption newArg = new ProcessedOptionBuilder().name("").
+                ProcessedOption newArg = ProcessedOptionBuilder.builder().name("").
                         optionType(pc.getArgument().getOptionType()).
                         type(String.class).
-                        activator(pc.getArgument().getActivator()).
+                        activator(pc.getArgument().activator()).
                         valueSeparator(pc.getArgument().getValueSeparator()).
-                        required(pc.getArgument().isRequired()).description(argDesc).create();
+                        required(pc.getArgument().isRequired()).description(argDesc).build();
                 builder.argument(newArg);
             }
 
             for (ProcessedOption opt : pc.getOptions()) {
-                String optDesc = opt.getDescription();
-                String boptDesc = getValue(bundle, parentName, pc.getName(), superNames, "option." + opt.getName() + ".description");
+                String optDesc = opt.description();
+                String boptDesc = getValue(bundle, parentName, pc.name(), superNames, "option." + opt.name() + ".description");
                 if (boptDesc != null) {
                     optDesc = boptDesc;
                 }
-                ProcessedOption newOption = new ProcessedOptionBuilder().name(opt.getName()).
+                ProcessedOption newOption = ProcessedOptionBuilder.builder().name(opt.name()).
                         optionType(opt.getOptionType()).
                         type(String.class).
-                        activator(opt.getActivator()).
+                        activator(opt.activator()).
                         valueSeparator(opt.getValueSeparator()).
-                        shortName(opt.getShortName() == null ? 0 : opt.getShortName().charAt(0)).
+                        shortName(opt.shortName() == null ? 0 : opt.shortName().charAt(0)).
                         required(opt.isRequired()).
-                        description(optDesc).create();
+                        description(optDesc).build();
                 builder.addOption(newOption);
             }
             return builder.create();
@@ -1020,13 +1020,13 @@ public class HelpSupport {
                 return false;
             }
             Dependency dep = (Dependency) other;
-            return option.getName().equals(dep.option.getName());
+            return option.name().equals(dep.option.name());
         }
 
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 13 * hash + Objects.hashCode(this.option.getName());
+            hash = 13 * hash + Objects.hashCode(this.option.name());
             return hash;
         }
     }
@@ -1035,7 +1035,7 @@ public class HelpSupport {
             ProcessedOption arg, boolean domain) {
         Map<ProcessedOption, Dependency> dependencies = new IdentityHashMap<>();
         if (arg != null) {
-            List<ProcessedOption> argExpected = retrieveExpected(arg.getActivator(),
+            List<ProcessedOption> argExpected = retrieveExpected(arg.activator(),
                     opts, domain);
             Dependency d = new Dependency();
             d.option = arg;
@@ -1046,7 +1046,7 @@ public class HelpSupport {
                 dependencies.put(e, de);
                 d.dependsOn.add(de);
             }
-            List<ProcessedOption> argNotExpected = retrieveNotExpected(arg.getActivator(),
+            List<ProcessedOption> argNotExpected = retrieveNotExpected(arg.activator(),
                     opts, domain);
             for (ProcessedOption e : argNotExpected) {
                 Dependency depDep = dependencies.get(e);
@@ -1061,7 +1061,7 @@ public class HelpSupport {
             }
         }
         for (ProcessedOption opt : opts) {
-            List<ProcessedOption> expected = retrieveExpected(opt.getActivator(), opts, domain);
+            List<ProcessedOption> expected = retrieveExpected(opt.activator(), opts, domain);
             Dependency optDep = dependencies.get(opt);
             if (optDep == null) {
                 optDep = new Dependency();
@@ -1077,7 +1077,7 @@ public class HelpSupport {
                 }
                 optDep.dependsOn.add(depDep);
             }
-            List<ProcessedOption> notExpected = retrieveNotExpected(opt.getActivator(), opts, domain);
+            List<ProcessedOption> notExpected = retrieveNotExpected(opt.activator(), opts, domain);
             for (ProcessedOption e : notExpected) {
                 Dependency depDep = dependencies.get(e);
                 if (depDep == null) {
@@ -1099,14 +1099,14 @@ public class HelpSupport {
         if (activator instanceof NotExpectedOptionsActivator) {
             for (String s : ((NotExpectedOptionsActivator) activator).getNotExpected()) {
                 for (ProcessedOption opt : opts) {
-                    if (s.equals(opt.getName())) {
+                    if (s.equals(opt.name())) {
                         if (domain) {
                             // This option is only valid in non domain mode.
-                            if (opt.getActivator() instanceof StandaloneOptionActivator) {
+                            if (opt.activator() instanceof StandaloneOptionActivator) {
                                 continue;
                             }
                         } else // This option is only valid in non domain mode.
-                         if (opt.getActivator() instanceof DomainOptionActivator) {
+                         if (opt.activator() instanceof DomainOptionActivator) {
                                 continue;
                             }
                         notExpected.add(opt);
@@ -1126,14 +1126,14 @@ public class HelpSupport {
             String[] obj = (String[]) activator.getClass().getField(WF_CLI_EXPECTED_OPTIONS).get(null);
             for (String s : obj) {
                 for (ProcessedOption opt : opts) {
-                    if (s.equals(opt.getName())) {
+                    if (s.equals(opt.name())) {
                         if (domain) {
                             // This option is only valid in non domain mode.
-                            if (opt.getActivator() instanceof StandaloneOptionActivator) {
+                            if (opt.activator() instanceof StandaloneOptionActivator) {
                                 continue;
                             }
                         } else // This option is only valid in non domain mode.
-                         if (opt.getActivator() instanceof DomainOptionActivator) {
+                         if (opt.activator() instanceof DomainOptionActivator) {
                                 continue;
                             }
 
@@ -1148,14 +1148,14 @@ public class HelpSupport {
         if (activator instanceof ExpectedOptionsActivator) {
             for (String s : ((ExpectedOptionsActivator) activator).getExpected()) {
                 for (ProcessedOption opt : opts) {
-                    if (s.equals(opt.getName())) {
+                    if (s.equals(opt.name())) {
                         if (domain) {
                             // This option is only valid in non domain mode.
-                            if (opt.getActivator() instanceof StandaloneOptionActivator) {
+                            if (opt.activator() instanceof StandaloneOptionActivator) {
                                 continue;
                             }
                         } else // This option is only valid in non domain mode.
-                         if (opt.getActivator() instanceof DomainOptionActivator) {
+                         if (opt.activator() instanceof DomainOptionActivator) {
                                 continue;
                             }
 
@@ -1170,7 +1170,7 @@ public class HelpSupport {
     private static List<ProcessedOption> retrieveStandaloneOptions(List<ProcessedOption> opts) {
         List<ProcessedOption> standalone = new ArrayList<>();
         for (ProcessedOption opt : opts) {
-            if (!(opt.getActivator() instanceof DomainOptionActivator)) {
+            if (!(opt.activator() instanceof DomainOptionActivator)) {
                 standalone.add(opt);
             }
         }
@@ -1180,8 +1180,8 @@ public class HelpSupport {
     private static List<ProcessedOption> retrieveDomainOptions(List<ProcessedOption> opts) {
         List<ProcessedOption> domain = new ArrayList<>();
         for (ProcessedOption opt : opts) {
-            if ((opt.getActivator() instanceof DomainOptionActivator
-                    || !(opt.getActivator() instanceof StandaloneOptionActivator))) {
+            if ((opt.activator() instanceof DomainOptionActivator
+                    || !(opt.activator() instanceof StandaloneOptionActivator))) {
                 domain.add(opt);
             }
         }

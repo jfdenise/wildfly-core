@@ -21,8 +21,8 @@
  */
 package org.wildfly.core.cli.command.aesh;
 
-import org.aesh.cl.converter.Converter;
-import org.aesh.cl.validator.OptionValidatorException;
+import org.aesh.command.converter.Converter;
+import org.aesh.command.validator.OptionValidatorException;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.ArgumentWithValue;
