@@ -35,8 +35,8 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-public class CompositeParser {
-
+public class CompositeParser extends AbstractParser {
+    ArgumentValueCallbackHandler handler = new ArgumentValueCallbackHandler(true);
     private static class ValueInitialState extends DefaultParsingState {
 
         public static final ValueInitialState INSTANCE = new ValueInitialState();
@@ -49,9 +49,11 @@ public class CompositeParser {
             enterState('{', complexValueState);
         }
     }
-    public String parse(String valueAndMore, ProcessedOption option, CLICommandInvocation ctx) throws CommandFormatException {
+
+    @Override
+    public int parse(String valueAndMore, ProcessedOption option, CLICommandInvocation ctx) throws CommandFormatException {
         ArgumentValueCallbackHandler handler = new ArgumentValueCallbackHandler(true);
         StateParser.parse(valueAndMore, handler, ValueInitialState.INSTANCE);
-        return Util.updateOptionValue(option, valueAndMore, handler.getEndOfParsing());
+        return handler.getEndOfParsing();
     }
 }
