@@ -417,6 +417,7 @@ public class StateParser {
         @Override
         public void terminateParsing() {
             endOfParsing = location;
+            location = input.length();
         }
     }
 }

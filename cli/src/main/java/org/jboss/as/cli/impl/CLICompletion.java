@@ -66,7 +66,13 @@ public class CLICompletion implements Completion<CompleteOperation> {
         co.setOffset(offset);
         if (!candidates.isEmpty()) {
             co.addCompletionCandidates(candidates);
-            if (candidates.size() == 1) {
+            String buffer = context.getArgumentsString() == null
+                    ? co.getBuffer() : context.getArgumentsString() + co.getBuffer();
+            if (co.getCompletionCandidates().size() == 1
+                    && co.getCompletionCandidates().get(0).
+                    getCharacters().startsWith(buffer)) {
+                co.doAppendSeparator(true);
+            } else {
                 co.doAppendSeparator(false);
             }
         }

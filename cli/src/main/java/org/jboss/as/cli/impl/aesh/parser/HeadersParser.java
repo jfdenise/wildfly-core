@@ -30,12 +30,11 @@ import org.jboss.as.cli.parsing.operation.HeaderListState;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
- * An header parser. TODO, to move to public API once Aesh expose the parser
- * annotation
+ * An header parser.
  *
  * @author jdenise@redhat.com
  */
-public class HeadersParser {
+public class HeadersParser extends AbstractParser {
     private final DefaultCallbackHandler callback = new DefaultCallbackHandler();
     private final DefaultParsingState initialState = new DefaultParsingState("INITIAL_STATE");
 
@@ -43,9 +42,10 @@ public class HeadersParser {
         initialState.enterState('{', HeaderListState.INSTANCE_LEAVE_PARSING);
     }
 
-    public String parse(String valueAndMore, ProcessedOption option, CLICommandInvocation ctx) throws CommandFormatException {
+    @Override
+    public int parse(String valueAndMore, ProcessedOption option, CLICommandInvocation ctx) throws CommandFormatException {
         callback.reset();
         ParserUtil.parse(valueAndMore, callback, initialState);
-        return Util.updateOptionValue(option, valueAndMore, callback.getEndOfParsing());
+        return callback.getEndOfParsing();
     }
 }
