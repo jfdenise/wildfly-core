@@ -25,8 +25,6 @@ import java.util.List;
 import org.aesh.command.impl.internal.ProcessedCommand;
 import org.aesh.command.impl.parser.CommandLineCompletionParser;
 import org.aesh.command.impl.parser.CommandLineParser;
-import org.aesh.command.impl.parser.CommandLineParserException;
-import org.aesh.command.impl.parser.OptionParserException;
 import org.aesh.command.populator.CommandPopulator;
 import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.console.AeshContext;
@@ -38,6 +36,8 @@ import org.aesh.command.container.CommandContainerResult;
 import org.aesh.command.container.DefaultCommandContainer;
 import org.aesh.command.impl.internal.ProcessedOption;
 import org.aesh.command.invocation.CommandInvocation;
+import org.aesh.command.parser.CommandLineParserException;
+import org.aesh.command.parser.OptionParserException;
 import org.aesh.command.validator.CommandValidatorException;
 import org.aesh.parser.ParsedLineIterator;
 import org.aesh.parser.ParsedLine;
@@ -134,7 +134,8 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         }
 
         @Override
-        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
+        public void populateObject(String line, InvocationProviders invocationProviders,
+                AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
             parser.populateObject(line, invocationProviders, aeshContext, validate);
         }
 

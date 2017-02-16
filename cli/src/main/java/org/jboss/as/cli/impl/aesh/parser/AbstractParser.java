@@ -23,6 +23,7 @@ package org.jboss.as.cli.impl.aesh.parser;
 
 import org.aesh.command.impl.internal.ProcessedOption;
 import org.aesh.command.parser.OptionParser;
+import org.aesh.command.parser.OptionParserException;
 import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandFormatException;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -36,7 +37,7 @@ abstract class AbstractParser implements OptionParser {
     public abstract int parse(String valueAndMore, ProcessedOption option, CLICommandInvocation ctx) throws CommandFormatException;
 
     @Override
-    public void parse(ParsedLineIterator parsedLineIterator, ProcessedOption option) {
+    public void parse(ParsedLineIterator parsedLineIterator, ProcessedOption option) throws OptionParserException {
         String valueAndMore = parsedLineIterator.stringFromCurrentPosition();
         int offset;
         int i = valueAndMore.indexOf("=") + 1;
@@ -45,7 +46,7 @@ abstract class AbstractParser implements OptionParser {
         try {
             offset = parse(str, option, null);
         } catch (CommandFormatException ex) {
-            throw new RuntimeException(ex);
+            throw new OptionParserException(ex.getLocalizedMessage(), ex);
         }
 
         updateOptionValue(option, str, offset);

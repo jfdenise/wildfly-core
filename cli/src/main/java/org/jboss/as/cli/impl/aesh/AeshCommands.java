@@ -22,7 +22,6 @@
 package org.jboss.as.cli.impl.aesh;
 
 import java.util.ServiceLoader;
-import org.aesh.command.impl.parser.CommandLineParserException;
 import org.aesh.command.validator.CommandValidatorException;
 import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.command.AeshCommandRuntime;
@@ -34,6 +33,7 @@ import org.aesh.command.Shell;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
+import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.Completion;
 import org.jboss.as.cli.CliInitializationException;
@@ -43,6 +43,7 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandExecutor.ExecutableBuilder;
 import org.jboss.as.cli.impl.ReadlineConsole;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
@@ -63,6 +64,13 @@ public class AeshCommands {
         public BatchCompliantCommand getBatchCompliant() {
             if (executor.getExecutable() instanceof BatchCompliantCommand) {
                 return (BatchCompliantCommand) executor.getExecutable();
+            }
+            return null;
+        }
+
+        public DMRCommand getDMRCompliant() {
+            if (executor.getExecutable() instanceof DMRCommand) {
+                return (DMRCommand) executor.getExecutable();
             }
             return null;
         }

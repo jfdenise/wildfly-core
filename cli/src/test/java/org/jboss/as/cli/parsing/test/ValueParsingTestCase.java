@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.parsing.test;
 
+import org.aesh.command.parser.OptionParserException;
 import org.aesh.parser.LineParser;
 import org.aesh.parser.ParsedLine;
 import org.aesh.parser.ParsedLineIterator;
@@ -37,7 +38,7 @@ import org.junit.Test;
 public class ValueParsingTestCase {
 
     @Test
-    public void testHeaders() throws CommandFormatException {
+    public void testHeaders() throws CommandFormatException, OptionParserException {
         {
             String value = "    {ax=true; rollout ( server_group ) toto;}";
             String others = " --doit";
@@ -101,7 +102,7 @@ public class ValueParsingTestCase {
     }
 
     @Test
-    public void testList2() throws CommandFormatException {
+    public void testList2() throws CommandFormatException, OptionParserException {
         {
             String value = "         [{az=10,ax={}, az=[{},{},{}]}, {az=10,ax={}, az=[{},{},{}]}]";
             String others = "     --doit={}";

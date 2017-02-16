@@ -14,8 +14,6 @@ import org.aesh.command.impl.internal.ProcessedCommand;
 import org.aesh.command.impl.internal.ProcessedCommandBuilder;
 import org.aesh.command.impl.parser.CommandLineCompletionParser;
 import org.aesh.command.impl.parser.CommandLineParser;
-import org.aesh.command.impl.parser.CommandLineParserException;
-import org.aesh.command.impl.parser.OptionParserException;
 import org.aesh.command.populator.CommandPopulator;
 import org.aesh.command.Command;
 import org.aesh.command.CommandNotFoundException;
@@ -25,10 +23,13 @@ import org.aesh.command.impl.internal.ProcessedOption;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.impl.registry.MutableCommandRegistry;
 import org.aesh.command.invocation.InvocationProviders;
+import org.aesh.command.parser.CommandLineParserException;
+import org.aesh.command.parser.OptionParserException;
 import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.CompatActivator;
 import org.jboss.logging.Logger;
 
 /**
@@ -294,4 +295,15 @@ public class CLICommandRegistry implements CommandRegistry {
     public List<String> getExposedCommands() {
         return Collections.unmodifiableList(exposedCommands);
     }
+
+    @Override
+    public void addRegistrationListener(CommandRegistrationListener listener) {
+        reg.addRegistrationListener(listener);
+    }
+
+    @Override
+    public void removeRegistrationListener(CommandRegistrationListener listener) {
+        reg.removeRegistrationListener(listener);
+    }
+
 }
