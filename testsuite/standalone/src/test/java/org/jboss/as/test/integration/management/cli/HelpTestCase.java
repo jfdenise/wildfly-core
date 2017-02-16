@@ -38,7 +38,7 @@ import org.wildfly.core.testrunner.WildflyTestRunner;
 public class HelpTestCase extends AbstractCliTestBase {
 
     private static final String[] COMMANDS = {
-        "cn", "connect", "deploy", "help", "history", "ls", "pwn", "quit", "undeploy", "version"
+        "cn", "connect", "help", "history", "ls", "pwn", "quit", "deployment", "version"
     };
 
     @BeforeClass

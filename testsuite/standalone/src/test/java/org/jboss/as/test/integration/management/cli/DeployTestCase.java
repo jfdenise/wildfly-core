@@ -111,6 +111,18 @@ public class DeployTestCase {
         checkDeployment(cliTestApp1War.getName(), true);
         checkDeployment(cliTestAnotherWar.getName(), true);
         checkDeployment(cliTestApp2War.getName(), true);
+
+        // Undeploy them all.
+        ctx.handle("deployment undeploy * --keep-content");
+        checkDeployment(cliTestApp1War.getName(), false);
+        checkDeployment(cliTestAnotherWar.getName(), false);
+        checkDeployment(cliTestApp2War.getName(), false);
+
+        // Deploy them all.
+        ctx.handle("deployment redeploy-all");
+        checkDeployment(cliTestApp1War.getName(), true);
+        checkDeployment(cliTestAnotherWar.getName(), true);
+        checkDeployment(cliTestApp2War.getName(), true);
     }
 
     @Test

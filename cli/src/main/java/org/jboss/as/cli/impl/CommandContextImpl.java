@@ -110,8 +110,6 @@ import org.jboss.as.cli.handlers.AttachmentHandler;
 import org.jboss.as.cli.handlers.ClearScreenHandler;
 import org.jboss.as.cli.handlers.CommandCommandHandler;
 import org.jboss.as.cli.handlers.ConnectionInfoHandler;
-import org.jboss.as.cli.handlers.DeployHandler;
-import org.jboss.as.cli.handlers.DeploymentInfoHandler;
 import org.jboss.as.cli.handlers.DeploymentOverlayHandler;
 import org.jboss.as.cli.handlers.EchoDMRHandler;
 import org.jboss.as.cli.handlers.EchoVariableHandler;
@@ -127,7 +125,6 @@ import org.jboss.as.cli.handlers.ReloadHandler;
 import org.jboss.as.cli.handlers.SetVariableHandler;
 import org.jboss.as.cli.handlers.ShutdownHandler;
 import org.jboss.as.cli.handlers.ResponseHandler;
-import org.jboss.as.cli.handlers.UndeployHandler;
 import org.jboss.as.cli.handlers.UnsetVariableHandler;
 import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.cli.handlers.batch.BatchClearHandler;
@@ -160,6 +157,10 @@ import org.jboss.as.cli.impl.aesh.commands.CommandTimeoutCommand;
 import org.jboss.as.cli.impl.aesh.commands.ConnectCommand;
 import org.jboss.as.cli.impl.aesh.commands.HelpCommand;
 import org.jboss.as.cli.impl.aesh.commands.QuitCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentCommand;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.Deploy;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.DeploymentInfo;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.Undeploy;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -188,6 +189,7 @@ import org.jboss.logging.Logger.Level;
 import org.jboss.stdio.StdioContext;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
+import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.OptionalNameCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -503,9 +505,19 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             aeshCommands.getRegistry().addCommand(new AttachmentCommand());
             aeshCommands.getRegistry().addCommand(new CommandTimeoutCommand());
             aeshCommands.getRegistry().addCommand(new ConnectCommand());
+            DeploymentCommand deploy = new DeploymentCommand(this);
+            aeshCommands.getRegistry().addCommand(deploy);
             aeshCommands.getRegistry().addCommand(new HelpCommand(aeshCommands.getRegistry(),
                     cmdRegistry));
             aeshCommands.getRegistry().addCommand(new QuitCommand());
+
+            //Bridge to deprecated commands
+            aeshCommands.getRegistry().addCommand(new Deploy(this));
+            aeshCommands.getRegistry().addCommand(new DeploymentInfo(this,
+                    deploy.getPermissions()));
+            aeshCommands.getRegistry().addCommand(new Undeploy(this,
+                    deploy.getPermissions()));
+
         } catch (CommandLineException ex) {
             throw new CliInitializationException(ex);
         }
@@ -529,9 +541,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         cmdRegistry.registerHandler(new UnsetVariableHandler(), "unset");
 
         // deployment
-        cmdRegistry.registerHandler(new DeployHandler(this), "deploy");
-        cmdRegistry.registerHandler(new UndeployHandler(this), "undeploy");
-        cmdRegistry.registerHandler(new DeploymentInfoHandler(this), "deployment-info");
+        //cmdRegistry.registerHandler(new DeployHandler(this), "deploy");
+        //cmdRegistry.registerHandler(new UndeployHandler(this), "undeploy");
+        //cmdRegistry.registerHandler(new DeploymentInfoHandler(this), "deployment-info");
         cmdRegistry.registerHandler(new DeploymentOverlayHandler(this), "deployment-overlay");
 
         // batch commands
@@ -1559,6 +1571,28 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
             final CommandHandler handler = cmdRegistry.getCommandHandler(parsedCmd.getOperationName());
             if (handler == null) {
+                CLIExecutor exec = null;
+                try {
+                    exec = aeshCommands.newExecutor(line);
+                } catch (CommandLineException ex) {
+                    throw new OperationFormatException(ex);
+                }
+                if (exec != null) {
+                    BatchCompliantCommand bc = exec.getBatchCompliant();
+                    if (isBatchMode()) {
+                        if (bc == null) {
+                            throw new OperationFormatException("The command is not allowed in a batch.");
+                        }
+                        Batch batch = getBatchManager().getActiveBatch();
+                        return new HandledRequest(bc.buildRequest(this, batch.getAttachments()), null);
+                    } else {
+                        DMRCommand dmr = exec.getDMRCompliant();
+                        if (dmr == null) {
+                            throw new OperationFormatException("The command does not translate to an operation request.");
+                        }
+                        return new HandledRequest(dmr.buildRequest(this), null);
+                    }
+                }
                 throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
             }
             if(batchMode) {
