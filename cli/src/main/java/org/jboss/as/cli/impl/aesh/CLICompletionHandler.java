@@ -69,7 +69,7 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
             // One of the two repositories.
             // Aesh first
             aeshCommands.complete(co);
-            if (co.getCompletionCandidates().isEmpty()) {
+            if (co.getCompletionCandidates().isEmpty() || parts.length == 1) {
                 delegate.complete(co);
             }
         }
@@ -91,6 +91,9 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
         complete(co);
         for (TerminalString ts : co.getCompletionCandidates()) {
             candidates.add(ts.getCharacters());
+        }
+        if (co.getCompletionCandidates().isEmpty()) {
+            return -1;
         }
         return co.getOffset();
     }

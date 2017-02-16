@@ -37,9 +37,6 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
-import org.jboss.as.cli.operation.OperationRequestAddress;
-import org.jboss.as.cli.operation.OperationRequestCompleter;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.as.controller.client.OperationMessageHandler;
@@ -57,38 +54,19 @@ public class AttachmentDisplayCommand implements Command<CLICommandInvocation>, 
 
     public static class OperationCompleter implements OptionCompleter<CLICompleterInvocation> {
 
-        private final DefaultCallbackHandler parsedCmd = new DefaultCallbackHandler(false);
-
         @Override
         public void complete(CLICompleterInvocation completerInvocation) {
             List<String> candidates = new ArrayList<>();
             String buff = completerInvocation.getGivenCompleteValue();
-            OperationRequestAddress address = completerInvocation.getCommandContext().getCurrentNodePath();
-            if (buff == null || buff.trim().isEmpty()) {
-                candidates.add(":");
-                if (address == null || address.isEmpty()) {
-                    candidates.add("/");
-                }
-            } else {
-                parsedCmd.reset();
-                try {
-                    parsedCmd.parse(address,
-                            buff, false,
-                            completerInvocation.getCommandContext());
-                } catch (CommandFormatException ex) {
-                    // XXX OK.
-                    return;
-                }
-                int offset = OperationRequestCompleter.INSTANCE.
-                        complete(completerInvocation.getCommandContext(),
-                                parsedCmd,
-                                buff,
-                                0, candidates);
+            int offset = completerInvocation.getCommandContext().
+                    getDefaultCommandCompleter().complete(completerInvocation.getCommandContext(),
+                            buff, buff.length(), candidates);
+            if (offset >= 0) {
                 completerInvocation.setOffset(buff.length() - offset);
+                Collections.sort(candidates);
+                completerInvocation.addAllCompleterValues(candidates);
+                completerInvocation.setAppendSpace(false);
             }
-            Collections.sort(candidates);
-            completerInvocation.addAllCompleterValues(candidates);
-            completerInvocation.setAppendSpace(false);
         }
     }
 

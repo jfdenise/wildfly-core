@@ -63,8 +63,8 @@ public class CLICompletion implements Completion<CompleteOperation> {
 
         List<String> candidates = new ArrayList<>();
         int offset = completer.complete(context, co.getBuffer(), co.getCursor(), candidates);
-        co.setOffset(offset);
         if (!candidates.isEmpty()) {
+            co.setOffset(offset);
             co.addCompletionCandidates(candidates);
             String buffer = context.getArgumentsString() == null
                     ? co.getBuffer() : context.getArgumentsString() + co.getBuffer();
