@@ -21,10 +21,11 @@ import org.aesh.command.impl.container.AeshCommandContainerBuilder;
 import org.aesh.command.container.CommandContainer;
 import org.aesh.command.impl.internal.ProcessedOption;
 import org.aesh.command.registry.CommandRegistry;
-import org.aesh.command.impl.registry.MutableCommandRegistry;
+import org.aesh.command.impl.registry.MutableCommandRegistryImpl;
 import org.aesh.command.invocation.InvocationProviders;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.command.parser.OptionParserException;
+import org.aesh.command.registry.MutableCommandRegistry;
 import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
@@ -145,7 +146,7 @@ public class CLICommandRegistry implements CommandRegistry {
     }
 
     private static final Logger log = Logger.getLogger(CLICommandRegistry.class);
-    private final MutableCommandRegistry reg = new MutableCommandRegistry();
+    private final MutableCommandRegistry reg = new MutableCommandRegistryImpl();
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
     private final List<String> exposedCommands = new ArrayList<>();
 
@@ -253,7 +254,6 @@ public class CLICommandRegistry implements CommandRegistry {
         return reg.getAllCommandNames();
     }
 
-    @Override
     public void removeCommand(String name) {
         if (exposedCommands.contains(name)) {
             exposedCommands.remove(name);
