@@ -1,1 +1,1 @@
-org.jboss.as.patching.cli.PatchHandlerProvider
+org.jboss.as.patching.cli.PatchCommand

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,31 +19,17 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-
 package org.jboss.as.patching.cli;
 
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandHandler;
-import org.jboss.as.cli.CommandHandlerProvider;
-
+import org.aesh.command.completer.OptionCompleter;
+import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 /**
- * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2012 Red Hat Inc.
+ *
+ * @author jdenise@redhat.com
  */
-@Deprecated
-public class PatchHandlerProvider implements CommandHandlerProvider {
+public class PatchIdCompleter implements OptionCompleter<CLICompleterInvocation> {
 
     @Override
-    public CommandHandler createCommandHandler(CommandContext ctx) {
-        return new PatchHandler(ctx);
-    }
-
-    @Override
-    public String[] getNames() {
-        return new String[] { PatchHandler.PATCH };
-    }
-
-    @Override
-    public boolean isTabComplete() {
-        return true;
+    public void complete(CLICompleterInvocation completerInvocation) {
     }
 }

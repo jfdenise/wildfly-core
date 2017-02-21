@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,31 +19,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-
 package org.jboss.as.patching.cli;
 
+import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
+import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandHandler;
-import org.jboss.as.cli.CommandHandlerProvider;
+import org.jboss.as.patching.tool.PatchOperationBuilder;
 
 /**
- * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2012 Red Hat Inc.
+ *
+ * @author jdenise@redhat.com
  */
-@Deprecated
-public class PatchHandlerProvider implements CommandHandlerProvider {
+@CommandDefinition(name = "history", description = "")
+public class PatchHistory extends AbstractDistributionCommand {
 
-    @Override
-    public CommandHandler createCommandHandler(CommandContext ctx) {
-        return new PatchHandler(ctx);
+    @Option(name = "patch-stream", hasValue = true, required = false)
+    private String patchStream;
+
+    public PatchHistory() {
+        super("history");
     }
 
     @Override
-    public String[] getNames() {
-        return new String[] { PatchHandler.PATCH };
+    protected PatchOperationBuilder createPatchOperationBuilder(CommandContext ctx) throws CommandException {
+        return PatchOperationBuilder.Factory.history(patchStream);
     }
 
-    @Override
-    public boolean isTabComplete() {
-        return true;
-    }
 }
