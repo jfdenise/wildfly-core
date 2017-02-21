@@ -22,10 +22,9 @@
 package org.jboss.as.cli.impl.aesh;
 
 import java.util.ServiceLoader;
+import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.validator.CommandValidatorException;
 import org.aesh.command.validator.OptionValidatorException;
-import org.aesh.command.AeshCommandRuntime;
-import org.aesh.command.impl.AeshCommandRuntimeBuilder;
 import org.aesh.command.Executor;
 import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.AeshContext;
@@ -33,6 +32,7 @@ import org.aesh.command.Shell;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
+import org.aesh.command.CommandRuntime;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.Completion;
@@ -77,7 +77,7 @@ public class AeshCommands {
     }
 
     private final CLICommandInvocationProvider invocationProvider;
-    private final AeshCommandRuntime<CLICommandInvocation, AeshCompleteOperation> processor;
+    private final CommandRuntime<CLICommandInvocation> processor;
     private final CLICommandRegistry registry = new CLICommandRegistry();
     private final CLICompletionHandler completionHandler;
 
