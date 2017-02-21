@@ -2322,4 +2322,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             }
         }
     }
+
+    // For testing prupose.
+    public AeshCommands getAeshCommands() {
+        return aeshCommands;
+    }
 }

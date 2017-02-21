@@ -36,7 +36,6 @@ import org.jboss.as.patching.tool.PatchOperationBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedAndNotExpectedOptionsActivator;
-import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedOptionsActivator;
 import org.wildfly.core.cli.command.aesh.activator.DefaultNotExpectedOptionsActivator;
 import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
 
@@ -57,13 +56,6 @@ public class PatchInfo extends AbstractDistributionCommand {
     public static class NoPatchIdActivator extends DefaultNotExpectedOptionsActivator {
 
         public NoPatchIdActivator() {
-            super("");
-        }
-    };
-
-    public static class PatchIdActivator extends DefaultExpectedOptionsActivator {
-
-        public PatchIdActivator() {
             super("");
         }
     };

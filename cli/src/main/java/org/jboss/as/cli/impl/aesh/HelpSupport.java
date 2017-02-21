@@ -83,6 +83,7 @@ public class HelpSupport {
     private static final String OPTION_PREFIX = "--";
     private static final String OPTION_SUFFIX = "  - ";
 
+    public static final String NULL_DESCRIPTION = "WARNING: No Description. Please Fix it";
     static void printHelp(CommandContext ctx) {
         ctx.printLine(printHelp(ctx, "help"));
     }
@@ -408,7 +409,7 @@ public class HelpSupport {
         // Compute synopsis.
         builder.append("SYNOPSIS").append(Config.getLineSeparator());
         builder.append(Config.getLineSeparator());
-        String synopsis = getValue(bundle, parentName, commandName, superNames, "synopsis");
+        String synopsis = getValue(bundle, parentName, commandName, superNames, "synopsis", true);
         if (synopsis == null) {
             //Synopsis option tab
             StringBuilder tabBuilder = new StringBuilder();
@@ -644,6 +645,7 @@ public class HelpSupport {
         // Then sort these by name.
         // Argument being the first one.
         List<ProcessedOption> options = new ArrayList<>();
+        List<ProcessedOption> requiredOptions = new ArrayList<>();
         for (Entry<ProcessedOption, Dependency> entry : dependencies.entrySet()) {
             Dependency d = entry.getValue();
             if (!d.dependsOn.isEmpty()) {
@@ -659,19 +661,29 @@ public class HelpSupport {
                     options.add(d.option);
                 }
             }
+            if (d.option.isRequired()) {
+                requiredOptions.add(d.option);
+            }
         }
-        if (options.isEmpty()) {
+        if (options.isEmpty() && requiredOptions.isEmpty()) {
             // we can return any...
             for (Entry<ProcessedOption, Dependency> e : dependencies.entrySet()) {
                 options.add(e.getKey());
             }
+        } else if (options.isEmpty()) {
+            // Required options must come first.
+            options = requiredOptions;
         }
+
+        //
         // sort options.
         Collections.sort(options, (ProcessedOption o1, ProcessedOption o2) -> {
-            String name = o1.name();
-            // headers are last one in synopsis.
-            if (name.equals("headers")) {
+            // Headers are last ones.
+            if (o1.name().equals("headers")) {
                 return 1;
+            }
+            if (o2.name().equals("headers")) {
+                return -1;
             }
             return o1.name().compareTo(o2.name());
         });
@@ -753,33 +765,48 @@ public class HelpSupport {
         }
 
         if (!sameGroup.isEmpty()) {
+            boolean added = false;
             for (Dependency d : sameGroup) {
                 String content = addSynopsisOption(bundle, dependencies,
                         parentName, commandName, superNames, d.option, isOperation);
                 if (content != null) {
-                    synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
+                    // The first added option mustn't start with " " it has already been added
+                    // by " | ".
+                    if (added) {
+                        synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
+                    } else if (content.startsWith(" ")) {
+                        content = content.substring(1);
+                    }
                     synopsisBuilder.append(content);
+                    added = true;
                 }
             }
-            synopsisBuilder.append(" ");
+            if (added) {
+                synopsisBuilder.append(" ");
+            }
         }
 
         if (!dep.dependsOn.isEmpty()) {
+            boolean added = false;
             for (Dependency d : dep.dependsOn) {
                 String content = addSynopsisOption(bundle, dependencies,
                         parentName, commandName, superNames, d.option, isOperation);
                 if (content != null) {
                     synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
                     synopsisBuilder.append(content);
+                    added = true;
                 }
             }
-            synopsisBuilder.append(" ");
+            if (added) {
+                synopsisBuilder.append(" ");
+            }
         }
         if (!opt.isRequired()) {
             synopsisBuilder.append("[");
         }
         if (opt.name().equals("")) {
-            String value = getValue(bundle, parentName, commandName, superNames, "arguments.value");
+            String value = getValue(bundle, parentName, commandName, superNames,
+                    "arguments.value", true);
             synopsisBuilder.append(value == null ? "argument" : value);
         } else {
             if (isOperation) {
@@ -793,7 +820,7 @@ public class HelpSupport {
                     val = VALUES.get(opt.type());
                 } else {
                     val = getValue(bundle, parentName, commandName, superNames, "option."
-                            + opt.name() + ".value");
+                            + opt.name() + ".value", true);
                     val = val == null ? VALUES.get(opt.type()) : val;
                     synopsisBuilder.append(" ");
                 }
@@ -921,7 +948,7 @@ public class HelpSupport {
     }
 
     private static String getValue(ResourceBundle bundle, String parentName,
-            String commandName, List<String> superNames, String key) {
+            String commandName, List<String> superNames, String key, boolean acceptNull) {
         if (bundle == null) {
             return null;
         }
@@ -954,6 +981,9 @@ public class HelpSupport {
                 }
             }
         }
+        if (value == null && !acceptNull) {
+            value = NULL_DESCRIPTION;
+        }
         return value;
     }
 
@@ -965,7 +995,7 @@ public class HelpSupport {
                 return pc;
             }
             String desc = pc.description();
-            String bdesc = getValue(bundle, parentName, pc.name(), superNames, "description");
+            String bdesc = getValue(bundle, parentName, pc.name(), superNames, "description", false);
             if (bdesc != null) {
                 desc = bdesc;
             }
@@ -973,7 +1003,8 @@ public class HelpSupport {
 
             if (pc.getArgument() != null) {
                 String argDesc = pc.getArgument().description();
-                String bargDesc = getValue(bundle, parentName, pc.name(), superNames, "arguments.description");
+                String bargDesc = getValue(bundle, parentName, pc.name(), superNames,
+                        "arguments.description", false);
                 if (bargDesc != null) {
                     argDesc = bargDesc;
                 }
@@ -988,7 +1019,8 @@ public class HelpSupport {
 
             for (ProcessedOption opt : pc.getOptions()) {
                 String optDesc = opt.description();
-                String boptDesc = getValue(bundle, parentName, pc.name(), superNames, "option." + opt.name() + ".description");
+                String boptDesc = getValue(bundle, parentName, pc.name(), superNames,
+                        "option." + opt.name() + ".description", false);
                 if (boptDesc != null) {
                     optDesc = boptDesc;
                 }
