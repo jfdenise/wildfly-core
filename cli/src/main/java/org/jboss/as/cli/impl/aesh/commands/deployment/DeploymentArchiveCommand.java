@@ -46,7 +46,7 @@ import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.converter.FileConverter;
+import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationBuilder;

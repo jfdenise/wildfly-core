@@ -615,15 +615,17 @@ public class HelpSupport {
             String content = addSynopsisOption(bundle, dependencies,
                     parentName,
                     commandName, superNames, opt, isOperation);
-            synopsisBuilder.append(content.trim());
-            if (isOperation) {
-                if (!dependencies.isEmpty()) {
-                    synopsisBuilder.append(",");
-                } else {
-                    synopsisBuilder.append(")");
+            if (content != null) {
+                synopsisBuilder.append(content.trim());
+                if (isOperation) {
+                    if (!dependencies.isEmpty()) {
+                        synopsisBuilder.append(",");
+                    } else {
+                        synopsisBuilder.append(")");
+                    }
                 }
+                synopsisBuilder.append(" ");
             }
-            synopsisBuilder.append(" ");
         }
         if (hasActions && hasOptions) {
             synopsisBuilder.append(" ]");
@@ -684,34 +686,89 @@ public class HelpSupport {
             ProcessedOption opt,
             boolean isOperation) {
         if (!dependencies.containsKey(opt)) {
-            throw new IllegalArgumentException("Option " + opt.name() + " already treated");
+            return null;
         }
         StringBuilder synopsisBuilder = new StringBuilder();
         // Do we have dependencies?
         Dependency dep = dependencies.remove(opt);
         boolean foundConflict = false;
+        List<Dependency> sameGroup = new ArrayList<>();
         if (!dep.conflictWith.isEmpty()) {
             for (Dependency d : dep.conflictWith) {
+                // If we have common dependencies with the conflict, must be added prior to the conflict.
+                // For example:
+                // A conflict with B and depends on C.
+                // B conflict with A and depends on C.
+                // The resulting must be C (A | B)
+                for (Dependency dd : dep.dependsOn) {
+                    if (d.dependsOn.contains(dd)) {
+                        String content = addSynopsisOption(bundle, dependencies,
+                                parentName, commandName, superNames, dd.option, isOperation);
+                        if (content != null) {
+                            synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
+                            synopsisBuilder.append(content);
+                        }
+                    }
+                }
                 if (dependencies.containsKey(d.option)) {
                     if (!foundConflict) {
                         synopsisBuilder.append(" (");
                     }
                     foundConflict = true;
+                    /**
+                     * So we have a conflict between A (dep) and B (d). A could
+                     * depends on option C. B could be in conflict with C (or
+                     * any option O that depends on C) This gives us: ( B | C
+                     * A).
+                     *
+                     */
+                    // Retrieve all the conflicts of B on which A depends (directly or
+                    // indirectly and remove them from B.
+                    List<Dependency> toRemove = retrieveDependedConflicts(dep, d);
+                    d.conflictWith.removeAll(toRemove);
+
+                    /**
+                     * A conflict B. A depends on D. B conflict C. C depends on
+                     * D. So conflict between B and C has been removed. C that
+                     * is in conflict with B must be added after D in the same
+                     * group as A. Such conflicts that share a dependency are
+                     * added once conflicts have been treated.
+                     */
+                    for (Dependency removed : toRemove) {
+                        if (!dep.dependsOn.contains(removed)) {
+                            sameGroup.add(removed);
+                        }
+                    }
                     String content = addSynopsisOption(bundle, dependencies,
                             parentName, commandName, superNames, d.option, isOperation);
-                    synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
-                    synopsisBuilder.append(content);
+                    if (content != null) {
+                        synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
+                        synopsisBuilder.append(content);
+                    }
                 }
             }
             if (foundConflict) {
                 synopsisBuilder.append(" | ");
             }
         }
+
+        if (!sameGroup.isEmpty()) {
+            for (Dependency d : sameGroup) {
+                String content = addSynopsisOption(bundle, dependencies,
+                        parentName, commandName, superNames, d.option, isOperation);
+                if (content != null) {
+                    synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
+                    synopsisBuilder.append(content);
+                }
+            }
+            synopsisBuilder.append(" ");
+        }
+
         if (!dep.dependsOn.isEmpty()) {
             for (Dependency d : dep.dependsOn) {
-                if (dependencies.containsKey(d.option)) {
-                    String content = addSynopsisOption(bundle, dependencies,
-                            parentName, commandName, superNames, d.option, isOperation);
+                String content = addSynopsisOption(bundle, dependencies,
+                        parentName, commandName, superNames, d.option, isOperation);
+                if (content != null) {
                     synopsisBuilder.append(content.startsWith(" ") ? "" : " ");
                     synopsisBuilder.append(content);
                 }
@@ -752,6 +809,45 @@ public class HelpSupport {
             synopsisBuilder.append(" ) ");
         }
         return synopsisBuilder.toString();
+    }
+
+    private static List<Dependency> retrieveDependedConflicts(Dependency option, Dependency conflict) {
+        List<Dependency> conflicts = new ArrayList<>();
+        List<Dependency> seen = new ArrayList<>();
+        for (Dependency d : conflict.conflictWith) {
+            if (d != option) { // the conflict is not the current option we can check it.
+                if (option.dependsOn.contains(d)) {
+                    conflicts.add(d);
+                } else {
+                    boolean found = findCommonDependency(option.dependsOn, d, seen);
+                    if (found) {
+                        conflicts.add(d);
+                    }
+                }
+            }
+        }
+        return conflicts;
+    }
+
+    // Check that a given conflict depends on a dependency presents in the passed depends set.
+    private static boolean findCommonDependency(Set<Dependency> depends, Dependency conflict, List<Dependency> seen) {
+        if (seen.contains(conflict)) {
+            return false;
+        }
+        seen.add(conflict);
+        for (Dependency d : depends) {
+            for (Dependency dc : conflict.dependsOn) {
+                // Same dependency
+                if (dc == d) {
+                    return true;
+                }
+                boolean ret = findCommonDependency(depends, dc, seen);
+                if (ret) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static String printOptions(List<ProcessedOption> opts,
@@ -846,6 +942,16 @@ public class HelpSupport {
                     continue;
                 }
                 break;
+            }
+        }
+        if (value != null) { // could be a reference to another option
+            if (value.startsWith("${") && value.endsWith("}")) {
+                String k = value.substring(2, value.length() - 1);
+                try {
+                    value = bundle.getString(k);
+                } catch (MissingResourceException ex2) {
+                    // Ok, missing key
+                }
             }
         }
         return value;
@@ -1011,8 +1117,8 @@ public class HelpSupport {
     private static class Dependency {
 
         private ProcessedOption option;
-        private final List<Dependency> dependsOn = new ArrayList<>();
-        private final List<Dependency> conflictWith = new ArrayList<>();
+        private final Set<Dependency> dependsOn = new HashSet<>();
+        private final Set<Dependency> conflictWith = new HashSet<>();
 
         @Override
         public boolean equals(Object other) {
@@ -1036,7 +1142,7 @@ public class HelpSupport {
         Map<ProcessedOption, Dependency> dependencies = new IdentityHashMap<>();
         if (arg != null) {
             List<ProcessedOption> argExpected = retrieveExpected(arg.activator(),
-                    opts, domain);
+                    opts, null, domain);
             Dependency d = new Dependency();
             d.option = arg;
             dependencies.put(arg, d);
@@ -1047,7 +1153,7 @@ public class HelpSupport {
                 d.dependsOn.add(de);
             }
             List<ProcessedOption> argNotExpected = retrieveNotExpected(arg.activator(),
-                    opts, domain);
+                    opts, null, domain);
             for (ProcessedOption e : argNotExpected) {
                 Dependency depDep = dependencies.get(e);
                 if (depDep == null) {
@@ -1058,10 +1164,11 @@ public class HelpSupport {
                 depDep.option = e;
                 dependencies.put(e, depDep);
                 d.conflictWith.add(depDep);
+                depDep.conflictWith.add(d);
             }
         }
         for (ProcessedOption opt : opts) {
-            List<ProcessedOption> expected = retrieveExpected(opt.activator(), opts, domain);
+            List<ProcessedOption> expected = retrieveExpected(opt.activator(), opts, arg, domain);
             Dependency optDep = dependencies.get(opt);
             if (optDep == null) {
                 optDep = new Dependency();
@@ -1077,7 +1184,7 @@ public class HelpSupport {
                 }
                 optDep.dependsOn.add(depDep);
             }
-            List<ProcessedOption> notExpected = retrieveNotExpected(opt.activator(), opts, domain);
+            List<ProcessedOption> notExpected = retrieveNotExpected(opt.activator(), opts, arg, domain);
             for (ProcessedOption e : notExpected) {
                 Dependency depDep = dependencies.get(e);
                 if (depDep == null) {
@@ -1086,30 +1193,32 @@ public class HelpSupport {
                     dependencies.put(e, depDep);
                 }
                 optDep.conflictWith.add(depDep);
+                depDep.conflictWith.add(optDep);
             }
         }
         return dependencies;
     }
 
-    private static List<ProcessedOption> retrieveNotExpected(OptionActivator activator, List<ProcessedOption> opts, boolean domain) {
+    private static List<ProcessedOption> retrieveNotExpected(OptionActivator activator, List<ProcessedOption> opts, ProcessedOption arg, boolean domain) {
         List<ProcessedOption> notExpected = new ArrayList<>();
         if (activator == null) {
             return notExpected;
         }
         if (activator instanceof NotExpectedOptionsActivator) {
             for (String s : ((NotExpectedOptionsActivator) activator).getNotExpected()) {
-                for (ProcessedOption opt : opts) {
-                    if (s.equals(opt.name())) {
-                        if (domain) {
-                            // This option is only valid in non domain mode.
-                            if (opt.activator() instanceof StandaloneOptionActivator) {
-                                continue;
+                if (s == null || s.equals("")) { // argument
+                    if (arg != null) {
+                        if (isDomainCompliant(arg, domain)) {
+                            notExpected.add(arg);
+                        }
+                    }
+                } else {
+                    for (ProcessedOption opt : opts) {
+                        if (s.equals(opt.name())) {
+                            if (isDomainCompliant(opt, domain)) {
+                                notExpected.add(opt);
                             }
-                        } else // This option is only valid in non domain mode.
-                         if (opt.activator() instanceof DomainOptionActivator) {
-                                continue;
-                            }
-                        notExpected.add(opt);
+                        }
                     }
                 }
             }
@@ -1117,7 +1226,22 @@ public class HelpSupport {
         return notExpected;
     }
 
-    private static List<ProcessedOption> retrieveExpected(OptionActivator activator, List<ProcessedOption> opts, boolean domain) {
+    private static boolean isDomainCompliant(ProcessedOption arg, boolean domain) {
+        if (domain) {
+            // This option is only valid in non domain mode.
+            if (arg.activator() instanceof StandaloneOptionActivator) {
+                return false;
+            }
+        } else // This option is only valid in non domain mode.
+        {
+            if (arg.activator() instanceof DomainOptionActivator) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static List<ProcessedOption> retrieveExpected(OptionActivator activator, List<ProcessedOption> opts, ProcessedOption arg, boolean domain) {
         List<ProcessedOption> expected = new ArrayList<>();
         if (activator == null) {
             return expected;
@@ -1125,19 +1249,19 @@ public class HelpSupport {
         try {
             String[] obj = (String[]) activator.getClass().getField(WF_CLI_EXPECTED_OPTIONS).get(null);
             for (String s : obj) {
-                for (ProcessedOption opt : opts) {
-                    if (s.equals(opt.name())) {
-                        if (domain) {
-                            // This option is only valid in non domain mode.
-                            if (opt.activator() instanceof StandaloneOptionActivator) {
-                                continue;
+                if (s == null || s.equals("")) { // argument
+                    if (arg != null) {
+                        if (isDomainCompliant(arg, domain)) {
+                            expected.add(arg);
+                        }
+                    }
+                } else {
+                    for (ProcessedOption opt : opts) {
+                        if (s.equals(opt.name())) {
+                            if (isDomainCompliant(opt, domain)) {
+                                expected.add(opt);
                             }
-                        } else // This option is only valid in non domain mode.
-                         if (opt.activator() instanceof DomainOptionActivator) {
-                                continue;
-                            }
-
-                        expected.add(opt);
+                        }
                     }
                 }
             }
@@ -1147,19 +1271,19 @@ public class HelpSupport {
 
         if (activator instanceof ExpectedOptionsActivator) {
             for (String s : ((ExpectedOptionsActivator) activator).getExpected()) {
-                for (ProcessedOption opt : opts) {
-                    if (s.equals(opt.name())) {
-                        if (domain) {
-                            // This option is only valid in non domain mode.
-                            if (opt.activator() instanceof StandaloneOptionActivator) {
-                                continue;
+                if (s == null || s.equals("")) { // argument
+                    if (arg != null) {
+                        if (isDomainCompliant(arg, domain)) {
+                            expected.add(arg);
+                        }
+                    }
+                } else {
+                    for (ProcessedOption opt : opts) {
+                        if (s.equals(opt.name())) {
+                            if (isDomainCompliant(opt, domain)) {
+                                expected.add(opt);
                             }
-                        } else // This option is only valid in non domain mode.
-                         if (opt.activator() instanceof DomainOptionActivator) {
-                                continue;
-                            }
-
-                        expected.add(opt);
+                        }
                     }
                 }
             }

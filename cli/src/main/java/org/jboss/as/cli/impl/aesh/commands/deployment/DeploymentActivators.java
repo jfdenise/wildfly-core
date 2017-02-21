@@ -27,7 +27,6 @@ import org.aesh.command.activator.OptionActivator;
 import org.aesh.command.impl.internal.ProcessedCommand;
 import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedAndNotExpectedOptionsActivator;
 import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
-import org.wildfly.core.cli.command.aesh.activator.DefaultNotExpectedOptionsActivator;
 import org.wildfly.core.cli.command.aesh.activator.ExpectedOptionsActivator;
 
 /**
@@ -110,11 +109,19 @@ public interface DeploymentActivators {
                     isSatisfied(cmd.getCommandContext());
         }
     }
-    public static class ServerGroupsActivator extends DefaultNotExpectedOptionsActivator
+    public static class ServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
             implements DomainOptionActivator {
 
+        private static final Set<String> EXPECTED = new HashSet<>();
+        private static final Set<String> NOT_EXPECTED = new HashSet<>();
+
+        static {
+            // Argument.
+            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            NOT_EXPECTED.add("all-server-groups");
+        }
         public ServerGroupsActivator() {
-            super("all-server-groups");
+            super(EXPECTED, NOT_EXPECTED);
         }
 
         @Override
@@ -131,11 +138,20 @@ public interface DeploymentActivators {
         }
     }
 
-    public static class AllServerGroupsActivator extends DefaultNotExpectedOptionsActivator
+    public static class AllServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
             implements DomainOptionActivator {
 
+        private static final Set<String> EXPECTED = new HashSet<>();
+        private static final Set<String> NOT_EXPECTED = new HashSet<>();
+
+        static {
+            // Argument.
+            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            NOT_EXPECTED.add("server-groups");
+        }
+
         public AllServerGroupsActivator() {
-            super("server-groups");
+            super(EXPECTED, NOT_EXPECTED);
         }
 
         @Override

@@ -42,7 +42,7 @@ import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentFileCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentListCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentRedeployCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentUrlCommand;
-import org.jboss.as.cli.impl.aesh.converter.FileConverter;
+import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
