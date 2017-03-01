@@ -1,17 +1,17 @@
 #!/bin/sh
-# CLI launcher script. The actual launcher is wildfly-cli.sh.
+# CLI launcher script. The actual launcher is cli-launcher.sh.
 # This file is in charge to make the actual launcher safe from patching CLI 
-# from the CLI.
+# scripts from the CLI.
 # NB: This file can be safely patched at execution time.
 # It is no more running once the CLI launcher is running.
 #
 DIR=`dirname "$0"`
-ORIGINAL_SCRIPT="$DIR"/wildfly-cli.sh
-RUNNING_SCRIPT="$DIR"/wildfly-cli-private-runner.sh
+ORIGINAL_SCRIPT="$DIR"/cli-launcher.sh
+RUNNING_SCRIPT="$DIR"/cli-private-launcher.sh
 cp "$ORIGINAL_SCRIPT" "$RUNNING_SCRIPT" 2>/dev/null
 if [ $? -ne 0 ]; then
   if [ -z "$JBOSS_CLI_NO_PATCH_WARNING" ]; then
-    echo "CLI runner script has not been created, patching this CLI running instance can lead to unpredictable behavior."
+    echo "CLI launcher script has not been created, patching this CLI running instance can lead to unpredictable behavior."
   fi
   RUNNING_SCRIPT="$ORIGINAL_SCRIPT"
 fi
