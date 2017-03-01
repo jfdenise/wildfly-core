@@ -10,7 +10,9 @@ ORIGINAL_SCRIPT="$DIR"/wildfly-cli.sh
 RUNNING_SCRIPT="$DIR"/wildfly-cli-private-runner.sh
 cp "$ORIGINAL_SCRIPT" "$RUNNING_SCRIPT" 2>/dev/null
 if [ $? -ne 0 ]; then
-  echo "CLI runner script has not been created, patching this CLI running instance can lead to unpredictable behavior."
+  if [ -z "$JBOSS_CLI_NO_PATCH_WARNING" ]; then
+    echo "CLI runner script has not been created, patching this CLI running instance can lead to unpredictable behavior."
+  fi
   RUNNING_SCRIPT="$ORIGINAL_SCRIPT"
 fi
 exec "$RUNNING_SCRIPT" "$@"
