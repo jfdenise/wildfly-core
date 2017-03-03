@@ -295,7 +295,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
         if (!result.hasDefined(org.jboss.as.cli.Util.RESULT)) {
             return HelpSupport.printHelp(ctx, "wildfly_raw_op");
         }
-        String content = HelpSupport.printHelp(ctx, result.get(org.jboss.as.cli.Util.RESULT));
+        String content = HelpSupport.printHelp(ctx, result.get(org.jboss.as.cli.Util.RESULT), address);
         if (content == null) {
             return HelpSupport.printHelp(ctx, "wildfly_raw_op");
         }

@@ -59,6 +59,7 @@ import org.aesh.command.Command;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
+import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -84,6 +85,7 @@ public class HelpSupport {
     private static final String OPTION_SUFFIX = "  - ";
 
     public static final String NULL_DESCRIPTION = "WARNING: No Description. Please Fix it";
+
     static void printHelp(CommandContext ctx) {
         ctx.printLine(printHelp(ctx, "help"));
     }
@@ -301,23 +303,28 @@ public class HelpSupport {
         return clazz;
     }
 
-    public static String printHelp(CommandContext ctx, ModelNode mn) {
+    public static String printHelp(CommandContext ctx, ModelNode mn,
+            OperationRequestAddress address) {
         try {
             // Build a ProcessedCommand from the ModelNode
             String commandName = mn.get("operation-name").asString();
             String desc = mn.get(Util.DESCRIPTION).asString();
+            desc += Config.getLineSeparator() + Config.getLineSeparator()
+                    + "NB: to retrieve operation full description call the following operation: "
+                    + buildAddress(address) + ":"
+                    + Util.READ_OPERATION_DESCRIPTION + "(name=" + commandName + ")";
             ModelNode props = mn.get(Util.REQUEST_PROPERTIES);
             ProcessedCommand<?> pcommand = new ProcessedCommandBuilder().
                     name(commandName).description(desc).create();
             for (String prop : props.keys()) {
                 ModelNode p = props.get(prop);
-                Class<?> clazz = getClassFromType(p.get(Util.TYPE).asType());
-                String pdesc = p.get(Util.TYPE).asString() + ", "
-                        + p.get(Util.DESCRIPTION).asString();
+                Class<?> clazz = getClassFromType(getAdaptedArgumentType(p));
+                boolean required = p.hasDefined(Util.REQUIRED) ? p.get(Util.REQUIRED).asBoolean() : false;
                 ProcessedOption opt = ProcessedOptionBuilder.builder().name(prop).
-                        required(true).
+                        required(required).
                         hasValue(true).
-                        description(pdesc).type(clazz).build();
+                        description(buildOperationArgumentDescription(p)).
+                        type(clazz).build();
                 pcommand.addOption(opt);
             }
 
@@ -350,6 +357,99 @@ public class HelpSupport {
             // XXX OK.
             return null;
         }
+    }
+
+    private static String buildOperationArgumentDescription(ModelNode p) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(buildOperationArgumentType(p)).append(", ");
+        builder.append(p.get(Util.DESCRIPTION).asString());
+        if (p.hasDefined(Util.VALUE_TYPE)) {
+            boolean isList = p.get(Util.TYPE).asType() == ModelType.LIST;
+            if (isList) {
+                builder.append(" List items are ");
+            }
+            ModelNode vt = p.get(Util.VALUE_TYPE);
+            if (isObject(vt)) {
+                if (isList) {
+                    builder.append("OBJECT instances with the following properties:").
+                            append(Config.getLineSeparator());
+                } else {
+                    builder.append("OBJECT properties:").append(Config.getLineSeparator());
+                }
+                for (String prop : vt.keys()) {
+                    ModelNode mn = vt.get(prop);
+                    builder.append(Config.getLineSeparator()).append("- ").
+                            append(prop).append(": ").
+                            append(buildOperationArgumentType(mn)).append(", ").
+                            append(getAdaptedArgumentDescription(mn));
+                    builder.append(Config.getLineSeparator());
+                }
+            } else {
+                builder.append(vt.asType());
+            }
+        }
+        return builder.toString();
+    }
+
+    private static String buildAddress(OperationRequestAddress address) {
+        StringBuilder builder = new StringBuilder();
+        if (address != null && !address.isEmpty()) {
+            for (OperationRequestAddress.Node node : address) {
+                builder.append("/" + node.getType() + "=" + node.getName());
+            }
+        }
+        return builder.toString();
+    }
+
+    private static String buildOperationArgumentType(ModelNode p) {
+        StringBuilder builder = new StringBuilder();
+        ModelType mt = getAdaptedArgumentType(p);
+        boolean isList = mt == ModelType.LIST;
+        builder.append(mt);
+        boolean isObject = false;
+        if (isList) {
+            String t = null;
+            if (p.hasDefined(Util.VALUE_TYPE)) {
+                ModelNode vt = p.get(Util.VALUE_TYPE);
+                isObject = isObject(vt);
+            }
+            if (isObject) {
+                t = "OBJECT";
+            } else {
+                t = p.get(Util.VALUE_TYPE).asType().name();
+            }
+            builder.append(" of ").append(t);
+        }
+        return builder.toString();
+    }
+
+    private static boolean isObject(ModelNode vt) {
+        try {
+            vt.asType();
+        } catch (Exception ex) {
+            return true;
+        }
+        return false;
+    }
+
+    private static ModelType getAdaptedArgumentType(ModelNode mn) {
+        ModelType type = mn.get(Util.TYPE).asType();
+        if (mn.hasDefined(Util.FILESYSTEM_PATH) && mn.hasDefined(Util.ATTACHED_STREAMS)) {
+            type = ModelType.STRING;
+        }
+        return type;
+    }
+
+    private static String getAdaptedArgumentDescription(ModelNode mn) {
+        String desc = mn.get(Util.DESCRIPTION).asString();
+        if (mn.hasDefined(Util.FILESYSTEM_PATH) && mn.hasDefined(Util.ATTACHED_STREAMS)) {
+            desc = "The path to the file to attach."
+                    + " The CLI deals directly with file paths and doesn't "
+                    + "require index manipulation." + Config.getLineSeparator()
+                    + "NB: The actual argument type is "
+                    + mn.get(Util.TYPE).asType();
+        }
+        return desc;
     }
 
     public static String getSubCommandHelp(String parentCommand,
@@ -1265,11 +1365,9 @@ public class HelpSupport {
                 return false;
             }
         } else // This option is only valid in non domain mode.
-        {
-            if (arg.activator() instanceof DomainOptionActivator) {
+         if (arg.activator() instanceof DomainOptionActivator) {
                 return false;
             }
-        }
         return true;
     }
 
