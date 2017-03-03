@@ -435,6 +435,7 @@ public class ReadlineConsole implements Console {
                 if (LOG.isLoggable(Level.FINER)) {
                     LOG.finer("Calling InterruptHandler");
                 }
+                c.write(Config.getLineSeparator());
                 settings.getInterrupt().run();
             }
         });

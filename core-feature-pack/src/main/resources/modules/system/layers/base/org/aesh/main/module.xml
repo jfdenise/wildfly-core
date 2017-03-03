@@ -33,5 +33,7 @@
 
     <dependencies>
         <module name="org.fusesource.jansi" />
+        <!-- required to handle native signals -->
+        <module name="sun.jdk" />
     </dependencies>
 </module>
