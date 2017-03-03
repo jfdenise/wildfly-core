@@ -109,7 +109,7 @@ public class DeploymentListCommand extends DeploymentControlledCommand
                 table.nextRow();
             }
         }
-        throw new CommandException(table.toString());
+        ctx.printLine(table.toString());
     }
 
     private static void printList(CLICommandInvocation ctx,
