@@ -521,17 +521,18 @@ public class HelpSupport {
             for (int i = 0; i < tabBuilder.toString().length() + TAB.length(); i++) {
                 synopsisTab.append(" ");
             }
-            // 2 cases, standalone and domain
-            List<ProcessedOption> standalone = retrieveStandaloneOptions(opts);
+            // 2 cases, no standAlone nor Domain only opts or standalone and/or domain only
+            List<ProcessedOption> standalone = retrieveNoContextOptions(opts);
             if (standalone.size() == opts.size()
                     && (arg == null || !(arg.activator() instanceof DomainOptionActivator))) {
                 synopsis = generateSynopsis(bundle, parentName, commandName, opts,
                         arg, parsers != null && parsers.size() > 0, superNames, isOperation, false);
                 builder.append(splitAndFormat(synopsis, 80, TAB, 0, synopsisTab.toString()));
             } else {
+                List<ProcessedOption> standaloneOnly = retrieveStandaloneOptions(opts);
                 builder.append("Standalone mode:").append(Config.getLineSeparator());
                 builder.append(Config.getLineSeparator());
-                synopsis = generateSynopsis(bundle, parentName, commandName, standalone,
+                synopsis = generateSynopsis(bundle, parentName, commandName, standaloneOnly,
                         arg, parsers != null && parsers.size() > 0, superNames, isOperation, false);
                 builder.append(splitAndFormat(synopsis, 80, TAB, 0, synopsisTab.toString()));
                 builder.append(Config.getLineSeparator());
@@ -1419,6 +1420,17 @@ public class HelpSupport {
             }
         }
         return expected;
+    }
+
+    private static List<ProcessedOption> retrieveNoContextOptions(List<ProcessedOption> opts) {
+        List<ProcessedOption> standalone = new ArrayList<>();
+        for (ProcessedOption opt : opts) {
+            if (!(opt.activator() instanceof DomainOptionActivator)
+                    && !(opt.activator() instanceof StandaloneOptionActivator)) {
+                standalone.add(opt);
+            }
+        }
+        return standalone;
     }
 
     private static List<ProcessedOption> retrieveStandaloneOptions(List<ProcessedOption> opts) {

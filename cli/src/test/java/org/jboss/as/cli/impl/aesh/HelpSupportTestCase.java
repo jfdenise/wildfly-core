@@ -49,6 +49,20 @@ public class HelpSupportTestCase {
     }
 
     @Test
+    public void testStandaloneOnly() throws Exception {
+        for (Class<? extends Command> clazz : Commands.TESTS_STANDALONE_ONLY) {
+            testStandaloneOnly(clazz);
+        }
+    }
+
+    @Test
+    public void testDomain() throws Exception {
+        for (Class<? extends Command> clazz : Commands.TESTS_DOMAIN) {
+            testDomain(clazz);
+        }
+    }
+
+    @Test
     public void testCLICommands() throws Exception {
         CommandContext ctx = CommandContextFactory.getInstance().newCommandContext();
         Method m = ctx.getClass().getMethod("getAeshCommands");
@@ -82,10 +96,37 @@ public class HelpSupportTestCase {
                 + "]. FOUND [" + synopsis + "]", ((TestCommand) c).getSynopsis(), synopsis);
     }
 
+    private static void testStandaloneOnly(Class<? extends Command> clazz) throws Exception {
+        Command c = clazz.newInstance();
+        String synopsis = getStandaloneOnlySynopsis(c);
+        Assert.assertEquals(clazz.getName() + ". EXPECTED [" + ((TestCommand) c).getSynopsis()
+                + "]. FOUND [" + synopsis + "]", ((TestCommand) c).getSynopsis(), synopsis);
+    }
+
+    private static void testDomain(Class<? extends Command> clazz) throws Exception {
+        Command c = clazz.newInstance();
+        String synopsis = getDomainSynopsis(c);
+        Assert.assertEquals(clazz.getName() + ". EXPECTED [" + ((TestCommand) c).getSynopsis()
+                + "]. FOUND [" + synopsis + "]", ((TestCommand) c).getSynopsis(), synopsis);
+    }
+
     private static String getStandaloneSynopsis(Command c) {
+        return getSynopsis(c, "SYNOPSIS", "DESCRIPTION");
+    }
+
+    private static String getStandaloneOnlySynopsis(Command c) {
+        return getSynopsis(c, "Standalone mode:", "Domain mode:");
+    }
+
+    private static String getDomainSynopsis(Command c) {
+        return getSynopsis(c, "Domain mode:", "DESCRIPTION");
+    }
+
+    private static String getSynopsis(Command c, String markerStart, String markerEnd) {
         String fullHelp = HelpSupport.getCommandHelp(containerBuilder.create(c).getParser());
-        int start = ("SYNOPSIS" + Config.getLineSeparator() + Config.getLineSeparator()).length();
-        int end = fullHelp.indexOf(Config.getLineSeparator() + Config.getLineSeparator() + "DESCRIPTION");
+        int begin = fullHelp.indexOf(markerStart);
+        int start = begin + (markerStart + Config.getLineSeparator() + Config.getLineSeparator()).length();
+        int end = fullHelp.indexOf(Config.getLineSeparator() + Config.getLineSeparator() + markerEnd);
         String synopsis = fullHelp.substring(start, end).trim();
         String[] lines = synopsis.split("\\n");
         StringBuilder builder = new StringBuilder();
@@ -94,4 +135,5 @@ public class HelpSupportTestCase {
         }
         return builder.toString().trim();
     }
+
 }

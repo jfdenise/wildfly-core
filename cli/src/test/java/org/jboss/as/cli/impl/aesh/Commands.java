@@ -13,13 +13,17 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
+import org.aesh.command.impl.internal.ProcessedCommand;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedAndNotExpectedOptionsActivator;
 import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedOptionsActivator;
 import org.wildfly.core.cli.command.aesh.activator.DefaultNotExpectedOptionsActivator;
+import org.wildfly.core.cli.command.aesh.activator.DefaultOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.StandaloneOptionActivator;
 
 /**
  * A bunch of commands to test for help.
@@ -33,6 +37,22 @@ public class Commands {
     static {
         for (Class<?> clazz : Commands.Standalone.class.getDeclaredClasses()) {
             TESTS_STANDALONE.add((Class<? extends Command>) clazz);
+        }
+    }
+
+    static List<Class<? extends Command>> TESTS_DOMAIN = new ArrayList<>();
+
+    static {
+        for (Class<?> clazz : Commands.Domain.class.getDeclaredClasses()) {
+            TESTS_DOMAIN.add((Class<? extends Command>) clazz);
+        }
+    }
+
+    static List<Class<? extends Command>> TESTS_STANDALONE_ONLY = new ArrayList<>();
+
+    static {
+        for (Class<?> clazz : Commands.StandaloneOnly.class.getDeclaredClasses()) {
+            TESTS_STANDALONE_ONLY.add((Class<? extends Command>) clazz);
         }
     }
 
@@ -460,6 +480,243 @@ public class Commands {
             public String getSynopsis() {
                 return "command1 ( [--opt3-conflict-with-opt2] [--opt4-depends-on-opt3-conflict-with-opt2] | "
                         + "[--opt1-conflict-with-opt4] [--opt2-depends-on-opt1-conflict-with-opt4] )";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+    }
+
+    public static class DomainA extends DefaultOptionActivator implements DomainOptionActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            return getCommandContext().isDomainMode();
+        }
+
+    }
+
+    public static class StandaloneA extends DefaultOptionActivator implements StandaloneOptionActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            return !getCommandContext().isDomainMode();
+        }
+
+    }
+
+    /**
+     * Commands that have domain dependent options
+     */
+    public static class Domain {
+
+        /**
+         * Only domain options
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command1 implements TestCommand, Command {
+
+            @Option(name = "server-groups", activator = DomainA.class, required = false)
+            public String serverGroups;
+
+            @Option(name = "all-server-groups", activator = DomainA.class,
+                    hasValue = false, required = false)
+            public boolean allServerGroups;
+
+            @Override
+            public String getSynopsis() {
+                return "command1 [--all-server-groups] [--server-groups <a string>]";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+
+        /**
+         * Domain options and non domain ones.
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command2 implements TestCommand, Command {
+
+            @Option(name = "server-groups", activator = DomainA.class, required = false)
+            public String serverGroups;
+
+            @Option(name = "all-server-groups", activator = DomainA.class,
+                    hasValue = false, required = false)
+            public boolean allServerGroups;
+
+            @Option(name = "opt1", required = true, hasValue = false)
+            public String opt1;
+
+            @Override
+            public String getSynopsis() {
+                return "command1 --opt1 [--all-server-groups] [--server-groups <a string>]";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+
+        /**
+         * Domain options, non domain ones and Standalone ones are not seen.
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command3 implements TestCommand, Command {
+
+            @Option(name = "server-groups", activator = DomainA.class, required = false)
+            public String serverGroups;
+
+            @Option(name = "all-server-groups", activator = DomainA.class,
+                    hasValue = false, required = false)
+            public boolean allServerGroups;
+
+            @Option(name = "opt1", required = true, hasValue = false)
+            public String opt1;
+
+            @Option(name = "opt2", required = true, hasValue = false, activator = StandaloneA.class)
+            public String optStandalone;
+
+            @Override
+            public String getSynopsis() {
+                return "command1 --opt1 [--all-server-groups] [--server-groups <a string>]";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+
+        /**
+         * Only standalone
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command4 implements TestCommand, Command {
+
+            @Option(name = "opt1", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt1;
+
+            @Option(name = "opt2", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt2;
+
+            @Override
+            public String getSynopsis() {
+                return "command1";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+    }
+
+    /**
+     * Commands that have standalone only dependent options
+     */
+    public static class StandaloneOnly {
+        /**
+         * Only standalone
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command1 implements TestCommand, Command {
+
+            @Option(name = "opt1", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt1;
+
+            @Option(name = "opt2", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt2;
+
+            @Override
+            public String getSynopsis() {
+                return "command1 --opt1 --opt2";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+
+        /**
+         * Standalone and non domain
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command2 implements TestCommand, Command {
+
+            @Option(name = "opt1", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt1;
+
+            @Option(name = "opt2", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt2;
+
+            @Option(name = "opt0", required = false, hasValue = false)
+            public String opt0;
+
+            @Override
+            public String getSynopsis() {
+                return "command1 --opt1 --opt2 [--opt0]";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+
+        /**
+         * Standalone non domain and domain
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command3 implements TestCommand, Command {
+
+            @Option(name = "opt1", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt1;
+
+            @Option(name = "opt2", required = true, hasValue = false, activator = StandaloneA.class)
+            public String opt2;
+
+            @Option(name = "opt0", required = false, hasValue = false)
+            public String opt0;
+
+            @Option(name = "opt3", required = true, hasValue = false, activator = DomainA.class)
+            public String opt3;
+
+            @Option(name = "opt4", required = true, hasValue = false, activator = DomainA.class)
+            public String opt4;
+
+            @Override
+            public String getSynopsis() {
+                return "command1 --opt1 --opt2 [--opt0]";
+            }
+
+            @Override
+            public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }
+
+        /**
+         * Only domain
+         */
+        @CommandDefinition(name = "command1", description = "")
+        public static class Command4 implements TestCommand, Command {
+
+            @Option(name = "opt3", required = true, hasValue = false, activator = DomainA.class)
+            public String opt3;
+
+            @Option(name = "opt4", required = true, hasValue = false, activator = DomainA.class)
+            public String opt4;
+
+            @Override
+            public String getSynopsis() {
+                return "command1";
             }
 
             @Override
