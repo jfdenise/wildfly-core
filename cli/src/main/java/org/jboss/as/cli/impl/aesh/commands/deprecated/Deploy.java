@@ -35,13 +35,13 @@ import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentAllCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentArchiveCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.EnableAllCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.DeployArchiveCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentFileCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentListCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentRedeployCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentUrlCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.DeployFileCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.ListCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.EnableCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.DeployUrlCommand;
 import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.dmr.ModelNode;
@@ -77,7 +77,7 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
 
     @Deprecated
     @Option(activator = HideOptionActivator.class, converter
-            = DeploymentUrlCommand.UrlConverter.class)
+            = DeployUrlCommand.UrlConverter.class)
     private URL url;
 
     @Deprecated
@@ -142,7 +142,7 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                 && url == null && (path == null || path.isEmpty()) && !force;
 
         if (l || noOptions) {
-            DeploymentListCommand.listDeployments(commandInvocation, l);
+            ListCommand.listDeployments(commandInvocation, l);
             return CommandResult.SUCCESS;
         }
 
@@ -156,7 +156,7 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                     throw new CommandException("force and disabled can't be used "
                             + "when deploying all disabled deployments");
                 }
-                DeploymentAllCommand command = new DeploymentAllCommand(getCommandContext(),
+                EnableAllCommand command = new EnableAllCommand(getCommandContext(),
                         getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.headers = headers;
@@ -164,7 +164,7 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                 return command.execute(commandInvocation);
 
             } else {
-                DeploymentRedeployCommand command = new DeploymentRedeployCommand(getCommandContext(),
+                EnableCommand command = new EnableCommand(getCommandContext(),
                         getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.headers = headers;
@@ -180,17 +180,17 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                 throw new CommandException("Filesystem path and --url can't be used together.");
             }
             Command c;
-            if (DeploymentArchiveCommand.isCliArchive(path.get(0))) {
-                DeploymentArchiveCommand command = new DeploymentArchiveCommand(getCommandContext(), getPermissions());
+            if (DeployArchiveCommand.isCliArchive(path.get(0))) {
+                DeployArchiveCommand command = new DeployArchiveCommand(getCommandContext(), getPermissions());
                 command.file = path;
                 command.script = script;
                 c = command;
             } else {
-                DeploymentFileCommand command = new DeploymentFileCommand(getCommandContext(), getPermissions());
+                DeployFileCommand command = new DeployFileCommand(getCommandContext(), getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.disabled = disabled;
                 command.file = path;
-                command.force = force;
+                command.replace = force;
                 command.headers = headers;
                 command.name = name;
                 command.runtimeName = rtName;
@@ -206,13 +206,13 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                 throw new CommandException("Filesystem path and --url can't be "
                         + "used together.");
             }
-            DeploymentUrlCommand command = new DeploymentUrlCommand(getCommandContext(),
+            DeployUrlCommand command = new DeployUrlCommand(getCommandContext(),
                     getPermissions());
             command.allServerGroups = allServerGroups;
             command.disabled = disabled;
             command.url = new ArrayList<>();
             command.url.add(url);
-            command.force = force;
+            command.replace = force;
             command.headers = headers;
             command.runtimeName = rtName;
             command.serverGroups = serverGroups;
@@ -243,7 +243,7 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                     throw new CommandFormatException("force and disabled can't be "
                             + "used when deploying all disabled deployments");
                 }
-                DeploymentAllCommand command = new DeploymentAllCommand(getCommandContext(),
+                EnableAllCommand command = new EnableAllCommand(getCommandContext(),
                         getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.headers = headers;
@@ -251,7 +251,7 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                 return command.buildRequest(context);
 
             } else {
-                DeploymentRedeployCommand command = new DeploymentRedeployCommand(getCommandContext(),
+                EnableCommand command = new EnableCommand(getCommandContext(),
                         getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.headers = headers;
@@ -268,19 +268,19 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                         + "be used together.");
             }
             DMRCommand c;
-            if (DeploymentArchiveCommand.isCliArchive(path.get(0))) {
-                DeploymentArchiveCommand command = new DeploymentArchiveCommand(getCommandContext(),
+            if (DeployArchiveCommand.isCliArchive(path.get(0))) {
+                DeployArchiveCommand command = new DeployArchiveCommand(getCommandContext(),
                         getPermissions());
                 command.file = path;
                 command.script = script;
                 c = command;
             } else {
-                DeploymentFileCommand command = new DeploymentFileCommand(getCommandContext(),
+                DeployFileCommand command = new DeployFileCommand(getCommandContext(),
                         getPermissions());
                 command.allServerGroups = allServerGroups;
                 command.disabled = disabled;
                 command.file = path;
-                command.force = force;
+                command.replace = force;
                 command.headers = headers;
                 command.name = name;
                 command.runtimeName = rtName;
@@ -296,13 +296,13 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
                 throw new CommandFormatException("Filesystem path and --url can't "
                         + "be used together.");
             }
-            DeploymentUrlCommand command = new DeploymentUrlCommand(getCommandContext(),
+            DeployUrlCommand command = new DeployUrlCommand(getCommandContext(),
                     getPermissions());
             command.allServerGroups = allServerGroups;
             command.disabled = disabled;
             command.url = new ArrayList<>();
             command.url.add(url);
-            command.force = force;
+            command.replace = force;
             command.headers = headers;
             command.runtimeName = rtName;
             command.serverGroups = serverGroups;

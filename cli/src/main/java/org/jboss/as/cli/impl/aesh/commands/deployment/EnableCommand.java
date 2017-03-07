@@ -37,7 +37,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.NameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.NameActivator;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -50,8 +50,8 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "redeploy", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentRedeployCommand extends DeploymentAbstractSubCommand implements DMRCommand {
+@CommandDefinition(name = "enable", description = "", activator = ControlledCommandActivator.class)
+public class EnableCommand extends AbstractSubCommand implements DMRCommand {
 
     public static class NameCompleter
             implements OptionCompleter<CLICompleterInvocation> {
@@ -90,7 +90,7 @@ public class DeploymentRedeployCommand extends DeploymentAbstractSubCommand impl
             completer = NameCompleter.class)
     public List<String> name;
 
-    public DeploymentRedeployCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public EnableCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 
@@ -98,7 +98,7 @@ public class DeploymentRedeployCommand extends DeploymentAbstractSubCommand impl
     public CommandResult execute(CLICommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("deployment redeploy"));
+            commandInvocation.println(commandInvocation.getHelpInfo("deployment enable"));
             return CommandResult.SUCCESS;
         }
         if (name == null || name.isEmpty()) {

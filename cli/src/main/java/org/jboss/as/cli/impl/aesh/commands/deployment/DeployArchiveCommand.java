@@ -66,7 +66,7 @@ import org.wildfly.core.cli.command.aesh.FileCompleter;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-archive", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentArchiveCommand extends DeploymentControlledCommand implements Command<CLICommandInvocation>, BatchCompliantCommand {
+public class DeployArchiveCommand extends AbstractControlledCommand implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     private static final String CLI_ARCHIVE_SUFFIX = ".cli";
 
@@ -82,7 +82,7 @@ public class DeploymentArchiveCommand extends DeploymentControlledCommand implem
             completer = FileCompleter.class, converter = FileConverter.class)
     public List<File> file;
 
-    public DeploymentArchiveCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public DeployArchiveCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 

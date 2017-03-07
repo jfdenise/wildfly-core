@@ -31,7 +31,7 @@ import org.jboss.as.cli.accesscontrol.PerNodeOperationAccess;
  *
  * @author jdenise@redhat.com
  */
-public class DeploymentPermissions {
+public class Permissions {
 
     private final AccessRequirement listPermission;
     private final AccessRequirement fullReplacePermission;
@@ -43,7 +43,7 @@ public class DeploymentPermissions {
     private final AccessRequirement mainRemovePermission;
     private final AccessRequirement undeployPermission;
     private final AccessRequirement removeOrUndeployPermission;
-    DeploymentPermissions(CommandContext ctx) {
+    Permissions(CommandContext ctx) {
         listPermission = AccessRequirementBuilder.Factory.create(ctx)
                 .all()
                 .operation(Util.READ_CHILDREN_NAMES)

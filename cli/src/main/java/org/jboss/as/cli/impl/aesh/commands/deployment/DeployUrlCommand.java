@@ -34,8 +34,8 @@ import org.aesh.command.validator.OptionValidatorException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.NameActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.UrlActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.NameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.UrlActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
@@ -48,7 +48,7 @@ import org.wildfly.core.cli.command.aesh.CLIConverterInvocation;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-url", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentUrlCommand extends DeploymentContentSubCommand implements DMRCommand {
+public class DeployUrlCommand extends AbstractDeployContentSubCommand implements DMRCommand {
 
     public static class UrlConverter implements Converter<URL, CLIConverterInvocation> {
 
@@ -64,7 +64,7 @@ public class DeploymentUrlCommand extends DeploymentContentSubCommand implements
     }
 
     @Option(hasValue = true, required = false, completer
-            = DeploymentRedeployCommand.NameCompleter.class,
+            = EnableCommand.NameCompleter.class,
             activator = NameActivator.class)
     public String name;
 
@@ -73,7 +73,7 @@ public class DeploymentUrlCommand extends DeploymentContentSubCommand implements
             converter = UrlConverter.class)
     public List<URL> url;
 
-    public DeploymentUrlCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public DeployUrlCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 

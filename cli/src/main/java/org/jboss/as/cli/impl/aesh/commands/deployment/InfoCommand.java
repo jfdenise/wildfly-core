@@ -38,7 +38,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.ServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.ServerGroupsActivator;
 import org.jboss.as.cli.impl.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.operation.ParsedCommandLine;
@@ -56,7 +56,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "info", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentInfoCommand extends DeploymentControlledCommand
+public class InfoCommand extends AbstractControlledCommand
         implements Command<CLICommandInvocation>, DMRCommand {
 
     private static final String ADDED = "added";
@@ -75,7 +75,7 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
     protected boolean help;
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', completer = DeploymentRedeployCommand.NameCompleter.class)
+    @Arguments(valueSeparator = ',', completer = EnableCommand.NameCompleter.class)
     private List<String> name;
 
     // This is for deprecated usage.
@@ -88,14 +88,14 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
     protected ModelNode headers;
 
     @Option(name = "server-group", activator = ServerGroupsActivator.class,
-            completer = DeploymentAbstractSubCommand.ServerGroupsCompleter.class,
+            completer = AbstractSubCommand.ServerGroupsCompleter.class,
             required = false)
     protected String serverGroup;
 
     private List<String> addedServerGroups;
     private List<String> otherServerGroups;
 
-    public DeploymentInfoCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public InfoCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 

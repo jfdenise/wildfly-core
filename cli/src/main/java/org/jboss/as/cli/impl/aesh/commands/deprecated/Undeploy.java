@@ -36,20 +36,21 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentArchiveCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentControlledCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentListCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentPermissions;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentRedeployCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentUndeployArchiveCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentUndeployCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.DeployArchiveCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.AbstractControlledCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.DisableCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.ListCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Permissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.EnableCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.UndeployArchiveCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.UndeployCommand;
 import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators;
 
 /**
  *
@@ -57,7 +58,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  */
 @Deprecated
 @CommandDefinition(name = "undeploy", description = "", activator = DeployActivator.class)
-public class Undeploy extends DeploymentControlledCommand
+public class Undeploy extends AbstractControlledCommand
         implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     @Deprecated
@@ -94,10 +95,10 @@ public class Undeploy extends DeploymentControlledCommand
     private boolean keepContent;
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', activator = DeploymentActivators.UndeployNameActivator.class,
-            completer = DeploymentRedeployCommand.NameCompleter.class)
+    @Arguments(valueSeparator = ',', activator = Activators.UndeployNameActivator.class,
+            completer = EnableCommand.NameCompleter.class)
     protected List<String> name;
-    public Undeploy(CommandContext ctx, DeploymentPermissions permissions) {
+    public Undeploy(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 
@@ -117,12 +118,12 @@ public class Undeploy extends DeploymentControlledCommand
                 && !keepContent && (name == null || name.isEmpty());
 
         if (noOptions || l) {
-            DeploymentListCommand.listDeployments(commandInvocation, l);
+            ListCommand.listDeployments(commandInvocation, l);
             return CommandResult.SUCCESS;
         }
         if (path != null) {
-            if (DeploymentArchiveCommand.isCliArchive(path)) {
-                DeploymentUndeployArchiveCommand command = new DeploymentUndeployArchiveCommand(getCommandContext(), getPermissions());
+            if (DeployArchiveCommand.isCliArchive(path)) {
+                UndeployArchiveCommand command = new UndeployArchiveCommand(getCommandContext(), getPermissions());
                 command.file = new ArrayList<>();
                 command.file.add(path);
                 command.script = script;
@@ -131,24 +132,29 @@ public class Undeploy extends DeploymentControlledCommand
         }
 
         if (name == null) {
-            DeploymentListCommand.listDeployments(commandInvocation, l);
+            ListCommand.listDeployments(commandInvocation, l);
             return CommandResult.SUCCESS;
         }
 
-        DeploymentUndeployCommand command = new DeploymentUndeployCommand(getCommandContext(), getPermissions());
+        UndeployCommand command = null;
+        if (keepContent) {
+            command = new DisableCommand(getCommandContext(), getPermissions());
+        } else {
+            command = new UndeployCommand(getCommandContext(), getPermissions());
+        }
         command.allRelevantServerGroups = allRelevantServerGroups;
         command.headers = headers;
-        command.keepContent = keepContent;
         command.name = name;
         command.serverGroups = serverGroups;
+
         return command.execute(commandInvocation);
     }
 
     @Override
     public ModelNode buildRequest(CommandContext commandInvocation) throws CommandFormatException {
         if (path != null) {
-            if (DeploymentArchiveCommand.isCliArchive(path)) {
-                DeploymentUndeployArchiveCommand command = new DeploymentUndeployArchiveCommand(getCommandContext(), getPermissions());
+            if (DeployArchiveCommand.isCliArchive(path)) {
+                UndeployArchiveCommand command = new UndeployArchiveCommand(getCommandContext(), getPermissions());
                 command.file = new ArrayList<>();
                 command.file.add(path);
                 command.script = script;
@@ -160,10 +166,14 @@ public class Undeploy extends DeploymentControlledCommand
             throw new CommandFormatException("Deployment name is missing.");
         }
 
-        DeploymentUndeployCommand command = new DeploymentUndeployCommand(getCommandContext(), getPermissions());
+        UndeployCommand command = null;
+        if (keepContent) {
+            command = new DisableCommand(getCommandContext(), getPermissions());
+        } else {
+            command = new UndeployCommand(getCommandContext(), getPermissions());
+        }
         command.allRelevantServerGroups = allRelevantServerGroups;
         command.headers = headers;
-        command.keepContent = keepContent;
         command.name = name;
         command.serverGroups = serverGroups;
         return command.buildRequest(commandInvocation);

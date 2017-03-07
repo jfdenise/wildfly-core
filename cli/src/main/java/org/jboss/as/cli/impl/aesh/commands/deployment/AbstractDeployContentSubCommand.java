@@ -32,8 +32,8 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.ForceActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.RuntimeNameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.ReplaceActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.RuntimeNameActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -46,15 +46,15 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deployment-deploy-content", description = "")
-public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubCommand {
+public abstract class AbstractDeployContentSubCommand extends AbstractSubCommand {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
-    @Option(hasValue = false, required = false, activator = ForceActivator.class,
-            shortName = 'f')
-    public boolean force;
+    @Option(hasValue = false, required = false, activator = ReplaceActivator.class,
+            shortName = 'r')
+    public boolean replace;
 
     @Option(hasValue = false, required = false)
     public boolean disabled;
@@ -63,7 +63,7 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
             = RuntimeNameActivator.class)
     public String runtimeName;
 
-    DeploymentContentSubCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    AbstractDeployContentSubCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 
@@ -141,10 +141,10 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
         CommandContext ctx = context;
         String name = getName();
 
-        if (force) {
+        if (replace) {
             if ((disabled && ctx.isDomainMode()) || serverGroups != null
                     || allServerGroups) {
-                throw new CommandFormatException("--force only replaces the content "
+                throw new CommandFormatException("--replace only replaces the content "
                         + "in the deployment repository and can't be used in combination with any of "
                         + "disabled, --server-groups or --all-server-groups.");
             }
@@ -172,7 +172,7 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
             if (!ctx.isBatchMode() && Util.isDeploymentInRepository(name,
                     ctx.getModelControllerClient())) {
                 throw new CommandFormatException("'" + name + "' already exists "
-                        + "in the deployment repository (use --force"
+                        + "in the deployment repository (use --replace"
                         + " to replace the existing content in the repository).");
             }
 
@@ -234,7 +234,7 @@ public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubC
                 ctx.getModelControllerClient())) {
             throw new CommandFormatException("'" + getName() + "' already exists in "
                     + "the deployment repository (use "
-                    + "--force to replace the existing content in the repository).");
+                    + "--replace to replace the existing content in the repository).");
         }
 
         ModelNode request = buildDeploymentRequest(ctx, Util.ADD);

@@ -44,11 +44,11 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = "deployment", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentCommand extends DeploymentControlledCommand
+public class DeploymentCommand extends AbstractControlledCommand
         implements GroupCommand<CLICommandInvocation, Command> {
 
     public DeploymentCommand(CommandContext ctx) {
-        super(ctx, new DeploymentPermissions(ctx));
+        super(ctx, new Permissions(ctx));
     }
 
     @Deprecated
@@ -61,15 +61,17 @@ public class DeploymentCommand extends DeploymentControlledCommand
     @Override
     public List<Command> getCommands() {
         List<Command> commands = new ArrayList<>();
-        commands.add(new DeploymentRedeployCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentAllCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentArchiveCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentUrlCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentFileCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentListCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentInfoCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentUndeployCommand(getCommandContext(), getPermissions()));
-        commands.add(new DeploymentUndeployArchiveCommand(getCommandContext(), getPermissions()));
+        commands.add(new EnableCommand(getCommandContext(), getPermissions()));
+        commands.add(new EnableAllCommand(getCommandContext(), getPermissions()));
+        commands.add(new DeployArchiveCommand(getCommandContext(), getPermissions()));
+        commands.add(new DeployUrlCommand(getCommandContext(), getPermissions()));
+        commands.add(new DeployFileCommand(getCommandContext(), getPermissions()));
+        commands.add(new ListCommand(getCommandContext(), getPermissions()));
+        commands.add(new InfoCommand(getCommandContext(), getPermissions()));
+        commands.add(new UndeployCommand(getCommandContext(), getPermissions()));
+        commands.add(new DisableAllCommand(getCommandContext(), getPermissions()));
+        commands.add(new DisableCommand(getCommandContext(), getPermissions()));
+        commands.add(new UndeployArchiveCommand(getCommandContext(), getPermissions()));
 
         return commands;
     }

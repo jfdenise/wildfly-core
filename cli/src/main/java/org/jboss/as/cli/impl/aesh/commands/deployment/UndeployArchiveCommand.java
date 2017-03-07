@@ -19,40 +19,41 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands.deprecated;
+package org.jboss.as.cli.impl.aesh.commands.deployment;
 
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.CommandException;
-import org.aesh.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.impl.aesh.commands.deployment.InfoCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Permissions;
-import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
+import org.jboss.as.cli.accesscontrol.AccessRequirement;
+import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
+import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-@Deprecated
-@CommandDefinition(name = "deployment-info", description = "", activator = DeploymentInfoActivator.class)
-public class DeploymentInfo extends InfoCommand {
+@CommandDefinition(name = "undeploy-archive", description = "", activator = ControlledCommandActivator.class)
+public class UndeployArchiveCommand extends DeployArchiveCommand {
 
-    public DeploymentInfo(CommandContext ctx, Permissions permissions) {
+    public UndeployArchiveCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 
     @Override
-    public CommandResult execute(CLICommandInvocation commandInvocation)
-            throws CommandException, InterruptedException {
-        if (help) {
-            try {
-                Util.printLegacyHelp(commandInvocation.getCommandContext(), "batch clear");
-            } catch (CommandLineException ex) {
-                throw new CommandException(ex);
-            }
-            return CommandResult.SUCCESS;
-        }
-        return super.execute(commandInvocation);
+    protected String getAction() {
+        return "undeploy-archive";
+    }
+
+    @Override
+    protected String getDefaultScript() {
+        return "undeploy.scr";
+    }
+
+    @Override
+    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
+        return AccessRequirementBuilder.Factory.create(ctx)
+                .any()
+                .requirement(getPermissions().getMainRemovePermission())
+                .requirement(getPermissions().getUndeployPermission())
+                .build();
     }
 }

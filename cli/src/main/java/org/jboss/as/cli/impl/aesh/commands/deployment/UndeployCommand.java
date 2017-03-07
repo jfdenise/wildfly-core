@@ -21,30 +21,44 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import java.util.List;
+import org.aesh.command.CommandDefinition;
+import org.aesh.command.option.Arguments;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.Util;
-import org.jboss.as.cli.impl.aesh.commands.ControlledCommand;
-import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
+import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public abstract class DeploymentControlledCommand extends ControlledCommand {
+@CommandDefinition(name = "undeploy", description = "", activator = ControlledCommandActivator.class)
+public class UndeployCommand extends AbstractUndeployCommand {
 
-    private final DeploymentPermissions permissions;
+    // Argument comes first, aesh behavior.
+    @Arguments(valueSeparator = ',', activator = Activators.UndeployNameActivator.class,
+            completer = EnableCommand.NameCompleter.class)
+    public List<String> name;
 
-    public DeploymentControlledCommand(CommandContext ctx, DeploymentPermissions permissions) {
-        super(ctx);
-        this.permissions = permissions;
-        DefaultOperationRequestAddress requiredAddress
-                = new DefaultOperationRequestAddress();
-        requiredAddress.toNodeType(Util.DEPLOYMENT);
-        addRequiredPath(requiredAddress);
+    // XXX jfdenise, is public for compat reason. Make it private when removing compat code.
+    public UndeployCommand(CommandContext ctx, Permissions permissions) {
+        super(ctx, permissions);
     }
 
-    public DeploymentPermissions getPermissions() {
-        return permissions;
+    @Override
+    protected boolean keepContent() {
+        return false;
     }
 
+    @Override
+    protected String getName() {
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        return name.get(0);
+    }
+
+    @Override
+    protected String getCommandName() {
+        return "undeploy";
+    }
 }

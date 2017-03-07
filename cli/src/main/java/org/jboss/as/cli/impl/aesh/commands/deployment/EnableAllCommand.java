@@ -45,14 +45,14 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "redeploy-all", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentAllCommand extends DeploymentAbstractSubCommand implements DMRCommand {
+@CommandDefinition(name = "enable-all", description = "", activator = ControlledCommandActivator.class)
+public class EnableAllCommand extends AbstractSubCommand implements DMRCommand {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
-    public DeploymentAllCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public EnableAllCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 
@@ -60,7 +60,7 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
     public CommandResult execute(CLICommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("deployment redeploy-all"));
+            commandInvocation.println(commandInvocation.getHelpInfo("deployment enable-all"));
             return CommandResult.SUCCESS;
         }
         deployAll(commandInvocation, allServerGroups, serverGroups, headers);
@@ -79,7 +79,7 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
                 throw new CommandException(Util.getFailureDescription(result));
             }
         } catch (IOException e) {
-            throw new CommandException("Failed to re-deploy", e);
+            throw new CommandException("Failed to enable-all", e);
         } catch (CommandFormatException ex) {
             throw new CommandException(ex);
         }
@@ -129,7 +129,7 @@ public class DeploymentAllCommand extends DeploymentAbstractSubCommand implement
             }
         }
         if (empty) {
-            throw new CommandFormatException("No disabled deployment to re-deploy.");
+            throw new CommandFormatException("No disabled deployment to enable.");
         }
         if (headers != null) {
             ModelNode opHeaders = composite.get(Util.OPERATION_HEADERS);

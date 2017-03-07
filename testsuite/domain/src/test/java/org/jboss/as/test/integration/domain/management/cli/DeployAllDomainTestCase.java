@@ -155,7 +155,7 @@ public class DeployAllDomainTestCase {
         checkDeployment(sgTwo, cliTestApp2War.getName(), true);
         checkDeployment(sgTwo, cliTestAppEar.getName(), true);
 
-        ctx.handle("deployment undeploy * --keep-content --all-relevant-server-groups");
+        ctx.handle("deployment disable-all --all-relevant-server-groups");
 
         checkDeployment(sgOne, cliTestApp1War.getName(), false);
         checkDeployment(sgOne, cliTestAnotherWar.getName(), false);
@@ -164,7 +164,7 @@ public class DeployAllDomainTestCase {
         checkDeployment(sgTwo, cliTestApp2War.getName(), false);
         checkDeployment(sgTwo, cliTestAppEar.getName(), false);
         // Deploy them all.
-        ctx.handle("deployment redeploy-all --server-groups=" + sgTwo + ',' + sgOne);
+        ctx.handle("deployment enable-all --server-groups=" + sgTwo + ',' + sgOne);
         checkDeployment(sgOne, cliTestApp1War.getName(), true);
         checkDeployment(sgOne, cliTestAnotherWar.getName(), true);
         checkDeployment(sgOne, cliTestAppEar.getName(), true);

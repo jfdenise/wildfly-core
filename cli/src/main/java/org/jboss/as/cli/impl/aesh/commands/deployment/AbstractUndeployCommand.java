@@ -32,7 +32,6 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.completer.OptionCompleter;
-import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
@@ -58,8 +57,8 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "undeploy", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentUndeployCommand extends DeploymentControlledCommand
+@CommandDefinition(name = "abstract-undeploy-deployment", description = "", activator = ControlledCommandActivator.class)
+public abstract class AbstractUndeployCommand extends AbstractControlledCommand
         implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     public static class ServerGroupsCompleter implements
@@ -67,7 +66,7 @@ public class DeploymentUndeployCommand extends DeploymentControlledCommand
 
         @Override
         public void complete(CLICompleterInvocation completerInvocation) {
-            DeploymentUndeployCommand rc = (DeploymentUndeployCommand) completerInvocation.getCommand();
+            UndeployCommand rc = (UndeployCommand) completerInvocation.getCommand();
 
             CommaSeparatedCompleter comp = new CommaSeparatedCompleter() {
                 @Override
@@ -91,11 +90,11 @@ public class DeploymentUndeployCommand extends DeploymentControlledCommand
     @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
-    @Option(name = "server-groups", activator = DeploymentActivators.UndeployServerGroupsActivator.class,
+    @Option(name = "server-groups", activator = Activators.UndeployServerGroupsActivator.class,
             completer = ServerGroupsCompleter.class, required = false)
     public String serverGroups;
 
-    @Option(name = "all-relevant-server-groups", activator = DeploymentActivators.AllRelevantServerGroupsActivator.class,
+    @Option(name = "all-relevant-server-groups", activator = Activators.AllRelevantServerGroupsActivator.class,
             hasValue = false, required = false)
     public boolean allRelevantServerGroups;
 
@@ -103,36 +102,35 @@ public class DeploymentUndeployCommand extends DeploymentControlledCommand
             required = false)
     public ModelNode headers;
 
-    @Option(hasValue = false, name = "keep-content")
-    public boolean keepContent;
-
-    // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', activator = DeploymentActivators.UndeployNameActivator.class,
-            completer = DeploymentRedeployCommand.NameCompleter.class)
-    public List<String> name;
-
     // XXX jfdenise, is public for compat reason. Make it private when removing compat code.
-    public DeploymentUndeployCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public AbstractUndeployCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
+
+    protected abstract boolean keepContent();
+
+    protected abstract String getName();
+
+    protected abstract String getCommandName();
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
         if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("deployment undeploy"));
+            commandInvocation.println(commandInvocation.getHelpInfo("deployment " + getCommandName()));
             return CommandResult.SUCCESS;
         }
-        if (name == null || name.isEmpty()) {
+        String name = getName();
+        if (name == null) {
             throw new CommandException("No deployment name");
         }
-        undeployName(commandInvocation, name.get(0), allRelevantServerGroups,
-                serverGroups, keepContent, headers);
+        undeployName(commandInvocation, name, allRelevantServerGroups,
+                serverGroups, keepContent(), headers);
         return CommandResult.SUCCESS;
     }
 
     @Override
-    public BatchResponseHandler buildBatchResponseHandler(CommandContext commandContext,
+    public BatchCompliantCommand.BatchResponseHandler buildBatchResponseHandler(CommandContext commandContext,
             Attachments attachments) {
         return null;
     }
@@ -158,8 +156,8 @@ public class DeploymentUndeployCommand extends DeploymentControlledCommand
     @Override
     public ModelNode buildRequest(CommandContext context)
             throws CommandFormatException {
-        return buildRequest(context, name.get(0), allRelevantServerGroups,
-                serverGroups, keepContent, headers);
+        return buildRequest(context, getName(), allRelevantServerGroups,
+                serverGroups, keepContent(), headers);
     }
 
     private static ModelNode buildRequest(CommandContext ctx, String name,

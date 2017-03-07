@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2016, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -23,37 +23,28 @@ package org.jboss.as.cli.impl.aesh.commands.deployment;
 
 import org.aesh.command.CommandDefinition;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "undeploy-archive", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentUndeployArchiveCommand extends DeploymentArchiveCommand {
+@CommandDefinition(name = "disable", description = "", activator = ControlledCommandActivator.class)
+public class DisableCommand extends UndeployCommand {
 
-    public DeploymentUndeployArchiveCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    // XXX jfdenise, is public for compat reason. Make it private when removing compat code.
+    public DisableCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 
     @Override
-    protected String getAction() {
-        return "undeploy-archive";
+    protected boolean keepContent() {
+        return true;
     }
 
     @Override
-    protected String getDefaultScript() {
-        return "undeploy.scr";
+    protected String getCommandName() {
+        return "disable";
     }
 
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getMainRemovePermission())
-                .requirement(getPermissions().getUndeployPermission())
-                .build();
-    }
 }

@@ -33,13 +33,13 @@ import org.wildfly.core.cli.command.aesh.activator.DependOptionActivator;
  *
  * @author jdenise@redhat.com
  */
-public interface DeploymentActivators {
+public interface Activators {
 
     public static class UrlActivator implements OptionActivator {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
             return cmd.getPermissions().getAddOrReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -49,7 +49,7 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
             return cmd.getPermissions().getDeployPermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -60,7 +60,7 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
             return cmd.getPermissions().getRemoveOrUndeployPermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -74,7 +74,7 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
             return cmd.getPermissions().getAddOrReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -84,7 +84,7 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
             return cmd.getPermissions().getMainAddPermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -94,17 +94,17 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
             return cmd.getPermissions().getAddOrReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
     }
 
-    public static class ForceActivator implements OptionActivator {
+    public static class ReplaceActivator implements OptionActivator {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) pc.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
             return cmd.getPermissions().getFullReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -126,7 +126,7 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) processedCommand.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) processedCommand.getCommand();
             if (!cmd.getPermissions().getDeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;
@@ -156,8 +156,8 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            DeploymentControlledCommand cmd
-                    = (DeploymentControlledCommand) processedCommand.getCommand();
+            AbstractControlledCommand cmd
+                    = (AbstractControlledCommand) processedCommand.getCommand();
             if (!cmd.getPermissions().getDeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;
@@ -187,8 +187,8 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            DeploymentControlledCommand cmd
-                    = (DeploymentControlledCommand) processedCommand.getCommand();
+            AbstractControlledCommand cmd
+                    = (AbstractControlledCommand) processedCommand.getCommand();
             if (!cmd.getPermissions().getUndeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;
@@ -218,7 +218,7 @@ public interface DeploymentActivators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            DeploymentControlledCommand cmd = (DeploymentControlledCommand) processedCommand.getCommand();
+            AbstractControlledCommand cmd = (AbstractControlledCommand) processedCommand.getCommand();
             if (!cmd.getPermissions().getUndeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;

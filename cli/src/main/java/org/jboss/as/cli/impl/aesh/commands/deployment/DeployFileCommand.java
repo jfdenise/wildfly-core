@@ -33,8 +33,8 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.NameActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.UnmanagedActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.NameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.UnmanagedActivator;
 import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.controller.client.Operation;
@@ -50,13 +50,13 @@ import org.wildfly.core.cli.command.aesh.FileCompleter;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-file", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentFileCommand extends DeploymentContentSubCommand implements DMRCommand {
+public class DeployFileCommand extends AbstractDeployContentSubCommand implements DMRCommand {
 
     @Option(hasValue = false, activator = UnmanagedActivator.class, required = false)
     public boolean unmanaged;
 
     @Option(hasValue = true, required = false, completer
-            = DeploymentRedeployCommand.NameCompleter.class,
+            = EnableCommand.NameCompleter.class,
             activator = NameActivator.class)
     public String name;
 
@@ -65,7 +65,7 @@ public class DeploymentFileCommand extends DeploymentContentSubCommand implement
             completer = FileCompleter.class, converter = FileConverter.class)
     public List<File> file;
 
-    public DeploymentFileCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    public DeployFileCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 

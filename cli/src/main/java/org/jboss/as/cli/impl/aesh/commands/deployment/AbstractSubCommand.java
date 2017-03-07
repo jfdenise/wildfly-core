@@ -34,8 +34,8 @@ import org.jboss.as.cli.impl.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.jboss.as.cli.impl.CommaSeparatedCompleter;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.AllServerGroupsActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.ServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.AllServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.ServerGroupsActivator;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -47,7 +47,7 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "abstract-sub-deployment", description = "")
-public abstract class DeploymentAbstractSubCommand extends DeploymentControlledCommand
+public abstract class AbstractSubCommand extends AbstractControlledCommand
         implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     public static class ServerGroupsCompleter implements
@@ -55,7 +55,7 @@ public abstract class DeploymentAbstractSubCommand extends DeploymentControlledC
 
         @Override
         public void complete(CLICompleterInvocation completerInvocation) {
-            DeploymentControlledCommand rc = (DeploymentControlledCommand) completerInvocation.getCommand();
+            AbstractControlledCommand rc = (AbstractControlledCommand) completerInvocation.getCommand();
 
             CommaSeparatedCompleter comp = new CommaSeparatedCompleter() {
                 @Override
@@ -84,7 +84,7 @@ public abstract class DeploymentAbstractSubCommand extends DeploymentControlledC
             required = false)
     public ModelNode headers;
 
-    DeploymentAbstractSubCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    AbstractSubCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 

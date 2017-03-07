@@ -46,7 +46,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "list", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentListCommand extends DeploymentControlledCommand
+public class ListCommand extends AbstractControlledCommand
         implements Command<CLICommandInvocation> {
 
     @Deprecated
@@ -56,7 +56,7 @@ public class DeploymentListCommand extends DeploymentControlledCommand
     @Option(name = "l", hasValue = false, shortName = 'l')
     private boolean l;
 
-    DeploymentListCommand(CommandContext ctx, DeploymentPermissions permissions) {
+    ListCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
     }
 
