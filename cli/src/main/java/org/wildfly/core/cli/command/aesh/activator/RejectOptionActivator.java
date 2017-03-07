@@ -21,26 +21,13 @@
  */
 package org.wildfly.core.cli.command.aesh.activator;
 
-import org.jboss.as.cli.CommandContext;
+import java.util.Set;
+import org.aesh.command.activator.OptionActivator;
 
 /**
  *
- * @author jfdenise
+ * @author jdenise@redhat.com
  */
-public abstract class DefaultOptionActivator implements CLIOptionActivator {
-
-    private CommandContext ctx;
-
-    protected DefaultOptionActivator() {
-    }
-
-    @Override
-    public void setCommandContext(CommandContext commandContext) {
-        this.ctx = commandContext;
-    }
-
-    @Override
-    public CommandContext getCommandContext() {
-        return ctx;
-    }
+public interface RejectOptionActivator extends OptionActivator {
+    Set<String> getRejected();
 }

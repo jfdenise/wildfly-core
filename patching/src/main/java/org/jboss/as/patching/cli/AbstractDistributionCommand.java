@@ -55,14 +55,14 @@ import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.wildfly.core.cli.command.aesh.CLIConverterInvocation;
-import org.wildfly.core.cli.command.aesh.DefaultOptionCompleter;
+import org.wildfly.core.cli.command.aesh.AbstractOptionCompleter;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
-import org.wildfly.core.cli.command.aesh.activator.DefaultOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
 import org.wildfly.security.manager.action.ReadEnvironmentPropertyAction;
 import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -120,7 +120,7 @@ public abstract class AbstractDistributionCommand implements Command<CLICommandI
         }
 
     }
-    public static class HostsActivator extends DefaultOptionActivator implements DomainOptionActivator {
+    public static class HostsActivator extends AbstractOptionActivator implements DomainOptionActivator {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
@@ -129,7 +129,7 @@ public abstract class AbstractDistributionCommand implements Command<CLICommandI
         }
     };
 
-    public static class DisconnectedActivator extends DefaultOptionActivator {
+    public static class DisconnectedActivator extends AbstractOptionActivator {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
@@ -137,7 +137,7 @@ public abstract class AbstractDistributionCommand implements Command<CLICommandI
         }
     };
 
-    public static class HostsCompleter extends DefaultOptionCompleter {
+    public static class HostsCompleter extends AbstractOptionCompleter {
 
         @Override
         public Collection<String> getCandidates(CommandContext ctx) {
@@ -158,7 +158,7 @@ public abstract class AbstractDistributionCommand implements Command<CLICommandI
 
     @Deprecated
     @Option(name = "bundle-path", converter = FilePathConverter.class,
-            required = false, activator = HiddenActivator.class)
+            required = false, activator = HideOptionActivator.class)
     private List<File> bundlePath;
 
     private final String action;

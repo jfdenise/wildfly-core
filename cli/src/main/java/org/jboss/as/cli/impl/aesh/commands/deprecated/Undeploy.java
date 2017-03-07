@@ -49,7 +49,7 @@ import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -61,36 +61,36 @@ public class Undeploy extends DeploymentControlledCommand
         implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     @Deprecated
-    @Option(hasValue = true, required = false, activator = HiddenActivator.class)
+    @Option(hasValue = true, required = false, activator = HideOptionActivator.class)
     protected String script;
 
     @Deprecated
-    @Option(hasValue = true, required = false, activator = HiddenActivator.class, converter = FileConverter.class)
+    @Option(hasValue = true, required = false, activator = HideOptionActivator.class, converter = FileConverter.class)
     protected File path;
 
     @Deprecated
-    @Option(hasValue = false, shortName = 'l', activator = HiddenActivator.class)
+    @Option(hasValue = false, shortName = 'l', activator = HideOptionActivator.class)
     private boolean l;
 
     @Deprecated
-    @Option(name = "server-groups", activator = HiddenActivator.class, required = false)
+    @Option(name = "server-groups", activator = HideOptionActivator.class, required = false)
     protected String serverGroups;
 
     @Deprecated
-    @Option(name = "all-relevant-server-groups", activator = HiddenActivator.class,
+    @Option(name = "all-relevant-server-groups", activator = HideOptionActivator.class,
             hasValue = false, required = false)
     protected boolean allRelevantServerGroups;
 
     @Deprecated
-    @Option(converter = HeadersConverter.class, required = false, activator = HiddenActivator.class)
+    @Option(converter = HeadersConverter.class, required = false, activator = HideOptionActivator.class)
     protected ModelNode headers;
 
     @Deprecated
-    @Option(hasValue = false, name = "keep-content", activator = HiddenActivator.class)
+    @Option(hasValue = false, name = "keep-content", activator = HideOptionActivator.class)
     private boolean keepContent;
 
     // Argument comes first, aesh behavior.

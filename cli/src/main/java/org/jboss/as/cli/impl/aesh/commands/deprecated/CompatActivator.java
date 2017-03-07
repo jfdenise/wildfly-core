@@ -23,7 +23,7 @@ package org.jboss.as.cli.impl.aesh.commands.deprecated;
 
 import org.aesh.command.impl.internal.ProcessedCommand;
 import org.wildfly.core.cli.command.aesh.activator.CLICommandActivator;
-import org.wildfly.core.cli.command.aesh.activator.DefaultActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractCommandActivator;
 
 /**
  *
@@ -32,7 +32,7 @@ import org.wildfly.core.cli.command.aesh.activator.DefaultActivator;
  * @author jdenise@readhat.com
  */
 @Deprecated
-public class CompatActivator extends DefaultActivator {
+public class CompatActivator extends AbstractCommandActivator {
 
     private final CLICommandActivator activator;
 

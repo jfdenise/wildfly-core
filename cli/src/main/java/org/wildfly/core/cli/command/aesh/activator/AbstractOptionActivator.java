@@ -21,13 +21,26 @@
  */
 package org.wildfly.core.cli.command.aesh.activator;
 
-import java.util.Set;
-import org.aesh.command.activator.OptionActivator;
+import org.jboss.as.cli.CommandContext;
 
 /**
  *
- * @author jdenise@redhat.com
+ * @author jfdenise
  */
-public interface NotExpectedOptionsActivator extends OptionActivator {
-    Set<String> getNotExpected();
+public abstract class AbstractOptionActivator implements CLIOptionActivator {
+
+    private CommandContext ctx;
+
+    protected AbstractOptionActivator() {
+    }
+
+    @Override
+    public void setCommandContext(CommandContext commandContext) {
+        this.ctx = commandContext;
+    }
+
+    @Override
+    public CommandContext getCommandContext() {
+        return ctx;
+    }
 }

@@ -22,13 +22,13 @@
 package org.jboss.as.cli.impl.aesh.commands.activator;
 
 import org.aesh.command.impl.internal.ProcessedCommand;
-import org.wildfly.core.cli.command.aesh.activator.DefaultActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractCommandActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class ConnectedActivator extends DefaultActivator {
+public class ConnectedActivator extends AbstractCommandActivator {
 
     @Override
     public boolean isActivated(ProcessedCommand cmd) {

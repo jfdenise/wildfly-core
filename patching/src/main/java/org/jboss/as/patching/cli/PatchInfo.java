@@ -35,9 +35,9 @@ import org.jboss.as.patching.Constants;
 import org.jboss.as.patching.tool.PatchOperationBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
-import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedAndNotExpectedOptionsActivator;
-import org.wildfly.core.cli.command.aesh.activator.DefaultNotExpectedOptionsActivator;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractDependRejectOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractRejectOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -46,21 +46,21 @@ import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
 @CommandDefinition(name = "info", description = "")
 public class PatchInfo extends AbstractDistributionCommand {
 
-    public static class NoStreamsActivator extends DefaultNotExpectedOptionsActivator {
+    public static class NoStreamsActivator extends AbstractRejectOptionActivator {
 
         public NoStreamsActivator() {
             super("streams");
         }
     };
 
-    public static class NoPatchIdActivator extends DefaultNotExpectedOptionsActivator {
+    public static class NoPatchIdActivator extends AbstractRejectOptionActivator {
 
         public NoPatchIdActivator() {
             super("");
         }
     };
 
-    public static class PatchIdNoStreamsActivator extends DefaultExpectedAndNotExpectedOptionsActivator {
+    public static class PatchIdNoStreamsActivator extends AbstractDependRejectOptionActivator {
 
         private static final Set<String> EXPECTED = new HashSet<>();
         private static final Set<String> NOT_EXPECTED = new HashSet<>();
@@ -82,7 +82,7 @@ public class PatchInfo extends AbstractDistributionCommand {
     @Arguments(completer = PatchIdCompleter.class, activator = NoStreamsActivator.class)
     private List<String> patchIdArg;
 
-    @Option(name = "patch-id", completer = PatchIdCompleter.class, activator = HiddenActivator.class)
+    @Option(name = "patch-id", completer = PatchIdCompleter.class, activator = HideOptionActivator.class)
     private String patchId;
 
     @Option(hasValue = false, shortName = 'v', required = false, activator = PatchIdNoStreamsActivator.class)
@@ -92,7 +92,7 @@ public class PatchInfo extends AbstractDistributionCommand {
     boolean streams;
 
     @Deprecated
-    @Option(name = "json-output", hasValue = false, required = false, activator = HiddenActivator.class)
+    @Option(name = "json-output", hasValue = false, required = false, activator = HideOptionActivator.class)
     boolean jsonOutput;
 
     public PatchInfo() {

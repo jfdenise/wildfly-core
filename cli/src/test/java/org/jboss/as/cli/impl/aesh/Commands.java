@@ -17,12 +17,12 @@ import org.aesh.command.impl.internal.ProcessedCommand;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
-import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedAndNotExpectedOptionsActivator;
-import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedOptionsActivator;
-import org.wildfly.core.cli.command.aesh.activator.DefaultNotExpectedOptionsActivator;
-import org.wildfly.core.cli.command.aesh.activator.DefaultOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractDependRejectOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractDependOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractRejectOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.StandaloneOptionActivator;
 
 /**
@@ -144,7 +144,7 @@ public class Commands {
         @CommandDefinition(name = "command1", description = "")
         public static class Command3 implements TestCommand, Command {
 
-            public static class Opt3Activator extends DefaultNotExpectedOptionsActivator {
+            public static class Opt3Activator extends AbstractRejectOptionActivator {
 
                 public Opt3Activator() {
                     super("opt2-without-value");
@@ -177,14 +177,14 @@ public class Commands {
         @CommandDefinition(name = "command1", description = "")
         public static class Command4 implements TestCommand, Command {
 
-            public static class Opt2Activator extends DefaultExpectedOptionsActivator {
+            public static class Opt2Activator extends AbstractDependOptionActivator {
 
                 public Opt2Activator() {
                     super("opt1-with-value");
                 }
             };
 
-            public static class Opt3Activator extends DefaultExpectedAndNotExpectedOptionsActivator {
+            public static class Opt3Activator extends AbstractDependRejectOptionActivator {
 
                 private static final Set<String> EXPECTED = new HashSet<>();
                 private static final Set<String> NOT_EXPECTED = new HashSet<>();
@@ -226,14 +226,14 @@ public class Commands {
         @CommandDefinition(name = "command1", description = "")
         public static class Command5 implements TestCommand, Command {
 
-            public static class Opt2Activator extends DefaultExpectedOptionsActivator {
+            public static class Opt2Activator extends AbstractDependOptionActivator {
 
                 public Opt2Activator() {
                     super("");
                 }
             };
 
-            public static class Opt3Activator extends DefaultExpectedAndNotExpectedOptionsActivator {
+            public static class Opt3Activator extends AbstractDependRejectOptionActivator {
 
                 private static final Set<String> EXPECTED = new HashSet<>();
                 private static final Set<String> NOT_EXPECTED = new HashSet<>();
@@ -277,14 +277,14 @@ public class Commands {
         @CommandDefinition(name = "command1", description = "")
         public static class Command6 implements TestCommand, Command {
 
-            public static class Opt2Activator extends DefaultExpectedOptionsActivator {
+            public static class Opt2Activator extends AbstractDependOptionActivator {
 
                 public Opt2Activator() {
                     super("", "opt1-with-value");
                 }
             };
 
-            public static class Opt3Activator extends DefaultExpectedAndNotExpectedOptionsActivator {
+            public static class Opt3Activator extends AbstractDependRejectOptionActivator {
 
                 private static final Set<String> EXPECTED = new HashSet<>();
                 private static final Set<String> NOT_EXPECTED = new HashSet<>();
@@ -330,21 +330,21 @@ public class Commands {
         @CommandDefinition(name = "command1", description = "")
         public static class Command7 implements TestCommand, Command {
 
-            public static class NoStreamsActivator extends DefaultNotExpectedOptionsActivator {
+            public static class NoStreamsActivator extends AbstractRejectOptionActivator {
 
                 public NoStreamsActivator() {
                     super("streams");
                 }
             };
 
-            public static class NoPatchIdActivator extends DefaultNotExpectedOptionsActivator {
+            public static class NoPatchIdActivator extends AbstractRejectOptionActivator {
 
                 public NoPatchIdActivator() {
                     super("");
                 }
             };
 
-            public static class PatchIdNoStreamsActivator extends DefaultExpectedAndNotExpectedOptionsActivator {
+            public static class PatchIdNoStreamsActivator extends AbstractDependRejectOptionActivator {
 
                 private static final Set<String> EXPECTED = new HashSet<>();
                 private static final Set<String> NOT_EXPECTED = new HashSet<>();
@@ -391,16 +391,16 @@ public class Commands {
         @CommandDefinition(name = "command1", description = "")
         public static class Command8 implements TestCommand, Command {
 
-            @Option(name = "opt1", hasValue = true, required = false, activator = HiddenActivator.class)
+            @Option(name = "opt1", hasValue = true, required = false, activator = HideOptionActivator.class)
             private String patchStream;
 
-            @Arguments(activator = HiddenActivator.class)
+            @Arguments(activator = HideOptionActivator.class)
             private List<String> patchIdArg;
 
-            @Option(hasValue = false, shortName = 'v', required = false, activator = HiddenActivator.class)
+            @Option(hasValue = false, shortName = 'v', required = false, activator = HideOptionActivator.class)
             boolean verbose;
 
-            @Option(hasValue = false, required = false, activator = HiddenActivator.class)
+            @Option(hasValue = false, required = false, activator = HideOptionActivator.class)
             boolean streams;
 
             @Override
@@ -423,14 +423,14 @@ public class Commands {
         @CommandDefinition(name = "command1", description = "")
         public static class Command9 implements TestCommand, Command {
 
-            public static class Opt3Activator extends DefaultNotExpectedOptionsActivator {
+            public static class Opt3Activator extends AbstractRejectOptionActivator {
 
                 public Opt3Activator() {
                     super("opt2-depends-on-opt1-conflict-with-opt4");
                 }
             };
 
-            public static class Opt4Activator extends DefaultExpectedAndNotExpectedOptionsActivator {
+            public static class Opt4Activator extends AbstractDependRejectOptionActivator {
 
                 private static final Set<String> EXPECTED = new HashSet<>();
                 private static final Set<String> NOT_EXPECTED = new HashSet<>();
@@ -445,7 +445,7 @@ public class Commands {
                 }
             }
 
-            public static class Opt1Activator extends DefaultNotExpectedOptionsActivator {
+            public static class Opt1Activator extends AbstractRejectOptionActivator {
 
                 public Opt1Activator() {
                     super("opt4-depends-on-opt3-conflict-with-opt2");
@@ -453,7 +453,7 @@ public class Commands {
             };
 
 
-            public static class Opt2Activator extends DefaultExpectedAndNotExpectedOptionsActivator {
+            public static class Opt2Activator extends AbstractDependRejectOptionActivator {
 
                 private static final Set<String> EXPECTED = new HashSet<>();
                 private static final Set<String> NOT_EXPECTED = new HashSet<>();
@@ -489,7 +489,7 @@ public class Commands {
         }
     }
 
-    public static class DomainA extends DefaultOptionActivator implements DomainOptionActivator {
+    public static class DomainA extends AbstractOptionActivator implements DomainOptionActivator {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
@@ -498,7 +498,7 @@ public class Commands {
 
     }
 
-    public static class StandaloneA extends DefaultOptionActivator implements StandaloneOptionActivator {
+    public static class StandaloneA extends AbstractOptionActivator implements StandaloneOptionActivator {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {

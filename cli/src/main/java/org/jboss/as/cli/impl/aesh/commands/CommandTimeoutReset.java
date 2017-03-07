@@ -33,7 +33,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.completer.CompleterInvocation;
 import org.jboss.as.cli.CommandContext.TIMEOUT_RESET_VALUE;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
@@ -44,7 +44,7 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 public class CommandTimeoutReset implements Command<CLICommandInvocation> {
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     @Arguments(completer = TimeoutCompleter.class)

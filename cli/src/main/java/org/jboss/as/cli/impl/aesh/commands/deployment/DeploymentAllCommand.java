@@ -33,7 +33,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -49,7 +49,7 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 public class DeploymentAllCommand extends DeploymentAbstractSubCommand implements DMRCommand {
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     public DeploymentAllCommand(CommandContext ctx, DeploymentPermissions permissions) {

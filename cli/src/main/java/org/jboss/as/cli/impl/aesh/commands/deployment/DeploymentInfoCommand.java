@@ -49,7 +49,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -71,7 +71,7 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
     private static final String STATUS = "STATUS";
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     protected boolean help;
 
     // Argument comes first, aesh behavior.
@@ -80,7 +80,7 @@ public class DeploymentInfoCommand extends DeploymentControlledCommand
 
     // This is for deprecated usage.
     @Deprecated
-    @Option(name = "name", activator = HiddenActivator.class)
+    @Option(name = "name", activator = HideOptionActivator.class)
     private String deprecatedName;
 
     @Option(converter = HeadersConverter.class, completer = HeadersCompleter.class,

@@ -27,11 +27,11 @@ import org.jboss.as.cli.CommandContext;
  *
  * @author jfdenise
  */
-public abstract class DefaultActivator implements CLICommandActivator {
+public abstract class AbstractCommandActivator implements CLICommandActivator {
 
     private CommandContext ctx;
 
-    protected DefaultActivator() {
+    protected AbstractCommandActivator() {
     }
 
     @Override

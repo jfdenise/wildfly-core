@@ -36,7 +36,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.as.controller.client.OperationMessageHandler;
@@ -71,7 +71,7 @@ public class AttachmentDisplayCommand implements Command<CLICommandInvocation>, 
     }
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     @Option(hasValue = true, completer = OperationCompleter.class)

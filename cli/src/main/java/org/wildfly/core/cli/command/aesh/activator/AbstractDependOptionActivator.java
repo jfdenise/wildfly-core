@@ -21,38 +21,48 @@
  */
 package org.wildfly.core.cli.command.aesh.activator;
 
-import org.aesh.command.activator.OptionActivator;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.aesh.command.impl.internal.ProcessedCommand;
+import org.aesh.command.impl.internal.ProcessedOption;
 
 /**
  *
- * Hides an option otherwise delegates to the provided Activator.
+ * Use this activator to make an option available if some options are already
+ * present.
  *
  * @author jdenise@redhat.com
  */
-public class HiddenActivator implements OptionActivator {
+public abstract class AbstractDependOptionActivator implements DependOptionActivator {
 
-    private static class HideActivator implements OptionActivator {
+    private final Set<String> options;
 
-        @Override
-        public boolean isActivated(ProcessedCommand processedCommand) {
-            return false;
-        }
+    protected AbstractDependOptionActivator(String... opts) {
+        options = new HashSet<>(Arrays.asList(opts));
     }
 
-    private final OptionActivator activator;
-
-    public HiddenActivator() {
-        this(true, null);
-    }
-
-    public HiddenActivator(boolean hidden, OptionActivator activator) {
-        this.activator = hidden ? new HideActivator() : activator;
+    protected AbstractDependOptionActivator(Set<String> opts) {
+        options = opts;
     }
 
     @Override
     public boolean isActivated(ProcessedCommand processedCommand) {
-        return activator.isActivated(processedCommand);
+        boolean found = true;
+        for (String opt : options) {
+            if (ARGUMENT_NAME.equals(opt)) {
+                found &= processedCommand.getArgument() != null && processedCommand.getArgument().getValue() != null;
+            } else {
+                ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(opt);
+                found &= processedOption != null && processedOption.getValue() != null;
+            }
+        }
+        return found;
     }
 
+    @Override
+    public Set<String> getDependsOn() {
+        return Collections.unmodifiableSet(options);
+    }
 }

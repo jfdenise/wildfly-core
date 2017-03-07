@@ -19,34 +19,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands;
+package org.wildfly.core.cli.command.aesh.activator;
 
-import org.aesh.command.CommandDefinition;
-import org.aesh.command.option.Option;
-import org.aesh.command.Command;
-import org.aesh.command.CommandException;
-import org.aesh.command.CommandResult;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
-import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
+import org.aesh.command.activator.OptionActivator;
+import org.aesh.command.impl.internal.ProcessedCommand;
 
 /**
  *
+ * Hides an option otherwise delegates to the provided Activator.
+ *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "get", description = "")
-public class CommandTimeoutGet implements Command<CLICommandInvocation> {
+public class HideOptionActivator implements OptionActivator {
 
-    @Deprecated
-    @Option(hasValue = false, activator = HideOptionActivator.class)
-    private boolean help;
+    private static class HideActivator implements OptionActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            return false;
+        }
+    }
+
+    private final OptionActivator activator;
+
+    public HideOptionActivator() {
+        this(true, null);
+    }
+
+    public HideOptionActivator(boolean hidden, OptionActivator activator) {
+        this.activator = hidden ? new HideActivator() : activator;
+    }
 
     @Override
-    public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
-        if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("command-timeout get"));
-            return CommandResult.SUCCESS;
-        }
-        commandInvocation.println("" + commandInvocation.getCommandContext().getCommandTimeout());
-        return CommandResult.SUCCESS;
+    public boolean isActivated(ProcessedCommand processedCommand) {
+        return activator.isActivated(processedCommand);
     }
+
 }

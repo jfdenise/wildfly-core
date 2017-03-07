@@ -28,7 +28,7 @@ import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.patching.tool.PatchOperationBuilder;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -46,7 +46,7 @@ public class PatchRollback extends PatchOverrideCommand {
     @Option(name = "patch-stream", hasValue = true, required = false)
     private String patchStream;
 
-    @Option(name = "patch-id", required = false, activator = HiddenActivator.class)
+    @Option(name = "patch-id", required = false, activator = HideOptionActivator.class)
     private String patchId;
 
     @Arguments(completer = PatchIdCompleter.class)

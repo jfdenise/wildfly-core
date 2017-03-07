@@ -42,7 +42,7 @@ import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -82,7 +82,7 @@ public class DeploymentRedeployCommand extends DeploymentAbstractSubCommand impl
     }
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     // Argument comes first, aesh behavior.

@@ -48,7 +48,7 @@ import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -59,61 +59,61 @@ import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
 public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean force;
 
     @Deprecated
-    @Option(hasValue = false, shortName = 'l', activator = HiddenActivator.class)
+    @Option(hasValue = false, shortName = 'l', activator = HideOptionActivator.class)
     private boolean l;
 
     @Deprecated
     @Arguments(valueSeparator = ',',
-            activator = HiddenActivator.class, converter = FileConverter.class)
+            activator = HideOptionActivator.class, converter = FileConverter.class)
     private List<File> path;
 
     @Deprecated
-    @Option(activator = HiddenActivator.class, converter
+    @Option(activator = HideOptionActivator.class, converter
             = DeploymentUrlCommand.UrlConverter.class)
     private URL url;
 
     @Deprecated
-    @Option(activator = HiddenActivator.class)
+    @Option(activator = HideOptionActivator.class)
     private String name;
 
     @Deprecated
     @Option(hasValue = true, name = "runtime-name", required = false,
-            activator = HiddenActivator.class)
+            activator = HideOptionActivator.class)
     private String rtName;
 
     @Deprecated
-    @Option(name = "server-groups", activator = HiddenActivator.class,
+    @Option(name = "server-groups", activator = HideOptionActivator.class,
             required = false)
     protected String serverGroups;
 
     @Deprecated
-    @Option(name = "all-server-groups", activator = HiddenActivator.class,
+    @Option(name = "all-server-groups", activator = HideOptionActivator.class,
             hasValue = false, required = false)
     protected boolean allServerGroups;
 
     @Deprecated
     @Option(converter = HeadersConverter.class,
-            required = false, activator = HiddenActivator.class)
+            required = false, activator = HideOptionActivator.class)
     protected ModelNode headers;
 
     @Deprecated
-    @Option(hasValue = false, required = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, required = false, activator = HideOptionActivator.class)
     protected boolean disabled;
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class, required = false)
+    @Option(hasValue = false, activator = HideOptionActivator.class, required = false)
     private boolean unmanaged;
 
     @Deprecated
-    @Option(hasValue = true, required = false, activator = HiddenActivator.class)
+    @Option(hasValue = true, required = false, activator = HideOptionActivator.class)
     private String script;
 
     @Deprecated

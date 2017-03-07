@@ -25,9 +25,9 @@ import java.util.HashSet;
 import java.util.Set;
 import org.aesh.command.activator.OptionActivator;
 import org.aesh.command.impl.internal.ProcessedCommand;
-import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedAndNotExpectedOptionsActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractDependRejectOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
-import org.wildfly.core.cli.command.aesh.activator.ExpectedOptionsActivator;
+import org.wildfly.core.cli.command.aesh.activator.DependOptionActivator;
 
 /**
  *
@@ -109,7 +109,7 @@ public interface DeploymentActivators {
                     isSatisfied(cmd.getCommandContext());
         }
     }
-    public static class ServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
+    public static class ServerGroupsActivator extends AbstractDependRejectOptionActivator
             implements DomainOptionActivator {
 
         private static final Set<String> EXPECTED = new HashSet<>();
@@ -117,7 +117,7 @@ public interface DeploymentActivators {
 
         static {
             // Argument.
-            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            EXPECTED.add(DependOptionActivator.ARGUMENT_NAME);
             NOT_EXPECTED.add("all-server-groups");
         }
         public ServerGroupsActivator() {
@@ -138,7 +138,7 @@ public interface DeploymentActivators {
         }
     }
 
-    public static class AllServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
+    public static class AllServerGroupsActivator extends AbstractDependRejectOptionActivator
             implements DomainOptionActivator {
 
         private static final Set<String> EXPECTED = new HashSet<>();
@@ -146,7 +146,7 @@ public interface DeploymentActivators {
 
         static {
             // Argument.
-            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            EXPECTED.add(DependOptionActivator.ARGUMENT_NAME);
             NOT_EXPECTED.add("server-groups");
         }
 
@@ -169,7 +169,7 @@ public interface DeploymentActivators {
         }
     }
 
-    public static class AllRelevantServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
+    public static class AllRelevantServerGroupsActivator extends AbstractDependRejectOptionActivator
             implements DomainOptionActivator {
 
         public AllRelevantServerGroupsActivator() {
@@ -181,7 +181,7 @@ public interface DeploymentActivators {
 
         static {
             // Argument.
-            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            EXPECTED.add(DependOptionActivator.ARGUMENT_NAME);
             NOT_EXPECTED.add("server-groups");
         }
 
@@ -200,7 +200,7 @@ public interface DeploymentActivators {
         }
     }
 
-    public static class UndeployServerGroupsActivator extends DefaultExpectedAndNotExpectedOptionsActivator
+    public static class UndeployServerGroupsActivator extends AbstractDependRejectOptionActivator
             implements DomainOptionActivator {
 
         public UndeployServerGroupsActivator() {
@@ -212,7 +212,7 @@ public interface DeploymentActivators {
 
         static {
             // Argument.
-            EXPECTED.add(ExpectedOptionsActivator.ARGUMENT_NAME);
+            EXPECTED.add(DependOptionActivator.ARGUMENT_NAME);
             NOT_EXPECTED.add("all-relevant-server-groups");
         }
 

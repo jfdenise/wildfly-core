@@ -31,25 +31,25 @@ import org.aesh.command.impl.internal.ProcessedCommand;
  *
  * @author jdenise@redhat.com
  */
-public abstract class DefaultExpectedAndNotExpectedOptionsActivator implements ExpectedOptionsActivator, NotExpectedOptionsActivator {
-    private static class ExpectedOptionsActivatorImpl extends DefaultExpectedOptionsActivator {
+public abstract class AbstractDependRejectOptionActivator implements DependOptionActivator, RejectOptionActivator {
+    private static class ExpectedOptionsActivatorImpl extends AbstractDependOptionActivator {
 
         ExpectedOptionsActivatorImpl(Set<String> opts) {
             super(opts);
         }
     }
 
-    private static class NotExpectedOptionsActivatorImpl extends DefaultNotExpectedOptionsActivator {
+    private static class NotExpectedOptionsActivatorImpl extends AbstractRejectOptionActivator {
 
         NotExpectedOptionsActivatorImpl(Set<String> opts) {
             super(opts);
         }
 
     }
-    private final ExpectedOptionsActivator expected;
-    private final NotExpectedOptionsActivator notExpected;
+    private final DependOptionActivator expected;
+    private final RejectOptionActivator notExpected;
 
-    protected DefaultExpectedAndNotExpectedOptionsActivator(Set<String> expectedOptions, Set<String> notExpectedOptions) {
+    protected AbstractDependRejectOptionActivator(Set<String> expectedOptions, Set<String> notExpectedOptions) {
         this.expected = new ExpectedOptionsActivatorImpl(expectedOptions);
         this.notExpected = new NotExpectedOptionsActivatorImpl(notExpectedOptions);
     }
@@ -63,12 +63,12 @@ public abstract class DefaultExpectedAndNotExpectedOptionsActivator implements E
     }
 
     @Override
-    public Set<String> getNotExpected() {
-        return notExpected.getNotExpected();
+    public Set<String> getRejected() {
+        return notExpected.getRejected();
     }
 
     @Override
-    public Set<String> getExpected() {
-        return expected.getExpected();
+    public Set<String> getDependsOn() {
+        return expected.getDependsOn();
     }
 }

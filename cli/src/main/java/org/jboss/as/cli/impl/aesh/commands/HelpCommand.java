@@ -53,7 +53,7 @@ import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.DefaultNotExpectedOptionsActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractRejectOptionActivator;
 
 /**
  *
@@ -158,7 +158,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
 
     }
 
-    public static class ArgActivator extends DefaultNotExpectedOptionsActivator {
+    public static class ArgActivator extends AbstractRejectOptionActivator {
 
         public ArgActivator() {
             super("commands");

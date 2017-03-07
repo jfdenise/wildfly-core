@@ -32,7 +32,7 @@ import org.jboss.as.cli.CommandContext;
  *
  * @author jdenise@redhat.com
  */
-public abstract class DefaultOptionCompleter implements OptionCompleter<CLICompleterInvocation> {
+public abstract class AbstractOptionCompleter implements OptionCompleter<CLICompleterInvocation> {
 
     @Override
     public void complete(CLICompleterInvocation completerInvocation) {

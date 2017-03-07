@@ -28,10 +28,10 @@ import org.aesh.command.activator.OptionActivator;
  *
  * @author jdenise@redhat.com
  */
-public interface ExpectedOptionsActivator extends OptionActivator {
+public interface DependOptionActivator extends OptionActivator {
 
     // XXX jfdenise.
     // Aesh names the arguments that way, this should be part of the spec.
     String ARGUMENT_NAME = "";
-    Set<String> getExpected();
+    Set<String> getDependsOn();
 }

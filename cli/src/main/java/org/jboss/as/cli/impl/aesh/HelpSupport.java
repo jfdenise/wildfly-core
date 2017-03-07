@@ -21,7 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,10 +66,10 @@ import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.logging.Logger;
 import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
-import org.wildfly.core.cli.command.aesh.activator.ExpectedOptionsActivator;
-import org.wildfly.core.cli.command.aesh.activator.NotExpectedOptionsActivator;
 import org.wildfly.core.cli.command.aesh.activator.StandaloneOptionActivator;
 import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.core.cli.command.aesh.activator.DependOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.RejectOptionActivator;
 
 /**
  *
@@ -619,11 +619,11 @@ public class HelpSupport {
     }
 
     private static void retrieveHidden(Set<String> deprecated, ProcessedCommand<Command> cmd) {
-        if (cmd.getArgument() != null && cmd.getArgument().activator() instanceof HiddenActivator) {
+        if (cmd.getArgument() != null && cmd.getArgument().activator() instanceof HideOptionActivator) {
             deprecated.add("");
         }
         for (ProcessedOption po : cmd.getOptions()) {
-            if (po.activator() instanceof HiddenActivator) {
+            if (po.activator() instanceof HideOptionActivator) {
                 deprecated.add(po.name());
             }
         }
@@ -1337,8 +1337,8 @@ public class HelpSupport {
         if (activator == null) {
             return notExpected;
         }
-        if (activator instanceof NotExpectedOptionsActivator) {
-            for (String s : ((NotExpectedOptionsActivator) activator).getNotExpected()) {
+        if (activator instanceof RejectOptionActivator) {
+            for (String s : ((RejectOptionActivator) activator).getRejected()) {
                 if (s == null || s.equals("")) { // argument
                     if (arg != null) {
                         if (isDomainCompliant(arg, domain)) {
@@ -1400,8 +1400,8 @@ public class HelpSupport {
             // XXX OK, no field.
         }
 
-        if (activator instanceof ExpectedOptionsActivator) {
-            for (String s : ((ExpectedOptionsActivator) activator).getExpected()) {
+        if (activator instanceof DependOptionActivator) {
+            for (String s : ((DependOptionActivator) activator).getDependsOn()) {
                 if (s == null || s.equals("")) { // argument
                     if (arg != null) {
                         if (isDomainCompliant(arg, domain)) {

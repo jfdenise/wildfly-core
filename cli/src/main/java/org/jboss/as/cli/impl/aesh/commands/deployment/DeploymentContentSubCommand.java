@@ -37,7 +37,7 @@ import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentActivators.Runti
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -49,7 +49,7 @@ import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
 public abstract class DeploymentContentSubCommand extends DeploymentAbstractSubCommand {
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     @Option(hasValue = false, required = false, activator = ForceActivator.class,

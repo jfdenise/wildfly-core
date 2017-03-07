@@ -31,7 +31,7 @@ import org.aesh.command.CommandException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.ValueResolverConverter;
 
 @CommandDefinition(name = "connect", description = "")
@@ -41,7 +41,7 @@ public class ConnectCommand implements Command<CLICommandInvocation> {
     private List<String> controller;
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     @Override

@@ -27,10 +27,10 @@ import org.aesh.command.option.Option;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
-import org.wildfly.core.cli.command.aesh.activator.HiddenActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
-import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedOptionsActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractDependOptionActivator;
 
 /**
  *
@@ -39,14 +39,14 @@ import org.wildfly.core.cli.command.aesh.activator.DefaultExpectedOptionsActivat
 @CommandDefinition(name = "save", description = "")
 public class AttachmentSaveCommand extends AttachmentDisplayCommand {
 
-    public static final class FileActivator extends DefaultExpectedOptionsActivator {
+    public static final class FileActivator extends AbstractDependOptionActivator {
 
         public FileActivator() {
             super("operation");
         }
     }
 
-    public static final class OverwriteActivator extends DefaultExpectedOptionsActivator {
+    public static final class OverwriteActivator extends AbstractDependOptionActivator {
 
         public OverwriteActivator() {
             super("file");
@@ -54,7 +54,7 @@ public class AttachmentSaveCommand extends AttachmentDisplayCommand {
     }
 
     @Deprecated
-    @Option(hasValue = false, activator = HiddenActivator.class)
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     @Option(hasValue = true, completer = FileCompleter.class, activator = FileActivator.class)

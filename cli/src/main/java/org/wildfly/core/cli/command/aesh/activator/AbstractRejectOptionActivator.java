@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.aesh.command.impl.internal.ProcessedCommand;
 import org.aesh.command.impl.internal.ProcessedOption;
+import static org.wildfly.core.cli.command.aesh.activator.DependOptionActivator.ARGUMENT_NAME;
 
 /**
  *
@@ -35,34 +36,37 @@ import org.aesh.command.impl.internal.ProcessedOption;
  *
  * @author jdenise@redhat.com
  */
-public abstract class DefaultExpectedOptionsActivator implements ExpectedOptionsActivator {
+public abstract class AbstractRejectOptionActivator implements RejectOptionActivator {
 
     private final Set<String> options;
 
-    protected DefaultExpectedOptionsActivator(String... opts) {
+    protected AbstractRejectOptionActivator(String... opts) {
         options = new HashSet<>(Arrays.asList(opts));
     }
 
-    protected DefaultExpectedOptionsActivator(Set<String> opts) {
+    protected AbstractRejectOptionActivator(Set<String> opts) {
         options = opts;
     }
 
     @Override
     public boolean isActivated(ProcessedCommand processedCommand) {
-        boolean found = true;
         for (String opt : options) {
             if (ARGUMENT_NAME.equals(opt)) {
-                found &= processedCommand.getArgument() != null && processedCommand.getArgument().getValue() != null;
+                if (processedCommand.getArgument() != null && processedCommand.getArgument().getValue() != null) {
+                    return false;
+                }
             } else {
                 ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(opt);
-                found &= processedOption != null && processedOption.getValue() != null;
+                if (processedOption != null && processedOption.getValue() != null) {
+                    return false;
+                }
             }
         }
-        return found;
+        return true;
     }
 
     @Override
-    public Set<String> getExpected() {
+    public Set<String> getRejected() {
         return Collections.unmodifiableSet(options);
     }
 }
