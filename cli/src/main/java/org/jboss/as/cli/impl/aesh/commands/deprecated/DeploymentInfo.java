@@ -21,13 +21,24 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deprecated;
 
+import java.util.ArrayList;
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
+import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.impl.aesh.commands.deployment.AbstractDeployCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
 import org.jboss.as.cli.impl.aesh.commands.deployment.InfoCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Permissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
+import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
+import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
@@ -36,10 +47,28 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  */
 @Deprecated
 @CommandDefinition(name = "deployment-info", description = "", activator = DeploymentInfoActivator.class)
-public class DeploymentInfo extends InfoCommand {
+public class DeploymentInfo extends CommandWithPermissions
+        implements Command<CLICommandInvocation>, DMRCommand {
 
+    @Deprecated
+    @Option(hasValue = false, activator = HideOptionActivator.class)
+    protected boolean help;
+
+    @Deprecated
+    @Option(name = "name", activator = HideOptionActivator.class)
+    private String name;
+
+    @Deprecated
+    @Option(converter = HeadersConverter.class,
+            required = false)
+    protected ModelNode headers;
+
+    @Option(name = "server-group", activator = Activators.ServerGroupsActivator.class,
+            completer = AbstractDeployCommand.ServerGroupsCompleter.class,
+            required = false)
+    protected String serverGroup;
     public DeploymentInfo(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.infoAccess(permissions), permissions);
     }
 
     @Override
@@ -47,12 +76,31 @@ public class DeploymentInfo extends InfoCommand {
             throws CommandException, InterruptedException {
         if (help) {
             try {
-                Util.printLegacyHelp(commandInvocation.getCommandContext(), "batch clear");
+                Util.printLegacyHelp(commandInvocation.getCommandContext(), "deployment-info");
             } catch (CommandLineException ex) {
                 throw new CommandException(ex);
             }
             return CommandResult.SUCCESS;
         }
-        return super.execute(commandInvocation);
+        InfoCommand ic = new InfoCommand(getCommandContext(), getPermissions());
+        ic.headers = headers;
+        if (name != null) {
+            ic.name = new ArrayList<>();
+            ic.name.add(name);
+        }
+        ic.serverGroup = serverGroup;
+        return ic.execute(commandInvocation);
+    }
+
+    @Override
+    public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
+        InfoCommand ic = new InfoCommand(getCommandContext(), getPermissions());
+        ic.headers = headers;
+        if (name != null) {
+            ic.name = new ArrayList<>();
+            ic.name.add(name);
+        }
+        ic.serverGroup = serverGroup;
+        return ic.buildRequest(context);
     }
 }

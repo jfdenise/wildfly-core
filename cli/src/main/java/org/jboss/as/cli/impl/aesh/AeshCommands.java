@@ -78,7 +78,7 @@ public class AeshCommands {
 
     private final CLICommandInvocationProvider invocationProvider;
     private final CommandRuntime<CLICommandInvocation> processor;
-    private final CLICommandRegistry registry = new CLICommandRegistry();
+    private final CLICommandRegistry registry;
     private final CLICompletionHandler completionHandler;
 
     public AeshCommands(CommandContext ctx) throws CliInitializationException {
@@ -86,6 +86,7 @@ public class AeshCommands {
     }
 
     public AeshCommands(CommandContext ctx, Completion<CompleteOperation> delegate, ReadlineConsole console) throws CliInitializationException {
+        registry = new CLICommandRegistry(ctx);
         Shell shell = null;
         if (console != null) {
             shell = new ReadlineShell(console);

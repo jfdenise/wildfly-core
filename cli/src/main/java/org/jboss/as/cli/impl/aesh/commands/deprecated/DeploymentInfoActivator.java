@@ -28,7 +28,7 @@ import org.jboss.as.cli.impl.aesh.commands.activator.ConnectedActivator;
  * @author jdenise@redhat.com
  */
 @Deprecated
-public class DeploymentInfoActivator extends CompatActivator {
+public class DeploymentInfoActivator extends CompatCommandActivator {
 
     public DeploymentInfoActivator() {
         super(new ConnectedActivator());

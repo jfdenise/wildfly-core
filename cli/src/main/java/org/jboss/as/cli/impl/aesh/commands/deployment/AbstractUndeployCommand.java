@@ -21,6 +21,9 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,10 +41,9 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.impl.CommaSeparatedCompleter;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.cli.impl.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.as.cli.operation.OperationFormatException;
@@ -51,14 +53,14 @@ import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "abstract-undeploy-deployment", description = "", activator = ControlledCommandActivator.class)
-public abstract class AbstractUndeployCommand extends AbstractControlledCommand
+public abstract class AbstractUndeployCommand extends CommandWithPermissions
         implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     public static class ServerGroupsCompleter implements
@@ -104,7 +106,7 @@ public abstract class AbstractUndeployCommand extends AbstractControlledCommand
 
     // XXX jfdenise, is public for compat reason. Make it private when removing compat code.
     public AbstractUndeployCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.undeployAccess(permissions), permissions);
     }
 
     protected abstract boolean keepContent();
@@ -247,14 +249,5 @@ public abstract class AbstractUndeployCommand extends AbstractControlledCommand
             opHeaders.set(headers);
         }
         return composite;
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getMainRemovePermission())
-                .requirement(getPermissions().getUndeployPermission())
-                .build();
     }
 }

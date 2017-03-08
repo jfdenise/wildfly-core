@@ -21,24 +21,26 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
 import org.aesh.command.completer.OptionCompleter;
-import org.aesh.command.Command;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.accesscontrol.AccessRequirement;
 import org.jboss.as.cli.impl.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.jboss.as.cli.impl.CommaSeparatedCompleter;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.AllServerGroupsActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.ServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.AllServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.ServerGroupsActivator;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
-import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -46,16 +48,15 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "abstract-sub-deployment", description = "")
-public abstract class AbstractSubCommand extends AbstractControlledCommand
-        implements Command<CLICommandInvocation>, BatchCompliantCommand {
+@CommandDefinition(name = "deployment-deploy", description = "")
+public abstract class AbstractDeployCommand extends CommandWithPermissions implements BatchCompliantCommand {
 
     public static class ServerGroupsCompleter implements
             OptionCompleter<CLICompleterInvocation> {
 
         @Override
         public void complete(CLICompleterInvocation completerInvocation) {
-            AbstractControlledCommand rc = (AbstractControlledCommand) completerInvocation.getCommand();
+            CommandWithPermissions rc = (CommandWithPermissions) completerInvocation.getCommand();
 
             CommaSeparatedCompleter comp = new CommaSeparatedCompleter() {
                 @Override
@@ -84,8 +85,9 @@ public abstract class AbstractSubCommand extends AbstractControlledCommand
             required = false)
     public ModelNode headers;
 
-    AbstractSubCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+    AbstractDeployCommand(CommandContext ctx, Function<CommandContext, AccessRequirement> acBuilder,
+            Permissions permissions) {
+        super(ctx, acBuilder, permissions);
     }
 
     @Override

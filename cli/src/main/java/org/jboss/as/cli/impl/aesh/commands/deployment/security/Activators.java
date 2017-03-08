@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands.deployment;
+package org.jboss.as.cli.impl.aesh.commands.deployment.security;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,7 +39,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) pc.getCommand();
             return cmd.getPermissions().getAddOrReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -49,7 +49,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) pc.getCommand();
             return cmd.getPermissions().getDeployPermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -60,7 +60,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) pc.getCommand();
             return cmd.getPermissions().getRemoveOrUndeployPermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -74,7 +74,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) pc.getCommand();
             return cmd.getPermissions().getAddOrReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -84,7 +84,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) pc.getCommand();
             return cmd.getPermissions().getMainAddPermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -94,7 +94,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) pc.getCommand();
             return cmd.getPermissions().getAddOrReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -104,7 +104,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand pc) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) pc.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) pc.getCommand();
             return cmd.getPermissions().getFullReplacePermission().
                     isSatisfied(cmd.getCommandContext());
         }
@@ -126,7 +126,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) processedCommand.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) processedCommand.getCommand();
             if (!cmd.getPermissions().getDeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;
@@ -156,8 +156,8 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            AbstractControlledCommand cmd
-                    = (AbstractControlledCommand) processedCommand.getCommand();
+            CommandWithPermissions cmd
+                    = (CommandWithPermissions) processedCommand.getCommand();
             if (!cmd.getPermissions().getDeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;
@@ -187,8 +187,8 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            AbstractControlledCommand cmd
-                    = (AbstractControlledCommand) processedCommand.getCommand();
+            CommandWithPermissions cmd
+                    = (CommandWithPermissions) processedCommand.getCommand();
             if (!cmd.getPermissions().getUndeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;
@@ -218,7 +218,7 @@ public interface Activators {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            AbstractControlledCommand cmd = (AbstractControlledCommand) processedCommand.getCommand();
+            CommandWithPermissions cmd = (CommandWithPermissions) processedCommand.getCommand();
             if (!cmd.getPermissions().getUndeployPermission().
                     isSatisfied(cmd.getCommandContext())) {
                 return false;

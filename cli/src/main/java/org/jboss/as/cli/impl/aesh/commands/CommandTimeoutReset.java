@@ -33,7 +33,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.completer.CompleterInvocation;
 import org.jboss.as.cli.CommandContext.TIMEOUT_RESET_VALUE;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**

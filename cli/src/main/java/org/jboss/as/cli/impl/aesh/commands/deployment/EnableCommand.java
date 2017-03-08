@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,15 +35,14 @@ import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.NameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.NameActivator;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -51,7 +51,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "enable", description = "", activator = ControlledCommandActivator.class)
-public class EnableCommand extends AbstractSubCommand implements DMRCommand {
+public class EnableCommand extends AbstractDeployCommand implements DMRCommand {
 
     public static class NameCompleter
             implements OptionCompleter<CLICompleterInvocation> {
@@ -91,7 +91,7 @@ public class EnableCommand extends AbstractSubCommand implements DMRCommand {
     public List<String> name;
 
     public EnableCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.enableAccess(permissions), permissions);
     }
 
     @Override
@@ -170,13 +170,5 @@ public class EnableCommand extends AbstractSubCommand implements DMRCommand {
             opHeaders.set(headers);
         }
         return deployRequest;
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getDeployPermission())
-                .build();
     }
 }

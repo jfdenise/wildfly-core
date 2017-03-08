@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.util.List;
 import org.aesh.command.CommandDefinition;
@@ -30,14 +31,13 @@ import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.ReplaceActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.RuntimeNameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.ReplaceActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.RuntimeNameActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -46,7 +46,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deployment-deploy-content", description = "")
-public abstract class AbstractDeployContentSubCommand extends AbstractSubCommand {
+public abstract class AbstractDeployContentCommand extends AbstractDeployCommand {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
@@ -63,8 +63,9 @@ public abstract class AbstractDeployContentSubCommand extends AbstractSubCommand
             = RuntimeNameActivator.class)
     public String runtimeName;
 
-    AbstractDeployContentSubCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+    AbstractDeployContentCommand(CommandContext ctx,
+            Permissions permissions) {
+        super(ctx, AccessRequirements.deployContentAccess(permissions), permissions);
     }
 
     protected abstract void checkArgument() throws CommandException;
@@ -244,15 +245,5 @@ public abstract class AbstractDeployContentSubCommand extends AbstractSubCommand
         }
 
         return request;
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getFullReplacePermission())
-                .requirement(getPermissions().getAddOrReplacePermission())
-                .requirement(getPermissions().getDeployPermission())
-                .build();
     }
 }

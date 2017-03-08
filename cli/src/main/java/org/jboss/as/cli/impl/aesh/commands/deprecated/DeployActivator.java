@@ -21,14 +21,14 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deprecated;
 
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @Deprecated
-public class DeployActivator extends CompatActivator {
+public class DeployActivator extends CompatCommandActivator {
 
     public DeployActivator() {
         super(new ControlledCommandActivator());

@@ -19,9 +19,10 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands;
+package org.jboss.as.cli.impl.aesh.commands.security;
 
 import java.util.Iterator;
+import java.util.function.Function;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
@@ -36,23 +37,23 @@ import org.jboss.as.cli.parsing.ParserUtil;
  *
  * @author jdenise@redhat.com
  */
-public abstract class ControlledCommand {
+public abstract class AbstractControlledCommand implements ControlledCommand {
 
     private AccessRequirement accessRequirement;
     private OperationRequestAddress requiredAddress;
     private boolean dependsOnProfile;
     private String requiredType;
     private final CommandContext ctx;
+    private final Function<CommandContext, AccessRequirement> acBuilder;
 
-    protected ControlledCommand(CommandContext ctx) {
+    protected AbstractControlledCommand(CommandContext ctx, Function<CommandContext, AccessRequirement> acBuilder) {
         this.ctx = ctx;
+        this.acBuilder = acBuilder;
     }
 
     public CommandContext getCommandContext() {
         return ctx;
     }
-
-    protected abstract AccessRequirement buildAccessRequirement(CommandContext ctx);
 
     protected final void addRequiredPath(String requiredPath) {
         if (requiredPath == null) {
@@ -95,21 +96,25 @@ public abstract class ControlledCommand {
         }
     }
 
+    @Override
     public OperationRequestAddress getRequiredAddress() {
         return requiredAddress;
     }
 
+    @Override
     public boolean isDependsOnProfile() {
         return dependsOnProfile;
     }
 
+    @Override
     public AccessRequirement getAccessRequirement() {
         if (accessRequirement == null) {
-            accessRequirement = buildAccessRequirement(ctx);
+            accessRequirement = acBuilder.apply(ctx);
         }
         return accessRequirement;
     }
 
+    @Override
     public String getRequiredType() {
         return requiredType;
     }

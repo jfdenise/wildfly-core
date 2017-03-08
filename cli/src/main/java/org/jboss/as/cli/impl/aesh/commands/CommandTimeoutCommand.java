@@ -30,7 +30,7 @@ import org.aesh.command.option.Option;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**

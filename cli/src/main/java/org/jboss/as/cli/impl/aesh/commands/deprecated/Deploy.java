@@ -37,18 +37,19 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.aesh.commands.deployment.EnableAllCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeployArchiveCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeployFileCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.ListCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.EnableCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeployUrlCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -56,7 +57,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  */
 @Deprecated
 @CommandDefinition(name = "deploy", description = "", activator = DeployActivator.class)
-public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
+public class Deploy extends CommandWithPermissions implements BatchCompliantCommand {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
@@ -119,8 +120,8 @@ public class Deploy extends DeploymentCommand implements BatchCompliantCommand {
     @Deprecated
     private static final String ALL = "*";
 
-    public Deploy(CommandContext ctx) {
-        super(ctx);
+    public Deploy(CommandContext ctx, Permissions permissions) {
+        super(ctx, AccessRequirements.deploymentAccess(permissions), permissions);
     }
 
     @Deprecated

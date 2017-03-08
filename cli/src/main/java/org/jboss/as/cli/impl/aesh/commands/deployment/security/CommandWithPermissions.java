@@ -19,23 +19,26 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands.deployment;
+package org.jboss.as.cli.impl.aesh.commands.deployment.security;
 
+import java.util.function.Function;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.impl.aesh.commands.ControlledCommand;
+import org.jboss.as.cli.accesscontrol.AccessRequirement;
+import org.jboss.as.cli.impl.aesh.commands.security.AbstractControlledCommand;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public abstract class AbstractControlledCommand extends ControlledCommand {
+public abstract class CommandWithPermissions extends AbstractControlledCommand {
 
     private final Permissions permissions;
 
-    public AbstractControlledCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx);
+    public CommandWithPermissions(CommandContext ctx, Function<CommandContext, AccessRequirement> ac,
+            Permissions permissions) {
+        super(ctx, ac);
         this.permissions = permissions;
         DefaultOperationRequestAddress requiredAddress
                 = new DefaultOperationRequestAddress();

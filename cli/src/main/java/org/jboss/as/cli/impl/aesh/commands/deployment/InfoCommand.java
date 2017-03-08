@@ -21,12 +21,13 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
@@ -35,13 +36,11 @@ import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.ServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.ServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
 import org.jboss.as.cli.impl.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
-import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.util.SimpleTable;
 import org.jboss.as.cli.util.StrictSizeTable;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -49,15 +48,14 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "info", description = "", activator = ControlledCommandActivator.class)
-public class InfoCommand extends AbstractControlledCommand
-        implements Command<CLICommandInvocation>, DMRCommand {
+public class InfoCommand extends CommandWithPermissions implements DMRCommand {
 
     private static final String ADDED = "added";
     private static final String ENABLED = "ENABLED";
@@ -76,36 +74,26 @@ public class InfoCommand extends AbstractControlledCommand
 
     // Argument comes first, aesh behavior.
     @Arguments(valueSeparator = ',', completer = EnableCommand.NameCompleter.class)
-    private List<String> name;
-
-    // This is for deprecated usage.
-    @Deprecated
-    @Option(name = "name", activator = HideOptionActivator.class)
-    private String deprecatedName;
+    public List<String> name;
 
     @Option(converter = HeadersConverter.class, completer = HeadersCompleter.class,
             required = false)
-    protected ModelNode headers;
+    public ModelNode headers;
 
     @Option(name = "server-group", activator = ServerGroupsActivator.class,
-            completer = AbstractSubCommand.ServerGroupsCompleter.class,
+            completer = AbstractDeployCommand.ServerGroupsCompleter.class,
             required = false)
-    protected String serverGroup;
+    public String serverGroup;
 
     private List<String> addedServerGroups;
     private List<String> otherServerGroups;
 
     public InfoCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.infoAccess(permissions), permissions);
     }
 
     private String getName() {
         String deploymentName = (name == null || name.isEmpty()) ? null : name.get(0);
-        if (deploymentName == null) {
-            if (deprecatedName != null) {
-                deploymentName = deprecatedName;
-            }
-        }
         return deploymentName;
     }
 
@@ -133,36 +121,8 @@ public class InfoCommand extends AbstractControlledCommand
     }
 
     @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .standalone()
-                .any()
-                .operation(Util.READ_CHILDREN_RESOURCES)
-                .operation(Util.DEPLOYMENT + "=?", Util.READ_RESOURCE)
-                .parent()
-                .parent()
-                .domain()
-                .any()
-                .all()
-                .operation(Util.VALIDATE_ADDRESS)
-                .operation(Util.DEPLOYMENT + "=?", Util.READ_RESOURCE)
-                .serverGroupOperation(Util.DEPLOYMENT + "=?", Util.READ_RESOURCE)
-                .parent()
-                .all()
-                .operation(Util.READ_CHILDREN_RESOURCES)
-                .requirement(getPermissions().getSgChildrenResourcesPermission())
-                .parent()
-                .parent()
-                .parent()
-                .build();
-    }
-
-    @Override
     public ModelNode buildRequest(CommandContext ctx)
             throws CommandFormatException {
-        ParsedCommandLine parsedCmd = ctx.getParsedCommandLine();
         String deploymentName = getName();
         if (ctx.isDomainMode() && deploymentName == null
                 && (serverGroup == null || serverGroup.isEmpty())) {

@@ -46,8 +46,9 @@ import org.aesh.command.registry.MutableCommandRegistry;
 import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
+import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.CompatActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.CompatCommandActivator;
 import org.jboss.logging.Logger;
 
 /**
@@ -166,11 +167,21 @@ public class CLICommandRegistry implements CommandRegistry {
     private final MutableCommandRegistry reg = new MutableCommandRegistryImpl();
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
     private final List<String> exposedCommands = new ArrayList<>();
+    private final CommandContext ctx;
+
+    public CLICommandRegistry(CommandContext ctx) {
+        this.ctx = ctx;
+    }
 
     private CommandContainer addCommandContainer(CommandContainer container) throws CommandLineException {
         if (container.getParser().getProcessedCommand().getActivator() != null) {
-            if (!(container.getParser().getProcessedCommand().getActivator() instanceof CompatActivator)) {
-                exposedCommands.add(container.getParser().getProcessedCommand().name());
+            if (container.getParser().getProcessedCommand().getActivator() instanceof CompatCommandActivator) {
+                CompatCommandActivator activator
+                        = (CompatCommandActivator) container.getParser().getProcessedCommand().getActivator();
+                activator.setCommandContext(ctx);
+                if (activator.isActivated(container.getParser().getProcessedCommand())) {
+                    exposedCommands.add(container.getParser().getProcessedCommand().name());
+                }
             }
         }
         CLICommandContainer cliContainer;
@@ -190,7 +201,7 @@ public class CLICommandRegistry implements CommandRegistry {
     }
 
     CLICommandContainer wrapContainer(CommandContainer commandContainer) throws OptionParserException {
-        return new CLICommandContainer(commandContainer);
+        return new CLICommandContainer(commandContainer, ctx);
     }
 
     public CommandContainer addCommand(Command command) throws CommandLineException {

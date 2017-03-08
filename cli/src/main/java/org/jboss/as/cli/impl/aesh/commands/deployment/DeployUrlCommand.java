@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,9 +34,9 @@ import org.aesh.command.option.Option;
 import org.aesh.command.validator.OptionValidatorException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.NameActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.UrlActivator;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.NameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.UrlActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
@@ -48,7 +49,7 @@ import org.wildfly.core.cli.command.aesh.CLIConverterInvocation;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-url", description = "", activator = ControlledCommandActivator.class)
-public class DeployUrlCommand extends AbstractDeployContentSubCommand implements DMRCommand {
+public class DeployUrlCommand extends AbstractDeployContentCommand implements DMRCommand {
 
     public static class UrlConverter implements Converter<URL, CLIConverterInvocation> {
 

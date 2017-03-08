@@ -21,11 +21,13 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.util.List;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Arguments;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 
 /**
  *

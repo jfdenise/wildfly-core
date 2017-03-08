@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,10 +33,15 @@ import org.aesh.command.GroupCommand;
 import org.aesh.command.GroupCommandDefinition;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.Deploy;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.DeploymentInfo;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.Undeploy;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
@@ -44,11 +50,25 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = "deployment", description = "", activator = ControlledCommandActivator.class)
-public class DeploymentCommand extends AbstractControlledCommand
+public class DeploymentCommand extends CommandWithPermissions
         implements GroupCommand<CLICommandInvocation, Command> {
 
-    public DeploymentCommand(CommandContext ctx) {
-        super(ctx, new Permissions(ctx));
+    public DeploymentCommand(CommandContext ctx, Permissions permissions) {
+        super(ctx, AccessRequirements.deploymentAccess(permissions), permissions);
+    }
+
+    public static void registerDeploymentCommands(CommandContext ctx, CLICommandRegistry registry)
+            throws CommandLineException {
+        Permissions p = new Permissions(ctx);
+        DeploymentCommand deploy = new DeploymentCommand(ctx, p);
+        registry.addCommand(deploy);
+
+        //Bridge to deprecated commands
+        registry.addCommand(new Deploy(ctx, p));
+        registry.addCommand(new DeploymentInfo(ctx,
+                deploy.getPermissions()));
+        registry.addCommand(new Undeploy(ctx,
+                deploy.getPermissions()));
     }
 
     @Deprecated
@@ -74,17 +94,6 @@ public class DeploymentCommand extends AbstractControlledCommand
         commands.add(new UndeployArchiveCommand(getCommandContext(), getPermissions()));
 
         return commands;
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getListPermission())
-                .requirement(getPermissions().getFullReplacePermission())
-                .requirement(getPermissions().getMainAddPermission())
-                .requirement(getPermissions().getDeployPermission())
-                .build();
     }
 
     static List<String> getServerGroups(CommandContext ctx,

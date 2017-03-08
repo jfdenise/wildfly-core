@@ -158,9 +158,6 @@ import org.jboss.as.cli.impl.aesh.commands.ConnectCommand;
 import org.jboss.as.cli.impl.aesh.commands.HelpCommand;
 import org.jboss.as.cli.impl.aesh.commands.QuitCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentCommand;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.Deploy;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.DeploymentInfo;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.Undeploy;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -505,19 +502,10 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             aeshCommands.getRegistry().addCommand(new AttachmentCommand());
             aeshCommands.getRegistry().addCommand(new CommandTimeoutCommand());
             aeshCommands.getRegistry().addCommand(new ConnectCommand());
-            DeploymentCommand deploy = new DeploymentCommand(this);
-            aeshCommands.getRegistry().addCommand(deploy);
+            DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
             aeshCommands.getRegistry().addCommand(new HelpCommand(aeshCommands.getRegistry(),
                     cmdRegistry));
             aeshCommands.getRegistry().addCommand(new QuitCommand());
-
-            //Bridge to deprecated commands
-            aeshCommands.getRegistry().addCommand(new Deploy(this));
-            aeshCommands.getRegistry().addCommand(new DeploymentInfo(this,
-                    deploy.getPermissions()));
-            aeshCommands.getRegistry().addCommand(new Undeploy(this,
-                    deploy.getPermissions()));
-
         } catch (CommandLineException ex) {
             throw new CliInitializationException(ex);
         }

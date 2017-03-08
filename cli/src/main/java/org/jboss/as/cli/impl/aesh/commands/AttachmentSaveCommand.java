@@ -27,7 +27,7 @@ import org.aesh.command.option.Option;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
 import org.wildfly.core.cli.command.aesh.activator.AbstractDependOptionActivator;

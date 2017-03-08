@@ -37,7 +37,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.wildfly.core.cli.command.aesh.activator.AbstractDependRejectOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.AbstractRejectOptionActivator;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 
 /**
  *

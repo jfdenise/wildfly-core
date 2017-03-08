@@ -19,40 +19,34 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.core.cli.command.aesh.activator;
+package org.jboss.as.cli.impl.aesh.commands.deprecated;
 
-import org.aesh.command.activator.OptionActivator;
 import org.aesh.command.impl.internal.ProcessedCommand;
+import org.wildfly.core.cli.command.aesh.activator.CLICommandActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractCommandActivator;
 
 /**
  *
- * Hides an option otherwise delegates to the provided Activator.
+ * Never proposed in completion.
  *
- * @author jdenise@redhat.com
+ * @author jdenise@readhat.com
  */
-public class HideOptionActivator implements OptionActivator {
+@Deprecated
+public class CompatCommandActivator extends AbstractCommandActivator {
 
-    private static class HideActivator implements OptionActivator {
+    private final CLICommandActivator activator;
 
-        @Override
-        public boolean isActivated(ProcessedCommand processedCommand) {
-            return false;
-        }
-    }
-
-    private final OptionActivator activator;
-
-    public HideOptionActivator() {
-        this(true, null);
-    }
-
-    public HideOptionActivator(boolean hidden, OptionActivator activator) {
-        this.activator = hidden ? new HideActivator() : activator;
+    protected CompatCommandActivator(CLICommandActivator activator) {
+        this.activator = activator;
     }
 
     @Override
-    public boolean isActivated(ProcessedCommand processedCommand) {
-        return activator.isActivated(processedCommand);
+    public boolean isActivated(ProcessedCommand cmd) {
+        return getCommandContext().isLegacyMode();
     }
 
+    public boolean isActuallyActivated(ProcessedCommand cmd) {
+        activator.setCommandContext(getCommandContext());
+        return activator.isActivated(cmd);
+    }
 }

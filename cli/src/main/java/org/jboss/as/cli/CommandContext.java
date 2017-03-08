@@ -623,4 +623,13 @@ public interface CommandContext {
      */
     ModelNode execute(Operation op, String description)
             throws CommandLineException, IOException;
+
+    /**
+     * XXX JFDENISE, bind to proper configuration item.
+     *
+     * @return
+     */
+    default boolean isLegacyMode() {
+        return false;
+    }
 }

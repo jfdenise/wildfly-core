@@ -28,7 +28,7 @@ import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.patching.tool.PatchOperationBuilder;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 
 /**
  *

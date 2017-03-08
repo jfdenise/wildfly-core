@@ -21,11 +21,10 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import org.aesh.command.CommandDefinition;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 
 /**
  *
@@ -46,14 +45,5 @@ public class UndeployArchiveCommand extends DeployArchiveCommand {
     @Override
     protected String getDefaultScript() {
         return "undeploy.scr";
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getMainRemovePermission())
-                .requirement(getPermissions().getUndeployPermission())
-                .build();
     }
 }

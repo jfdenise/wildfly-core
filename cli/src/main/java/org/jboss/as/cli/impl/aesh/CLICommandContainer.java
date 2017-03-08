@@ -41,6 +41,8 @@ import org.aesh.command.parser.OptionParserException;
 import org.aesh.command.validator.CommandValidatorException;
 import org.aesh.parser.ParsedLineIterator;
 import org.aesh.parser.ParsedLine;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.CompatCommandActivator;
 
 /**
  * Wrapping of container to plug CLI Help support.
@@ -249,9 +251,11 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
 
     private final CommandContainer<Command> container;
     private final CommandLineParser<Command> parser;
+    private final CommandContext ctx;
 
-    CLICommandContainer(CommandContainer<Command> container) throws OptionParserException {
+    CLICommandContainer(CommandContainer<Command> container, CommandContext ctx) throws OptionParserException {
         this.container = container;
+        this.ctx = ctx;
         this.parser = new CLICommandParser();
     }
 
@@ -299,6 +303,10 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
     }
 
     private String doPrintHelp() {
+        if (parser.getProcessedCommand().getActivator() instanceof CompatCommandActivator) {
+            return HelpSupport.printHelp(ctx, parser.getProcessedCommand().name());
+        }
+
         return HelpSupport.getCommandHelp(parser);
     }
 }

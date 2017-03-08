@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -32,9 +33,9 @@ import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.NameActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators.UnmanagedActivator;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.NameActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.UnmanagedActivator;
 import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.controller.client.Operation;
@@ -50,7 +51,7 @@ import org.wildfly.core.cli.command.aesh.FileCompleter;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-file", description = "", activator = ControlledCommandActivator.class)
-public class DeployFileCommand extends AbstractDeployContentSubCommand implements DMRCommand {
+public class DeployFileCommand extends AbstractDeployContentCommand implements DMRCommand {
 
     @Option(hasValue = false, activator = UnmanagedActivator.class, required = false)
     public boolean unmanaged;

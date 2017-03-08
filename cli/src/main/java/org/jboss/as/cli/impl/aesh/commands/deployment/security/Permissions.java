@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands.deployment;
+package org.jboss.as.cli.impl.aesh.commands.deployment.security;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
@@ -43,7 +43,7 @@ public class Permissions {
     private final AccessRequirement mainRemovePermission;
     private final AccessRequirement undeployPermission;
     private final AccessRequirement removeOrUndeployPermission;
-    Permissions(CommandContext ctx) {
+    public Permissions(CommandContext ctx) {
         listPermission = AccessRequirementBuilder.Factory.create(ctx)
                 .all()
                 .operation(Util.READ_CHILDREN_NAMES)

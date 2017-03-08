@@ -19,13 +19,13 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands.activator;
+package org.jboss.as.cli.impl.aesh.commands.security;
 
 import java.io.IOException;
 import org.aesh.command.impl.internal.ProcessedCommand;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.impl.aesh.commands.ControlledCommand;
+import org.jboss.as.cli.impl.aesh.commands.activator.ConnectedActivator;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.dmr.ModelNode;
 
@@ -37,6 +37,9 @@ public class ControlledCommandActivator extends ConnectedActivator {
 
     @Override
     public boolean isActivated(ProcessedCommand cmd) {
+        if (getCommandContext().isLegacyMode()) {
+            return false;
+        }
         if (!super.isActivated(cmd)) {
             return false;
         }

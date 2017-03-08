@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -31,10 +32,9 @@ import org.aesh.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
@@ -46,14 +46,14 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "enable-all", description = "", activator = ControlledCommandActivator.class)
-public class EnableAllCommand extends AbstractSubCommand implements DMRCommand {
+public class EnableAllCommand extends AbstractDeployCommand implements DMRCommand {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
     public EnableAllCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.enableAllAccess(permissions), permissions);
     }
 
     @Override
@@ -136,13 +136,5 @@ public class EnableAllCommand extends AbstractSubCommand implements DMRCommand {
             opHeaders.set(headers);
         }
         return composite;
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getDeployPermission())
-                .build();
     }
 }

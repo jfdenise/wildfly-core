@@ -22,31 +22,39 @@
 package org.jboss.as.cli.impl.aesh.commands.deprecated;
 
 import org.aesh.command.impl.internal.ProcessedCommand;
-import org.wildfly.core.cli.command.aesh.activator.CLICommandActivator;
-import org.wildfly.core.cli.command.aesh.activator.AbstractCommandActivator;
+import org.wildfly.core.cli.command.aesh.activator.AbstractOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.CLIOptionActivator;
 
 /**
  *
- * Never proposed in completion.
+ * Hides an option otherwise delegates to the provided Activator.
  *
- * @author jdenise@readhat.com
+ * @author jdenise@redhat.com
  */
-@Deprecated
-public class CompatActivator extends AbstractCommandActivator {
+public class HideOptionActivator extends AbstractOptionActivator {
 
-    private final CLICommandActivator activator;
+    private static class HideActivator extends AbstractOptionActivator {
 
-    protected CompatActivator(CLICommandActivator activator) {
-        this.activator = activator;
+        @Override
+        public boolean isActivated(ProcessedCommand processedCommand) {
+            return getCommandContext() == null ? false : getCommandContext().isLegacyMode();
+        }
+    }
+
+    private final CLIOptionActivator activator;
+
+    public HideOptionActivator() {
+        this(true, null);
+    }
+
+    public HideOptionActivator(boolean hidden, CLIOptionActivator activator) {
+        this.activator = hidden ? new HideActivator() : activator;
     }
 
     @Override
-    public boolean isActivated(ProcessedCommand cmd) {
-        return false;
+    public boolean isActivated(ProcessedCommand processedCommand) {
+        activator.setCommandContext(getCommandContext());
+        return activator.isActivated(processedCommand);
     }
 
-    public boolean isActuallyActivated(ProcessedCommand cmd) {
-        activator.setCommandContext(getCommandContext());
-        return activator.isActivated(cmd);
-    }
 }

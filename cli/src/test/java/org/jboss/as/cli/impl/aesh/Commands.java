@@ -22,7 +22,7 @@ import org.wildfly.core.cli.command.aesh.activator.AbstractDependOptionActivator
 import org.wildfly.core.cli.command.aesh.activator.AbstractRejectOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.AbstractOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.StandaloneOptionActivator;
 
 /**

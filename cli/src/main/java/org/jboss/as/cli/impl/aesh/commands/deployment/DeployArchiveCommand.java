@@ -21,6 +21,8 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -40,12 +42,11 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.controller.client.Operation;
@@ -66,7 +67,7 @@ import org.wildfly.core.cli.command.aesh.FileCompleter;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-archive", description = "", activator = ControlledCommandActivator.class)
-public class DeployArchiveCommand extends AbstractControlledCommand implements Command<CLICommandInvocation>, BatchCompliantCommand {
+public class DeployArchiveCommand extends CommandWithPermissions implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     private static final String CLI_ARCHIVE_SUFFIX = ".cli";
 
@@ -83,7 +84,7 @@ public class DeployArchiveCommand extends AbstractControlledCommand implements C
     public List<File> file;
 
     public DeployArchiveCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.deployArchiveAccess(permissions), permissions);
     }
 
     protected String getAction() {
@@ -92,17 +93,6 @@ public class DeployArchiveCommand extends AbstractControlledCommand implements C
 
     protected String getDefaultScript() {
         return "deploy.scr";
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        // XXX JFDENISE, do we need them all?
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getFullReplacePermission())
-                .requirement(getPermissions().getAddOrReplacePermission())
-                .requirement(getPermissions().getDeployPermission())
-                .build();
     }
 
     @Override

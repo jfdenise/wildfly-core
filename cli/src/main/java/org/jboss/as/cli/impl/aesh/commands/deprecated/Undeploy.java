@@ -34,23 +34,21 @@ import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeployArchiveCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.AbstractControlledCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DisableCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.ListCommand;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Permissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import org.jboss.as.cli.impl.aesh.commands.deployment.EnableCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.UndeployArchiveCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.UndeployCommand;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
 import org.wildfly.core.cli.command.aesh.FileConverter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
-import org.jboss.as.cli.impl.aesh.commands.deployment.Activators;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators;
 
 /**
  *
@@ -58,7 +56,7 @@ import org.jboss.as.cli.impl.aesh.commands.deployment.Activators;
  */
 @Deprecated
 @CommandDefinition(name = "undeploy", description = "", activator = DeployActivator.class)
-public class Undeploy extends AbstractControlledCommand
+public class Undeploy extends CommandWithPermissions
         implements Command<CLICommandInvocation>, BatchCompliantCommand {
 
     @Deprecated
@@ -99,7 +97,7 @@ public class Undeploy extends AbstractControlledCommand
             completer = EnableCommand.NameCompleter.class)
     protected List<String> name;
     public Undeploy(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.undeployLegacyAccess(permissions), permissions);
     }
 
     @Override
@@ -183,15 +181,4 @@ public class Undeploy extends AbstractControlledCommand
     public BatchResponseHandler buildBatchResponseHandler(CommandContext commandContext, Attachments attachments) {
         return null;
     }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getListPermission())
-                .requirement(getPermissions().getMainRemovePermission())
-                .requirement(getPermissions().getUndeployPermission())
-                .build();
-    }
-
 }

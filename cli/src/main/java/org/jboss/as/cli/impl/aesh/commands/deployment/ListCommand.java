@@ -21,33 +21,32 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.CommandWithPermissions;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.accesscontrol.AccessRequirement;
-import org.jboss.as.cli.accesscontrol.AccessRequirementBuilder;
-import org.jboss.as.cli.impl.aesh.commands.activator.ControlledCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
+import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.cli.util.StrictSizeTable;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "list", description = "", activator = ControlledCommandActivator.class)
-public class ListCommand extends AbstractControlledCommand
-        implements Command<CLICommandInvocation> {
+public class ListCommand extends CommandWithPermissions {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
@@ -57,7 +56,7 @@ public class ListCommand extends AbstractControlledCommand
     private boolean l;
 
     ListCommand(CommandContext ctx, Permissions permissions) {
-        super(ctx, permissions);
+        super(ctx, AccessRequirements.listAccess(permissions), permissions);
     }
 
     @Override
@@ -154,14 +153,5 @@ public class ListCommand extends AbstractControlledCommand
         request.get(Util.OPERATION).set(Util.READ_RESOURCE);
         request.get(Util.INCLUDE_RUNTIME).set(true);
         return request;
-    }
-
-    @Override
-    protected AccessRequirement buildAccessRequirement(CommandContext ctx) {
-        return AccessRequirementBuilder.Factory.create(ctx)
-                .any()
-                .requirement(getPermissions().getDeployPermission())
-                .requirement(getPermissions().getListPermission())
-                .build();
     }
 }
