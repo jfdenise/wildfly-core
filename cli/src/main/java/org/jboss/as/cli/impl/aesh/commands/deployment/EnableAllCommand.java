@@ -33,20 +33,21 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "enable-all", description = "", activator = ControlledCommandActivator.class)
-public class EnableAllCommand extends AbstractDeployCommand implements DMRCommand {
+public class EnableAllCommand extends AbstractDeployCommand implements DMRCommand, LegacyBridge {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
@@ -56,6 +57,11 @@ public class EnableAllCommand extends AbstractDeployCommand implements DMRComman
         super(ctx, AccessRequirements.enableAllAccess(permissions), permissions);
     }
 
+    @Deprecated
+    public EnableAllCommand(CommandContext ctx) {
+        this(ctx, null);
+    }
+
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
@@ -63,17 +69,23 @@ public class EnableAllCommand extends AbstractDeployCommand implements DMRComman
             commandInvocation.println(commandInvocation.getHelpInfo("deployment enable-all"));
             return CommandResult.SUCCESS;
         }
-        deployAll(commandInvocation, allServerGroups, serverGroups, headers);
+        return execute(commandInvocation.getCommandContext());
+    }
+
+    @Override
+    public CommandResult execute(CommandContext ctx)
+            throws CommandException {
+        deployAll(ctx, allServerGroups, serverGroups, headers);
         return CommandResult.SUCCESS;
     }
 
-    static void deployAll(CLICommandInvocation commandInvocation,
+    static void deployAll(CommandContext ctx,
             boolean allServerGroups,
             String serverGroups, ModelNode headers) throws CommandException {
         try {
-            ModelNode request = buildRequest(commandInvocation.getCommandContext(),
+            ModelNode request = buildRequest(ctx,
                     allServerGroups, serverGroups, headers);
-            final ModelNode result = commandInvocation.getCommandContext().
+            final ModelNode result = ctx.
                     getModelControllerClient().execute(request);
             if (!Util.isSuccess(result)) {
                 throw new CommandException(Util.getFailureDescription(result));

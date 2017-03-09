@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2016, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -21,17 +21,16 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deprecated;
 
-import org.jboss.as.cli.impl.aesh.commands.activator.ConnectedActivator;
+import org.aesh.command.CommandException;
+import org.aesh.command.CommandResult;
+import org.jboss.as.cli.CommandContext;
 
 /**
+ * Interface exposed to legacy commands.
  *
  * @author jdenise@redhat.com
  */
 @Deprecated
-public class DeploymentInfoActivator extends CompatCommandActivator {
-
-    public DeploymentInfoActivator() {
-        super(new ConnectedActivator());
-    }
-
+public interface LegacyBridge {
+    CommandResult execute(CommandContext ctx) throws CommandException;
 }

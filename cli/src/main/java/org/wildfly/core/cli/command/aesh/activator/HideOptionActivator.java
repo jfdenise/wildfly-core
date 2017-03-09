@@ -19,11 +19,9 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.impl.aesh.commands.deprecated;
+package org.wildfly.core.cli.command.aesh.activator;
 
 import org.aesh.command.impl.internal.ProcessedCommand;
-import org.wildfly.core.cli.command.aesh.activator.AbstractOptionActivator;
-import org.wildfly.core.cli.command.aesh.activator.CLIOptionActivator;
 
 /**
  *
@@ -37,7 +35,7 @@ public class HideOptionActivator extends AbstractOptionActivator {
 
         @Override
         public boolean isActivated(ProcessedCommand processedCommand) {
-            return getCommandContext() == null ? false : getCommandContext().isLegacyMode();
+            return false;
         }
     }
 

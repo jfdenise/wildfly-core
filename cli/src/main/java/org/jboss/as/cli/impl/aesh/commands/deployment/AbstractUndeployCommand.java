@@ -53,7 +53,9 @@ import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.parser.HeadersParser;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 
 /**
  *
@@ -61,7 +63,7 @@ import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
  */
 @CommandDefinition(name = "abstract-undeploy-deployment", description = "", activator = ControlledCommandActivator.class)
 public abstract class AbstractUndeployCommand extends CommandWithPermissions
-        implements Command<CLICommandInvocation>, BatchCompliantCommand {
+        implements Command<CLICommandInvocation>, BatchCompliantCommand, LegacyBridge {
 
     public static class ServerGroupsCompleter implements
             OptionCompleter<CLICompleterInvocation> {
@@ -101,7 +103,7 @@ public abstract class AbstractUndeployCommand extends CommandWithPermissions
     public boolean allRelevantServerGroups;
 
     @Option(converter = HeadersConverter.class, completer = HeadersCompleter.class,
-            required = false)
+            required = false, parser = HeadersParser.class)
     public ModelNode headers;
 
     // XXX jfdenise, is public for compat reason. Make it private when removing compat code.
@@ -122,11 +124,17 @@ public abstract class AbstractUndeployCommand extends CommandWithPermissions
             commandInvocation.println(commandInvocation.getHelpInfo("deployment " + getCommandName()));
             return CommandResult.SUCCESS;
         }
+        return execute(commandInvocation.getCommandContext());
+    }
+
+    @Override
+    public CommandResult execute(CommandContext ctx)
+            throws CommandException {
         String name = getName();
         if (name == null) {
             throw new CommandException("No deployment name");
         }
-        undeployName(commandInvocation, name, allRelevantServerGroups,
+        undeployName(ctx, name, allRelevantServerGroups,
                 serverGroups, keepContent(), headers);
         return CommandResult.SUCCESS;
     }
@@ -137,13 +145,13 @@ public abstract class AbstractUndeployCommand extends CommandWithPermissions
         return null;
     }
 
-    static void undeployName(CLICommandInvocation commandInvocation, String name,
+    static void undeployName(CommandContext ctx, String name,
             boolean allServerGroups, String serverGroups, boolean keepContent, ModelNode headers)
             throws CommandException {
         try {
-            ModelNode request = buildRequest(commandInvocation.getCommandContext(),
+            ModelNode request = buildRequest(ctx,
                     name, allServerGroups, serverGroups, keepContent, headers);
-            final ModelNode result = commandInvocation.getCommandContext().
+            final ModelNode result = ctx.
                     getModelControllerClient().execute(request);
             if (!Util.isSuccess(result)) {
                 throw new CommandException(Util.getFailureDescription(result));

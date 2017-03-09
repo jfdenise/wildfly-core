@@ -48,7 +48,7 @@ import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.CompatCommandActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HasLegacyCounterPart;
 import org.jboss.logging.Logger;
 
 /**
@@ -174,14 +174,11 @@ public class CLICommandRegistry implements CommandRegistry {
     }
 
     private CommandContainer addCommandContainer(CommandContainer container) throws CommandLineException {
-        if (container.getParser().getProcessedCommand().getActivator() != null) {
-            if (container.getParser().getProcessedCommand().getActivator() instanceof CompatCommandActivator) {
-                CompatCommandActivator activator
-                        = (CompatCommandActivator) container.getParser().getProcessedCommand().getActivator();
-                activator.setCommandContext(ctx);
-                if (activator.isActivated(container.getParser().getProcessedCommand())) {
-                    exposedCommands.add(container.getParser().getProcessedCommand().name());
-                }
+        Command c = container.getParser().getProcessedCommand().getCommand();
+        if (c instanceof HasLegacyCounterPart) {
+            // In legacy mode, only expose legacy.
+            if (!ctx.isLegacyMode()) {
+                exposedCommands.add(container.getParser().getProcessedCommand().name());
             }
         }
         CLICommandContainer cliContainer;

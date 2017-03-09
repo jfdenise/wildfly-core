@@ -48,7 +48,8 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.parser.HeadersParser;
 
 /**
  *
@@ -77,7 +78,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
     public List<String> name;
 
     @Option(converter = HeadersConverter.class, completer = HeadersCompleter.class,
-            required = false)
+            required = false, parser = HeadersParser.class)
     public ModelNode headers;
 
     @Option(name = "server-group", activator = ServerGroupsActivator.class,
@@ -90,6 +91,11 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
 
     public InfoCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, AccessRequirements.infoAccess(permissions), permissions);
+    }
+
+    @Deprecated
+    public InfoCommand(CommandContext ctx) {
+        this(ctx, null);
     }
 
     private String getName() {
@@ -111,7 +117,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
             if (!Util.isSuccess(result)) {
                 throw new CommandException(Util.getFailureDescription(result));
             }
-            handleResponse(commandInvocation, result);
+            handleResponse(commandInvocation.getCommandContext(), result);
         } catch (IOException e) {
             throw new CommandException("Failed to deploy", e);
         } catch (CommandFormatException ex) {
@@ -267,9 +273,8 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
         return request;
     }
 
-    private void handleResponse(CLICommandInvocation invocation, ModelNode response)
+    public void handleResponse(CommandContext ctx, ModelNode response)
             throws CommandFormatException {
-        CommandContext ctx = invocation.getCommandContext();
         try {
             if (!response.hasDefined(Util.RESULT)) {
                 throw new CommandFormatException("The operation response came back "
@@ -334,7 +339,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
                                     : deploymentName));
 
                     final SimpleTable table = new SimpleTable(new String[]{NAME,
-                        RUNTIME_NAME, STATE});
+                        RUNTIME_NAME, STATE}, ctx.getTerminalWidth());
                     for (String name : allDeployments.keys()) {
                         if (!pattern.matcher(name).matches()) {
                             continue;
@@ -352,16 +357,16 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
                         }
                     }
                     if (!table.isEmpty()) {
-                        invocation.println(table.toString(true));
+                        ctx.printLine(table.toString(true));
                     }
                 } else {
                     final StrictSizeTable table = new StrictSizeTable(1);
                     table.addCell(Util.NAME, stepResponse.get(Util.NAME).asString());
                     table.addCell(Util.RUNTIME_NAME, stepResponse.
                             get(Util.RUNTIME_NAME).asString());
-                    invocation.println(table.toString());
+                    ctx.printLine(table.toString());
                     final SimpleTable groups
-                            = new SimpleTable(new String[]{SERVER_GROUP, STATE});
+                            = new SimpleTable(new String[]{SERVER_GROUP, STATE}, ctx.getTerminalWidth());
                     if (addedServerGroups == null) {
                         if (steps.hasNext()) {
                             throw new CommandFormatException("Didn't expect results "
@@ -398,11 +403,11 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
                             groups.addLine(new String[]{sg, NOT_ADDED});
                         }
                     }
-                    invocation.println(groups.toString(true));
+                    ctx.printLine(groups.toString(true));
                 }
             } else {
                 final SimpleTable table = new SimpleTable(new String[]{NAME,
-                    RUNTIME_NAME, PERSISTENT, ENABLED, STATUS});
+                    RUNTIME_NAME, PERSISTENT, ENABLED, STATUS}, ctx.getTerminalWidth());
                 final String deploymentName = getName();
                 if (deploymentName == null || deploymentName.indexOf('*') >= 0) {
                     final List<Property> list = result.asPropertyList();
@@ -430,7 +435,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
                         result.get(Util.STATUS).asString()});
                 }
                 if (!table.isEmpty()) {
-                    invocation.println(table.toString());
+                    ctx.printLine(table.toString());
                 }
             }
         } finally {

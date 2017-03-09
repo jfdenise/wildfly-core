@@ -38,6 +38,11 @@ public class DisableCommand extends UndeployCommand {
         super(ctx, permissions);
     }
 
+    @Deprecated
+    public DisableCommand(CommandContext ctx) {
+        this(ctx, null);
+    }
+
     @Override
     protected boolean keepContent() {
         return true;

@@ -106,10 +106,11 @@ import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
 import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
 import org.jboss.as.cli.handlers.ArchiveHandler;
-import org.jboss.as.cli.handlers.AttachmentHandler;
 import org.jboss.as.cli.handlers.ClearScreenHandler;
 import org.jboss.as.cli.handlers.CommandCommandHandler;
 import org.jboss.as.cli.handlers.ConnectionInfoHandler;
+import org.jboss.as.cli.handlers.DeployHandler;
+import org.jboss.as.cli.handlers.DeploymentInfoHandler;
 import org.jboss.as.cli.handlers.DeploymentOverlayHandler;
 import org.jboss.as.cli.handlers.EchoDMRHandler;
 import org.jboss.as.cli.handlers.EchoVariableHandler;
@@ -125,6 +126,7 @@ import org.jboss.as.cli.handlers.ReloadHandler;
 import org.jboss.as.cli.handlers.SetVariableHandler;
 import org.jboss.as.cli.handlers.ShutdownHandler;
 import org.jboss.as.cli.handlers.ResponseHandler;
+import org.jboss.as.cli.handlers.UndeployHandler;
 import org.jboss.as.cli.handlers.UnsetVariableHandler;
 import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.cli.handlers.batch.BatchClearHandler;
@@ -528,10 +530,12 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         cmdRegistry.registerHandler(new EchoVariableHandler(), "echo");
         cmdRegistry.registerHandler(new UnsetVariableHandler(), "unset");
 
-        // deployment
-        //cmdRegistry.registerHandler(new DeployHandler(this), "deploy");
-        //cmdRegistry.registerHandler(new UndeployHandler(this), "undeploy");
-        //cmdRegistry.registerHandler(new DeploymentInfoHandler(this), "deployment-info");
+        // deployment legacy bridge
+        cmdRegistry.registerHandler(new DeployHandler(this), isLegacyMode(), "deploy");
+        cmdRegistry.registerHandler(new UndeployHandler(this), isLegacyMode(), "undeploy");
+        cmdRegistry.registerHandler(new DeploymentInfoHandler(this), isLegacyMode(), "deployment-info");
+
+        // deployment-overlay
         cmdRegistry.registerHandler(new DeploymentOverlayHandler(this), "deployment-overlay");
 
         // batch commands

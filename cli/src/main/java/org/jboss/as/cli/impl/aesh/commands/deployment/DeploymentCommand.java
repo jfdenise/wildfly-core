@@ -38,9 +38,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.Deploy;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.DeploymentInfo;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.Undeploy;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.HasLegacyCounterPart;
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -51,7 +49,7 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  */
 @GroupCommandDefinition(name = "deployment", description = "", activator = ControlledCommandActivator.class)
 public class DeploymentCommand extends CommandWithPermissions
-        implements GroupCommand<CLICommandInvocation, Command> {
+        implements GroupCommand<CLICommandInvocation, Command>, HasLegacyCounterPart {
 
     public DeploymentCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, AccessRequirements.deploymentAccess(permissions), permissions);
@@ -62,13 +60,6 @@ public class DeploymentCommand extends CommandWithPermissions
         Permissions p = new Permissions(ctx);
         DeploymentCommand deploy = new DeploymentCommand(ctx, p);
         registry.addCommand(deploy);
-
-        //Bridge to deprecated commands
-        registry.addCommand(new Deploy(ctx, p));
-        registry.addCommand(new DeploymentInfo(ctx,
-                deploy.getPermissions()));
-        registry.addCommand(new Undeploy(ctx,
-                deploy.getPermissions()));
     }
 
     @Deprecated

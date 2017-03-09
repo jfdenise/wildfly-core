@@ -42,7 +42,8 @@ import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -51,7 +52,7 @@ import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "enable", description = "", activator = ControlledCommandActivator.class)
-public class EnableCommand extends AbstractDeployCommand implements DMRCommand {
+public class EnableCommand extends AbstractDeployCommand implements DMRCommand, LegacyBridge {
 
     public static class NameCompleter
             implements OptionCompleter<CLICompleterInvocation> {
@@ -94,6 +95,11 @@ public class EnableCommand extends AbstractDeployCommand implements DMRCommand {
         super(ctx, AccessRequirements.enableAccess(permissions), permissions);
     }
 
+    @Deprecated
+    public EnableCommand(CommandContext ctx) {
+        this(ctx, null);
+    }
+
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
             throws CommandException, InterruptedException {
@@ -101,20 +107,26 @@ public class EnableCommand extends AbstractDeployCommand implements DMRCommand {
             commandInvocation.println(commandInvocation.getHelpInfo("deployment enable"));
             return CommandResult.SUCCESS;
         }
+        return execute(commandInvocation.getCommandContext());
+    }
+
+    @Override
+    public CommandResult execute(CommandContext ctx)
+            throws CommandException {
         if (name == null || name.isEmpty()) {
             throw new CommandException("No deployment name");
         }
-        deployName(commandInvocation, name.get(0), allServerGroups, serverGroups, headers);
+        deployName(ctx, name.get(0), allServerGroups, serverGroups, headers);
         return CommandResult.SUCCESS;
     }
 
-    static void deployName(CLICommandInvocation commandInvocation, String name,
+    static void deployName(CommandContext ctx, String name,
             boolean allServerGroups, String serverGroups, ModelNode headers)
             throws CommandException {
         try {
-            ModelNode request = buildRequest(commandInvocation.getCommandContext(),
+            ModelNode request = buildRequest(ctx,
                     name, allServerGroups, serverGroups, headers);
-            final ModelNode result = commandInvocation.getCommandContext().
+            final ModelNode result = ctx.
                     getModelControllerClient().execute(request);
             if (!Util.isSuccess(result)) {
                 throw new CommandException(Util.getFailureDescription(result));

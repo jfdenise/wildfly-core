@@ -39,7 +39,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -66,15 +66,14 @@ public class ListCommand extends CommandWithPermissions {
             commandInvocation.println(commandInvocation.getHelpInfo("deployment list"));
             return CommandResult.SUCCESS;
         }
-        listDeployments(commandInvocation, l);
+        listDeployments(commandInvocation.getCommandContext(), l);
         return CommandResult.SUCCESS;
     }
 
-    public static void listDeployments(CLICommandInvocation commandInvocation,
+    public static void listDeployments(CommandContext ctx,
             boolean l) throws CommandException {
-        CommandContext ctx = commandInvocation.getCommandContext();
         if (!l) {
-            printList(commandInvocation, Util.getDeployments(ctx.
+            printList(ctx, Util.getDeployments(ctx.
                     getModelControllerClient()), l);
             return;
         }
@@ -111,14 +110,14 @@ public class ListCommand extends CommandWithPermissions {
         ctx.printLine(table.toString());
     }
 
-    private static void printList(CLICommandInvocation ctx,
+    private static void printList(CommandContext ctx,
             Collection<String> list, boolean l) {
         if (l) {
             for (String item : list) {
-                ctx.println(item);
+                ctx.printLine(item);
             }
         } else {
-            ctx.getCommandContext().printColumns(list);
+            ctx.printColumns(list);
         }
     }
 

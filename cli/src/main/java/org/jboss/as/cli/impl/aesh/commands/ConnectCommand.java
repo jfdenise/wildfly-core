@@ -31,7 +31,7 @@ import org.aesh.command.CommandException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.ValueResolverConverter;
 
 @CommandDefinition(name = "connect", description = "")

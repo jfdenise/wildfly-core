@@ -68,7 +68,7 @@ public class HelpSupportTestCase {
         Method m = ctx.getClass().getMethod("getAeshCommands");
         m.setAccessible(true);
         AeshCommands commands = (AeshCommands) m.invoke(ctx);
-        for (String name : commands.getRegistry().getExposedCommands()) {
+        for (String name : commands.getRegistry().getAllCommandNames()) {
             CommandContainer<Command> container = commands.getRegistry().getCommand(name, name);
             testCLICommand(null, container.getParser());
             for (CommandLineParser<Command> child : container.getParser().getAllChildParsers()) {

@@ -42,7 +42,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
@@ -59,6 +59,7 @@ import org.jboss.vfs.spi.MountHandle;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -67,7 +68,7 @@ import org.wildfly.core.cli.command.aesh.FileCompleter;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-archive", description = "", activator = ControlledCommandActivator.class)
-public class DeployArchiveCommand extends CommandWithPermissions implements Command<CLICommandInvocation>, BatchCompliantCommand {
+public class DeployArchiveCommand extends CommandWithPermissions implements Command<CLICommandInvocation>, BatchCompliantCommand, LegacyBridge {
 
     private static final String CLI_ARCHIVE_SUFFIX = ".cli";
 
@@ -87,6 +88,11 @@ public class DeployArchiveCommand extends CommandWithPermissions implements Comm
         super(ctx, AccessRequirements.deployArchiveAccess(permissions), permissions);
     }
 
+    @Deprecated
+    public DeployArchiveCommand(CommandContext ctx) {
+        this(ctx, null);
+    }
+
     protected String getAction() {
         return "deploy-archive";
     }
@@ -101,11 +107,16 @@ public class DeployArchiveCommand extends CommandWithPermissions implements Comm
             commandInvocation.println(commandInvocation.getHelpInfo("deployment " + getAction()));
             return CommandResult.SUCCESS;
         }
-        checkArgument();
         CommandContext ctx = commandInvocation.getCommandContext();
+        return execute(ctx);
+    }
+
+    public CommandResult execute(CommandContext ctx) throws CommandException {
+        checkArgument();
+
         Attachments attachments = new Attachments();
         try {
-            ModelNode request = buildRequest(commandInvocation.getCommandContext(),
+            ModelNode request = buildRequest(ctx,
                     attachments);
             OperationBuilder op = new OperationBuilder(request, true);
             for (String f : attachments.getAttachedFiles()) {

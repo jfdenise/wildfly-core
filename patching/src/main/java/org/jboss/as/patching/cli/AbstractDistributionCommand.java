@@ -62,7 +62,7 @@ import org.wildfly.core.cli.command.aesh.activator.DomainOptionActivator;
 import org.wildfly.security.manager.action.ReadEnvironmentPropertyAction;
 import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *

@@ -31,13 +31,14 @@ import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.ReplaceActivator;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.RuntimeNameActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  * XXX jfdenise, all fields are public to be accessible from legacy view. To be
@@ -46,7 +47,7 @@ import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deployment-deploy-content", description = "")
-public abstract class AbstractDeployContentCommand extends AbstractDeployCommand {
+public abstract class AbstractDeployContentCommand extends AbstractDeployCommand implements LegacyBridge {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
@@ -80,10 +81,15 @@ public abstract class AbstractDeployContentCommand extends AbstractDeployCommand
                     + getCommandName()));
             return CommandResult.SUCCESS;
         }
+        return execute(commandInvocation.getCommandContext());
+    }
+
+    @Override
+    public CommandResult execute(CommandContext ctx)
+            throws CommandException {
         checkArgument();
-        CommandContext ctx = commandInvocation.getCommandContext();
         try {
-            ModelNode request = buildRequest(commandInvocation.getCommandContext());
+            ModelNode request = buildRequest(ctx);
             final ModelNode result = execute(ctx, request);
             if (!Util.isSuccess(result)) {
                 throw new CommandException(Util.getFailureDescription(result));

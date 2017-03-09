@@ -37,6 +37,11 @@ public class UndeployArchiveCommand extends DeployArchiveCommand {
         super(ctx, permissions);
     }
 
+    @Deprecated
+    public UndeployArchiveCommand(CommandContext ctx) {
+        super(ctx, null);
+    }
+
     @Override
     protected String getAction() {
         return "undeploy-archive";

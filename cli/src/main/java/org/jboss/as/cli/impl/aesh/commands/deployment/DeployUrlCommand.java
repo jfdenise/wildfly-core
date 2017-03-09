@@ -78,6 +78,11 @@ public class DeployUrlCommand extends AbstractDeployContentCommand implements DM
         super(ctx, permissions);
     }
 
+    @Deprecated
+    public DeployUrlCommand(CommandContext ctx) {
+        this(ctx, null);
+    }
+
     @Override
     protected void checkArgument() throws CommandException {
         if (url == null || url.isEmpty()) {

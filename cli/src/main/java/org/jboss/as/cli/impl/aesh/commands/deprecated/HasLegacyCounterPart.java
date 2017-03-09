@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2016, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -21,32 +21,13 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deprecated;
 
-import org.aesh.command.impl.internal.ProcessedCommand;
-import org.wildfly.core.cli.command.aesh.activator.CLICommandActivator;
-import org.wildfly.core.cli.command.aesh.activator.AbstractCommandActivator;
-
 /**
+ * Interface implemented by new Commands to advertise that they have legacy
+ * counterpart.
  *
- * Never proposed in completion.
- *
- * @author jdenise@readhat.com
+ * @author jdenise@redhat.com
  */
 @Deprecated
-public class CompatCommandActivator extends AbstractCommandActivator {
+public interface HasLegacyCounterPart {
 
-    private final CLICommandActivator activator;
-
-    protected CompatCommandActivator(CLICommandActivator activator) {
-        this.activator = activator;
-    }
-
-    @Override
-    public boolean isActivated(ProcessedCommand cmd) {
-        return getCommandContext().isLegacyMode();
-    }
-
-    public boolean isActuallyActivated(ProcessedCommand cmd) {
-        activator.setCommandContext(getCommandContext());
-        return activator.isActivated(cmd);
-    }
 }

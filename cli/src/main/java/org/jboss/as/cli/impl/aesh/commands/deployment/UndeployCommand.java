@@ -46,6 +46,11 @@ public class UndeployCommand extends AbstractUndeployCommand {
         super(ctx, permissions);
     }
 
+    @Deprecated
+    public UndeployCommand(CommandContext ctx) {
+        this(ctx, null);
+    }
+
     @Override
     protected boolean keepContent() {
         return false;

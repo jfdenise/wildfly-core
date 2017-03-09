@@ -21,7 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
-import org.jboss.as.cli.impl.aesh.commands.deprecated.HideOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

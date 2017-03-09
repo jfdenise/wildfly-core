@@ -70,6 +70,11 @@ public class DeployFileCommand extends AbstractDeployContentCommand implements D
         super(ctx, permissions);
     }
 
+    @Deprecated
+    public DeployFileCommand(CommandContext ctx) {
+        this(ctx, null);
+    }
+
     @Override
     protected void checkArgument() throws CommandException {
         if (file == null || file.isEmpty()) {
