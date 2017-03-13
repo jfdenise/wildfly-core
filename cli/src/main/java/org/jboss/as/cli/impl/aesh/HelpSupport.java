@@ -86,7 +86,7 @@ public class HelpSupport {
 
     public static final String NULL_DESCRIPTION = "WARNING: No Description. Please Fix it";
 
-    static void printHelp(CommandContext ctx) {
+    public static void printHelp(CommandContext ctx) {
         ctx.printLine(printHelp(ctx, "help"));
     }
 
