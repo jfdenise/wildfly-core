@@ -1157,6 +1157,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public void connectController(String controller) throws CommandLineException {
+        connectController(controller, null);
+    }
+
+    @Override
+    public void connectController(String controller, String clientAddress) throws CommandLineException {
 
         connectionAddress = addressResolver.resolveAddress(controller);
 
@@ -1172,7 +1177,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     log.debug("connecting to " + connectionAddress.getHost() + ':' + connectionAddress.getPort() + " as " + username);
                 }
                 ModelControllerClient tempClient = ModelControllerClientFactory.CUSTOM.getClient(connectionAddress, cbh,
-                        disableLocalAuth, sslContext, defaultSslContext, config.getConnectionTimeout(), this, timeoutHandler, clientBindAddress);
+                        disableLocalAuth, sslContext, defaultSslContext, config.getConnectionTimeout(), this,
+                        timeoutHandler, clientAddress == null ? clientBindAddress : clientAddress);
                 retry = false;
                 connInfoBean = new ConnectionInfoBean();
                 tryConnection(tempClient, connectionAddress);

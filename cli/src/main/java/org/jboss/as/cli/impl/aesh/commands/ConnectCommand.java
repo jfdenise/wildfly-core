@@ -44,6 +44,9 @@ public class ConnectCommand implements Command<CLICommandInvocation> {
     @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
+    @Option
+    public String bind;
+
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
 
@@ -54,7 +57,7 @@ public class ConnectCommand implements Command<CLICommandInvocation> {
 
         try {
             String url = controller == null || controller.isEmpty() ? null : controller.get(0);
-            commandInvocation.getCommandContext().connectController(url);
+            commandInvocation.getCommandContext().connectController(url, bind);
         } catch (CommandLineException ex) {
             throw new CommandException(Util.getMessagesFromThrowable(ex));
         }
