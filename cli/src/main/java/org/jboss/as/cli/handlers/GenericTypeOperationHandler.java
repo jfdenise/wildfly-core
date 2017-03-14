@@ -94,13 +94,13 @@ public class GenericTypeOperationHandler extends BatchModeCommandHandler {
     private WritePropertyHandler writePropHandler;
     private Map<String, OperationCommand> opHandlers;
 
-    public GenericTypeOperationHandler(CommandContext ctx, String nodeType, String idProperty) {
-        this(ctx, nodeType, idProperty, "read-attribute", "read-children-names", "read-children-resources",
+    public GenericTypeOperationHandler(String commandName, CommandContext ctx, String nodeType, String idProperty) {
+        this(commandName, ctx, nodeType, idProperty, "read-attribute", "read-children-names", "read-children-resources",
                 "read-children-types", "read-operation-description", "read-operation-names",
                 "read-resource-description", "validate-address", "write-attribute", "undefine-attribute", "whoami");
     }
 
-    public GenericTypeOperationHandler(CommandContext ctx, String nodeType, String idProperty, String... excludeOperations) {
+    public GenericTypeOperationHandler(String commandName, CommandContext ctx, String nodeType, String idProperty, String... excludeOperations) {
 
         super(ctx, "generic-type-operation", true);
 
@@ -122,10 +122,11 @@ public class GenericTypeOperationHandler extends BatchModeCommandHandler {
         helpArg = new ArgumentWithoutValue(this, "--help", "-h");
 
         addRequiredPath(nodeType);
-        this.commandName = getRequiredType();
-        if(this.commandName == null) {
+
+        if (getRequiredType() == null) {
             throw new IllegalArgumentException("The node path doesn't end on a type: '" + nodeType + "'");
         }
+        this.commandName = commandName;
         this.idProperty = idProperty;
 
         if(excludeOperations != null) {
@@ -246,6 +247,10 @@ public class GenericTypeOperationHandler extends BatchModeCommandHandler {
         staticArgs.put(profile.getFullName(), profile);
         staticArgs.put(name.getFullName(), name);
         staticArgs.put(operation.getFullName(), operation);
+    }
+
+    public String getCommandName() {
+        return commandName;
     }
 
     public void addValueConverter(String propertyName, ArgumentValueConverter converter) {
