@@ -44,6 +44,7 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
+import org.jboss.as.cli.handlers.GenericTypeOperationHandler;
 import org.jboss.as.cli.impl.CLICompletion;
 import org.jboss.as.cli.impl.aesh.HelpSupport;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
@@ -237,7 +238,13 @@ public class HelpCommand implements Command<CLICommandInvocation> {
             if (ch == null) {
                 throw new CommandException("Command not found " + builder.toString());
             }
-            if (ch instanceof CommandHandlerWithHelp) {
+            if (ch instanceof GenericTypeOperationHandler) {
+                try {
+                    ((GenericTypeOperationHandler) ch).printDescription(commandInvocation.getCommandContext());
+                } catch (CommandLineException ex1) {
+                    throw new CommandException(ex1);
+                }
+            } else if (ch instanceof CommandHandlerWithHelp) {
                 try {
                     ((CommandHandlerWithHelp) ch).printHelp(commandInvocation.getCommandContext());
                 } catch (CommandLineException ex1) {
