@@ -22,16 +22,18 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<module xmlns="urn:jboss:module:1.5" name="org.aesh">
+<module xmlns="urn:jboss:module:1.5" name="org.jline">
     <properties>
         <property name="jboss.api" value="private"/>
     </properties>
 
     <resources>
-        <artifact name="${org.aesh:aesh-readline}"/>
+        <artifact name="${org.jline:jline-terminal}"/>
     </resources>
 
     <dependencies>
-        <module name="org.jline" />
+       <!-- <module name="org.fusesource.jansi" />-->
+        <!-- required to handle native signals -->
+        <!--<module name="sun.jdk" />-->
     </dependencies>
 </module>

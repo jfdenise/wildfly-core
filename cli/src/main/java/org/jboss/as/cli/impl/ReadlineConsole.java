@@ -41,8 +41,8 @@ import org.aesh.readline.alias.AliasPreProcessor;
 import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.Completion;
 import org.aesh.readline.history.FileHistory;
-import org.aesh.terminal.Terminal;
-import org.aesh.terminal.TerminalBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import org.aesh.tty.Signal;
 import org.aesh.tty.terminal.TerminalConnection;
 import org.aesh.util.ANSI;
@@ -407,11 +407,10 @@ public class ReadlineConsole implements Console {
         // - Otherwise, a system terminal is used. system terminals don't use System.out
         //   so are protected against embed-server I/O handling.
         Terminal terminal = TerminalBuilder.builder()
-                .input(settings.getInStream() == null
-                        ? System.in : settings.getInStream())
                 // Use CLI stream if not a system terminal, it protects against
                 // embed-server I/O redefinition
-                .output(stream)
+                .streams(settings.getInStream() == null
+                        ? System.in : settings.getInStream(), stream)
                 .nativeSignals(true)
                 .name("CLI Terminal")
                 // We ask for a system terminal only if the Output has not been redefined.
