@@ -42,9 +42,9 @@ import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.Completion;
 import org.aesh.readline.history.FileHistory;
 import org.aesh.terminal.Terminal;
-import org.aesh.terminal.TerminalBuilder;
-import org.aesh.tty.Signal;
-import org.aesh.tty.terminal.TerminalConnection;
+import org.aesh.readline.terminal.TerminalBuilder;
+import org.aesh.terminal.tty.Signal;
+import org.aesh.readline.tty.terminal.TerminalConnection;
 import org.aesh.util.ANSI;
 import org.aesh.util.Config;
 import org.aesh.util.FileAccessPermission;
@@ -682,7 +682,7 @@ public class ReadlineConsole implements Console {
                     LOG.log(Level.FINER,
                             "Executing command {0} in a new thread.", line);
                 }
-                if (handleAlias(line)) {
+                if (line == null || line.trim().length() == 0 || handleAlias(line)) {
                     loop();
                     return;
                 }
