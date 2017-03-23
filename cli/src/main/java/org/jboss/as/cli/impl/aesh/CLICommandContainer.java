@@ -110,13 +110,13 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         }
 
         @Override
-        public void parse(String line, boolean ignoreRequirements) {
-            parser.parse(line, ignoreRequirements);
+        public void parse(String line, Mode mode) {
+            parser.parse(line, mode);
         }
 
         @Override
-        public void parse(ParsedLineIterator iterator, boolean ignoreRequirements) {
-            parser.parse(iterator, ignoreRequirements);
+        public void parse(ParsedLineIterator iterator, Mode mode) {
+            parser.parse(iterator, mode);
         }
 
         @Override
@@ -136,8 +136,8 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
 
         @Override
         public void populateObject(String line, InvocationProviders invocationProviders,
-                AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
-            parser.populateObject(line, invocationProviders, aeshContext, validate);
+                AeshContext aeshContext, Mode mode) throws CommandLineParserException, OptionValidatorException {
+            parser.populateObject(line, invocationProviders, aeshContext, mode);
         }
 
         @Override
@@ -208,13 +208,13 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         }
 
         @Override
-        public void parse(String line, boolean ignoreRequirements) {
-            container.getParser().parse(line, ignoreRequirements);
+        public void parse(String line, Mode mode) {
+            container.getParser().parse(line, mode);
         }
 
         @Override
-        public void parse(ParsedLineIterator iterator, boolean ignoreRequirements) {
-            container.getParser().parse(iterator, ignoreRequirements);
+        public void parse(ParsedLineIterator iterator, Mode mode) {
+            container.getParser().parse(iterator, mode);
         }
 
         @Override
@@ -233,8 +233,8 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         }
 
         @Override
-        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
-            container.getParser().populateObject(line, invocationProviders, aeshContext, validate);
+        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, Mode mode) throws CommandLineParserException, OptionValidatorException {
+            container.getParser().populateObject(line, invocationProviders, aeshContext, mode);
         }
 
         @Override

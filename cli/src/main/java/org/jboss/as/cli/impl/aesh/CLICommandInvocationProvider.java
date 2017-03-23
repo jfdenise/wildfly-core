@@ -21,37 +21,16 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
-import org.aesh.command.Shell;
-import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.invocation.CommandInvocationProvider;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.impl.ReadlineConsole;
 /**
  *
  * @author jdenise@redhat.com
  */
-public class CLICommandInvocationProvider implements CommandInvocationProvider<CLICommandInvocation> {
-
-    private final ReadlineConsole console;
-    private final CommandContext ctx;
-    private final CLICommandRegistry registry;
-    private final Shell shell;
-
-    CLICommandInvocationProvider(CommandContext ctx, CLICommandRegistry registry, ReadlineConsole console, Shell shell) {
-        this.ctx = ctx;
-        this.registry = registry;
-        this.console = console;
-        this.shell = shell;
-    }
+public class CLICommandInvocationProvider implements CommandInvocationProvider {
 
     @Override
-    public CLICommandInvocation enhanceCommandInvocation(CommandInvocation commandInvocation) {
-        return new CLICommandInvocationImpl(ctx, registry, commandInvocation, console, shell);
-    }
-
-    CLICommandInvocation newCommandInvocation(CommandInvocation commandInvocation, CommandContext context) {
-        return new CLICommandInvocationImpl(context, registry,
-                commandInvocation, console, shell);
+    public CommandInvocation enhanceCommandInvocation(CommandInvocation commandInvocation) {
+        return commandInvocation;
     }
 }

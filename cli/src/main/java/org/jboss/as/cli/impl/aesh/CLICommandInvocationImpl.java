@@ -21,13 +21,12 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.aesh.command.Executor;
 import org.aesh.readline.Prompt;
 import org.aesh.readline.action.KeyAction;
-import org.aesh.terminal.Key;
-import org.aesh.tty.Size;
 import org.aesh.util.Parser;
 import org.aesh.command.impl.parser.CommandLineParser;
 import org.aesh.command.validator.CommandValidatorException;
@@ -36,8 +35,14 @@ import org.aesh.console.AeshContext;
 import org.aesh.command.Shell;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
+import org.aesh.command.CommandRuntime;
+import org.aesh.command.impl.operator.OutputDelegate;
 import org.aesh.command.invocation.CommandInvocation;
+import org.aesh.command.invocation.CommandInvocationConfiguration;
 import org.aesh.command.parser.CommandLineParserException;
+import org.aesh.readline.terminal.Key;
+import org.aesh.terminal.tty.Size;
+import org.aesh.util.Config;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.ReadlineConsole;
@@ -112,18 +117,20 @@ class CLICommandInvocationImpl implements CLICommandInvocation {
     }
 
     private final CommandContext ctx;
-    private final CommandInvocation original;
     private final CLICommandRegistry registry;
     private final Shell shell;
     private final ReadlineConsole console;
-
+    private final CommandInvocationConfiguration config;
+    private final CommandRuntime runtime;
     CLICommandInvocationImpl(CommandContext ctx, CLICommandRegistry registry,
-            CommandInvocation original, ReadlineConsole console, Shell shell) {
+            ReadlineConsole console, Shell shell, CommandRuntime runtime,
+            CommandInvocationConfiguration config) {
         this.ctx = ctx;
         this.registry = registry;
-        this.original = original;
         this.console = console;
         this.shell = shell != null ? shell : new NonInteractiveShell();
+        this.runtime = runtime;
+        this.config = config;
     }
 
     @Override
@@ -177,7 +184,7 @@ class CLICommandInvocationImpl implements CLICommandInvocation {
 
     @Override
     public AeshContext getAeshContext() {
-        return original.getAeshContext();
+        return config.getAeshContext();
     }
 
     @Override
@@ -219,25 +226,52 @@ class CLICommandInvocationImpl implements CLICommandInvocation {
             CommandLineParserException,
             OptionValidatorException,
             CommandValidatorException,
-            CommandException, InterruptedException {
-        original.executeCommand(input);
+            CommandException, InterruptedException, IOException {
+        runtime.executeCommand(input);
     }
 
     @Override
     public void print(String msg) {
-        ctx.print(msg);
+        print(msg, false);
     }
 
     @Override
     public void println(String msg) {
-        ctx.printLine(msg);
+        print(msg, true);
+    }
+
+    private void print(String msg, boolean newLine) {
+        if (getConfiguration().getOutputRedirection() != null) {
+            OutputDelegate output = getConfiguration().getOutputRedirection();
+            try {
+                output.write(msg);
+                if (newLine) {
+                    output.write(Config.getLineSeparator());
+                }
+            } catch (IOException ex) {
+                // XXX JFDENISE, we should throw IOException in interface.
+                throw new RuntimeException(ex);
+            }
+        } else {
+            shell.write(msg);
+            if (newLine) {
+                shell.write(Config.getLineSeparator());
+            }
+        }
     }
 
     @Override
     public Executor<? extends CommandInvocation> buildExecutor(String line) throws CommandNotFoundException,
             CommandLineParserException,
             OptionValidatorException,
-            CommandValidatorException {
-        return original.buildExecutor(line);
+            CommandValidatorException,
+            IOException {
+        return runtime.buildExecutor(line);
     }
+
+    @Override
+    public CommandInvocationConfiguration getConfiguration() {
+        return config;
+    }
+
 }

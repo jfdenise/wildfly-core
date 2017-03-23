@@ -21,6 +21,12 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.ServiceLoader;
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.validator.CommandValidatorException;
@@ -33,7 +39,11 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
 import org.aesh.command.CommandRuntime;
+import org.aesh.command.Execution;
+import org.aesh.command.operator.OperatorType;
 import org.aesh.command.parser.CommandLineParserException;
+import org.aesh.io.FileResource;
+import org.aesh.io.Resource;
 import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.Completion;
 import org.jboss.as.cli.CliInitializationException;
@@ -53,30 +63,66 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  */
 public class AeshCommands {
 
+    private class BridgedContext implements AeshContext {
+
+        private final CommandContext ctx;
+
+        private BridgedContext(CommandContext ctx) {
+            this.ctx = ctx;
+        }
+
+        @Override
+        public Resource getCurrentWorkingDirectory() {
+            return new FileResource(ctx.getCurrentDir());
+        }
+
+        @Override
+        public void setCurrentWorkingDirectory(Resource cwd) {
+            ctx.setCurrentDir(new File(cwd.getAbsolutePath()));
+        }
+    }
+
     public class CLIExecutor {
 
-        private final Executor executor;
+        private final List<CLIExecution> executions;
 
-        CLIExecutor(Executor executor) {
-            this.executor = executor;
+        CLIExecutor(Executor<CLICommandInvocation> executor) {
+            List<CLIExecution> lst = new ArrayList<>();
+            for (Execution<CLICommandInvocation> ex : executor.getExecutions()) {
+                lst.add(new CLIExecution(ex));
+            }
+            executions = Collections.unmodifiableList(lst);
+        }
+
+        public List<CLIExecution> getExecutions() {
+            return executions;
+        }
+    }
+
+    public class CLIExecution {
+
+        private final Execution execution;
+
+        CLIExecution(Execution execution) {
+            this.execution = execution;
         }
 
         public BatchCompliantCommand getBatchCompliant() {
-            if (executor.getExecutable() instanceof BatchCompliantCommand) {
-                return (BatchCompliantCommand) executor.getExecutable();
+            if (execution.getCommand() instanceof BatchCompliantCommand) {
+                return (BatchCompliantCommand) execution.getCommand();
             }
             return null;
         }
 
         public DMRCommand getDMRCompliant() {
-            if (executor.getExecutable() instanceof DMRCommand) {
-                return (DMRCommand) executor.getExecutable();
+            if (execution.getCommand() instanceof DMRCommand) {
+                return (DMRCommand) execution.getCommand();
             }
             return null;
         }
     }
 
-    private final CLICommandInvocationProvider invocationProvider;
+    private final CLICommandInvocationBuilder invocationBuilder;
     private final CommandRuntime<CLICommandInvocation> processor;
     private final CLICommandRegistry registry;
     private final CLICompletionHandler completionHandler;
@@ -91,12 +137,15 @@ public class AeshCommands {
         if (console != null) {
             shell = new ReadlineShell(console);
         }
-        invocationProvider = new CLICommandInvocationProvider(ctx, registry, console, shell);
+        invocationBuilder = new CLICommandInvocationBuilder(ctx, registry, console, shell);
         AeshCommandRuntimeBuilder builder = AeshCommandRuntimeBuilder.builder();
         processor = builder.
                 commandRegistry(registry).
+                operators(EnumSet.of(OperatorType.REDIRECT_OUT, OperatorType.END)).
+                parseBrackets(true).
+                aeshContext(new BridgedContext(ctx)).
                 commandActivatorProvider(new CLICommandActivatorProvider(ctx)).
-                commandInvocationProvider(invocationProvider).
+                commandInvocationBuilder(invocationBuilder).
                 completerInvocationProvider(new CLICompleterInvocationProvider(ctx, registry)).
                 converterInvocationProvider(new CLIConverterInvocationProvider(ctx)).
                 optionActivatorProvider(new CLIOptionActivatorProvider(ctx)).
@@ -125,7 +174,7 @@ public class AeshCommands {
         processor.complete(co);
     }
 
-    public CLIExecutor newExecutor(String line) throws CommandLineException {
+    public CLIExecutor newExecutor(String line) throws CommandLineException, IOException {
         CLIExecutor exe;
         try {
             exe = new CLIExecutor(processor.buildExecutor(line));
@@ -137,15 +186,12 @@ public class AeshCommands {
         return exe;
     }
 
-    public ExecutableBuilder newExecutableBuilder(CLIExecutor exe) {
-        Executor executor = exe.executor;
+    public ExecutableBuilder newExecutableBuilder(CLIExecution exe) {
         return (CommandContext ctx) -> {
-            CLICommandInvocation ci = invocationProvider.
-                    newCommandInvocation(executor.getCommandInvocation(), ctx);
             return () -> {
                 try {
-                    executor.getExecutable().execute(ci);
-                } catch (CommandException ex) {
+                    exe.execution.execute();
+                } catch (CommandException | CommandValidatorException ex) {
                     throw new CommandLineException(ex.getLocalizedMessage());
                 } catch (InterruptedException ex) {
                     Thread.interrupted();

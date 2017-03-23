@@ -137,8 +137,8 @@ public class CLICommandRegistry implements CommandRegistry {
         }
 
         @Override
-        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, boolean validate) throws CommandLineParserException, OptionValidatorException {
-            parser.populateObject(line, invocationProviders, aeshContext, validate);
+        public void populateObject(String line, InvocationProviders invocationProviders, AeshContext aeshContext, Mode mode) throws CommandLineParserException, OptionValidatorException {
+            parser.populateObject(line, invocationProviders, aeshContext, mode);
         }
 
         @Override
@@ -147,13 +147,13 @@ public class CLICommandRegistry implements CommandRegistry {
         }
 
         @Override
-        public void parse(String line, boolean ignoreRequirements) {
-            parser.parse(line, ignoreRequirements);
+        public void parse(String line, Mode mode) {
+            parser.parse(line, mode);
         }
 
         @Override
-        public void parse(ParsedLineIterator iterator, boolean ignoreRequirements) {
-            parser.parse(iterator, ignoreRequirements);
+        public void parse(ParsedLineIterator iterator, Mode mode) {
+            parser.parse(iterator, mode);
         }
 
         @Override

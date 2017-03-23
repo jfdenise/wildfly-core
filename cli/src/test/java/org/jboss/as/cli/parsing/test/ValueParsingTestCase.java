@@ -53,7 +53,7 @@ public class ValueParsingTestCase {
             String value = "--headers={ax=true; rollout ( server_group ) toto;}";
             String others = " --doit";
             String cmdLine = value + others;
-            ParsedLine line = LineParser.parseLine(cmdLine);
+            ParsedLine line = new LineParser().parseLine(cmdLine);
             ParsedLineIterator iterator = line.iterator();
             new HeadersParser().parse(iterator, null);
             char c = iterator.pollChar();
@@ -64,7 +64,7 @@ public class ValueParsingTestCase {
 
         {
             String value = "--headers={ax=true; rollout ( server_group ) toto;}";
-            ParsedLine line = LineParser.parseLine(value);
+            ParsedLine line = new LineParser().parseLine(value);
             ParsedLineIterator iterator = line.iterator();
             new HeadersParser().parse(iterator, null);
             assertTrue("Iterator is not finished", iterator.finished());
@@ -117,7 +117,7 @@ public class ValueParsingTestCase {
             String value = "--list=[{az=10,ax={}, az=[{},{},{}]}, {az=10,ax={}, az=[{},{},{}]}]";
             String others = " --doit";
             String cmdLine = value + others;
-            ParsedLine line = LineParser.parseLine(cmdLine);
+            ParsedLine line = new LineParser().parseLine(cmdLine);
             ParsedLineIterator iterator = line.iterator();
             new CompositeParser().parse(iterator, null);
             char c = iterator.pollChar();

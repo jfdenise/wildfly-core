@@ -27,7 +27,7 @@ import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.Completion;
 import org.aesh.readline.completion.CompletionHandler;
-import org.aesh.terminal.formatting.TerminalString;
+import org.aesh.readline.terminal.formatting.TerminalString;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.logmanager.Logger;

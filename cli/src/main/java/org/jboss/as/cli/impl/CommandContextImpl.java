@@ -153,6 +153,7 @@ import org.jboss.as.cli.handlers.trycatch.TryHandler;
 import org.jboss.as.cli.impl.ReadlineConsole.Settings;
 import org.jboss.as.cli.impl.ReadlineConsole.SettingsBuilder;
 import org.jboss.as.cli.impl.aesh.AeshCommands;
+import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecution;
 import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecutor;
 import org.jboss.as.cli.impl.aesh.commands.AttachmentCommand;
 import org.jboss.as.cli.impl.aesh.commands.CommandTimeoutCommand;
@@ -817,38 +818,40 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                         }, line);
                     }
                 } else {
-                    CLIExecutor exec = aeshCommands.newExecutor(line);
-                    if (exec == null) {
+                    CLIExecutor cliExecutor = aeshCommands.newExecutor(line);
+                    if (cliExecutor == null) {
                         throw new CommandLineException("Unexpected command '"
                                 + line + "'. Type 'help --commands' for the list of supported commands.");
                     }
-                    BatchCompliantCommand bc = exec.getBatchCompliant();
-                    if (isBatchMode() && bc != null) {
-                        try {
-                            Batch batch = getBatchManager().getActiveBatch();
-                            BatchCompliantCommand.BatchResponseHandler request = bc.buildBatchResponseHandler(this,
-                                    batch.getAttachments());
+                    for (CLIExecution exec : cliExecutor.getExecutions()) {
+                        BatchCompliantCommand bc = exec.getBatchCompliant();
+                        if (isBatchMode() && bc != null) {
+                            try {
+                                Batch batch = getBatchManager().getActiveBatch();
+                                BatchCompliantCommand.BatchResponseHandler request = bc.buildBatchResponseHandler(this,
+                                        batch.getAttachments());
 
-                            // Wrap into legacy API.
-                            ResponseHandler rh = null;
-                            if (request != null) {
-                                rh = (ModelNode step, OperationResponse response) -> {
-                                    request.handleResponse(step, response);
-                                };
+                                // Wrap into legacy API.
+                                ResponseHandler rh = null;
+                                if (request != null) {
+                                    rh = (ModelNode step, OperationResponse response) -> {
+                                        request.handleResponse(step, response);
+                                    };
+                                }
+                                BatchedCommand batchedCmd
+                                        = new DefaultBatchedCommand(this, line,
+                                                bc.buildRequest(this, batch.getAttachments()), rh);
+                                batch.add(batchedCmd);
+                            } catch (CommandFormatException e) {
+                                throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
                             }
-                            BatchedCommand batchedCmd
-                                    = new DefaultBatchedCommand(this, line,
-                                            bc.buildRequest(this, batch.getAttachments()), rh);
-                            batch.add(batchedCmd);
-                        } catch (CommandFormatException e) {
-                            throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
+                        } else {
+                            execute(() -> {
+                                executor.execute(aeshCommands.newExecutableBuilder(exec),
+                                        timeout, TimeUnit.SECONDS);
+                                return null;
+                            }, line);
                         }
-                    } else {
-                        execute(() -> {
-                            executor.execute(aeshCommands.newExecutableBuilder(exec),
-                                    timeout, TimeUnit.SECONDS);
-                            return null;
-                        }, line);
                     }
                 }
             }
@@ -914,6 +917,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         } catch (CommandLineException ex) {
             throw ex;
         } catch (Exception ex) {
+
+            ex.printStackTrace();
+
             throw new CommandLineException("Exception for " + msg, ex);
         }
     }
@@ -1572,23 +1578,25 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 CLIExecutor exec = null;
                 try {
                     exec = aeshCommands.newExecutor(line);
-                } catch (CommandLineException ex) {
+                } catch (CommandLineException | IOException ex) {
                     throw new OperationFormatException(ex);
                 }
                 if (exec != null) {
-                    BatchCompliantCommand bc = exec.getBatchCompliant();
-                    if (isBatchMode()) {
-                        if (bc == null) {
-                            throw new OperationFormatException("The command is not allowed in a batch.");
+                    for (CLIExecution execution : exec.getExecutions()) {
+                        BatchCompliantCommand bc = execution.getBatchCompliant();
+                        if (isBatchMode()) {
+                            if (bc == null) {
+                                throw new OperationFormatException("The command is not allowed in a batch.");
+                            }
+                            Batch batch = getBatchManager().getActiveBatch();
+                            return new HandledRequest(bc.buildRequest(this, batch.getAttachments()), null);
+                        } else {
+                            DMRCommand dmr = execution.getDMRCompliant();
+                            if (dmr == null) {
+                                throw new OperationFormatException("The command does not translate to an operation request.");
+                            }
+                            return new HandledRequest(dmr.buildRequest(this), null);
                         }
-                        Batch batch = getBatchManager().getActiveBatch();
-                        return new HandledRequest(bc.buildRequest(this, batch.getAttachments()), null);
-                    } else {
-                        DMRCommand dmr = exec.getDMRCompliant();
-                        if (dmr == null) {
-                            throw new OperationFormatException("The command does not translate to an operation request.");
-                        }
-                        return new HandledRequest(dmr.buildRequest(this), null);
                     }
                 }
                 throw new OperationFormatException("No command handler for '" + parsedCmd.getOperationName() + "'.");
