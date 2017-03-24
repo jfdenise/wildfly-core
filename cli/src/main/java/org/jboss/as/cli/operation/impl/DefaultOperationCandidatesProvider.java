@@ -24,8 +24,10 @@ package org.jboss.as.cli.operation.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jboss.as.cli.CommandArgument;
 import org.jboss.as.cli.CommandContext;
@@ -210,6 +212,181 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
         return Util.getOperationNames(ctx, prefix);
     }
 
+    /**
+     * Class that establishes completion visibility of a property.
+     * If all (could be double TAB), hidden properties (due to alternatives/requires)
+     * are shown.
+     */
+    public static class PropertyVisibility {
+        private static final String REQUIRED_PROPERTY = "*";
+        private final Set<String> presentProperties;
+        private final String radical;
+        private final boolean all;
+        private final boolean multiple;
+        private final Set<String> invalidAlternativesProperties = new HashSet<>();
+        private final Set<String> invalidRequiresProperties = new HashSet<>();
+        private final Set<String> requiredRequires = new HashSet<>();
+        private final List<Property> propList;
+        private final Set<String> requires = new HashSet<>();
+        public PropertyVisibility(boolean all, List<Property> propList,
+                Set<String> presentProperties, String radical) {
+            this.all = all;
+            this.propList = propList;
+            this.presentProperties = Collections.unmodifiableSet(presentProperties);
+            this.radical = radical;
+
+            for (Property prop : propList) {
+                //Existing properties.
+                if (presentProperties.contains(prop.getName())) {
+                    // Is it part of an alternatives?
+                    // If yes, then other alternatives and all associated requires must be hidden.
+                    if (prop.getValue().hasDefined(Util.ALTERNATIVES)) {
+                        List<ModelNode> alternatives = prop.getValue().get(Util.ALTERNATIVES).asList();
+                        for (ModelNode mn : alternatives) {
+                            invalidAlternativesProperties.add(mn.asString());
+                            //Iterate all properties to retrieve requires to hide.
+                            for (Property pp : propList) {
+                                if (pp.getName().equals(mn.asString())) {
+                                    if (pp.getValue().hasDefined(Util.REQUIRES)) {
+                                        List<ModelNode> requires = pp.getValue().get(Util.REQUIRES).asList();
+                                        for (ModelNode req : requires) {
+                                            if (!this.requires.contains(req.asString())) {
+                                                invalidRequiresProperties.add(req.asString());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // If we have some requires, and one is present,
+                    // others must be hidden.
+                    if (prop.getValue().hasDefined(Util.REQUIRES)) {
+                        List<ModelNode> requires = prop.getValue().get(Util.REQUIRES).asList();
+                        boolean onePresent = false;
+                        for (ModelNode req : requires) {
+                            if (presentProperties.contains(req.asString())) {
+                                onePresent = true;
+                                break;
+                            }
+                        }
+                        if (onePresent) { // disable all other requires.
+                            for (ModelNode req : requires) {
+                                if (!presentProperties.contains(req.asString())) {
+                                    if (!this.requires.contains(req.asString())) {
+                                        invalidRequiresProperties.add(req.asString());
+                                    }
+                                }
+                            }
+                        } else {
+                            // In case some requires are shared with disabled alternatives/requires
+                            // re-enable them.
+                            for (ModelNode req : requires) {
+                                invalidRequiresProperties.remove(req.asString());
+                                requiredRequires.add(req.asString());
+                            }
+                        }
+                    }
+                } else {
+                    // Property is not present. If one of its requires is present, it means
+                    // that is must be exposed.
+                    if (prop.getValue().hasDefined(Util.REQUIRES)) {
+                        List<ModelNode> requires = prop.getValue().get(Util.REQUIRES).asList();
+                        for (ModelNode req : requires) {
+                            if (presentProperties.contains(req.asString())) {
+                                invalidRequiresProperties.remove(prop.getName());
+                                this.requires.add(prop.getName());
+                            }
+                        }
+                    }
+                }
+            }
+
+            // The number of candidates can only be computed once visibility has
+            // been established for all properties.
+            // When a single candidate is to be returned do not decorate name.
+            int i = 0;
+            for (Property prop : propList) {
+                // Check visibility of property.
+                if (canAppearNext(prop)) {
+                    i += 1;
+                }
+                if (i > 1) {
+                    break;
+                }
+            }
+            this.multiple = i > 1;
+        }
+
+        private String getName(Property prop) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(prop.getName());
+            if (multiple && isRequired(prop)) {
+                builder.append(REQUIRED_PROPERTY);
+            }
+
+            return builder.toString();
+        }
+
+        private boolean isRequired(Property prop) {
+            boolean actuallyRequired = (!prop.getValue().hasDefined(Util.REQUIRED)
+                    || (prop.getValue().hasDefined(Util.REQUIRED)
+                    && prop.getValue().get(Util.REQUIRED).asBoolean()));
+            if (actuallyRequired) {
+                return true;
+            }
+            // Could become required if is a requires of an existing property/
+            return requiredRequires.contains(prop.getName());
+        }
+
+        public void addCandidates(List<String> candidates) {
+            for (Property prop : propList) {
+                if (canAppearNext(prop)) {
+                    candidates.add(multiple ? getName(prop) : prop.getName());
+                }
+            }
+            Collections.sort(candidates);
+        }
+
+        public boolean hasMore() {
+            for (Property prop : propList) {
+                if (!presentProperties.contains(prop.getName())
+                        && !invalidAlternativesProperties.contains(prop.getName())
+                        && !invalidRequiresProperties.contains(prop.getName())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean canAppearNext(Property prop) {
+            if (presentProperties.contains(prop.getName())) {
+                return false;
+            }
+
+            // If user typed something, complete if possible.
+            // Invalid properties will be exposed in this case.
+            if (radical != null && !radical.isEmpty()) {
+                return prop.getName().startsWith(radical);
+            }
+
+            // All, return all remaining.
+            if (all) {
+                return true;
+            }
+
+            // The applied filters.
+            if (invalidAlternativesProperties.contains(prop.getName())) {
+                return false;
+            }
+            if (invalidRequiresProperties.contains(prop.getName())) {
+                return false;
+            }
+
+            return true;
+        }
+    }
+
     @Override
     public List<CommandArgument> getProperties(CommandContext ctx, String operationName, OperationRequestAddress address) {
 
@@ -250,6 +427,14 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
                 }
                 final List<Property> propList = reqProps.asPropertyList();
                 result = new ArrayList<CommandArgument>(propList.size());
+
+                String radical = ctx.getParsedCommandLine().getLastParsedPropertyValue() == null
+                        ? ctx.getParsedCommandLine().getLastParsedPropertyName() : null;
+                final PropertyVisibility visibility
+                        = new PropertyVisibility(false, propList,
+                                ctx.getParsedCommandLine().getPropertyNames(),
+                                radical);
+
                 for(final Property prop : propList) {
                     final CommandLineCompleter completer = getCompleter(globalOpProps, prop, ctx, operationName, address);
                     result.add(new CommandArgument(){
@@ -257,6 +442,11 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
                         @Override
                         public String getFullName() {
                             return argName;
+                        }
+
+                        @Override
+                        public String getDecoratedName() {
+                            return visibility.getName(prop);
                         }
 
                         @Override
@@ -276,7 +466,7 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
 
                         @Override
                         public boolean canAppearNext(CommandContext ctx) throws CommandFormatException {
-                            return !isPresent(ctx.getParsedCommandLine());
+                            return visibility.canAppearNext(prop);
                         }
 
                         @Override
@@ -317,7 +507,8 @@ public class DefaultOperationCandidatesProvider implements OperationCandidatesPr
                         @Override
                         public CommandLineCompleter getValueCompleter() {
                             return completer;
-                        }});
+                        }
+                    });
                 }
             }
         } catch (Exception e) {
