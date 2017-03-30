@@ -48,6 +48,19 @@ import org.junit.Test;
  */
 public class ValueTypeCompletionTestCase {
 
+    private static final String capabilities_prop = "{\n"
+            + "            \"type\" => OBJECT,\n"
+            + "            \"value-type\" => {\n"
+            + "                \"prop1\" => {\n"
+            + "                      \"type\" => STRING,\n"
+            + "                      \"capability-reference\" => \"org.wildfly.security.role-mapper\"\n"
+            + "                },\n"
+            + "                \"prop2\" => {\n"
+            + "                      \"type\" => BOOLEAN\n"
+            + "                }\n"
+            + "            }\n"
+            + "        }";
+
     private static final String bytes_prop = "{\n"
             + "            \"type\" => OBJECT,\n"
             + "            \"value-type\" => {\n"
@@ -1113,13 +1126,20 @@ public class ValueTypeCompletionTestCase {
         try {
             CommandContext ctx = CommandContextFactory.getInstance().newCommandContext();
             ModelNode valueType = ModelNode.fromJSONString(VALUETYPE_WITH_FILES);
-            ValueTypeCompleter completer = new ValueTypeCompleter(valueType);
             {
                 List<String> candidates = new ArrayList<>();
                 String content = "{p1_a=" + radical;
                 new ValueTypeCompleter(valueType).complete(ctx, content, content.length() - 1, candidates);
                 assertTrue(candidates.size() == 1);
                 assertTrue(candidates.get(0).equals(f.getName()));
+            }
+
+            {
+                List<String> candidates = new ArrayList<>();
+                String content = "{p1_a=" + f.getName();
+                new ValueTypeCompleter(valueType).complete(ctx, content, content.length() - 1, candidates);
+                assertTrue(candidates.size() == 1);
+                assertTrue(candidates.get(0).equals(","));
             }
 
             {
@@ -1565,6 +1585,42 @@ public class ValueTypeCompletionTestCase {
         }
 
     }
+
+    @Test
+    public void testCapabilities() throws Exception {
+        final ModelNode propDescr = ModelNode.fromString(capabilities_prop);
+        assertTrue(propDescr.isDefined());
+
+        final List<String> candidates = new ArrayList<>();
+        List<String> capabilities = new ArrayList<>();
+        CapabilityCompleterFactory factory = (OperationRequestAddress address, String staticPart) -> {
+            return new TestCapabilityReferenceCompleter(capabilities);
+        };
+        int i;
+        i = new ValueTypeCompleter(propDescr, factory).complete(null, "{prop1=", 0, candidates);
+        assertEquals(Arrays.asList(), candidates);
+        assertEquals(-1, i);
+
+        capabilities.add("coco");
+        capabilities.add("prefMapper001");
+        capabilities.add("prefMapper002");
+
+        candidates.clear();
+        i = new ValueTypeCompleter(propDescr, factory).complete(null, "{prop1=", 0, candidates);
+        assertEquals(capabilities, candidates);
+        assertEquals(7, i);
+
+        candidates.clear();
+        i = new ValueTypeCompleter(propDescr, factory).complete(null, "{prop1=c", 0, candidates);
+        assertEquals(Arrays.asList("coco"), candidates);
+        assertEquals(7, i);
+
+        candidates.clear();
+        i = new ValueTypeCompleter(propDescr, factory).complete(null, "{prop1=coco", 0, candidates);
+        assertEquals(Arrays.asList(","), candidates);
+        assertEquals(11, i);
+    }
+
     @Test
     public void testListCapabilities() throws Exception {
         final ModelNode propDescr = ModelNode.fromString(role_mapper);
