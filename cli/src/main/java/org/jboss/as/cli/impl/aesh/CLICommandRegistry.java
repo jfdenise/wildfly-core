@@ -180,6 +180,8 @@ public class CLICommandRegistry implements CommandRegistry {
             if (!ctx.isLegacyMode()) {
                 exposedCommands.add(container.getParser().getProcessedCommand().name());
             }
+        } else {
+            exposedCommands.add(container.getParser().getProcessedCommand().name());
         }
         CLICommandContainer cliContainer;
         try {
