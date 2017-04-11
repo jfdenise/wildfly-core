@@ -23,9 +23,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -43,6 +46,10 @@ import org.aesh.readline.completion.Completion;
 import org.aesh.readline.history.FileHistory;
 import org.aesh.terminal.Terminal;
 import org.aesh.readline.terminal.TerminalBuilder;
+import org.aesh.readline.cursor.CursorListener;
+import org.aesh.readline.cursor.Line;
+import org.aesh.readline.cursor.Line.CursorTransactionBuilder;
+import org.aesh.readline.terminal.formatting.Color;
 import org.aesh.terminal.tty.Signal;
 import org.aesh.readline.tty.terminal.TerminalConnection;
 import org.aesh.util.ANSI;
@@ -60,6 +67,95 @@ import org.jboss.logmanager.Logger;
  * @author jdenise@redhat.com
  */
 public class ReadlineConsole implements Console {
+
+    private static final class CharacterMatcher {
+
+        private static final List<Character> endSeparators = new ArrayList<>();
+        private static final Map<Character, Character> endStartSeparators = new HashMap<>();
+
+        static {
+            endSeparators.add('}');
+            endSeparators.add(']');
+            endSeparators.add(')');
+            endStartSeparators.put('}', '{');
+            endStartSeparators.put(']', '[');
+            endStartSeparators.put(')', '(');
+        }
+
+        private TerminalConnection connection;
+
+        private int lastIndex = -1;
+
+        private Line lastLine;
+
+        private CharacterMatcher(TerminalConnection connection) {
+            this.connection = connection;
+        }
+
+        void clear() {
+            if (lastLine != null) {
+                if (lastIndex >= 0) {
+                    CursorTransactionBuilder builder = lastLine.newCursorTransactionBuilder();
+                    builder.colorize(lastIndex, Color.DEFAULT, Color.DEFAULT, false);
+                    builder.build().run();
+                }
+            }
+        }
+
+        void match(Line line) {
+            lastLine = line;
+            // Clear last colorized character.
+            clear();
+
+            char endChar = (char) line.getCharacterAtCursor();
+            if (endSeparators.contains(endChar)) {
+                String l = line.getLineToCursor();
+                char startChar = endStartSeparators.get(endChar);
+                int index = findStart(l, startChar, endChar);
+                if (index == -1) {
+                    // This one is a mismatch, colorize in red.
+                    lastIndex = colorizeWrongEnd(line);
+                    return;
+                }
+                lastIndex = colorize(line, index);
+            } else {
+                lastIndex = -1;
+            }
+        }
+
+        private int findStart(String l, char start, char end) {
+            int endCount = 0;
+            char[] chars = l.toCharArray();
+            for (int i = chars.length - 1; i >= 0; i--) {
+                char c = chars[i];
+                if (c == start) {
+                    if (endCount == 0) {
+                        return i;
+                    } else {
+                        endCount--;
+                    }
+                }
+                if (c == end) {
+                    endCount += 1;
+                }
+            }
+            return -1;
+        }
+
+        private int colorize(Line line, int startIndex) {
+            CursorTransactionBuilder builder = line.newCursorTransactionBuilder();
+            builder.colorize(startIndex, Color.DEFAULT, Color.GREEN, true);
+            builder.build().run();
+            return startIndex;
+        }
+
+        private int colorizeWrongEnd(Line line) {
+            CursorTransactionBuilder builder = line.newCursorTransactionBuilder();
+            builder.colorize(line.getCurrentCharacterIndex(), Color.RED, Color.DEFAULT, true);
+            builder.build().run();
+            return line.getCurrentCharacterIndex();
+        }
+    }
 
     private static final Logger LOG = Logger.getLogger(ReadlineConsole.class.getName());
 
@@ -116,6 +212,7 @@ public class ReadlineConsole implements Console {
 
         private final Consumer<int[]> interceptor;
         private Thread connectionThread;
+
         CLITerminalConnection(Terminal terminal) {
             super(terminal);
             interceptor = (int[] ints) -> {
@@ -153,7 +250,7 @@ public class ReadlineConsole implements Console {
 
         @Override
         public void close() {
-            if(connectionThread !=null) {
+            if (connectionThread != null) {
                 connectionThread.interrupt();
             }
             super.close();
@@ -213,7 +310,7 @@ public class ReadlineConsole implements Console {
             return disableHistory;
         }
 
-         /**
+        /**
          * @return the outputRedefined
          */
         @Override
@@ -366,6 +463,14 @@ public class ReadlineConsole implements Console {
     private final AliasManager aliasManager;
     private final List<Function<String, Optional<String>>> preProcessors = new ArrayList<>();
 
+    private final CharacterMatcher matcher;
+    private final CursorListener cursorListener = new CursorListener() {
+        @Override
+        public void moved(Line line) {
+            matcher.match(line);
+        }
+    };
+
     ReadlineConsole(CommandContext cmdCtx, Settings settings) throws IOException {
         this.cmdCtx = cmdCtx;
         this.settings = settings;
@@ -387,6 +492,7 @@ public class ReadlineConsole implements Console {
         preProcessors.add(aliasPreProcessor);
         completions.add(new AliasCompletion(aliasManager));
         readline = new Readline();
+        matcher = new CharacterMatcher(connection);
     }
 
     @Override
@@ -414,6 +520,7 @@ public class ReadlineConsole implements Console {
                 .output(stream)
                 .nativeSignals(true)
                 .name("CLI Terminal")
+                .charset(Charset.defaultCharset())
                 // We ask for a system terminal only if the Output has not been redefined.
                 // If the IO context is redirected ( <, or remote process usage),
                 // then, whatever the output being redefined or not, the terminal
@@ -426,7 +533,7 @@ public class ReadlineConsole implements Console {
         }
         c.setCloseHandler((t) -> {
             if (LOG.isLoggable(Level.FINER)) {
-                LOG.finer("Calling clasHandler");
+                LOG.finer("Calling closeHandler");
             }
             printNewLine();
         });
@@ -435,6 +542,8 @@ public class ReadlineConsole implements Console {
                 if (LOG.isLoggable(Level.FINER)) {
                     LOG.finer("Calling InterruptHandler");
                 }
+                // Prior to send a \n clean the current line.
+                matcher.clear();
                 c.write(Config.getLineSeparator());
                 settings.getInterrupt().run();
             }
@@ -704,7 +813,7 @@ public class ReadlineConsole implements Console {
                         loop();
                     }
                 });
-            }, completions, preProcessors, readlineHistory);
+            }, completions, preProcessors, readlineHistory, cursorListener);
         }
     }
 
