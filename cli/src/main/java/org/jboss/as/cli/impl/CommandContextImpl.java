@@ -132,7 +132,6 @@ import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.cli.handlers.batch.BatchClearHandler;
 import org.jboss.as.cli.handlers.batch.BatchDiscardHandler;
 import org.jboss.as.cli.handlers.batch.BatchEditLineHandler;
-import org.jboss.as.cli.handlers.batch.BatchHandler;
 import org.jboss.as.cli.handlers.batch.BatchHoldbackHandler;
 import org.jboss.as.cli.handlers.batch.BatchListHandler;
 import org.jboss.as.cli.handlers.batch.BatchMoveLineHandler;
@@ -160,6 +159,7 @@ import org.jboss.as.cli.impl.aesh.commands.CommandTimeoutCommand;
 import org.jboss.as.cli.impl.aesh.commands.ConnectCommand;
 import org.jboss.as.cli.impl.aesh.commands.HelpCommand;
 import org.jboss.as.cli.impl.aesh.commands.QuitCommand;
+import org.jboss.as.cli.impl.aesh.commands.batch.BatchCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentCommand;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
@@ -503,6 +503,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         try {
             aeshCommands.getRegistry().addCommand(new AttachmentCommand());
+            aeshCommands.getRegistry().addCommand(new BatchCommand());
             aeshCommands.getRegistry().addCommand(new CommandTimeoutCommand());
             aeshCommands.getRegistry().addCommand(new ConnectCommand());
             DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
@@ -539,16 +540,17 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         // deployment-overlay
         cmdRegistry.registerHandler(new DeploymentOverlayHandler(this), "deployment-overlay");
 
-        // batch commands
-        cmdRegistry.registerHandler(new BatchHandler(this), "batch");
-        cmdRegistry.registerHandler(new BatchDiscardHandler(), "discard-batch");
-        cmdRegistry.registerHandler(new BatchListHandler(), "list-batch");
-        cmdRegistry.registerHandler(new BatchHoldbackHandler(), "holdback-batch");
-        cmdRegistry.registerHandler(new BatchRunHandler(this), "run-batch");
-        cmdRegistry.registerHandler(new BatchClearHandler(), "clear-batch");
-        cmdRegistry.registerHandler(new BatchRemoveLineHandler(), "remove-batch-line");
-        cmdRegistry.registerHandler(new BatchMoveLineHandler(), "move-batch-line");
-        cmdRegistry.registerHandler(new BatchEditLineHandler(), "edit-batch-line");
+        // batch legacy bridge
+        // We can't register the batch legacy command, name clash with new command.
+        //cmdRegistry.registerHandler(new BatchHandler(this), isLegacyMode(), "batch");
+        cmdRegistry.registerHandler(new BatchDiscardHandler(), isLegacyMode(), "discard-batch");
+        cmdRegistry.registerHandler(new BatchListHandler(), isLegacyMode(), "list-batch");
+        cmdRegistry.registerHandler(new BatchHoldbackHandler(), isLegacyMode(), "holdback-batch");
+        cmdRegistry.registerHandler(new BatchRunHandler(this), isLegacyMode(), "run-batch");
+        cmdRegistry.registerHandler(new BatchClearHandler(), isLegacyMode(), "clear-batch");
+        cmdRegistry.registerHandler(new BatchRemoveLineHandler(), isLegacyMode(), "remove-batch-line");
+        cmdRegistry.registerHandler(new BatchMoveLineHandler(), isLegacyMode(), "move-batch-line");
+        cmdRegistry.registerHandler(new BatchEditLineHandler(), isLegacyMode(), "edit-batch-line");
 
         // try-catch
         cmdRegistry.registerHandler(new TryHandler(), "try");
@@ -1584,7 +1586,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 if (exec != null) {
                     for (CLIExecution execution : exec.getExecutions()) {
                         BatchCompliantCommand bc = execution.getBatchCompliant();
-                        if (isBatchMode()) {
+                        if (batchMode) {
                             if (bc == null) {
                                 throw new OperationFormatException("The command is not allowed in a batch.");
                             }
