@@ -106,9 +106,7 @@ import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
 import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
 import org.jboss.as.cli.handlers.ArchiveHandler;
-import org.jboss.as.cli.handlers.ClearScreenHandler;
 import org.jboss.as.cli.handlers.CommandCommandHandler;
-import org.jboss.as.cli.handlers.ConnectionInfoHandler;
 import org.jboss.as.cli.handlers.DeployHandler;
 import org.jboss.as.cli.handlers.DeploymentInfoHandler;
 import org.jboss.as.cli.handlers.DeploymentOverlayHandler;
@@ -119,7 +117,6 @@ import org.jboss.as.cli.handlers.HistoryHandler;
 import org.jboss.as.cli.handlers.LsHandler;
 import org.jboss.as.cli.handlers.OperationRequestHandler;
 import org.jboss.as.cli.handlers.PrefixHandler;
-import org.jboss.as.cli.handlers.PrintWorkingNodeHandler;
 import org.jboss.as.cli.handlers.ReadAttributeHandler;
 import org.jboss.as.cli.handlers.ReadOperationHandler;
 import org.jboss.as.cli.handlers.ReloadHandler;
@@ -128,7 +125,6 @@ import org.jboss.as.cli.handlers.ShutdownHandler;
 import org.jboss.as.cli.handlers.ResponseHandler;
 import org.jboss.as.cli.handlers.UndeployHandler;
 import org.jboss.as.cli.handlers.UnsetVariableHandler;
-import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.cli.handlers.batch.BatchClearHandler;
 import org.jboss.as.cli.handlers.batch.BatchDiscardHandler;
 import org.jboss.as.cli.handlers.batch.BatchEditLineHandler;
@@ -155,10 +151,14 @@ import org.jboss.as.cli.impl.aesh.AeshCommands;
 import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecution;
 import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecutor;
 import org.jboss.as.cli.impl.aesh.commands.AttachmentCommand;
+import org.jboss.as.cli.impl.aesh.commands.ClearCommand;
 import org.jboss.as.cli.impl.aesh.commands.CommandTimeoutCommand;
 import org.jboss.as.cli.impl.aesh.commands.ConnectCommand;
+import org.jboss.as.cli.impl.aesh.commands.ConnectionInfoCommand;
 import org.jboss.as.cli.impl.aesh.commands.HelpCommand;
+import org.jboss.as.cli.impl.aesh.commands.PwdCommand;
 import org.jboss.as.cli.impl.aesh.commands.QuitCommand;
+import org.jboss.as.cli.impl.aesh.commands.VersionCommand;
 import org.jboss.as.cli.impl.aesh.commands.batch.BatchCommand;
 import org.jboss.as.cli.impl.aesh.commands.deployment.DeploymentCommand;
 import org.jboss.as.cli.operation.CommandLineParser;
@@ -504,28 +504,32 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         try {
             aeshCommands.getRegistry().addCommand(new AttachmentCommand());
             aeshCommands.getRegistry().addCommand(new BatchCommand());
+            aeshCommands.getRegistry().addCommand(new ClearCommand());
             aeshCommands.getRegistry().addCommand(new CommandTimeoutCommand());
             aeshCommands.getRegistry().addCommand(new ConnectCommand());
+            aeshCommands.getRegistry().addCommand(new ConnectionInfoCommand());
             DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
             aeshCommands.getRegistry().addCommand(new HelpCommand(aeshCommands.getRegistry(),
                     cmdRegistry));
+            aeshCommands.getRegistry().addCommand(new PwdCommand());
             aeshCommands.getRegistry().addCommand(new QuitCommand());
+            aeshCommands.getRegistry().addCommand(new VersionCommand());
         } catch (CommandLineException ex) {
             throw new CliInitializationException(ex);
         }
 
         cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
-        cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
+        //cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
         cmdRegistry.registerHandler(new CommandCommandHandler(cmdRegistry), "command");
         cmdRegistry.registerHandler(new EchoDMRHandler(), "echo-dmr");
         cmdRegistry.registerHandler(new HistoryHandler(), "history");
         cmdRegistry.registerHandler(new LsHandler(this), "ls");
         cmdRegistry.registerHandler(new ASModuleHandler(this), "module");
-        cmdRegistry.registerHandler(new PrintWorkingNodeHandler(), "pwd", "pwn");
+        //cmdRegistry.registerHandler(new PrintWorkingNodeHandler(), "pwd", "pwn");
         cmdRegistry.registerHandler(new ReadAttributeHandler(this), "read-attribute");
         cmdRegistry.registerHandler(new ReadOperationHandler(this), "read-operation");
-        cmdRegistry.registerHandler(new VersionHandler(), "version");
-        cmdRegistry.registerHandler(new ConnectionInfoHandler(), "connection-info");
+        //cmdRegistry.registerHandler(new VersionHandler(), "version");
+        //cmdRegistry.registerHandler(new ConnectionInfoHandler(), "connection-info");
 
         // variables
         cmdRegistry.registerHandler(new SetVariableHandler(), "set");

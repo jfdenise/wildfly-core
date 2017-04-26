@@ -62,6 +62,7 @@ import org.wildfly.core.cli.command.DMRCommand;
  *
  * @author Alexey Loubyansky
  */
+@Deprecated
 public class DeployHandler extends DeploymentHandler {
 
     private final ArgumentWithoutValue force;
