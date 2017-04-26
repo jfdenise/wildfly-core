@@ -27,6 +27,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
@@ -35,7 +36,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = BatchCommand.DISCARD, description = "", activator = BatchActivator.class)
-public class BatchDiscardCommand implements Command<CLICommandInvocation> {
+public class BatchDiscardCommand implements Command<CLICommandInvocation>, LegacyBridge {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
@@ -56,7 +57,8 @@ public class BatchDiscardCommand implements Command<CLICommandInvocation> {
         return execute(commandInvocation.getCommandContext());
     }
 
-    public static CommandResult execute(CommandContext ctx)
+    @Override
+    public CommandResult execute(CommandContext ctx)
             throws CommandException {
         boolean result = ctx.getBatchManager().discardActiveBatch();
         if (!result) {

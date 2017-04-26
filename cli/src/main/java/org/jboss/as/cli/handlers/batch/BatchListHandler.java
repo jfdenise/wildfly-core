@@ -52,7 +52,7 @@ public class BatchListHandler extends CommandHandlerWithHelp {
     @Override
     protected void doHandle(CommandContext ctx) throws CommandFormatException {
         try {
-            BatchListCommand.execute(ctx);
+            new BatchListCommand().execute(ctx);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());
         }

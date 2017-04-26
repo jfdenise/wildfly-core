@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.handlers.batch;
 
+import java.util.ArrayList;
 import org.aesh.command.CommandException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -61,7 +62,10 @@ public class BatchHoldbackHandler extends CommandHandlerWithHelp {
             name = args.getOtherProperties().get(0);
         }
         try {
-            BatchHoldbackCommand.execute(ctx, name);
+            BatchHoldbackCommand cmd = new BatchHoldbackCommand();
+            cmd.name = new ArrayList<>();
+            cmd.name.add(name);
+            cmd.execute(ctx);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());
         }

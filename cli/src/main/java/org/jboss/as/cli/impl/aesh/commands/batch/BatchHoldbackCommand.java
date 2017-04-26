@@ -46,7 +46,7 @@ public class BatchHoldbackCommand implements Command<CLICommandInvocation> {
 
     // XXX JFDENISE AESH-401
     @Arguments() // required = true
-    private List<String> name;
+    public List<String> name;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -63,12 +63,13 @@ public class BatchHoldbackCommand implements Command<CLICommandInvocation> {
                 return res;
             }
         }
-        String n = (name == null || name.isEmpty()) ? null : name.get(0);
-        return execute(commandInvocation.getCommandContext(), n);
+
+        return execute(commandInvocation.getCommandContext());
     }
 
-    public static CommandResult execute(CommandContext ctx, String batchName)
+    public CommandResult execute(CommandContext ctx)
             throws CommandException {
+        String batchName = (name == null || name.isEmpty()) ? null : name.get(0);
         BatchManager batchManager = ctx.getBatchManager();
         if (!batchManager.isBatchActive()) {
             throw new CommandException("No active batch to holdback.");

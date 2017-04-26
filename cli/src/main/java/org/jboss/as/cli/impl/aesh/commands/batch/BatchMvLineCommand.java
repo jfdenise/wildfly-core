@@ -29,6 +29,7 @@ import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
@@ -37,17 +38,17 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = BatchCommand.MOVE_LINE, description = "", activator = BatchActivator.class)
-public class BatchMvLineCommand implements Command<CLICommandInvocation> {
+public class BatchMvLineCommand implements Command<CLICommandInvocation>, LegacyBridge {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
     protected boolean help;
 
     @Option(name="current-line-number", hasValue = true, required = true)
-    private Integer currentLine;
+    public Integer currentLine;
 
     @Option(name="new-line-number", hasValue = true, required = true)
-    private Integer newLine;
+    public Integer newLine;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -64,10 +65,11 @@ public class BatchMvLineCommand implements Command<CLICommandInvocation> {
                 return res;
             }
         }
-        return execute(commandInvocation.getCommandContext(), currentLine, newLine);
+        return execute(commandInvocation.getCommandContext());
     }
 
-    public static CommandResult execute(CommandContext ctx, Integer currentLine, Integer newLine)
+    @Override
+    public CommandResult execute(CommandContext ctx)
             throws CommandException {
         BatchManager batchManager = ctx.getBatchManager();
 

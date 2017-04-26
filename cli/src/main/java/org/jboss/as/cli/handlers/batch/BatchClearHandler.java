@@ -54,7 +54,7 @@ public class BatchClearHandler extends CommandHandlerWithHelp {
     protected void doHandle(CommandContext ctx) throws CommandFormatException {
 
         try {
-            BatchClearCommand.execute(ctx);
+            new BatchClearCommand().execute(ctx);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());
         }

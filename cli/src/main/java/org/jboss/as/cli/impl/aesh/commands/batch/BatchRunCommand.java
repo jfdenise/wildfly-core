@@ -37,6 +37,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.jboss.as.cli.impl.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -54,7 +55,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = BatchCommand.RUN, description = "", activator = BatchActivator.class)
-public class BatchRunCommand implements Command<CLICommandInvocation>, DMRCommand {
+public class BatchRunCommand implements Command<CLICommandInvocation>, DMRCommand, LegacyBridge {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
@@ -82,6 +83,7 @@ public class BatchRunCommand implements Command<CLICommandInvocation>, DMRComman
         return execute(commandInvocation.getCommandContext());
     }
 
+    @Override
     public CommandResult execute(CommandContext context)
             throws CommandException {
         boolean failed = false;

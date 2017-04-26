@@ -41,7 +41,6 @@ import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.dmr.ModelNode;
-import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
 
 /**
@@ -51,7 +50,7 @@ import org.wildfly.core.cli.command.aesh.FileCompleter;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-file", description = "", activator = ControlledCommandActivator.class)
-public class DeployFileCommand extends AbstractDeployContentCommand implements DMRCommand {
+public class DeployFileCommand extends AbstractDeployContentCommand {
 
     @Option(hasValue = false, activator = UnmanagedActivator.class, required = false)
     public boolean unmanaged;

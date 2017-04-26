@@ -31,6 +31,7 @@ import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
@@ -39,7 +40,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = BatchCommand.REMOVE_LINE, description = "", activator = BatchActivator.class)
-public class BatchRmLineCommand implements Command<CLICommandInvocation> {
+public class BatchRmLineCommand implements Command<CLICommandInvocation>, LegacyBridge {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
@@ -47,7 +48,7 @@ public class BatchRmLineCommand implements Command<CLICommandInvocation> {
 
     // XXX JFDENISE AESH-401
     @Arguments(activator = HideOptionActivator.class)
-    List<Integer> altLine;
+    public List<Integer> line;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -57,19 +58,20 @@ public class BatchRmLineCommand implements Command<CLICommandInvocation> {
             return CommandResult.SUCCESS;
         }
 
-        if (altLine == null || altLine.isEmpty()) {
+        if (line == null || line.isEmpty()) {
             //Legacy compliance
             CommandResult res = BatchCommand.handle(commandInvocation, BatchCommand.REMOVE_LINE);
             if (res != null) {
                 return res;
             }
         }
-        Integer line = (altLine == null || altLine.isEmpty()) ? null : altLine.get(0);
-        return execute(commandInvocation.getCommandContext(), line);
+        return execute(commandInvocation.getCommandContext());
     }
 
-    public static CommandResult execute(CommandContext ctx, Integer line)
+    @Override
+    public CommandResult execute(CommandContext ctx)
             throws CommandException {
+        Integer l = (line == null || line.isEmpty()) ? null : line.get(0);
         BatchManager batchManager = ctx.getBatchManager();
         if (!batchManager.isBatchActive()) {
             throw new CommandException("No active batch.");
@@ -84,11 +86,11 @@ public class BatchRmLineCommand implements Command<CLICommandInvocation> {
             throw new CommandException("Missing line number.");
         }
 
-        if (line < 1 || line > batchSize) {
+        if (l < 1 || l > batchSize) {
             throw new CommandException(line + " isn't in range [1.." + batchSize + "].");
         }
 
-        batch.remove(line - 1);
+        batch.remove(l - 1);
         return CommandResult.SUCCESS;
     }
 }

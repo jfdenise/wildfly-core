@@ -39,7 +39,6 @@ import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirement
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.NameActivator;
 import org.jboss.dmr.ModelNode;
-import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
@@ -52,7 +51,7 @@ import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "enable", description = "", activator = ControlledCommandActivator.class)
-public class EnableCommand extends AbstractDeployCommand implements DMRCommand, LegacyBridge {
+public class EnableCommand extends AbstractDeployCommand implements LegacyBridge {
 
     public static class NameCompleter
             implements OptionCompleter<CLICompleterInvocation> {

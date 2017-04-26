@@ -31,6 +31,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
@@ -39,7 +40,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = BatchCommand.LIST, description = "", activator = BatchActivator.class)
-public class BatchListCommand implements Command<CLICommandInvocation> {
+public class BatchListCommand implements Command<CLICommandInvocation>, LegacyBridge {
 
     @Deprecated
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
@@ -59,11 +60,12 @@ public class BatchListCommand implements Command<CLICommandInvocation> {
             return res;
         }
 
-        return execute(commandInvocation);
+        return execute(commandInvocation.getCommandContext());
 
     }
 
-    public static CommandResult execute(CommandContext ctx) throws CommandException {
+    @Override
+    public CommandResult execute(CommandContext ctx) throws CommandException {
         BatchManager batchManager = ctx.getBatchManager();
         if (!batchManager.isBatchActive()) {
             throw new CommandException("No active batch.");

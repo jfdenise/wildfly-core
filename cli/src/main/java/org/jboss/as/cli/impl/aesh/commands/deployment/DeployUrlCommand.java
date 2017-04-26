@@ -39,7 +39,6 @@ import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.NameAc
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.UrlActivator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.dmr.ModelNode;
-import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLIConverterInvocation;
 
 /**
@@ -49,7 +48,7 @@ import org.wildfly.core.cli.command.aesh.CLIConverterInvocation;
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "deploy-url", description = "", activator = ControlledCommandActivator.class)
-public class DeployUrlCommand extends AbstractDeployContentCommand implements DMRCommand {
+public class DeployUrlCommand extends AbstractDeployContentCommand {
 
     public static class UrlConverter implements Converter<URL, CLIConverterInvocation> {
 

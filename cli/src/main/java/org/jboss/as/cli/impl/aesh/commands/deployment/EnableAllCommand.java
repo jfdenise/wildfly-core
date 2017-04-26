@@ -21,33 +21,32 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.deployment;
 
-import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.option.Option;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
+import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
+import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
+import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
-import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
 @CommandDefinition(name = "enable-all", description = "", activator = ControlledCommandActivator.class)
-public class EnableAllCommand extends AbstractDeployCommand implements DMRCommand, LegacyBridge {
+public class EnableAllCommand extends AbstractDeployCommand implements LegacyBridge {
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)

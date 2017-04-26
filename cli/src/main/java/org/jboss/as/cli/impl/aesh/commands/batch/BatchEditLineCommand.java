@@ -71,7 +71,14 @@ public class BatchEditLineCommand implements Command<CLICommandInvocation> {
                 return res;
             }
         }
-        String editedLine = (cmd == null || cmd.isEmpty()) ? null : cmd.get(0);
+        StringBuilder builder = new StringBuilder();
+        String editedLine = null;
+        if (cmd != null) {
+            for (String s : cmd) {
+                builder.append(s).append(" ");
+            }
+            editedLine = builder.toString();
+        }
         return execute(commandInvocation.
                 getCommandContext(), line_number, editedLine);
     }

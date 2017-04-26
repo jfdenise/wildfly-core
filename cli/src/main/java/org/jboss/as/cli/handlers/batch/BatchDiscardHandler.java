@@ -53,7 +53,7 @@ public class BatchDiscardHandler extends CommandHandlerWithHelp {
     protected void doHandle(CommandContext ctx) throws CommandFormatException {
 
         try {
-            BatchDiscardCommand.execute(ctx);
+            new BatchDiscardCommand().execute(ctx);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());
         }
