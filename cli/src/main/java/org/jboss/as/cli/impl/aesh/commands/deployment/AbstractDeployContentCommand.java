@@ -30,6 +30,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
@@ -81,11 +82,11 @@ public abstract class AbstractDeployContentCommand extends AbstractDeployCommand
                     + getCommandName()));
             return CommandResult.SUCCESS;
         }
-        return execute(commandInvocation.getCommandContext());
+        return execute(commandInvocation.getCommandContext(), commandInvocation);
     }
 
     @Override
-    public CommandResult execute(CommandContext ctx)
+    public CommandResult execute(CommandContext ctx, OutputPrinter printer)
             throws CommandException {
         checkArgument();
         try {

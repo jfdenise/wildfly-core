@@ -31,6 +31,7 @@ import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -80,10 +81,10 @@ public class BatchEditLineCommand implements Command<CLICommandInvocation> {
             editedLine = builder.toString();
         }
         return execute(commandInvocation.
-                getCommandContext(), line_number, editedLine);
+                getCommandContext(), line_number, editedLine, commandInvocation);
     }
 
-    public static CommandResult execute(CommandContext ctx, Integer lineNumber, String editedLine)
+    public static CommandResult execute(CommandContext ctx, Integer lineNumber, String editedLine, OutputPrinter printer)
             throws CommandException {
         BatchManager batchManager = ctx.getBatchManager();
 
@@ -121,7 +122,7 @@ public class BatchEditLineCommand implements Command<CLICommandInvocation> {
         try {
             BatchedCommand newCmd = ctx.toBatchedCommand(editedLine);
             batch.set(lineNumber - 1, newCmd);
-            ctx.printLine("#" + lineNumber
+            printer.println("#" + lineNumber
                     + " " + newCmd.getCommand());
         } catch (CommandFormatException ex) {
             throw new CommandException(ex);

@@ -42,7 +42,7 @@ import org.jboss.dmr.ModelNode;
  *
  * @author Alexey Loubyansky
  */
-public interface CommandContext {
+public interface CommandContext extends OutputPrinter {
 
     /**
      * Scope for entries added to context.
@@ -88,7 +88,13 @@ public interface CommandContext {
      *
      * @param message the message to print
      */
+    @Override
     default void print(String message) {
+        printLine(message);
+    }
+
+    @Override
+    default void println(String message) {
         printLine(message);
     }
 
@@ -100,6 +106,7 @@ public interface CommandContext {
      * Prints a collection of strings as columns to the CLI's output.
      * @param col  the collection of strings to print as columns.
      */
+    @Override
     void printColumns(Collection<String> col);
 
     /**

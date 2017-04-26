@@ -40,6 +40,7 @@ import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.CommaSeparatedCompleter;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
@@ -124,11 +125,11 @@ public abstract class AbstractUndeployCommand extends CommandWithPermissions
             commandInvocation.println(commandInvocation.getHelpInfo("deployment " + getCommandName()));
             return CommandResult.SUCCESS;
         }
-        return execute(commandInvocation.getCommandContext());
+        return execute(commandInvocation.getCommandContext(), commandInvocation);
     }
 
     @Override
-    public CommandResult execute(CommandContext ctx)
+    public CommandResult execute(CommandContext ctx, OutputPrinter printer)
             throws CommandException {
         String name = getName();
         if (name == null) {

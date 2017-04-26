@@ -35,6 +35,7 @@ import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.ServerGroupsActivator;
@@ -117,7 +118,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
             if (!Util.isSuccess(result)) {
                 throw new CommandException(Util.getFailureDescription(result));
             }
-            handleResponse(commandInvocation.getCommandContext(), result);
+            handleResponse(commandInvocation.getCommandContext(), result, commandInvocation);
         } catch (IOException e) {
             throw new CommandException("Failed to deploy", e);
         } catch (CommandFormatException ex) {
@@ -273,7 +274,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
         return request;
     }
 
-    public void handleResponse(CommandContext ctx, ModelNode response)
+    public void handleResponse(CommandContext ctx, ModelNode response, OutputPrinter printer)
             throws CommandFormatException {
         try {
             if (!response.hasDefined(Util.RESULT)) {
@@ -357,14 +358,14 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
                         }
                     }
                     if (!table.isEmpty()) {
-                        ctx.printLine(table.toString(true));
+                        printer.println(table.toString(true));
                     }
                 } else {
                     final StrictSizeTable table = new StrictSizeTable(1);
                     table.addCell(Util.NAME, stepResponse.get(Util.NAME).asString());
                     table.addCell(Util.RUNTIME_NAME, stepResponse.
                             get(Util.RUNTIME_NAME).asString());
-                    ctx.printLine(table.toString());
+                    printer.println(table.toString());
                     final SimpleTable groups
                             = new SimpleTable(new String[]{SERVER_GROUP, STATE}, ctx.getTerminalWidth());
                     if (addedServerGroups == null) {
@@ -403,7 +404,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
                             groups.addLine(new String[]{sg, NOT_ADDED});
                         }
                     }
-                    ctx.printLine(groups.toString(true));
+                    printer.println(groups.toString(true));
                 }
             } else {
                 final SimpleTable table = new SimpleTable(new String[]{NAME,
@@ -435,7 +436,7 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
                         result.get(Util.STATUS).asString()});
                 }
                 if (!table.isEmpty()) {
-                    ctx.printLine(table.toString());
+                    printer.println(table.toString());
                 }
             }
         } finally {

@@ -109,7 +109,7 @@ public class BatchCommand implements Command<CLICommandInvocation> {
             return BatchLoadFileCommand.handle(commandInvocation, file);
         }
         if (list) {
-            return new BatchListCommand().execute(commandInvocation.getCommandContext());
+            return new BatchListCommand().execute(commandInvocation.getCommandContext(), commandInvocation);
         }
         if (name != null && !name.isEmpty()) {
             return BatchReactivateCommand.handle(commandInvocation, name);

@@ -34,6 +34,7 @@ import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
@@ -106,11 +107,11 @@ public class EnableCommand extends AbstractDeployCommand implements LegacyBridge
             commandInvocation.println(commandInvocation.getHelpInfo("deployment enable"));
             return CommandResult.SUCCESS;
         }
-        return execute(commandInvocation.getCommandContext());
+        return execute(commandInvocation.getCommandContext(), commandInvocation);
     }
 
     @Override
-    public CommandResult execute(CommandContext ctx)
+    public CommandResult execute(CommandContext ctx, OutputPrinter printer)
             throws CommandException {
         if (name == null || name.isEmpty()) {
             throw new CommandException("No deployment name");

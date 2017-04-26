@@ -33,6 +33,7 @@ import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
@@ -80,11 +81,11 @@ public class BatchRunCommand implements Command<CLICommandInvocation>, DMRComman
         if (res != null) {
             return res;
         }
-        return execute(commandInvocation.getCommandContext());
+        return execute(commandInvocation.getCommandContext(), commandInvocation);
     }
 
     @Override
-    public CommandResult execute(CommandContext context)
+    public CommandResult execute(CommandContext context, OutputPrinter printer)
             throws CommandException {
         boolean failed = false;
         OperationResponse response;
@@ -144,10 +145,10 @@ public class BatchRunCommand implements Command<CLICommandInvocation>, DMRComman
             }
         }
         if (verbose) {
-            context.printLine(response.getResponseNode().toString());
+            printer.println(response.getResponseNode().toString());
         } else {
-            context.printLine("The batch executed successfully");
-            CommandUtil.displayResponseHeaders(context, response.getResponseNode());
+            printer.println("The batch executed successfully");
+            CommandUtil.displayResponseHeaders(printer, response.getResponseNode());
         }
         return CommandResult.SUCCESS;
     }

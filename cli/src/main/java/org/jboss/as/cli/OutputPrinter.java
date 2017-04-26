@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2016, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,20 +19,19 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.core.cli.command.aesh;
+package org.jboss.as.cli;
 
-import org.aesh.command.invocation.CommandInvocation;
-import org.aesh.command.registry.CommandRegistry;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.OutputPrinter;
+import java.util.Collection;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public interface CLICommandInvocation extends CommandInvocation, OutputPrinter {
+public interface OutputPrinter {
 
-    CommandContext getCommandContext();
+    void println(String line);
 
-    CommandRegistry getCommandRegistry();
+    void print(String line);
+
+    void printColumns(Collection<String> col);
 }

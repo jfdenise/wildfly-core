@@ -24,6 +24,7 @@ package org.jboss.as.cli.impl.aesh.commands.deprecated;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.OutputPrinter;
 
 /**
  * Interface exposed to legacy commands.
@@ -32,5 +33,5 @@ import org.jboss.as.cli.CommandContext;
  */
 @Deprecated
 public interface LegacyBridge {
-    CommandResult execute(CommandContext ctx) throws CommandException;
+    CommandResult execute(CommandContext ctx, OutputPrinter printer) throws CommandException;
 }

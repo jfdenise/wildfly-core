@@ -28,6 +28,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -60,12 +61,12 @@ public class BatchListCommand implements Command<CLICommandInvocation>, LegacyBr
             return res;
         }
 
-        return execute(commandInvocation.getCommandContext());
+        return execute(commandInvocation.getCommandContext(), commandInvocation);
 
     }
 
     @Override
-    public CommandResult execute(CommandContext ctx) throws CommandException {
+    public CommandResult execute(CommandContext ctx, OutputPrinter printer) throws CommandException {
         BatchManager batchManager = ctx.getBatchManager();
         if (!batchManager.isBatchActive()) {
             throw new CommandException("No active batch.");
@@ -75,10 +76,10 @@ public class BatchListCommand implements Command<CLICommandInvocation>, LegacyBr
         if (!commands.isEmpty()) {
             for (int i = 0; i < commands.size(); ++i) {
                 BatchedCommand cmd = commands.get(i);
-                ctx.printLine("#" + (i + 1) + ' ' + cmd.getCommand());
+                printer.println("#" + (i + 1) + ' ' + cmd.getCommand());
             }
         } else {
-            ctx.printLine("The batch is empty.");
+            printer.println("The batch is empty.");
         }
         return CommandResult.SUCCESS;
     }

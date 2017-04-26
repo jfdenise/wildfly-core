@@ -100,6 +100,6 @@ public class DeploymentInfoHandler extends BaseOperationCommand {
 
     @Override
     protected void handleResponse(CommandContext ctx, ModelNode response, boolean composite) throws CommandFormatException {
-        ic.handleResponse(ctx, response);
+        ic.handleResponse(ctx, response, ctx);
     }
 }

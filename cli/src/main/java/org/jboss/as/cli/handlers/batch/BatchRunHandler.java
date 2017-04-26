@@ -73,12 +73,12 @@ public class BatchRunHandler extends BaseOperationCommand {
                 cmd.arg = new ArrayList<>();
                 cmd.arg.add(new File(f));
                 cmd.headers = headersNode;
-                cmd.execute(ctx);
+                cmd.execute(ctx, ctx);
             } else {
                 BatchRunCommand cmd = new BatchRunCommand();
                 cmd.headers = headersNode;
                 cmd.verbose = v;
-                cmd.execute(ctx);
+                cmd.execute(ctx, ctx);
             }
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());

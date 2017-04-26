@@ -248,7 +248,7 @@ public class DeployHandler extends DeploymentHandler {
         boolean l = this.l.isPresent(args);
         if (!args.hasProperties() || l) {
             try {
-                ListCommand.listDeployments(ctx, l);
+                ListCommand.listDeployments(ctx, l, ctx);
             } catch (CommandException ex) {
                 throw new CommandLineException(ex.getLocalizedMessage());
             }
@@ -286,7 +286,7 @@ public class DeployHandler extends DeploymentHandler {
                 command.headers = headersNode;
                 command.serverGroups = serverGroups;
                 try {
-                    command.execute(ctx);
+                    command.execute(ctx, ctx);
                 } catch (CommandException ex) {
                     throw new CommandLineException(ex.getLocalizedMessage());
                 }
@@ -300,7 +300,7 @@ public class DeployHandler extends DeploymentHandler {
                 command.name = new ArrayList<>();
                 command.name.add(name);
                 try {
-                    command.execute(ctx);
+                    command.execute(ctx, ctx);
                 } catch (CommandException ex) {
                     throw new CommandLineException(ex.getLocalizedMessage());
                 }
@@ -335,7 +335,7 @@ public class DeployHandler extends DeploymentHandler {
                 c = command;
             }
             try {
-                c.execute(ctx);
+                c.execute(ctx, ctx);
             } catch (CommandException ex) {
                 throw new CommandLineException(ex.getLocalizedMessage());
             }
@@ -362,7 +362,7 @@ public class DeployHandler extends DeploymentHandler {
             command.serverGroups = serverGroups;
 
             try {
-                command.execute(ctx);
+                command.execute(ctx, ctx);
             } catch (CommandException ex) {
                 throw new CommandLineException(ex.getLocalizedMessage());
             }

@@ -26,7 +26,7 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.OutputPrinter;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
@@ -73,9 +73,9 @@ public class AttachmentSaveCommand extends AttachmentDisplayCommand {
     }
 
     @Override
-    AttachmentResponseHandler buildHandler(CommandContext commandContext) {
+    AttachmentResponseHandler buildHandler(OutputPrinter printer) {
         return new AttachmentResponseHandler((String t) -> {
-            commandContext.printLine(t);
+            printer.println(t);
         }, new File(file), true, overwrite);
     }
 }

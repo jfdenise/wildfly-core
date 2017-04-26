@@ -27,6 +27,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -55,11 +56,11 @@ public class BatchClearCommand implements Command<CLICommandInvocation>, LegacyB
         if (res != null) {
             return res;
         }
-        return execute(commandInvocation.getCommandContext());
+        return execute(commandInvocation.getCommandContext(), commandInvocation);
     }
 
     @Override
-    public CommandResult execute(CommandContext ctx)
+    public CommandResult execute(CommandContext ctx, OutputPrinter printer)
             throws CommandException {
         Batch batch = ctx.getBatchManager().getActiveBatch();
         if (batch == null) {

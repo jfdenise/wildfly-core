@@ -205,7 +205,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
                 }
                 lst.sort(null);
                 commandInvocation.println("Commands available in the current context:");
-                commandInvocation.getCommandContext().printColumns(lst);
+                commandInvocation.printColumns(lst);
                 commandInvocation.println("To read a description of a specific command execute 'help <command name>'.");
             } else {
                 commandInvocation.println(commandInvocation.getHelpInfo("help"));

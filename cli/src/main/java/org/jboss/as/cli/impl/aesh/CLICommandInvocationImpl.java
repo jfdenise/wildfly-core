@@ -22,6 +22,7 @@
 package org.jboss.as.cli.impl.aesh;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.aesh.command.Executor;
@@ -238,6 +239,13 @@ class CLICommandInvocationImpl implements CLICommandInvocation {
     @Override
     public void println(String msg) {
         print(msg, true);
+    }
+
+    @Override
+    public void printColumns(Collection<String> col) {
+        for (String item : col) {
+            print(item, true);
+        }
     }
 
     private void print(String msg, boolean newLine) {

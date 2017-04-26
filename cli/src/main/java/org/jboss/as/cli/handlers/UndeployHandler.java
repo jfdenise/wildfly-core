@@ -207,7 +207,7 @@ public class UndeployHandler extends DeploymentHandler {
         final boolean l = this.l.isPresent(args);
         if (!args.hasProperties() || l) {
             try {
-                ListCommand.listDeployments(ctx, l);
+                ListCommand.listDeployments(ctx, l, ctx);
             } catch (CommandException ex) {
                 throw new CommandLineException(ex.getLocalizedMessage());
             }
@@ -224,7 +224,7 @@ public class UndeployHandler extends DeploymentHandler {
                 command.file.add(f);
                 command.script = script.getValue(args);
                 try {
-                    command.execute(ctx);
+                    command.execute(ctx, ctx);
                 } catch (CommandException ex) {
                     throw new CommandLineException(ex.getLocalizedMessage());
                 }
@@ -234,7 +234,7 @@ public class UndeployHandler extends DeploymentHandler {
         final String name = this.name.getValue(ctx.getParsedCommandLine());
         if (name == null) {
             try {
-                ListCommand.listDeployments(ctx, l);
+                ListCommand.listDeployments(ctx, l, ctx);
             } catch (CommandException ex) {
                 throw new CommandLineException(ex.getLocalizedMessage());
             }
@@ -260,7 +260,7 @@ public class UndeployHandler extends DeploymentHandler {
         command.serverGroups = serverGroups.getValue(args);
 
         try {
-            command.execute(ctx);
+            command.execute(ctx, ctx);
         } catch (CommandException ex) {
             throw new CommandLineException(ex.getLocalizedMessage());
         }
