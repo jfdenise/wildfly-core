@@ -99,9 +99,6 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
         } catch (CancellationException e) {
             throw new CommandLineException("The result couldn't be retrieved (perhaps the task was cancelled", e);
         } catch (IOException e) {
-            if (e.getCause() != null && !(e.getCause() instanceof InterruptedException)) {
-                ctx.disconnectController();
-            }
             throw new CommandLineException("Communication error", e);
         } catch (RuntimeException e) {
             throw new CommandLineException("Failed to execute operation.", e);

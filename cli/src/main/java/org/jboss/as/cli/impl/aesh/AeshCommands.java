@@ -50,8 +50,9 @@ import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.impl.CommandContextImpl;
+import org.jboss.as.cli.impl.CommandExecutor;
 import org.jboss.as.cli.impl.CommandExecutor.ExecutableBuilder;
-import org.jboss.as.cli.impl.OperationCommandContainer;
 import org.jboss.as.cli.impl.ReadlineConsole;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.DMRCommand;
@@ -132,11 +133,11 @@ public class AeshCommands {
     private final CLICommandRegistry registry;
     private final CLICompletionHandler completionHandler;
 
-    public AeshCommands(CommandContext ctx, OperationCommandContainer op) throws CliInitializationException {
+    public AeshCommands(CommandContextImpl ctx, OperationCommandContainer op) throws CliInitializationException {
         this(ctx, null, null, op);
     }
 
-    public AeshCommands(CommandContext ctx, Completion<CompleteOperation> delegate,
+    public AeshCommands(CommandContextImpl ctx, Completion<CompleteOperation> delegate,
             ReadlineConsole console, OperationCommandContainer op) throws CliInitializationException {
         registry = new CLICommandRegistry(ctx, op);
         Shell shell = null;
@@ -197,17 +198,25 @@ public class AeshCommands {
     }
 
     public ExecutableBuilder newExecutableBuilder(CLIExecution exe) {
-        return (CommandContext ctx) -> {
-            return () -> {
-                try {
-                    exe.execution.execute();
-                } catch (CommandException | CommandValidatorException ex) {
-                    throw new CommandLineException(ex.getLocalizedMessage());
-                } catch (InterruptedException ex) {
-                    Thread.interrupted();
-                    throw new CommandLineException(ex);
-                }
-            };
+        return new ExecutableBuilder() {
+            @Override
+            public CommandExecutor.Executable build() {
+                return () -> {
+                    try {
+                        exe.execution.execute();
+                    } catch (CommandException | CommandValidatorException ex) {
+                        throw new CommandLineException(ex.getLocalizedMessage());
+                    } catch (InterruptedException ex) {
+                        Thread.interrupted();
+                        throw new CommandLineException(ex);
+                    }
+                };
+            }
+
+            @Override
+            public CommandContext getCommandContext() {
+                return exe.getInvocation().getCommandContext();
+            }
         };
     }
 

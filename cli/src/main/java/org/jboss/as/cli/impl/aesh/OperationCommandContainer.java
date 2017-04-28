@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.jboss.as.cli.impl;
+package org.jboss.as.cli.impl.aesh;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +23,7 @@ import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.impl.CommandContextImpl;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
@@ -159,7 +160,7 @@ public class OperationCommandContainer extends DefaultCommandContainer<Command> 
     private final CommandLineParser<Command> parser = new OperationParser();
     private final CommandContextImpl ctx;
 
-    OperationCommandContainer(CommandContextImpl ctx) {
+    public OperationCommandContainer(CommandContextImpl ctx) {
         this.ctx = ctx;
     }
 

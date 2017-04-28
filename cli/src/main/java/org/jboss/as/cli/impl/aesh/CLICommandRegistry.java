@@ -49,7 +49,6 @@ import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.aesh.commands.deprecated.HasLegacyCounterPart;
-import org.jboss.as.cli.impl.OperationCommandContainer;
 import org.jboss.logging.Logger;
 
 /**

@@ -10,7 +10,7 @@ import org.aesh.command.Shell;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.invocation.CommandInvocationBuilder;
 import org.aesh.command.invocation.CommandInvocationConfiguration;
-import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.ReadlineConsole;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
@@ -21,11 +21,12 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 public class CLICommandInvocationBuilder implements CommandInvocationBuilder<CLICommandInvocation> {
 
     private final ReadlineConsole console;
-    private final CommandContext ctx;
+    private final CommandContextImpl ctx;
     private final CLICommandRegistry registry;
     private final Shell shell;
 
-    CLICommandInvocationBuilder(CommandContext ctx, CLICommandRegistry registry, ReadlineConsole console, Shell shell) {
+    CLICommandInvocationBuilder(CommandContextImpl ctx,
+            CLICommandRegistry registry, ReadlineConsole console, Shell shell) {
         this.ctx = ctx;
         this.registry = registry;
         this.console = console;
@@ -35,7 +36,8 @@ public class CLICommandInvocationBuilder implements CommandInvocationBuilder<CLI
     @Override
     public CommandInvocation build(CommandRuntime<CLICommandInvocation> runtime,
             CommandInvocationConfiguration configuration) {
-        return new CLICommandInvocationImpl(ctx, registry, console, shell, runtime, configuration);
+        return new CLICommandInvocationImpl(ctx.getContextualCommandContext(),
+                registry, console, shell, runtime, configuration);
     }
 
 }

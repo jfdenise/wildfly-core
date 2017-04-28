@@ -72,7 +72,9 @@ public class CommandExecutor {
 
     public interface ExecutableBuilder {
 
-        Executable build(CommandContext ctx);
+        Executable build();
+
+        CommandContext getCommandContext();
     }
 
     // A wrapper to allow to override ModelControllerClient.
@@ -682,10 +684,19 @@ public class CommandExecutor {
             TimeUnit unit) throws
             CommandLineException,
             InterruptedException, ExecutionException, TimeoutException {
-        ExecutableBuilder builder = (CommandContext ctx) -> {
-            return (Executable) () -> {
-                handler.handle(ctx);
-            };
+        ExecutableBuilder builder = new ExecutableBuilder() {
+            CommandContext c = newTimeoutCommandContext(ctx);
+            @Override
+            public Executable build() {
+                return () -> {
+                    handler.handle(c);
+                };
+            }
+
+            @Override
+            public CommandContext getCommandContext() {
+                return c;
+            }
         };
         execute(builder, timeout, unit);
     }
@@ -698,18 +709,20 @@ public class CommandExecutor {
             InterruptedException, ExecutionException, TimeoutException {
         if (timeout <= 0) {
             //Synchronous
-            builder.build(ctx).execute();
+            builder.build().execute();
         } else { // Guarded execution
-            TimeoutCommandContext context = new TimeoutCommandContext(ctx);
             Future<Void> task = executorService.submit(() -> {
-                builder.build(context).execute();
+                builder.build().execute();
                 return null;
             });
             try {
                 task.get(timeout, unit);
             } catch (TimeoutException ex) {
                 // First make the context unusable
-                context.timeout();
+                CommandContext c = builder.getCommandContext();
+                if (c instanceof TimeoutCommandContext) {
+                    ((TimeoutCommandContext) c).timeout();
+                }
                 // Then cancel the task.
                 task.cancel(true);
                 throw ex;
@@ -730,6 +743,14 @@ public class CommandExecutor {
 
     void cancel() {
         executorService.shutdownNow();
+    }
+
+    public CommandContext newTimeoutCommandContext(CommandContext ctx) {
+        if (ctx.getCommandTimeout() <= 0) {
+            return ctx;
+        } else {
+            return new TimeoutCommandContext(ctx);
+        }
     }
 
     // FOR TESTING PURPOSE ONLY

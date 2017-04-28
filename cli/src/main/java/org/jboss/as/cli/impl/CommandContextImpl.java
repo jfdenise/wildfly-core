@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl;
 
+import org.jboss.as.cli.impl.aesh.OperationCommandContainer;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -211,7 +212,7 @@ import org.xnio.http.RedirectException;
  *
  * @author Alexey Loubyansky
  */
-class CommandContextImpl implements CommandContext, ModelControllerClientFactory.ConnectionCloseHandler {
+public class CommandContextImpl implements CommandContext, ModelControllerClientFactory.ConnectionCloseHandler {
 
     private static final Logger log = Logger.getLogger(CommandContext.class);
 
@@ -2372,5 +2373,10 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             set(Scope.REQUEST, "OP_REQ", req);
             operationHandler.handle(ctx);
         }
+    }
+
+    // Required to handle timeout.
+    public CommandContext getContextualCommandContext() {
+        return executor.newTimeoutCommandContext(this);
     }
 }
