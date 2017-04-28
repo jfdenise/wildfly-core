@@ -73,7 +73,9 @@ import javax.security.auth.login.Configuration;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslException;
+import org.aesh.command.impl.operator.OutputDelegate;
 import org.aesh.readline.Prompt;
+import org.aesh.util.Config;
 import org.aesh.util.FileAccessPermission;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CliConfig;
@@ -190,6 +192,7 @@ import org.jboss.stdio.StdioContext;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.DMRCommand;
+import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.OptionalNameCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -327,6 +330,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private boolean redefinedOutput;
 
     private final AeshCommands aeshCommands;
+    private CLICommandInvocation invocationContext;
 
     /**
      * Version mode - only used when --version is called from the command line.
@@ -339,7 +343,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         this.cmdCompleter = null;
         operationHandler = new OperationRequestHandler();
         initStdIO();
-        aeshCommands = new AeshCommands(this);
+        aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
         try {
             initCommands();
         } catch (CommandLineException e) {
@@ -398,11 +402,13 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             // e.g. jboss-cli.ch -c < some_file
             // the input will be read before the connection is established
             initBasicConsole(configuration.getConsoleInput(), false);
-            aeshCommands = new AeshCommands(this, new CLICompletion(this, new CommandCompleter(cmdRegistry)), console);
+            aeshCommands = new AeshCommands(this, new CLICompletion(this,
+                    new CommandCompleter(cmdRegistry)), console,
+                    new OperationCommandContainer(this));
             cmdCompleter = aeshCommands.getCommandCompleter();
             this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
         } else {
-            aeshCommands = new AeshCommands(this);
+            aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
             this.cmdCompleter = null;
             this.operationCandidatesProvider = null;
         }
@@ -775,60 +781,13 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             line = console.parse(line);
         }
 
-        resetArgs(line);
         try {
-            if(redirection != null) {
+            if (redirection != null) {
+                resetArgs(line);
                 redirection.target.handle(this);
-            } else if (parsedCmd.getFormat() == OperationFormat.INSTANCE) {
-                if (isBatchMode()) {
-                    Batch batch = getBatchManager().getActiveBatch();
-                    final ModelNode request = Util.toOperationRequest(this,
-                            parsedCmd, batch.getAttachments());
-                    StringBuilder op = new StringBuilder();
-                    op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
-                    op.append(line.substring(line.indexOf(':')));
-                    DefaultBatchedCommand batchedCmd
-                            = new DefaultBatchedCommand(this, op.toString(), request, null);
-                    batch.add(batchedCmd);
-                } else {
-                    Attachments attachments = new Attachments();
-                    final ModelNode op = Util.toOperationRequest(this, parsedCmd, attachments);
-                    RequestWithAttachments req = new RequestWithAttachments(op, attachments);
-                    set(Scope.REQUEST, "OP_REQ", req);
-                    operationHandler.handle(this);
-                }
             } else {
-                final String cmdName = parsedCmd.getOperationName();
-                CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
-                if (handler != null) {
-                    if (isBatchMode() && handler.isBatchMode(this)) {
-                        if (!(handler instanceof OperationCommand)) {
-                            throw new CommandLineException("The command is not allowed in a batch.");
-                        } else {
-                            try {
-                                Batch batch = getBatchManager().getActiveBatch();
-                                HandledRequest request = ((OperationCommand) handler).buildHandledRequest(this,
-                                        batch.getAttachments());
-                                BatchedCommand batchedCmd
-                                        = new DefaultBatchedCommand(this, line,
-                                                request.getRequest(), request.getResponseHandler());
-                                batch.add(batchedCmd);
-                            } catch (CommandFormatException e) {
-                                throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
-                            }
-                        }
-                    } else {
-                        execute(() -> {
-                            executor.execute(handler, timeout, TimeUnit.SECONDS);
-                            return null;
-                        }, line);
-                    }
-                } else {
-                    CLIExecutor cliExecutor = aeshCommands.newExecutor(line);
-                    if (cliExecutor == null) {
-                        throw new CommandLineException("Unexpected command '"
-                                + line + "'. Type 'help --commands' for the list of supported commands.");
-                    }
+                CLIExecutor cliExecutor = aeshCommands.newExecutor(line);
+                if (cliExecutor != null) {
                     for (CLIExecution exec : cliExecutor.getExecutions()) {
                         BatchCompliantCommand bc = exec.getBatchCompliant();
                         if (isBatchMode() && bc != null) {
@@ -853,11 +812,45 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                             }
                         } else {
                             execute(() -> {
+                                invocationContext = exec.getInvocation();
                                 executor.execute(aeshCommands.newExecutableBuilder(exec),
                                         timeout, TimeUnit.SECONDS);
+                                // Operations are handled as aesh command.
+                                clear(Scope.REQUEST);
                                 return null;
                             }, line);
                         }
+                    }
+                } else {
+                    resetArgs(line);
+                    final String cmdName = parsedCmd.getOperationName();
+                    CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
+                    if (handler != null) {
+                        if (isBatchMode() && handler.isBatchMode(this)) {
+                            if (!(handler instanceof OperationCommand)) {
+                                throw new CommandLineException("The command is not allowed in a batch.");
+                            } else {
+                                try {
+                                    Batch batch = getBatchManager().getActiveBatch();
+                                    HandledRequest request = ((OperationCommand) handler).buildHandledRequest(this,
+                                            batch.getAttachments());
+                                    BatchedCommand batchedCmd
+                                            = new DefaultBatchedCommand(this, line,
+                                                    request.getRequest(), request.getResponseHandler());
+                                    batch.add(batchedCmd);
+                                } catch (CommandFormatException e) {
+                                    throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
+                                }
+                            }
+                        } else {
+                            execute(() -> {
+                                executor.execute(handler, timeout, TimeUnit.SECONDS);
+                                return null;
+                            }, line);
+                        }
+                    } else {
+                        throw new CommandLineException("Unexpected command '"
+                                + line + "'. Type 'help --commands' for the list of supported commands.");
                     }
                 }
             }
@@ -867,16 +860,19 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             if(log.isDebugEnabled()) {
                 log.debug("Failed to handle '" + line + "'", t);
             }
+
+            t.printStackTrace();
+
             throw new CommandLineException("Failed to handle '" + line + "'", t);
         } finally {
             // so that getArgumentsString() doesn't return this line
             // during the tab-completion of the next command
             cmdLine = null;
+            invocationContext = null;
             clear(Scope.REQUEST);
         }
     }
 
-    // Method called for if condition and low level operation to be guarded by a timeout.
     @Override
     public ModelNode execute(Operation mn, String description) throws CommandLineException, IOException {
         if (client == null) {
@@ -995,6 +991,21 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 outputTarget.flush();
             } catch (IOException e) {
                 System.err.println("Failed to print '" + message + "' to the output target: " + e.getLocalizedMessage());
+            }
+            return;
+        }
+
+        // Could be a redirection at the aesh command or operation level
+        if (invocationContext != null && invocationContext.getConfiguration().getOutputRedirection() != null) {
+            OutputDelegate output = invocationContext.getConfiguration().getOutputRedirection();
+            try {
+                output.write(message);
+                if (newLine) {
+                    output.write(Config.getLineSeparator());
+                }
+            } catch (IOException ex) {
+                // XXX JFDENISE, we should throw IOException in interface.
+                throw new RuntimeException(ex);
             }
             return;
         }
@@ -2226,6 +2237,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
             final String line = parsedLine.getSubstitutedLine();
             try {
+                // XXX jfdenise, this code is possibly dead code, no operation as redirection.
                 if (parsedLine.getFormat() == OperationFormat.INSTANCE) {
                     if (isBatchMode()) {
                         Batch batch = getBatchManager().getActiveBatch();
@@ -2338,5 +2350,27 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     // For testing prupose.
     public AeshCommands getAeshCommands() {
         return aeshCommands;
+    }
+
+    // The passed CommandContext can be wrapped.
+    public void handleOperation(String line, CommandContext ctx) throws CommandFormatException, CommandLineException {
+        resetArgs(line);
+        if (isBatchMode()) {
+            Batch batch = getBatchManager().getActiveBatch();
+            final ModelNode request = Util.toOperationRequest(this,
+                    parsedCmd, batch.getAttachments());
+            StringBuilder op = new StringBuilder();
+            op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
+            op.append(line.substring(line.indexOf(':')));
+            DefaultBatchedCommand batchedCmd
+                    = new DefaultBatchedCommand(this, op.toString(), request, null);
+            batch.add(batchedCmd);
+        } else {
+            Attachments attachments = new Attachments();
+            final ModelNode op = Util.toOperationRequest(this, parsedCmd, attachments);
+            RequestWithAttachments req = new RequestWithAttachments(op, attachments);
+            set(Scope.REQUEST, "OP_REQ", req);
+            operationHandler.handle(ctx);
+        }
     }
 }

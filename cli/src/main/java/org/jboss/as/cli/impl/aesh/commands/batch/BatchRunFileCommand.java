@@ -126,7 +126,7 @@ public class BatchRunFileCommand extends BatchRunCommand {
             return res;
         }
         try {
-            return super.execute(commandInvocation.getCommandContext(), commandInvocation);
+            return super.execute(commandInvocation.getCommandContext());
         } finally {
             BatchManager batchManager = commandInvocation.getCommandContext().
                     getBatchManager();

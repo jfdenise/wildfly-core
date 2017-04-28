@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.Set;
 import org.aesh.command.CommandException;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.util.SimpleTable;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -37,7 +36,7 @@ import org.jboss.dmr.ModelNode;
  */
 public class CommandUtil {
 
-    public static void displayResponseHeaders(OutputPrinter printer, ModelNode response) {
+    public static void displayResponseHeaders(CommandContext context, ModelNode response) {
         if (response.has(org.jboss.as.cli.Util.RESPONSE_HEADERS)) {
             final ModelNode headers = response.get(org.jboss.as.cli.Util.RESPONSE_HEADERS);
             final Set<String> keys = headers.keys();
@@ -47,7 +46,7 @@ public class CommandUtil {
             }
             final StringBuilder buf = new StringBuilder();
             table.append(buf, true);
-            printer.println(buf.toString());
+            context.println(buf.toString());
         }
     }
 

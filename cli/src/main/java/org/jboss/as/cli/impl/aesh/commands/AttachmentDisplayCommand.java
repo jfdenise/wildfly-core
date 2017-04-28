@@ -34,7 +34,6 @@ import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
@@ -105,7 +104,7 @@ public class AttachmentDisplayCommand implements Command<CLICommandInvocation>, 
         }
 
         try {
-            buildHandler(commandInvocation).
+            buildHandler(commandInvocation.getCommandContext()).
                     handleResponse(response.getResponseNode(), response);
         } catch (CommandLineException ex) {
             throw new CommandException(ex.getLocalizedMessage());
@@ -127,9 +126,9 @@ public class AttachmentDisplayCommand implements Command<CLICommandInvocation>, 
         return context.buildRequest(operation);
     }
 
-    AttachmentResponseHandler buildHandler(OutputPrinter printer) {
+    AttachmentResponseHandler buildHandler(CommandContext ctx) {
         return new AttachmentResponseHandler((String t) -> {
-            printer.println(t);
+            ctx.println(t);
         }, null, false, false);
     }
 }

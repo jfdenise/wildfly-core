@@ -27,7 +27,6 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.impl.aesh.commands.deprecated.LegacyBridge;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
@@ -55,11 +54,11 @@ public class BatchDiscardCommand implements Command<CLICommandInvocation>, Legac
         if (res != null) {
             return res;
         }
-        return execute(commandInvocation.getCommandContext(), commandInvocation);
+        return execute(commandInvocation.getCommandContext());
     }
 
     @Override
-    public CommandResult execute(CommandContext ctx, OutputPrinter printer)
+    public CommandResult execute(CommandContext ctx)
             throws CommandException {
         boolean result = ctx.getBatchManager().discardActiveBatch();
         if (!result) {

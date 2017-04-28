@@ -41,6 +41,7 @@ import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationBuilder;
+import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -87,7 +88,7 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
         }
 
         try {
-            final ModelNode result = ctx.execute(op, "Operation request");
+            final ModelNode result = ctx.getModelControllerClient().execute(op, OperationMessageHandler.DISCARD);
             if (Util.isSuccess(result)) {
                 ctx.printLine(result.toString());
             } else {

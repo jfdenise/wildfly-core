@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.LineBreakHandler;
+import org.jboss.as.cli.parsing.OperatorState;
 import org.jboss.as.cli.parsing.OutputTargetState;
 import org.jboss.as.cli.parsing.ParsingContext;
 
@@ -62,6 +63,9 @@ public class ArgumentListState extends DefaultParsingState {
             }
         });
         putHandler(OutputTargetState.OUTPUT_REDIRECT_CHAR, GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
+        for (char c : OperatorState.OPERATORS) {
+            putHandler(c, GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
+        }
         setIgnoreWhitespaces(true);
         setReturnHandler(new CharacterHandler(){
             @Override

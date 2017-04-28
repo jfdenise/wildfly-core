@@ -37,13 +37,11 @@ import org.aesh.command.Shell;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
 import org.aesh.command.CommandRuntime;
-import org.aesh.command.impl.operator.OutputDelegate;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.invocation.CommandInvocationConfiguration;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.readline.terminal.Key;
 import org.aesh.terminal.tty.Size;
-import org.aesh.util.Config;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.ReadlineConsole;
@@ -233,39 +231,16 @@ class CLICommandInvocationImpl implements CLICommandInvocation {
 
     @Override
     public void print(String msg) {
-        print(msg, false);
+        ctx.print(msg);
     }
 
     @Override
     public void println(String msg) {
-        print(msg, true);
+        ctx.println(msg);
     }
 
-    @Override
     public void printColumns(Collection<String> col) {
-        for (String item : col) {
-            print(item, true);
-        }
-    }
-
-    private void print(String msg, boolean newLine) {
-        if (getConfiguration().getOutputRedirection() != null) {
-            OutputDelegate output = getConfiguration().getOutputRedirection();
-            try {
-                output.write(msg);
-                if (newLine) {
-                    output.write(Config.getLineSeparator());
-                }
-            } catch (IOException ex) {
-                // XXX JFDENISE, we should throw IOException in interface.
-                throw new RuntimeException(ex);
-            }
-        } else {
-            shell.write(msg);
-            if (newLine) {
-                shell.write(Config.getLineSeparator());
-            }
-        }
+        ctx.printColumns(col);
     }
 
     @Override

@@ -78,7 +78,7 @@ public class BatchRemoveLineHandler extends CommandHandlerWithHelp {
             BatchRmLineCommand cmd = new BatchRmLineCommand();
             cmd.line = new ArrayList<>();
             cmd.line.add(lineNumber);
-            cmd.execute(ctx, ctx);
+            cmd.execute(ctx);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());
         }

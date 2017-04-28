@@ -31,7 +31,6 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
@@ -67,14 +66,14 @@ public class ListCommand extends CommandWithPermissions {
             commandInvocation.println(commandInvocation.getHelpInfo("deployment list"));
             return CommandResult.SUCCESS;
         }
-        listDeployments(commandInvocation.getCommandContext(), l, commandInvocation);
+        listDeployments(commandInvocation.getCommandContext(), l);
         return CommandResult.SUCCESS;
     }
 
     public static void listDeployments(CommandContext ctx,
-            boolean l, OutputPrinter printer) throws CommandException {
+            boolean l) throws CommandException {
         if (!l) {
-            printList(printer, Util.getDeployments(ctx.
+            printList(ctx, Util.getDeployments(ctx.
                     getModelControllerClient()), l);
             return;
         }
@@ -108,17 +107,17 @@ public class ListCommand extends CommandWithPermissions {
                 table.nextRow();
             }
         }
-        printer.println(table.toString());
+        ctx.println(table.toString());
     }
 
-    private static void printList(OutputPrinter printer,
+    private static void printList(CommandContext ctx,
             Collection<String> list, boolean l) {
         if (l) {
             for (String item : list) {
-                printer.println(item);
+                ctx.println(item);
             }
         } else {
-            printer.printColumns(list);
+            ctx.printColumns(list);
         }
     }
 

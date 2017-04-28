@@ -51,6 +51,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandExecutor.ExecutableBuilder;
+import org.jboss.as.cli.impl.OperationCommandContainer;
 import org.jboss.as.cli.impl.ReadlineConsole;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.DMRCommand;
@@ -101,10 +102,14 @@ public class AeshCommands {
 
     public class CLIExecution {
 
-        private final Execution execution;
+        private final Execution<CLICommandInvocation> execution;
 
-        CLIExecution(Execution execution) {
+        CLIExecution(Execution<CLICommandInvocation> execution) {
             this.execution = execution;
+        }
+
+        public CLICommandInvocation getInvocation() {
+            return execution.getCommandInvocation();
         }
 
         public BatchCompliantCommand getBatchCompliant() {
@@ -127,12 +132,13 @@ public class AeshCommands {
     private final CLICommandRegistry registry;
     private final CLICompletionHandler completionHandler;
 
-    public AeshCommands(CommandContext ctx) throws CliInitializationException {
-        this(ctx, null, null);
+    public AeshCommands(CommandContext ctx, OperationCommandContainer op) throws CliInitializationException {
+        this(ctx, null, null, op);
     }
 
-    public AeshCommands(CommandContext ctx, Completion<CompleteOperation> delegate, ReadlineConsole console) throws CliInitializationException {
-        registry = new CLICommandRegistry(ctx);
+    public AeshCommands(CommandContext ctx, Completion<CompleteOperation> delegate,
+            ReadlineConsole console, OperationCommandContainer op) throws CliInitializationException {
+        registry = new CLICommandRegistry(ctx, op);
         Shell shell = null;
         if (console != null) {
             shell = new ReadlineShell(console);
@@ -156,6 +162,10 @@ public class AeshCommands {
             console.setCompletionHandler(completionHandler);
             console.addCompleter(completionHandler);
         }
+    }
+
+    private void buildOperationBridge() {
+
     }
 
     public CommandLineCompleter getCommandCompleter() {

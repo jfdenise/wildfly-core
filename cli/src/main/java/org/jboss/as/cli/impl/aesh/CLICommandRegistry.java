@@ -49,6 +49,7 @@ import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.aesh.commands.deprecated.HasLegacyCounterPart;
+import org.jboss.as.cli.impl.OperationCommandContainer;
 import org.jboss.logging.Logger;
 
 /**
@@ -168,9 +169,11 @@ public class CLICommandRegistry implements CommandRegistry {
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
     private final List<String> exposedCommands = new ArrayList<>();
     private final CommandContext ctx;
+    private final OperationCommandContainer op;
 
-    public CLICommandRegistry(CommandContext ctx) {
+    public CLICommandRegistry(CommandContext ctx, OperationCommandContainer op) {
         this.ctx = ctx;
+        this.op = op;
     }
 
     private CommandContainer addCommandContainer(CommandContainer container) throws CommandLineException {
@@ -268,6 +271,9 @@ public class CLICommandRegistry implements CommandRegistry {
     @Override
     public CommandContainer<Command> getCommand(String name, String line)
             throws CommandNotFoundException {
+        if (name.startsWith(":") || name.startsWith("/") || name.startsWith(".")) {
+            return op;
+        }
         return reg.getCommand(name, line);
     }
 

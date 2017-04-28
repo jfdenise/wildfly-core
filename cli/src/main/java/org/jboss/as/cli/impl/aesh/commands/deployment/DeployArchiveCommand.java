@@ -41,7 +41,6 @@ import org.jboss.as.cli.Attachments.ConsumeListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.jboss.as.cli.batch.Batch;
@@ -109,10 +108,10 @@ public class DeployArchiveCommand extends CommandWithPermissions implements Comm
             return CommandResult.SUCCESS;
         }
         CommandContext ctx = commandInvocation.getCommandContext();
-        return execute(ctx, commandInvocation);
+        return execute(ctx);
     }
 
-    public CommandResult execute(CommandContext ctx, OutputPrinter printer) throws CommandException {
+    public CommandResult execute(CommandContext ctx) throws CommandException {
         checkArgument();
 
         Attachments attachments = new Attachments();

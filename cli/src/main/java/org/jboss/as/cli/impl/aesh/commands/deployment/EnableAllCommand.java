@@ -30,7 +30,6 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
-import org.jboss.as.cli.OutputPrinter;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.AccessRequirements;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
@@ -69,11 +68,11 @@ public class EnableAllCommand extends AbstractDeployCommand implements LegacyBri
             commandInvocation.println(commandInvocation.getHelpInfo("deployment enable-all"));
             return CommandResult.SUCCESS;
         }
-        return execute(commandInvocation.getCommandContext(), commandInvocation);
+        return execute(commandInvocation.getCommandContext());
     }
 
     @Override
-    public CommandResult execute(CommandContext ctx, OutputPrinter printer)
+    public CommandResult execute(CommandContext ctx)
             throws CommandException {
         deployAll(ctx, allServerGroups, serverGroups, headers);
         return CommandResult.SUCCESS;

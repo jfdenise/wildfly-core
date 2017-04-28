@@ -154,7 +154,7 @@ public class BatchEditLineHandler extends CommandHandlerWithHelp {
         String editedLine = argsStr.substring(i).trim();
 
         try {
-            BatchEditLineCommand.execute(ctx, lineNumber, editedLine, ctx);
+            BatchEditLineCommand.execute(ctx, lineNumber, editedLine);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());
         }

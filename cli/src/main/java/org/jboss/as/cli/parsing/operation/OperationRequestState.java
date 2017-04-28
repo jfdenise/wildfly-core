@@ -25,6 +25,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.LineBreakHandler;
+import org.jboss.as.cli.parsing.OperatorState;
 import org.jboss.as.cli.parsing.OutputTargetState;
 import org.jboss.as.cli.parsing.ParsingContext;
 
@@ -39,11 +40,12 @@ public class OperationRequestState extends DefaultParsingState {
     public static final OperationRequestState INSTANCE = new OperationRequestState();
 
     public OperationRequestState() {
-        this(NodeState.INSTANCE, AddressOperationSeparatorState.INSTANCE, PropertyListState.INSTANCE, HeaderListState.INSTANCE, OutputTargetState.INSTANCE);
+        this(NodeState.INSTANCE, AddressOperationSeparatorState.INSTANCE, PropertyListState.INSTANCE,
+                HeaderListState.INSTANCE, OutputTargetState.INSTANCE, OperatorState.INSTANCE);
     }
 
     public OperationRequestState(final NodeState nodeState, final AddressOperationSeparatorState addrOpSep, final PropertyListState propList,
-            final HeaderListState headerList, final OutputTargetState outRedirect) {
+            final HeaderListState headerList, final OutputTargetState outRedirect, OperatorState operator) {
         super(ID);
         //setDefaultHandler(new EnterStateCharacterHandler(nodeState));
         setDefaultHandler(new LineBreakHandler(false){
@@ -60,6 +62,9 @@ public class OperationRequestState extends DefaultParsingState {
         enterState('(', propList);
         enterState('{', headerList);
         enterState(OutputTargetState.OUTPUT_REDIRECT_CHAR, outRedirect);
+        for (char c : OperatorState.OPERATORS) {
+            enterState(c, operator);
+        }
         setReturnHandler(new CharacterHandler(){
             @Override
             public void handle(ParsingContext ctx) throws CommandFormatException {

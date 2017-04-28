@@ -182,6 +182,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
+        CommandContext ctx = commandInvocation.getCommandContext();
         if (command == null || command.isEmpty()) {
             if (commands) {
                 List<String> lst = new ArrayList<>();
@@ -204,11 +205,11 @@ public class HelpCommand implements Command<CLICommandInvocation> {
                     }
                 }
                 lst.sort(null);
-                commandInvocation.println("Commands available in the current context:");
-                commandInvocation.printColumns(lst);
-                commandInvocation.println("To read a description of a specific command execute 'help <command name>'.");
+                ctx.println("Commands available in the current context:");
+                ctx.printColumns(lst);
+                ctx.println("To read a description of a specific command execute 'help <command name>'.");
             } else {
-                commandInvocation.println(commandInvocation.getHelpInfo("help"));
+                ctx.println(commandInvocation.getHelpInfo("help"));
             }
             return CommandResult.SUCCESS;
         }
@@ -226,13 +227,13 @@ public class HelpCommand implements Command<CLICommandInvocation> {
 
         // An operation?
         if (CLICompletion.isOperation(mainCommand)) {
-            commandInvocation.println(getOperationHelp(builder.toString(), commandInvocation.getCommandContext()));
+            ctx.println(getOperationHelp(builder.toString(), commandInvocation.getCommandContext()));
             return CommandResult.SUCCESS;
         }
 
         try {
             CommandLineParser parser = aeshRegistry.findCommand(mainCommand, builder.toString());
-            commandInvocation.println(parser.printHelp());
+            ctx.println(parser.printHelp());
         } catch (CommandNotFoundException ex) {
             CommandHandler ch = handlersRegistry.getCommandHandler(mainCommand);
             if (ch == null) {

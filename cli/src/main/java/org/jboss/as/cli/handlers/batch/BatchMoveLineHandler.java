@@ -87,7 +87,7 @@ public class BatchMoveLineHandler extends CommandHandlerWithHelp {
             BatchMvLineCommand cmd = new BatchMvLineCommand();
             cmd.currentLine = lineNumber;
             cmd.newLine = toLineNumber;
-            cmd.execute(ctx, ctx);
+            cmd.execute(ctx);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());
         }

@@ -25,6 +25,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
+import org.jboss.as.cli.parsing.OperatorState;
 import org.jboss.as.cli.parsing.OutputTargetState;
 import org.jboss.as.cli.parsing.ParsingContext;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
@@ -51,5 +52,8 @@ public final class OperationNameState extends ExpressionBaseState {
         putHandler('(', GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
         putHandler('{', GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
         putHandler(OutputTargetState.OUTPUT_REDIRECT_CHAR, GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
+        for (char c : OperatorState.OPERATORS) {
+            putHandler(c, GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
+        }
     }
 }

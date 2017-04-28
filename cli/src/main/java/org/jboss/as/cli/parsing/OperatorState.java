@@ -19,19 +19,30 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli;
+package org.jboss.as.cli.parsing;
 
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
- * @author jdenise@redhat.com
+ * @author jfdenise
  */
-public interface OutputPrinter {
+public class OperatorState extends DefaultParsingState {
 
-    void println(String line);
+    public static final String ID = "OPERATOR";
+    public static final OperatorState INSTANCE = new OperatorState();
+    public static final Set<Character> OPERATORS = new HashSet<>();
 
-    void print(String line);
+    static {
+        // This one is natively supported by CLI, forget it.
+        //OPERATORS.add('>');
+        OPERATORS.add('|');
+        OPERATORS.add(';');
+    }
 
-    void printColumns(Collection<String> col);
+    public OperatorState() {
+        super(ID);
+        setDefaultHandler(GlobalCharacterHandlers.CONTENT_CHARACTER_HANDLER);
+    }
 }

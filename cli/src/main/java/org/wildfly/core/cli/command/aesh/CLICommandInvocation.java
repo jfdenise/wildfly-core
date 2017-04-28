@@ -24,13 +24,12 @@ package org.wildfly.core.cli.command.aesh;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.OutputPrinter;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public interface CLICommandInvocation extends CommandInvocation, OutputPrinter {
+public interface CLICommandInvocation extends CommandInvocation {
 
     CommandContext getCommandContext();
 
