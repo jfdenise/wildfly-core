@@ -22,8 +22,13 @@ import org.aesh.command.populator.CommandPopulator;
 import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
+import org.jboss.as.cli.Attachments;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandContextImpl;
+import org.jboss.dmr.ModelNode;
+import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
@@ -32,6 +37,32 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  */
 public class OperationCommandContainer extends DefaultCommandContainer<Command> {
 
+    class OperationCommand implements Command<CLICommandInvocation>, BatchCompliantCommand {
+
+        @Override
+        public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
+            try {
+                // we pass down the contextual commandContext, could have been wrapped by the timeout handling
+                ctx.handleOperation(line, commandInvocation.getCommandContext());
+            } catch (CommandLineException ex) {
+                throw new CommandException(ex.getLocalizedMessage());
+            } finally {
+                line = null;
+            }
+            return CommandResult.SUCCESS;
+        }
+
+        @Override
+        public BatchResponseHandler buildBatchResponseHandler(CommandContext commandContext, Attachments attachments) throws CommandLineException {
+            return null;
+        }
+
+        @Override
+        public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
+            return ctx.buildOperationRequest(line).getRequest();
+        }
+
+    }
     public class OperationParser implements CommandLineParser<Command> {
 
         @Override
@@ -140,20 +171,7 @@ public class OperationCommandContainer extends DefaultCommandContainer<Command> 
 
     }
 
-    private final Command<CLICommandInvocation> command = new Command<CLICommandInvocation>() {
-        @Override
-        public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
-            try {
-                // we pass down the contextual commandContext, could have been wrapped by the timeout handling
-                ctx.handleOperation(line, commandInvocation.getCommandContext());
-            } catch (CommandLineException ex) {
-                throw new CommandException(ex.getLocalizedMessage());
-            } finally {
-                line = null;
-            }
-            return CommandResult.SUCCESS;
-        }
-    };
+    private final Command<CLICommandInvocation> command = new OperationCommand();
 
     private String line;
 

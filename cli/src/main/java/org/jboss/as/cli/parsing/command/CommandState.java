@@ -28,7 +28,6 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.OperatorState;
-import org.jboss.as.cli.parsing.OutputTargetState;
 import org.jboss.as.cli.parsing.ParsingContext;
 
 
@@ -42,10 +41,10 @@ public class CommandState extends DefaultParsingState {
     public static final String ID = "CMD";
 
     CommandState() {
-        this(AddressCommandSeparatorState.INSTANCE, ArgumentListState.INSTANCE, OutputTargetState.INSTANCE, OperatorState.INSTANCE);
+        this(AddressCommandSeparatorState.INSTANCE, ArgumentListState.INSTANCE);
     }
 
-    CommandState(AddressCommandSeparatorState addrCmdSeparator, final ArgumentListState argList, OutputTargetState outputRedirect, OperatorState operator) {
+    CommandState(AddressCommandSeparatorState addrCmdSeparator, final ArgumentListState argList) {
         super(ID);
         setEnterHandler(new EnterStateCharacterHandler(addrCmdSeparator));
         setDefaultHandler(new LineBreakHandler(false, false){
@@ -66,9 +65,6 @@ public class CommandState extends DefaultParsingState {
                     handler.handle(ctx);
                 }
             }});
-        enterState(OutputTargetState.OUTPUT_REDIRECT_CHAR, outputRedirect);
-        for (char c : OperatorState.OPERATORS) {
-            enterState(c, operator);
-        }
+        OperatorState.registerEnterStates(this);
     }
 }

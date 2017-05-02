@@ -148,7 +148,8 @@ public class AeshCommands {
         AeshCommandRuntimeBuilder builder = AeshCommandRuntimeBuilder.builder();
         processor = builder.
                 commandRegistry(registry).
-                operators(EnumSet.of(OperatorType.REDIRECT_OUT, OperatorType.END, OperatorType.PIPE)).
+                operators(EnumSet.of(OperatorType.REDIRECT_OUT, OperatorType.END,
+                        OperatorType.PIPE, OperatorType.APPEND_OUT)).
                 parseBrackets(true).
                 aeshContext(new BridgedContext(ctx)).
                 commandActivatorProvider(new CLICommandActivatorProvider(ctx)).
