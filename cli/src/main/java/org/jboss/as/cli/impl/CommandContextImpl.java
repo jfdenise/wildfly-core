@@ -78,6 +78,7 @@ import org.aesh.command.impl.operator.OutputDelegate;
 import org.aesh.readline.Prompt;
 import org.aesh.util.Config;
 import org.aesh.util.FileAccessPermission;
+import org.jboss.aesh.extensions.grep.Grep;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -524,6 +525,9 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } catch (CommandLineException ex) {
             throw new CliInitializationException(ex);
         }
+
+        // Extensions
+        aeshCommands.getRegistry().addCommand(new Grep());
 
         cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
         //cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
