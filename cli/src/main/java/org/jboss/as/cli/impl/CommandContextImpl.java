@@ -75,6 +75,8 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslException;
 import org.aesh.command.impl.operator.OutputDelegate;
+import org.aesh.command.invocation.InvocationProviders;
+import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.readline.Prompt;
 import org.aesh.util.Config;
 import org.aesh.util.FileAccessPermission;
@@ -333,7 +335,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
     private final AeshCommands aeshCommands;
     private CLICommandInvocation invocationContext;
-
+    private final CommandCompleter legacyCmdCompleter;
     /**
      * Version mode - only used when --version is called from the command line.
      *
@@ -343,6 +345,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         this.console = null;
         this.operationCandidatesProvider = null;
         this.cmdCompleter = null;
+        this.legacyCmdCompleter = null;
         operationHandler = new OperationRequestHandler();
         initStdIO();
         aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
@@ -404,14 +407,16 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             // e.g. jboss-cli.ch -c < some_file
             // the input will be read before the connection is established
             initBasicConsole(configuration.getConsoleInput(), false);
+            legacyCmdCompleter = new CommandCompleter(cmdRegistry);
             aeshCommands = new AeshCommands(this, new CLICompletion(this,
-                    new CommandCompleter(cmdRegistry)), console,
+                    legacyCmdCompleter), console,
                     new OperationCommandContainer(this));
             cmdCompleter = aeshCommands.getCommandCompleter();
             this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
         } else {
             aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
             this.cmdCompleter = null;
+            this.legacyCmdCompleter = null;
             this.operationCandidatesProvider = null;
         }
 
@@ -2405,6 +2410,21 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             clear(Scope.REQUEST);
             this.parsedCmd = originalParsedArguments;
             this.cmdLine = originalCmdLine;
+        }
+    }
+
+    public void completeOperationAndLegacy(AeshCompleteOperation co, InvocationProviders invocationProviders) {
+        List<String> candidates = new ArrayList<>();
+        int offset = legacyCmdCompleter.complete(this,
+                co.getBuffer(), co.getCursor(), candidates);
+        co.setOffset(offset);
+        co.setCompletionCandidates(candidates);
+        String buffer = this.getArgumentsString() == null ? co.getBuffer() : this.getArgumentsString() + co.getBuffer();
+        if (co.getCompletionCandidates().size() == 1
+                && co.getCompletionCandidates().get(0).getCharacters().startsWith(buffer)) {
+            co.doAppendSeparator(true);
+        } else {
+            co.doAppendSeparator(false);
         }
     }
 

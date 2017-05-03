@@ -44,6 +44,7 @@ import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.command.parser.OptionParserException;
 import org.aesh.command.registry.MutableCommandRegistry;
 import org.aesh.command.validator.OptionValidatorException;
+import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandContext;
@@ -159,6 +160,11 @@ public class CLICommandRegistry implements CommandRegistry {
         @Override
         public CommandLineParser<Command> parsedCommand() {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public void complete(AeshCompleteOperation completeOperation, InvocationProviders invocationProviders) {
+            parser.complete(completeOperation, invocationProviders);
         }
 
     }

@@ -39,6 +39,7 @@ import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.command.parser.OptionParserException;
 import org.aesh.command.validator.CommandValidatorException;
+import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.parser.ParsedLineIterator;
 import org.aesh.parser.ParsedLine;
 import org.jboss.as.cli.CommandContext;
@@ -149,6 +150,11 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         public CommandLineParser<Command> parsedCommand() {
             return parser.parsedCommand();
         }
+
+        @Override
+        public void complete(AeshCompleteOperation completeOperation, InvocationProviders invocationProviders) {
+            parser.complete(completeOperation, invocationProviders);
+        }
     }
 
     public class CLICommandParser implements CommandLineParser<Command> {
@@ -245,6 +251,11 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
         @Override
         public CommandLineParser<Command> parsedCommand() {
             return container.getParser().parsedCommand();
+        }
+
+        @Override
+        public void complete(AeshCompleteOperation completeOperation, InvocationProviders invocationProviders) {
+            container.getParser().complete(completeOperation, invocationProviders);
         }
     }
 

@@ -70,7 +70,9 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
             // Aesh first
             aeshCommands.complete(co);
             if (co.getCompletionCandidates().isEmpty() || parts.length == 1) {
-                delegate.complete(co);
+                if (!buff.startsWith("/") && !buff.startsWith(":") && !buff.startsWith(".")) {
+                    delegate.complete(co);
+                }
             }
         }
 

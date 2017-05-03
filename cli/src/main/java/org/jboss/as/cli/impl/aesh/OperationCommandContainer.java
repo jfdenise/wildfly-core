@@ -20,6 +20,7 @@ import org.aesh.command.invocation.InvocationProviders;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.command.populator.CommandPopulator;
 import org.aesh.command.validator.OptionValidatorException;
+import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.Attachments;
@@ -63,6 +64,7 @@ public class OperationCommandContainer extends DefaultCommandContainer<Command> 
         }
 
     }
+
     public class OperationParser implements CommandLineParser<Command> {
 
         @Override
@@ -147,7 +149,7 @@ public class OperationCommandContainer extends DefaultCommandContainer<Command> 
 
         @Override
         public void parse(ParsedLineIterator iterator, Mode mode) {
-            line = iterator.getOriginalLine();
+            line = iterator.originalLine();
         }
 
         @Override
@@ -169,6 +171,10 @@ public class OperationCommandContainer extends DefaultCommandContainer<Command> 
             return this;
         }
 
+        @Override
+        public void complete(AeshCompleteOperation co, InvocationProviders invocationProviders) {
+            ctx.completeOperationAndLegacy(co, invocationProviders);
+        }
     }
 
     private final Command<CLICommandInvocation> command = new OperationCommand();
@@ -177,7 +183,6 @@ public class OperationCommandContainer extends DefaultCommandContainer<Command> 
 
     private final CommandLineParser<Command> parser = new OperationParser();
     private final CommandContextImpl ctx;
-
     public OperationCommandContainer(CommandContextImpl ctx) {
         this.ctx = ctx;
     }
