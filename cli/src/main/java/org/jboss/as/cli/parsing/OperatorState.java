@@ -42,14 +42,17 @@ public class OperatorState {
     static {
         Map<Character, List<String>> map = new HashMap<>();
         for (OperatorType ot : OperatorType.values()) {
-            if (!ot.value().isEmpty()) {
-                char c = ot.value().charAt(0);
-                List<String> operators = map.get(c);
-                if (operators == null) {
-                    operators = new ArrayList<>();
-                    map.put(c, operators);
+            // We don't want other operators.
+            if (ot.value().startsWith(">") || ot.value().startsWith("|")) {
+                if (!ot.value().isEmpty()) {
+                    char c = ot.value().charAt(0);
+                    List<String> operators = map.get(c);
+                    if (operators == null) {
+                        operators = new ArrayList<>();
+                        map.put(c, operators);
+                    }
+                    operators.add(ot.value());
                 }
-                operators.add(ot.value());
             }
         }
         for (Entry<Character, List<String>> entry : map.entrySet()) {
@@ -113,6 +116,7 @@ public class OperatorState {
 
     public static void registerLeaveHandlers(DefaultParsingState state) {
         for (OpState op : OPERATORS) {
+
             state.putHandler(op.getFirstChar(), GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
         }
     }
