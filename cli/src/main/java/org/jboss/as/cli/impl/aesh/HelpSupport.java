@@ -489,7 +489,7 @@ public class HelpSupport {
         Collections.sort(opts, (ProcessedOption o1, ProcessedOption o2) -> {
             return o1.name().compareTo(o2.name());
         });
-        ProcessedOption arg = deprecated.contains("") ? null : pcommand.getArgument();
+        ProcessedOption arg = deprecated.contains("") ? null : pcommand.getArguments();
 
         return getCommandHelp(bundle, superNames, arg, parsers, opts, pcommand,
                 parentName, commandName, parser.getProcessedCommand(), false);
@@ -619,7 +619,7 @@ public class HelpSupport {
     }
 
     private static void retrieveHidden(Set<String> deprecated, ProcessedCommand<Command> cmd) {
-        if (cmd.getArgument() != null && cmd.getArgument().activator() instanceof HideOptionActivator) {
+        if (cmd.getArguments() != null && cmd.getArguments().activator() instanceof HideOptionActivator) {
             deprecated.add("");
         }
         for (ProcessedOption po : cmd.getOptions()) {
@@ -1102,20 +1102,20 @@ public class HelpSupport {
             }
             ProcessedCommandBuilder builder = new ProcessedCommandBuilder().name(pc.name()).description(desc);
 
-            if (pc.getArgument() != null) {
-                String argDesc = pc.getArgument().description();
+            if (pc.getArguments() != null) {
+                String argDesc = pc.getArguments().description();
                 String bargDesc = getValue(bundle, parentName, pc.name(), superNames,
                         "arguments.description", false);
                 if (bargDesc != null) {
                     argDesc = bargDesc;
                 }
                 ProcessedOption newArg = ProcessedOptionBuilder.builder().name("").
-                        optionType(pc.getArgument().getOptionType()).
+                        optionType(pc.getArguments().getOptionType()).
                         type(String.class).
-                        activator(pc.getArgument().activator()).
-                        valueSeparator(pc.getArgument().getValueSeparator()).
-                        required(pc.getArgument().isRequired()).description(argDesc).build();
-                builder.argument(newArg);
+                        activator(pc.getArguments().activator()).
+                        valueSeparator(pc.getArguments().getValueSeparator()).
+                        required(pc.getArguments().isRequired()).description(argDesc).build();
+                builder.arguments(newArg);
             }
 
             for (ProcessedOption opt : pc.getOptions()) {

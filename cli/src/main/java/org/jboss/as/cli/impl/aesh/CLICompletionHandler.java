@@ -24,12 +24,12 @@ package org.jboss.as.cli.impl.aesh;
 import java.util.List;
 import java.util.logging.Level;
 import org.aesh.complete.AeshCompleteOperation;
-import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.Completion;
 import org.aesh.readline.completion.CompletionHandler;
 import org.aesh.readline.terminal.formatting.TerminalString;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineCompleter;
+import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.logmanager.Logger;
 
 /**
@@ -38,17 +38,13 @@ import org.jboss.logmanager.Logger;
  */
 class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> implements Completion<AeshCompleteOperation>, CommandLineCompleter {
 
-    private final Completion<CompleteOperation> delegate;
-    private final AeshCommands aeshCommands;
     private static final Logger LOG = Logger.getLogger(CLICompletionHandler.class.getName());
 
-    CLICompletionHandler(AeshCommands aeshCommands, Completion<CompleteOperation> delegate) {
+    private final AeshCommands aeshCommands;
+    private final CommandContextImpl ctx;
+    CLICompletionHandler(AeshCommands aeshCommands, CommandContextImpl ctx) {
         this.aeshCommands = aeshCommands;
-        this.delegate = delegate == null ? new Completion<CompleteOperation>() {
-            @Override
-            public void complete(CompleteOperation completeOperation) {
-            }
-        } : delegate;
+        this.ctx = ctx;
     }
 
     @Override
@@ -57,25 +53,15 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
         if (LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, "Completing {0}", co.getBuffer());
         }
-        String buff = co.getBuffer().trim();
-        String[] parts = buff.split(" ");
-        // all command names from both repositories
-        if (buff.isEmpty() || parts.length == 0) {
-            // Aesh
-            aeshCommands.complete(co);
-            // Delegate
-            delegate.complete(co);
-        } else {
-            // One of the two repositories.
-            // Aesh first
-            aeshCommands.complete(co);
-            if (co.getCompletionCandidates().isEmpty() || parts.length == 1) {
-                if (!buff.startsWith("/") && !buff.startsWith(":") && !buff.startsWith(".")) {
-                    delegate.complete(co);
-                }
-            }
+        String buffer = co.getBuffer().trim();
+        if (buffer.startsWith("$")) {
+            ctx.completeOperationAndLegacy(co);
+            return;
         }
-
+        if (buffer.isEmpty()) {
+            co.addCompletionCandidate("/");
+        }
+        aeshCommands.complete(co);
         if (LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, "Completion candidates {0}",
                     co.getCompletionCandidates());

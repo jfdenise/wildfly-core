@@ -458,13 +458,12 @@ public class ReadlineConsole {
         connection.stdoutHandler().accept(ANSI.CLEAR_SCREEN);
     }
 
-    public void printColumns(Collection<String> list) {
+    public String formatColumns(Collection<String> list) {
         String[] newList = new String[list.size()];
         list.toArray(newList);
-        connection.write(
-                Parser.formatDisplayList(newList,
-                        getHeight(),
-                        getWidth()));
+        return Parser.formatDisplayList(newList,
+                getHeight(),
+                getWidth());
     }
 
     public void print(String line) {

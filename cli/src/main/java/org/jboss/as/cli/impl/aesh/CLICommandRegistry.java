@@ -22,6 +22,7 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
+import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +38,6 @@ import org.aesh.command.CommandNotFoundException;
 import org.aesh.command.impl.container.AeshCommandContainerBuilder;
 import org.aesh.command.container.CommandContainer;
 import org.aesh.command.impl.internal.ProcessedOption;
-import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.impl.registry.MutableCommandRegistryImpl;
 import org.aesh.command.invocation.InvocationProviders;
 import org.aesh.command.parser.CommandLineParserException;
@@ -47,16 +47,19 @@ import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
-import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.CommandRegistry;
+import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.aesh.commands.deprecated.HasLegacyCounterPart;
+import org.jboss.as.cli.impl.aesh.commands.operation.LegacyCommandContainer;
 import org.jboss.logging.Logger;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-public class CLICommandRegistry implements CommandRegistry {
+public class CLICommandRegistry extends CommandRegistry implements org.aesh.command.registry.CommandRegistry {
 
     /**
      * Wraps an extension command registered as a sub command.
@@ -173,12 +176,24 @@ public class CLICommandRegistry implements CommandRegistry {
     private final MutableCommandRegistry reg = new MutableCommandRegistryImpl();
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
     private final List<String> exposedCommands = new ArrayList<>();
-    private final CommandContext ctx;
+    private final CommandContextImpl ctx;
     private final OperationCommandContainer op;
 
-    public CLICommandRegistry(CommandContext ctx, OperationCommandContainer op) {
+    public CLICommandRegistry(CommandContextImpl ctx, OperationCommandContainer op) {
         this.ctx = ctx;
         this.op = op;
+    }
+
+    @Override
+    public void registerHandler(CommandHandler handler, boolean tabComplete, String... names) throws RegisterHandlerException {
+        super.registerHandler(handler, tabComplete, names);
+        if (tabComplete) {
+            try {
+                addLegacyCommand(handler, names);
+            } catch (CommandLineException ex) {
+                throw new RegisterHandlerException(ex.getLocalizedMessage());
+            }
+        }
     }
 
     private CommandContainer addCommandContainer(CommandContainer container) throws CommandLineException {
@@ -243,7 +258,7 @@ public class CLICommandRegistry implements CommandRegistry {
                                 activator(cmd.getActivator()).
                                 addOptions(cmd.getOptions()).
                                 aliases(cmd.getAliases()).
-                                argument(cmd.getArgument()).
+                                arguments(cmd.getArguments()).
                                 command(cmd.getCommand()).
                                 description(cmd.description()).
                                 name(childName). // child name
@@ -276,7 +291,7 @@ public class CLICommandRegistry implements CommandRegistry {
     @Override
     public CommandContainer<Command> getCommand(String name, String line)
             throws CommandNotFoundException {
-        if (name.startsWith(":") || name.startsWith("/") || name.startsWith(".")) {
+        if (OperationCommandContainer.isOperation(name)) {
             return op;
         }
         return reg.getCommand(name, line);
@@ -344,4 +359,7 @@ public class CLICommandRegistry implements CommandRegistry {
         reg.removeRegistrationListener(listener);
     }
 
+    void addLegacyCommand(CommandHandler handler, String... names) throws CommandLineException {
+        addCommand(new LegacyCommandContainer(ctx, names, handler));
+    }
 }

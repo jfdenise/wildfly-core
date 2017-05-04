@@ -45,9 +45,9 @@ import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.cli.handlers.GenericTypeOperationHandler;
-import org.jboss.as.cli.impl.CLICompletion;
 import org.jboss.as.cli.impl.aesh.HelpSupport;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
+import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
@@ -81,7 +81,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
 
             // Special case for operations.
             String buff = completerInvocation.getGivenCompleteValue();
-            if (CLICompletion.isOperation(buff)) {
+            if (OperationCommandContainer.isOperation(buff)) {
                 List<String> candidates = new ArrayList<>();
                 parsedCmd.reset();
                 try {
@@ -226,7 +226,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
         }
 
         // An operation?
-        if (CLICompletion.isOperation(mainCommand)) {
+        if (OperationCommandContainer.isOperation(mainCommand)) {
             ctx.println(getOperationHelp(builder.toString(), commandInvocation.getCommandContext()));
             return CommandResult.SUCCESS;
         }

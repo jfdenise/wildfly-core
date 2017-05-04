@@ -1,9 +1,26 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2017, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ *
  */
-package org.jboss.as.cli.impl.aesh;
+package org.jboss.as.cli.impl.aesh.commands.operation;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,13 +40,7 @@ import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.AeshContext;
 import org.aesh.parser.ParsedLineIterator;
-import org.jboss.as.cli.Attachments;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandFormatException;
-import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandContextImpl;
-import org.jboss.dmr.ModelNode;
-import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
@@ -38,31 +49,22 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  */
 public class OperationCommandContainer extends DefaultCommandContainer<Command> {
 
-    class OperationCommand implements Command<CLICommandInvocation>, BatchCompliantCommand {
+    public static boolean isOperation(String mainCommand) {
+        mainCommand = mainCommand.trim();
+        return mainCommand.startsWith(":") || mainCommand.startsWith(".") || mainCommand.startsWith("/");
+    }
+
+    public class OperationCommand implements Command<CLICommandInvocation>, SpecialCommand {
 
         @Override
         public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
-            try {
-                // we pass down the contextual commandContext, could have been wrapped by the timeout handling
-                ctx.handleOperation(line, commandInvocation.getCommandContext());
-            } catch (CommandLineException ex) {
-                throw new CommandException(ex.getLocalizedMessage());
-            } finally {
-                line = null;
-            }
-            return CommandResult.SUCCESS;
+            throw new CommandException("Should never be called directly.");
         }
 
         @Override
-        public BatchResponseHandler buildBatchResponseHandler(CommandContext commandContext, Attachments attachments) throws CommandLineException {
-            return null;
+        public String getLine() {
+            return line;
         }
-
-        @Override
-        public ModelNode buildRequest(CommandContext context) throws CommandFormatException {
-            return ctx.buildOperationRequest(line).getRequest();
-        }
-
     }
 
     public class OperationParser implements CommandLineParser<Command> {
@@ -173,7 +175,7 @@ public class OperationCommandContainer extends DefaultCommandContainer<Command> 
 
         @Override
         public void complete(AeshCompleteOperation co, InvocationProviders invocationProviders) {
-            ctx.completeOperationAndLegacy(co, invocationProviders);
+            ctx.completeOperationAndLegacy(co);
         }
     }
 

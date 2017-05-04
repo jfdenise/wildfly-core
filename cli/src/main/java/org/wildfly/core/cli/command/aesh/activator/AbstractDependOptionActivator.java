@@ -52,7 +52,7 @@ public abstract class AbstractDependOptionActivator implements DependOptionActiv
         boolean found = true;
         for (String opt : options) {
             if (ARGUMENT_NAME.equals(opt)) {
-                found &= processedCommand.getArgument() != null && processedCommand.getArgument().getValue() != null;
+                found &= processedCommand.getArguments() != null && processedCommand.getArguments().getValue() != null;
             } else {
                 ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(opt);
                 found &= processedOption != null && processedOption.getValue() != null;

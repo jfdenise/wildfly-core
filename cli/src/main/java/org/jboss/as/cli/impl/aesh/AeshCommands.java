@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh;
 
+import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,16 +45,18 @@ import org.aesh.command.operator.OperatorType;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
-import org.aesh.readline.completion.CompleteOperation;
-import org.aesh.readline.completion.Completion;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.CommandExecutor;
 import org.jboss.as.cli.impl.CommandExecutor.ExecutableBuilder;
 import org.jboss.as.cli.impl.ReadlineConsole;
+import org.jboss.as.cli.impl.aesh.commands.operation.LegacyCommandContainer.LegacyCommand;
+import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer.OperationCommand;
+import org.jboss.as.cli.impl.aesh.commands.operation.SpecialCommand;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -126,6 +129,25 @@ public class AeshCommands {
             }
             return null;
         }
+
+        public CommandHandler getLegacyHandler() {
+            if (execution.getCommand() instanceof LegacyCommand) {
+                return ((LegacyCommand) execution.getCommand()).getCommandHandler();
+            }
+            return null;
+        }
+
+        public boolean isOperation() {
+            return execution.getCommand() instanceof OperationCommand;
+        }
+
+        public String getLine() {
+            if (execution.getCommand() instanceof SpecialCommand) {
+                return ((SpecialCommand) execution.getCommand()).getLine();
+            }
+            return null;
+        }
+
     }
 
     private final CLICommandInvocationBuilder invocationBuilder;
@@ -134,11 +156,10 @@ public class AeshCommands {
     private final CLICompletionHandler completionHandler;
 
     public AeshCommands(CommandContextImpl ctx, OperationCommandContainer op) throws CliInitializationException {
-        this(ctx, null, null, op);
+        this(ctx, null, op);
     }
 
-    public AeshCommands(CommandContextImpl ctx, Completion<CompleteOperation> delegate,
-            ReadlineConsole console, OperationCommandContainer op) throws CliInitializationException {
+    public AeshCommands(CommandContextImpl ctx, ReadlineConsole console, OperationCommandContainer op) throws CliInitializationException {
         registry = new CLICommandRegistry(ctx, op);
         Shell shell = null;
         if (console != null) {
@@ -159,15 +180,11 @@ public class AeshCommands {
                 optionActivatorProvider(new CLIOptionActivatorProvider(ctx)).
                 validatorInvocationProvider(new CLIValidatorInvocationProvider(ctx)).
                 build();
-        completionHandler = new CLICompletionHandler(this, delegate);
+        completionHandler = new CLICompletionHandler(this, ctx);
         if (console != null) {
             console.setCompletionHandler(completionHandler);
             console.addCompleter(completionHandler);
         }
-    }
-
-    private void buildOperationBridge() {
-
     }
 
     public CommandLineCompleter getCommandCompleter() {
