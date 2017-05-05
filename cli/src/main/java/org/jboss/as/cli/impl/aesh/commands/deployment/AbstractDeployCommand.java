@@ -39,6 +39,7 @@ import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.jboss.as.cli.impl.CommaSeparatedCompleter;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.AllServerGroupsActivator;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators.ServerGroupsActivator;
+import org.jboss.as.cli.impl.aesh.parser.HeadersParser;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 
@@ -82,6 +83,7 @@ public abstract class AbstractDeployCommand extends CommandWithPermissions imple
     public boolean allServerGroups;
 
     @Option(converter = HeadersConverter.class, completer = HeadersCompleter.class,
+            parser = HeadersParser.class,
             required = false)
     public ModelNode headers;
 

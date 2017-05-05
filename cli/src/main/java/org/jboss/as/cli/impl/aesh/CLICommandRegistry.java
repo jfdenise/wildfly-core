@@ -259,6 +259,7 @@ public class CLICommandRegistry extends CommandRegistry implements org.aesh.comm
                                 addOptions(cmd.getOptions()).
                                 aliases(cmd.getAliases()).
                                 arguments(cmd.getArguments()).
+                                argument(cmd.getArgument()).
                                 command(cmd.getCommand()).
                                 description(cmd.description()).
                                 name(childName). // child name

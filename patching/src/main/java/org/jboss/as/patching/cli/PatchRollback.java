@@ -21,10 +21,9 @@
  */
 package org.jboss.as.patching.cli;
 
-import java.util.List;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.patching.tool.PatchOperationBuilder;
@@ -34,7 +33,7 @@ import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
  *
  * @author jdenise@redhat.com
  */
-@CommandDefinition(name = "rollback", description = "")
+@CommandDefinition(name = "rollback", description = "", activator = PatchRollbackActivator.class)
 public class PatchRollback extends PatchOverrideCommand {
 
     @Option(name = "reset-configuration", hasValue = true, required = true)
@@ -49,22 +48,22 @@ public class PatchRollback extends PatchOverrideCommand {
     @Option(name = "patch-id", required = false, activator = HideOptionActivator.class)
     private String patchId;
 
-    @Arguments(completer = PatchIdCompleter.class)
-    private List<String> patchIdArg;
+    @Argument(required = true, completer = PatchIdCompleter.class)
+    private String patchIdArg;
 
     public PatchRollback(String action) {
         super("rollback");
     }
 
     private String getPatchId() throws CommandException {
-        if (patchId != null && (patchIdArg != null && !patchIdArg.isEmpty())) {
+        if (patchId != null && patchIdArg != null) {
             throw new CommandException("patch-id argument and options can't be set al together.");
         }
         if (patchId != null) {
             return patchId;
         }
-        if (patchIdArg != null && !patchIdArg.isEmpty()) {
-            return patchIdArg.get(0);
+        if (patchIdArg != null) {
+            return patchIdArg;
         }
         return null;
     }
@@ -80,6 +79,11 @@ public class PatchRollback extends PatchOverrideCommand {
             builder = PatchOperationBuilder.Factory.rollbackLast(patchStream, resetConfiguration);
         }
         return builder;
+    }
+
+    @Override
+    String getPatchStream() {
+        return patchStream;
     }
 
 }

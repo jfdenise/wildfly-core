@@ -24,7 +24,6 @@ package org.jboss.as.cli.impl.aesh.commands;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.aesh.command.option.Arguments;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
 import org.aesh.command.completer.OptionCompleter;
@@ -32,6 +31,7 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.completer.CompleterInvocation;
+import org.aesh.command.option.Argument;
 import org.jboss.as.cli.CommandContext.TIMEOUT_RESET_VALUE;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -47,8 +47,8 @@ public class CommandTimeoutReset implements Command<CLICommandInvocation> {
     @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
-    @Arguments(completer = TimeoutCompleter.class)
-    private List<String> value;
+    @Argument(completer = TimeoutCompleter.class)
+    private String value;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
@@ -59,7 +59,7 @@ public class CommandTimeoutReset implements Command<CLICommandInvocation> {
         if (value == null || value.isEmpty()) {
             throw new CommandException("No value to reset");
         }
-        TIMEOUT_RESET_VALUE resetValue = Enum.valueOf(TIMEOUT_RESET_VALUE.class, value.get(0).toUpperCase());
+        TIMEOUT_RESET_VALUE resetValue = Enum.valueOf(TIMEOUT_RESET_VALUE.class, value.toUpperCase());
         commandInvocation.getCommandContext().resetTimeout(resetValue);
         return CommandResult.SUCCESS;
     }

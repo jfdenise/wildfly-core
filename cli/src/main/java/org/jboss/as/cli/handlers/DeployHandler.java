@@ -324,8 +324,7 @@ public class DeployHandler extends DeploymentHandler {
                 DeployFileCommand command = new DeployFileCommand(ctx);
                 command.allServerGroups = allServerGroups;
                 command.disabled = disabled;
-                command.file = new ArrayList<>();
-                command.file.add(f);
+                command.file = f;
                 command.replace = force;
                 command.headers = headersNode;
                 command.name = name;
@@ -435,8 +434,7 @@ public class DeployHandler extends DeploymentHandler {
                 DeployFileCommand command = new DeployFileCommand(ctx);
                 command.allServerGroups = allServerGroups;
                 command.disabled = disabled;
-                command.file = new ArrayList<>();
-                command.file.add(f);
+                command.file = f;
                 command.replace = force;
                 command.headers = headersNode;
                 command.name = name;

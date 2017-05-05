@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CommandContext;
@@ -61,9 +61,8 @@ public class DeployFileCommand extends AbstractDeployContentCommand {
     public String name;
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',',
-            completer = FileCompleter.class, converter = FileConverter.class)
-    public List<File> file;
+    @Argument(completer = FileCompleter.class, converter = FileConverter.class, required = true)
+    public File file;
 
     public DeployFileCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
@@ -76,16 +75,15 @@ public class DeployFileCommand extends AbstractDeployContentCommand {
 
     @Override
     protected void checkArgument() throws CommandException {
-        if (file == null || file.isEmpty()) {
+        if (file == null) {
             throw new CommandException("No deployment file");
         }
-        File f = file.get(0);
-        if (!f.exists()) {
-            throw new CommandException("Path " + f.getAbsolutePath()
+        if (!file.exists()) {
+            throw new CommandException("Path " + file.getAbsolutePath()
                     + " doesn't exist.");
         }
-        if (!unmanaged && f.isDirectory()) {
-            throw new CommandException(f.getAbsolutePath() + " is a directory.");
+        if (!unmanaged && file.isDirectory()) {
+            throw new CommandException(file.getAbsolutePath() + " is a directory.");
         }
     }
 
@@ -94,19 +92,17 @@ public class DeployFileCommand extends AbstractDeployContentCommand {
         if (name != null) {
             return name;
         }
-        File f = file.get(0);
-        return f.getName();
+        return file.getName();
     }
 
     @Override
     protected void addContent(CommandContext context, ModelNode content) throws OperationFormatException {
-        File f = file.get(0);
         if (unmanaged) {
-            content.get(Util.PATH).set(f.getAbsolutePath());
-            content.get(Util.ARCHIVE).set(f.isFile());
+            content.get(Util.PATH).set(file.getAbsolutePath());
+            content.get(Util.ARCHIVE).set(file.isFile());
         } else if (context.getBatchManager().isBatchActive()) {
             Attachments attachments = context.getBatchManager().getActiveBatch().getAttachments();
-            int index = attachments.addFileAttachment(f.getAbsolutePath());
+            int index = attachments.addFileAttachment(file.getAbsolutePath());
             content.get(Util.INPUT_STREAM_INDEX).set(index);
         } else {
             content.get(Util.INPUT_STREAM_INDEX).set(0);
@@ -117,7 +113,7 @@ public class DeployFileCommand extends AbstractDeployContentCommand {
     protected List<String> getServerGroups(CommandContext ctx)
             throws CommandFormatException {
         return DeploymentCommand.getServerGroups(ctx, ctx.getModelControllerClient(),
-                allServerGroups, serverGroups, file.get(0));
+                allServerGroups, serverGroups, file);
     }
 
     @Override
@@ -131,7 +127,7 @@ public class DeployFileCommand extends AbstractDeployContentCommand {
         ModelNode result;
         if (!unmanaged) {
             OperationBuilder op = new OperationBuilder(request);
-            op.addFileAsAttachment(file.get(0));
+            op.addFileAsAttachment(file);
             request.get(Util.CONTENT).get(0).get(Util.INPUT_STREAM_INDEX).set(0);
             try (Operation operation = op.build()) {
                 result = ctx.getModelControllerClient().execute(operation);

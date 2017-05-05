@@ -21,11 +21,10 @@
  */
 package org.jboss.as.cli.impl.aesh.commands;
 
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
-import java.util.List;
 import org.aesh.command.option.Option;
 import org.aesh.command.CommandException;
 import org.jboss.as.cli.CommandLineException;
@@ -37,8 +36,8 @@ import org.wildfly.core.cli.command.aesh.ValueResolverConverter;
 @CommandDefinition(name = "connect", description = "")
 public class ConnectCommand implements Command<CLICommandInvocation> {
 
-    @Arguments(converter = ValueResolverConverter.class)
-    private List<String> controller;
+    @Argument(converter = ValueResolverConverter.class)
+    private String controller;
 
     @Deprecated
     @Option(hasValue = false, activator = HideOptionActivator.class)
@@ -56,8 +55,7 @@ public class ConnectCommand implements Command<CLICommandInvocation> {
         }
 
         try {
-            String url = controller == null || controller.isEmpty() ? null : controller.get(0);
-            commandInvocation.getCommandContext().connectController(url, bind);
+            commandInvocation.getCommandContext().connectController(controller, bind);
         } catch (CommandLineException ex) {
             throw new CommandException(Util.getMessagesFromThrowable(ex));
         }

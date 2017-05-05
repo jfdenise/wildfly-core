@@ -15,7 +15,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.impl.internal.ProcessedCommand;
 import org.aesh.command.invocation.CommandInvocation;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.wildfly.core.cli.command.aesh.activator.AbstractDependRejectOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.AbstractDependOptionActivator;
@@ -94,8 +94,8 @@ public class Commands {
             String opt2;
             @Option(name = "opt3-with-value", hasValue = true)
             String opt3;
-            @Arguments()
-            List<String> args;
+            @Argument()
+            String args;
 
             @Override
             public String getSynopsis() {
@@ -122,8 +122,8 @@ public class Commands {
             String opt2;
             @Option(name = "opt3-with-value", hasValue = true, required = true)
             String opt3;
-            @Arguments()
-            List<String> args;
+            @Argument()
+            String args;
 
             @Override
             public String getSynopsis() {
@@ -180,7 +180,7 @@ public class Commands {
             public static class Opt2Activator extends AbstractDependOptionActivator {
 
                 public Opt2Activator() {
-                    super("opt1-with-value");
+                    super(false, "opt1-with-value");
                 }
             };
 
@@ -196,7 +196,7 @@ public class Commands {
                 }
 
                 public Opt3Activator() {
-                    super(EXPECTED, NOT_EXPECTED);
+                    super(false, EXPECTED, NOT_EXPECTED);
                 }
             }
             @Option(name = "opt1-with-value", hasValue = true)
@@ -229,7 +229,7 @@ public class Commands {
             public static class Opt2Activator extends AbstractDependOptionActivator {
 
                 public Opt2Activator() {
-                    super("");
+                    super(false, "");
                 }
             };
 
@@ -245,7 +245,7 @@ public class Commands {
                 }
 
                 public Opt3Activator() {
-                    super(EXPECTED, NOT_EXPECTED);
+                    super(false, EXPECTED, NOT_EXPECTED);
                 }
             }
             @Option(name = "opt1-with-value", hasValue = true)
@@ -254,8 +254,8 @@ public class Commands {
             String opt2;
             @Option(name = "opt3-with-value", hasValue = true, required = true, activator = Opt3Activator.class)
             String opt3;
-            @Arguments()
-            List<String> args;
+            @Argument()
+            String args;
 
             @Override
             public String getSynopsis() {
@@ -280,7 +280,7 @@ public class Commands {
             public static class Opt2Activator extends AbstractDependOptionActivator {
 
                 public Opt2Activator() {
-                    super("", "opt1-with-value");
+                    super(false, "", "opt1-with-value");
                 }
             };
 
@@ -297,7 +297,7 @@ public class Commands {
                 }
 
                 public Opt3Activator() {
-                    super(EXPECTED, NOT_EXPECTED);
+                    super(false, EXPECTED, NOT_EXPECTED);
                 }
             }
             @Option(name = "opt1-with-value", hasValue = true)
@@ -306,8 +306,8 @@ public class Commands {
             String opt2;
             @Option(name = "opt3-with-value", hasValue = true, required = true, activator = Opt3Activator.class)
             String opt3;
-            @Arguments()
-            List<String> args;
+            @Argument()
+            String args;
 
             @Override
             public String getSynopsis() {
@@ -356,15 +356,15 @@ public class Commands {
                 }
 
                 public PatchIdNoStreamsActivator() {
-                    super(EXPECTED, NOT_EXPECTED);
+                    super(false, EXPECTED, NOT_EXPECTED);
                 }
             }
 
             @Option(name = "patch-stream", hasValue = true, required = false, activator = PatchIdNoStreamsActivator.class)
             private String patchStream;
 
-            @Arguments(activator = NoStreamsActivator.class)
-            private List<String> patchIdArg;
+            @Argument(activator = NoStreamsActivator.class)
+            private String patchIdArg;
 
             @Option(hasValue = false, shortName = 'v', required = false, activator = PatchIdNoStreamsActivator.class)
             boolean verbose;
@@ -394,8 +394,8 @@ public class Commands {
             @Option(name = "opt1", hasValue = true, required = false, activator = HideOptionActivator.class)
             private String patchStream;
 
-            @Arguments(activator = HideOptionActivator.class)
-            private List<String> patchIdArg;
+            @Argument(activator = HideOptionActivator.class)
+            private String patchIdArg;
 
             @Option(hasValue = false, shortName = 'v', required = false, activator = HideOptionActivator.class)
             boolean verbose;
@@ -441,7 +441,7 @@ public class Commands {
                 }
 
                 public Opt4Activator() {
-                    super(EXPECTED, NOT_EXPECTED);
+                    super(false, EXPECTED, NOT_EXPECTED);
                 }
             }
 
@@ -464,7 +464,7 @@ public class Commands {
                 }
 
                 public Opt2Activator() {
-                    super(EXPECTED, NOT_EXPECTED);
+                    super(false, EXPECTED, NOT_EXPECTED);
                 }
             }
             @Option(name = "opt1-conflict-with-opt4", hasValue = false, activator = Opt1Activator.class)

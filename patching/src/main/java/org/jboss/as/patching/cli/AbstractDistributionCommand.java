@@ -169,6 +169,10 @@ public abstract class AbstractDistributionCommand implements Command<CLICommandI
         this.action = action;
     }
 
+    String getPatchStream() {
+        return null;
+    }
+
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
         if (host != null && !commandInvocation.getCommandContext().isDomainMode()) {
@@ -222,7 +226,7 @@ public abstract class AbstractDistributionCommand implements Command<CLICommandI
 
     protected abstract PatchOperationBuilder createPatchOperationBuilder(CommandContext ctx) throws CommandException;
 
-    private PatchOperationTarget createPatchOperationTarget(CommandContext ctx) throws CommandException {
+    PatchOperationTarget createPatchOperationTarget(CommandContext ctx) throws CommandException {
         final PatchOperationTarget target;
         final ParsedCommandLine args = ctx.getParsedCommandLine();
         if (ctx.getModelControllerClient() != null) {

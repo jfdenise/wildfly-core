@@ -34,7 +34,7 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
@@ -61,9 +61,9 @@ import org.wildfly.core.cli.command.aesh.FileCompleter;
 public class PatchInspect implements Command<CLICommandInvocation> {
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',',
+    @Argument(required = true,
             completer = FileCompleter.class, converter = FileConverter.class)
-    private List<File> path;
+    private File patchFile;
 
     @Option(hasValue = false, shortName = 'v', required = false)
     boolean verbose;
@@ -75,10 +75,9 @@ public class PatchInspect implements Command<CLICommandInvocation> {
     }
 
     private void doInspect(CommandContext ctx) throws CommandException {
-        if (path == null || path.isEmpty()) {
+        if (patchFile == null) {
             throw new CommandException("No patch path provided");
         }
-        final File patchFile = path.get(0);
         if (!patchFile.exists()) {
             throw new CommandException("Failed to locate " + patchFile.getAbsolutePath());
         }

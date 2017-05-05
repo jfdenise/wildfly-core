@@ -21,7 +21,16 @@
  */
 package org.jboss.as.patching.cli;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.aesh.command.CommandException;
 import org.aesh.command.completer.OptionCompleter;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import org.jboss.as.patching.Constants;
+import org.jboss.as.patching.PatchingException;
+import org.jboss.as.patching.tool.PatchOperationBuilder;
+import org.jboss.as.patching.tool.PatchOperationTarget;
+import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 /**
  *
@@ -31,5 +40,35 @@ public class PatchIdCompleter implements OptionCompleter<CLICompleterInvocation>
 
     @Override
     public void complete(CLICompleterInvocation completerInvocation) {
+        AbstractDistributionCommand cmd = (AbstractDistributionCommand) completerInvocation.getCommand();
+        try {
+            final PatchOperationTarget target = cmd.createPatchOperationTarget(completerInvocation.getCommandContext());
+            PatchOperationBuilder builder = PatchOperationBuilder.Factory.info(cmd.getPatchStream());
+            ModelNode response = builder.execute(target);
+            final ModelNode result = response.get(ModelDescriptionConstants.RESULT);
+            if (!result.isDefined()) {
+                return;
+            }
+            List<ModelNode> patches = result.get(Constants.PATCHES).asList();
+            List<String> names = new ArrayList<>();
+            for (ModelNode p : patches) {
+                names.add(p.asString());
+            }
+            String buffer = completerInvocation.getGivenCompleteValue();
+            if (buffer == null || buffer.isEmpty()) {
+                completerInvocation.addAllCompleterValues(names);
+            } else {
+                for (String n : names) {
+                    if (n.startsWith(buffer) && !n.equals(buffer)) {
+                        completerInvocation.addCompleterValue(n);
+                        completerInvocation.setOffset(buffer.length());
+                    }
+                }
+            }
+        } catch (CommandException | PatchingException ex) {
+            // OK, will not complete.
+            return;
+        }
+
     }
 }

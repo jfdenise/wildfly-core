@@ -44,7 +44,7 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import org.aesh.util.Config;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
@@ -489,7 +489,7 @@ public class HelpSupport {
         Collections.sort(opts, (ProcessedOption o1, ProcessedOption o2) -> {
             return o1.name().compareTo(o2.name());
         });
-        ProcessedOption arg = deprecated.contains("") ? null : pcommand.getArguments();
+        ProcessedOption arg = deprecated.contains("") ? null : pcommand.getArgument();
 
         return getCommandHelp(bundle, superNames, arg, parsers, opts, pcommand,
                 parentName, commandName, parser.getProcessedCommand(), false);
@@ -619,7 +619,7 @@ public class HelpSupport {
     }
 
     private static void retrieveHidden(Set<String> deprecated, ProcessedCommand<Command> cmd) {
-        if (cmd.getArguments() != null && cmd.getArguments().activator() instanceof HideOptionActivator) {
+        if (cmd.getArgument() != null && cmd.getArgument().activator() instanceof HideOptionActivator) {
             deprecated.add("");
         }
         for (ProcessedOption po : cmd.getOptions()) {
@@ -667,8 +667,8 @@ public class HelpSupport {
                     }
                     deprecated.add(name);
                 } else {
-                    Arguments arg;
-                    if ((arg = field.getAnnotation(Arguments.class)) != null) {
+                    Argument arg;
+                    if ((arg = field.getAnnotation(Argument.class)) != null) {
                         deprecated.add("");
                     }
                 }
@@ -1102,20 +1102,20 @@ public class HelpSupport {
             }
             ProcessedCommandBuilder builder = new ProcessedCommandBuilder().name(pc.name()).description(desc);
 
-            if (pc.getArguments() != null) {
-                String argDesc = pc.getArguments().description();
+            if (pc.getArgument() != null) {
+                String argDesc = pc.getArgument().description();
                 String bargDesc = getValue(bundle, parentName, pc.name(), superNames,
                         "arguments.description", false);
                 if (bargDesc != null) {
                     argDesc = bargDesc;
                 }
                 ProcessedOption newArg = ProcessedOptionBuilder.builder().name("").
-                        optionType(pc.getArguments().getOptionType()).
+                        optionType(pc.getArgument().getOptionType()).
                         type(String.class).
-                        activator(pc.getArguments().activator()).
-                        valueSeparator(pc.getArguments().getValueSeparator()).
-                        required(pc.getArguments().isRequired()).description(argDesc).build();
-                builder.arguments(newArg);
+                        activator(pc.getArgument().activator()).
+                        valueSeparator(pc.getArgument().getValueSeparator()).
+                        required(pc.getArgument().isRequired()).description(argDesc).build();
+                builder.argument(newArg);
             }
 
             for (ProcessedOption opt : pc.getOptions()) {

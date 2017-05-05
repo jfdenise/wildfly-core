@@ -36,6 +36,7 @@ import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
  * @author jdenise
  */
 public class HeadersCompleter implements OptionCompleter<CLICompleterInvocation> {
+
     private final DefaultCallbackHandler handler = new DefaultCallbackHandler();
 
     @Override
@@ -45,19 +46,24 @@ public class HeadersCompleter implements OptionCompleter<CLICompleterInvocation>
         if (cliCompleterInvocation.getGivenCompleteValue() != null) {
             pos = cliCompleterInvocation.getGivenCompleteValue().length();
         }
-        try {
-            handler.parseOperation(null, cliCompleterInvocation.getGivenCompleteValue());
-        } catch (CommandFormatException e) {
-            //e.printStackTrace();
-            return;
-        }
-        int cursor = 0;
-        if (handler.endsOnHeaderListStart() || handler.hasHeaders()) {
-            cursor = OperationRequestCompleter.INSTANCE.complete(cliCompleterInvocation.
-                    getCommandContext(), handler, cliCompleterInvocation.getGivenCompleteValue(), pos, candidates);
+        if (pos == 0) {
+            candidates.add("{");
+
+        } else {
+            try {
+                handler.parseOperation(null, cliCompleterInvocation.getGivenCompleteValue());
+            } catch (CommandFormatException e) {
+                //e.printStackTrace();
+                return;
+            }
+            int cursor = 0;
+            if (handler.endsOnHeaderListStart() || handler.hasHeaders()) {
+                cursor = OperationRequestCompleter.INSTANCE.complete(cliCompleterInvocation.
+                        getCommandContext(), handler, cliCompleterInvocation.getGivenCompleteValue(), pos, candidates);
+            }
+            cliCompleterInvocation.setOffset(cliCompleterInvocation.getGivenCompleteValue().length() - cursor);
         }
         cliCompleterInvocation.addAllCompleterValues(candidates);
-        cliCompleterInvocation.setOffset(cliCompleterInvocation.getGivenCompleteValue().length() - cursor);
         cliCompleterInvocation.setAppendSpace(false);
     }
 

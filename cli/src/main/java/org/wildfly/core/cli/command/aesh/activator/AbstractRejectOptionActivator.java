@@ -52,7 +52,7 @@ public abstract class AbstractRejectOptionActivator implements RejectOptionActiv
     public boolean isActivated(ProcessedCommand processedCommand) {
         for (String opt : options) {
             if (ARGUMENT_NAME.equals(opt)) {
-                if (processedCommand.getArguments() != null && processedCommand.getArguments().getValue() != null) {
+                if (processedCommand.getArgument() != null && processedCommand.getArgument().getValue() != null) {
                     return false;
                 }
             } else {

@@ -121,7 +121,7 @@ public interface Activators {
             NOT_EXPECTED.add("all-server-groups");
         }
         public ServerGroupsActivator() {
-            super(EXPECTED, NOT_EXPECTED);
+            super(false, EXPECTED, NOT_EXPECTED);
         }
 
         @Override
@@ -151,7 +151,7 @@ public interface Activators {
         }
 
         public AllServerGroupsActivator() {
-            super(EXPECTED, NOT_EXPECTED);
+            super(false, EXPECTED, NOT_EXPECTED);
         }
 
         @Override
@@ -173,7 +173,7 @@ public interface Activators {
             implements DomainOptionActivator {
 
         public AllRelevantServerGroupsActivator() {
-            super(EXPECTED, NOT_EXPECTED);
+            super(false, EXPECTED, NOT_EXPECTED);
         }
 
         private static final Set<String> EXPECTED = new HashSet<>();
@@ -204,7 +204,7 @@ public interface Activators {
             implements DomainOptionActivator {
 
         public UndeployServerGroupsActivator() {
-            super(EXPECTED, NOT_EXPECTED);
+            super(false, EXPECTED, NOT_EXPECTED);
         }
 
         private static final Set<String> EXPECTED = new HashSet<>();

@@ -38,12 +38,15 @@ import org.aesh.command.impl.internal.ProcessedOption;
 public abstract class AbstractDependOptionActivator implements DependOptionActivator {
 
     private final Set<String> options;
+    private final boolean lax;
 
-    protected AbstractDependOptionActivator(String... opts) {
+    protected AbstractDependOptionActivator(boolean lax, String... opts) {
         options = new HashSet<>(Arrays.asList(opts));
+        this.lax = lax;
     }
 
-    protected AbstractDependOptionActivator(Set<String> opts) {
+    protected AbstractDependOptionActivator(boolean lax, Set<String> opts) {
+        this.lax = lax;
         options = opts;
     }
 
@@ -52,10 +55,10 @@ public abstract class AbstractDependOptionActivator implements DependOptionActiv
         boolean found = true;
         for (String opt : options) {
             if (ARGUMENT_NAME.equals(opt)) {
-                found &= processedCommand.getArguments() != null && processedCommand.getArguments().getValue() != null;
+                found &= processedCommand.getArgument() != null && (lax || processedCommand.getArgument().getValue() != null);
             } else {
                 ProcessedOption processedOption = processedCommand.findLongOptionNoActivatorCheck(opt);
-                found &= processedOption != null && processedOption.getValue() != null;
+                found &= processedOption != null && (lax || processedOption.getValue() != null);
             }
         }
         return found;

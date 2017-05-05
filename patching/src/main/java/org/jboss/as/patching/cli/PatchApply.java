@@ -22,10 +22,9 @@
 package org.jboss.as.patching.cli;
 
 import java.io.File;
-import java.util.List;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.patching.tool.PatchOperationBuilder;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
@@ -39,9 +38,9 @@ import org.wildfly.core.cli.command.aesh.FileConverter;
 public class PatchApply extends PatchOverrideCommand {
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',',
+    @Argument(required = true,
             completer = FileCompleter.class, converter = FileConverter.class)
-    private List<File> path;
+    private File file;
 
     public PatchApply(String action) {
         super("apply");
@@ -49,19 +48,18 @@ public class PatchApply extends PatchOverrideCommand {
 
     @Override
     protected PatchOperationBuilder createUnconfiguredOperationBuilder(CommandContext ctx) throws CommandException {
-        if (path == null || path.isEmpty()) {
+        if (file == null) {
             throw new CommandException("A path is required.");
         }
 
-        final File f = path.get(0);
-        if (!f.exists()) {
+        if (!file.exists()) {
             // i18n is never used for CLI exceptions
-            throw new CommandException("Path " + f.getAbsolutePath() + " doesn't exist.");
+            throw new CommandException("Path " + file.getAbsolutePath() + " doesn't exist.");
         }
-        if (f.isDirectory()) {
-            throw new CommandException(f.getAbsolutePath() + " is a directory.");
+        if (file.isDirectory()) {
+            throw new CommandException(file.getAbsolutePath() + " is a directory.");
         }
-        return PatchOperationBuilder.Factory.patch(f);
+        return PatchOperationBuilder.Factory.patch(file);
     }
 
 }

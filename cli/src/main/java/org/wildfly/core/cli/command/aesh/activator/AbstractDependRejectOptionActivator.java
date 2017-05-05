@@ -34,8 +34,8 @@ import org.aesh.command.impl.internal.ProcessedCommand;
 public abstract class AbstractDependRejectOptionActivator implements DependOptionActivator, RejectOptionActivator {
     private static class ExpectedOptionsActivatorImpl extends AbstractDependOptionActivator {
 
-        ExpectedOptionsActivatorImpl(Set<String> opts) {
-            super(opts);
+        ExpectedOptionsActivatorImpl(boolean lax, Set<String> opts) {
+            super(lax, opts);
         }
     }
 
@@ -49,8 +49,8 @@ public abstract class AbstractDependRejectOptionActivator implements DependOptio
     private final DependOptionActivator expected;
     private final RejectOptionActivator notExpected;
 
-    protected AbstractDependRejectOptionActivator(Set<String> expectedOptions, Set<String> notExpectedOptions) {
-        this.expected = new ExpectedOptionsActivatorImpl(expectedOptions);
+    protected AbstractDependRejectOptionActivator(boolean lax, Set<String> expectedOptions, Set<String> notExpectedOptions) {
+        this.expected = new ExpectedOptionsActivatorImpl(lax, expectedOptions);
         this.notExpected = new NotExpectedOptionsActivatorImpl(notExpectedOptions);
     }
 

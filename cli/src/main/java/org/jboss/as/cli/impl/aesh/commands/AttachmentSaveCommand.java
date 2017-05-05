@@ -42,14 +42,14 @@ public class AttachmentSaveCommand extends AttachmentDisplayCommand {
     public static final class FileActivator extends AbstractDependOptionActivator {
 
         public FileActivator() {
-            super("operation");
+            super(false, "operation");
         }
     }
 
     public static final class OverwriteActivator extends AbstractDependOptionActivator {
 
         public OverwriteActivator() {
-            super("file");
+            super(false, "file");
         }
     }
 

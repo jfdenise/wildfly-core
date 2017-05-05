@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.util.SimpleTable;
@@ -72,15 +72,15 @@ public class PatchInfo extends AbstractDistributionCommand {
         }
 
         public PatchIdNoStreamsActivator() {
-            super(EXPECTED, NOT_EXPECTED);
+            super(true, EXPECTED, NOT_EXPECTED);
         }
     }
 
     @Option(name = "patch-stream", hasValue = true, required = false, activator = PatchIdNoStreamsActivator.class)
     private String patchStream;
 
-    @Arguments(completer = PatchIdCompleter.class, activator = NoStreamsActivator.class)
-    private List<String> patchIdArg;
+    @Argument(completer = PatchIdCompleter.class, activator = NoStreamsActivator.class)
+    private String patchIdArg;
 
     @Option(name = "patch-id", completer = PatchIdCompleter.class, activator = HideOptionActivator.class)
     private String patchId;
@@ -100,14 +100,14 @@ public class PatchInfo extends AbstractDistributionCommand {
     }
 
     private String getPatchId() throws CommandException {
-        if (patchId != null && (patchIdArg != null && !patchIdArg.isEmpty())) {
+        if (patchId != null && patchIdArg != null) {
             throw new CommandException("patch-id argument and options can't be set al together.");
         }
         if (patchId != null) {
             return patchId;
         }
         if (patchIdArg != null && !patchIdArg.isEmpty()) {
-            return patchIdArg.get(0);
+            return patchIdArg;
         }
         return null;
     }
@@ -217,6 +217,11 @@ public class PatchInfo extends AbstractDistributionCommand {
             patchesStr = buf.toString();
         }
         table.addLine(new String[]{"One-off patches:", patchesStr});
+    }
+
+    @Override
+    String getPatchStream() {
+        return patchStream;
     }
 
 }
