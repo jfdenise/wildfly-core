@@ -42,6 +42,9 @@ public class PatchIdCompleter implements OptionCompleter<CLICompleterInvocation>
     public void complete(CLICompleterInvocation completerInvocation) {
         AbstractDistributionCommand cmd = (AbstractDistributionCommand) completerInvocation.getCommand();
         try {
+            if (completerInvocation.getCommandContext().isDomainMode() && cmd.getHost() == null) {
+                return;
+            }
             final PatchOperationTarget target = cmd.createPatchOperationTarget(completerInvocation.getCommandContext());
             PatchOperationBuilder builder = PatchOperationBuilder.Factory.info(cmd.getPatchStream());
             ModelNode response = builder.execute(target);

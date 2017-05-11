@@ -48,7 +48,7 @@ public class PatchRollback extends PatchOverrideCommand {
     @Option(name = "patch-id", required = false, activator = HideOptionActivator.class)
     private String patchId;
 
-    @Argument(required = true, completer = PatchIdCompleter.class)
+    @Argument(completer = PatchIdCompleter.class)
     private String patchIdArg;
 
     public PatchRollback(String action) {

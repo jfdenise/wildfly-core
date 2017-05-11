@@ -22,7 +22,6 @@
 package org.jboss.as.cli.handlers.batch;
 
 import java.io.File;
-import java.util.ArrayList;
 import org.aesh.command.CommandException;
 import org.jboss.as.cli.Attachments;
 
@@ -70,8 +69,7 @@ public class BatchRunHandler extends BaseOperationCommand {
             if (f != null) {
                 BatchRunFileCommand cmd = new BatchRunFileCommand();
                 cmd.verbose = v;
-                cmd.arg = new ArrayList<>();
-                cmd.arg.add(new File(f));
+                cmd.file = new File(f);
                 cmd.headers = headersNode;
                 cmd.execute(ctx);
             } else {
@@ -94,8 +92,7 @@ public class BatchRunHandler extends BaseOperationCommand {
             if (f != null) {
                 BatchRunFileCommand cmd = new BatchRunFileCommand();
                 cmd.verbose = v;
-                cmd.arg = new ArrayList<>();
-                cmd.arg.add(new File(f));
+                cmd.file = new File(f);
                 cmd.headers = headersNode;
                 return cmd.newRequest(ctx);
             } else {

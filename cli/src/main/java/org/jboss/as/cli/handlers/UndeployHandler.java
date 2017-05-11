@@ -23,7 +23,6 @@ package org.jboss.as.cli.handlers;
 
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -220,8 +219,7 @@ public class UndeployHandler extends DeploymentHandler {
             f = new File(path);
             if (DeployArchiveCommand.isCliArchive(f)) {
                 UndeployArchiveCommand command = new UndeployArchiveCommand(ctx);
-                command.file = new ArrayList<>();
-                command.file.add(f);
+                command.file = f;
                 command.script = script.getValue(args);
                 try {
                     command.execute(ctx);
@@ -254,8 +252,7 @@ public class UndeployHandler extends DeploymentHandler {
         }
         command.headers = headersNode;
         if (name != null) {
-            command.name = new ArrayList<>();
-            command.name.add(name);
+            command.name = name;
         }
         command.serverGroups = serverGroups.getValue(args);
 
@@ -274,8 +271,7 @@ public class UndeployHandler extends DeploymentHandler {
             File f = new File(path);
             if (DeployArchiveCommand.isCliArchive(f)) {
                 UndeployArchiveCommand command = new UndeployArchiveCommand(ctx);
-                command.file = new ArrayList<>();
-                command.file.add(f);
+                command.file = f;
                 command.script = script.getValue(args);
                 return command.buildRequest(ctx);
             }
@@ -295,8 +291,7 @@ public class UndeployHandler extends DeploymentHandler {
         final String name = this.name.getValue(ctx.getParsedCommandLine());
         command.allRelevantServerGroups = allRelevantServerGroups.isPresent(args);
         if (name != null) {
-            command.name = new ArrayList<>();
-            command.name.add(name);
+            command.name = name;
         }
         command.serverGroups = serverGroups.getValue(args);
         return command.buildRequest(ctx);

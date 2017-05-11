@@ -21,13 +21,12 @@
  */
 package org.jboss.as.cli.impl.aesh.commands;
 
-import java.util.List;
-import org.aesh.command.option.Arguments;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
+import org.aesh.command.option.Argument;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
@@ -42,8 +41,8 @@ public class CommandTimeoutSet implements Command<CLICommandInvocation> {
     @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
-    @Arguments
-    private List<Integer> value;
+    @Argument(required = true)
+    private Integer value;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
@@ -51,13 +50,13 @@ public class CommandTimeoutSet implements Command<CLICommandInvocation> {
             commandInvocation.println(commandInvocation.getHelpInfo("command-timeout set"));
             return CommandResult.SUCCESS;
         }
-        if (value == null || value.isEmpty()) {
+        if (value == null) {
             throw new CommandException("No value to set");
         }
         try {
-            commandInvocation.getCommandContext().setCommandTimeout(value.get(0));
+            commandInvocation.getCommandContext().setCommandTimeout(value);
         } catch (NumberFormatException ex) {
-            throw new CommandException("Invalid command timeout value " + value.get(0));
+            throw new CommandException("Invalid command timeout value " + value);
         }
         return CommandResult.SUCCESS;
     }

@@ -30,7 +30,7 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.completer.OptionCompleter;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -86,9 +86,9 @@ public class EnableCommand extends AbstractDeployCommand implements LegacyBridge
     private boolean help;
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', activator = NameActivator.class,
+    @Argument(required = true, activator = NameActivator.class,
             completer = NameCompleter.class)
-    public List<String> name;
+    public String name;
 
     public EnableCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, AccessRequirements.enableAccess(permissions), permissions);
@@ -115,7 +115,7 @@ public class EnableCommand extends AbstractDeployCommand implements LegacyBridge
         if (name == null || name.isEmpty()) {
             throw new CommandException("No deployment name");
         }
-        deployName(ctx, name.get(0), allServerGroups, serverGroups, headers);
+        deployName(ctx, name, allServerGroups, serverGroups, headers);
         return CommandResult.SUCCESS;
     }
 
@@ -140,7 +140,7 @@ public class EnableCommand extends AbstractDeployCommand implements LegacyBridge
     @Override
     public ModelNode buildRequest(CommandContext context)
             throws CommandFormatException {
-        return buildRequest(context, name.get(0), allServerGroups,
+        return buildRequest(context, name, allServerGroups,
                 serverGroups, headers);
     }
 

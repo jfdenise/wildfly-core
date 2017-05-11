@@ -31,7 +31,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.completer.OptionCompleter;
 import org.aesh.command.impl.internal.ProcessedCommand;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.batch.BatchManager;
@@ -53,9 +53,8 @@ public class BatchReactivateCommand implements Command<CLICommandInvocation> {
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
-    // XXX JFDENISE AESH-401
-    @Arguments(completer = BatchNameCompleter.class)
-    private List<String> name;
+    @Argument(required = true, completer = BatchNameCompleter.class)
+    private String name;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -74,14 +73,13 @@ public class BatchReactivateCommand implements Command<CLICommandInvocation> {
         return handle(commandInvocation, name);
     }
 
-    static CommandResult handle(CLICommandInvocation commandInvocation, List<String> name) throws CommandException {
+    static CommandResult handle(CLICommandInvocation commandInvocation, String batchName) throws CommandException {
         CommandContext ctx = commandInvocation.getCommandContext();
         BatchManager batchManager = ctx.getBatchManager();
 
-        if (name == null || name.isEmpty()) {
+        if (batchName == null) {
             throw new CommandException("No batch name to re-activate");
         }
-        String batchName = name.get(0);
         if (batchManager.isHeldback(batchName)) {
             boolean activated = batchManager.activateHeldbackBatch(batchName);
             if (activated) {
@@ -101,7 +99,7 @@ public class BatchReactivateCommand implements Command<CLICommandInvocation> {
                 throw new CommandException("Failed to activate batch.");
             }
         } else {
-            throw new CommandException("'" + name
+            throw new CommandException("'" + batchName
                     + "' not found among the held back batches.");
         }
         return CommandResult.SUCCESS;

@@ -21,12 +21,11 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.batch;
 
-import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.batch.BatchManager;
@@ -44,9 +43,8 @@ public class BatchHoldbackCommand implements Command<CLICommandInvocation> {
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
     protected boolean help;
 
-    // XXX JFDENISE AESH-401
-    @Arguments() // required = true
-    public List<String> name;
+    @Argument(required = true)
+    public String batchName;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -56,7 +54,7 @@ public class BatchHoldbackCommand implements Command<CLICommandInvocation> {
             return CommandResult.SUCCESS;
         }
 
-        if (name == null || name.isEmpty()) {
+        if (batchName == null) {
             //Legacy compliance
             CommandResult res = BatchCommand.handle(commandInvocation, BatchCommand.HOLDBACK);
             if (res != null) {
@@ -69,7 +67,6 @@ public class BatchHoldbackCommand implements Command<CLICommandInvocation> {
 
     public CommandResult execute(CommandContext ctx)
             throws CommandException {
-        String batchName = (name == null || name.isEmpty()) ? null : name.get(0);
         BatchManager batchManager = ctx.getBatchManager();
         if (!batchManager.isBatchActive()) {
             throw new CommandException("No active batch to holdback.");

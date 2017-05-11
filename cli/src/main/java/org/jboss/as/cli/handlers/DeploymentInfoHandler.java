@@ -21,7 +21,6 @@
  */
 package org.jboss.as.cli.handlers;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import org.jboss.as.cli.CommandContext;
@@ -87,12 +86,11 @@ public class DeploymentInfoHandler extends BaseOperationCommand {
     @Override
     public ModelNode buildRequestWithoutHeaders(CommandContext ctx) throws CommandFormatException {
         final ParsedCommandLine parsedCmd = ctx.getParsedCommandLine();
-        ic.name = null;
+        ic.deploymentName = null;
         ic.serverGroup = null;
         String deploymentName = name.getValue(parsedCmd);
         if (name != null) {
-            ic.name = new ArrayList<>();
-            ic.name.add(deploymentName);
+            ic.deploymentName = deploymentName;
         }
         ic.serverGroup = serverGroup.getValue(parsedCmd);
         return ic.buildRequest(ctx);

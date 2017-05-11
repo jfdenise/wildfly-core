@@ -56,6 +56,7 @@ import org.aesh.command.impl.internal.ProcessedOption;
 import org.aesh.command.impl.internal.ProcessedOptionBuilder;
 import org.aesh.command.impl.parser.CommandLineParser;
 import org.aesh.command.Command;
+import org.aesh.command.option.Arguments;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
@@ -489,7 +490,8 @@ public class HelpSupport {
         Collections.sort(opts, (ProcessedOption o1, ProcessedOption o2) -> {
             return o1.name().compareTo(o2.name());
         });
-        ProcessedOption arg = deprecated.contains("") ? null : pcommand.getArgument();
+        ProcessedOption arg = deprecated.contains("") ? null
+                : (pcommand.getArgument() == null ? pcommand.getArguments() : pcommand.getArgument());
 
         return getCommandHelp(bundle, superNames, arg, parsers, opts, pcommand,
                 parentName, commandName, parser.getProcessedCommand(), false);
@@ -619,7 +621,8 @@ public class HelpSupport {
     }
 
     private static void retrieveHidden(Set<String> deprecated, ProcessedCommand<Command> cmd) {
-        if (cmd.getArgument() != null && cmd.getArgument().activator() instanceof HideOptionActivator) {
+        if ((cmd.getArgument() != null && cmd.getArgument().activator() instanceof HideOptionActivator)
+                || (cmd.getArguments() != null && cmd.getArguments().activator() instanceof HideOptionActivator)) {
             deprecated.add("");
         }
         for (ProcessedOption po : cmd.getOptions()) {
@@ -667,8 +670,7 @@ public class HelpSupport {
                     }
                     deprecated.add(name);
                 } else {
-                    Argument arg;
-                    if ((arg = field.getAnnotation(Argument.class)) != null) {
+                    if (field.getAnnotation(Argument.class) != null || field.getAnnotation(Arguments.class) != null) {
                         deprecated.add("");
                     }
                 }
@@ -1116,7 +1118,22 @@ public class HelpSupport {
                         valueSeparator(pc.getArgument().getValueSeparator()).
                         required(pc.getArgument().isRequired()).description(argDesc).build();
                 builder.argument(newArg);
+            } else if (pc.getArguments() != null) {
+                String argDesc = pc.getArguments().description();
+                String bargDesc = getValue(bundle, parentName, pc.name(), superNames,
+                        "arguments.description", false);
+                if (bargDesc != null) {
+                    argDesc = bargDesc;
+                }
+                ProcessedOption newArg = ProcessedOptionBuilder.builder().name("").
+                        optionType(pc.getArguments().getOptionType()).
+                        type(String.class).
+                        activator(pc.getArguments().activator()).
+                        valueSeparator(pc.getArguments().getValueSeparator()).
+                        required(pc.getArguments().isRequired()).description(argDesc).build();
+                builder.argument(newArg);
             }
+
 
             for (ProcessedOption opt : pc.getOptions()) {
                 String optDesc = opt.description();

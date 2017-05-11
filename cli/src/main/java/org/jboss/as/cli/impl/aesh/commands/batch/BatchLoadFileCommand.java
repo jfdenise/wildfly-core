@@ -25,12 +25,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -52,10 +51,9 @@ public class BatchLoadFileCommand implements Command<CLICommandInvocation> {
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
     private boolean help;
 
-    // XXX JFDENISE AESH-401
-    @Arguments(converter = FileConverter.class,
-            completer = FileCompleter.class) // required = true
-    private List<File> files;
+    @Argument(converter = FileConverter.class,
+            completer = FileCompleter.class, required = true)
+    private File file;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -64,7 +62,7 @@ public class BatchLoadFileCommand implements Command<CLICommandInvocation> {
             commandInvocation.println(commandInvocation.getHelpInfo("batch " + BatchCommand.LOAD_FILE));
             return CommandResult.SUCCESS;
         }
-        if (files == null || files.isEmpty()) {
+        if (file == null) {
             //Legacy compliance
             CommandResult res = BatchCommand.handle(commandInvocation, BatchCommand.LOAD_FILE);
             if (res != null) {
@@ -74,10 +72,9 @@ public class BatchLoadFileCommand implements Command<CLICommandInvocation> {
         if (commandInvocation.getCommandContext().getBatchManager().isBatchActive()) {
             throw new CommandException("Can't start a new batch while in batch mode.");
         }
-        if (files == null || files.isEmpty()) {
+        if (file == null) {
             throw new CommandException("File name must be provided");
         }
-        File file = files.get(0);
         return handle(commandInvocation, file);
     }
 

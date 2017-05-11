@@ -23,8 +23,10 @@ package org.jboss.as.patching.cli;
 
 import java.util.List;
 import org.aesh.command.impl.internal.ProcessedCommand;
+import org.jboss.as.cli.Util;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.patching.Constants;
+import org.jboss.as.patching.PatchingException;
 import org.jboss.as.patching.tool.PatchOperationBuilder;
 import org.jboss.as.patching.tool.PatchOperationTarget;
 import org.jboss.dmr.ModelNode;
@@ -39,34 +41,46 @@ public class PatchRollbackActivator extends AbstractCommandActivator {
     @Override
     public boolean isActivated(ProcessedCommand command) {
         try {
-            // We will not check all hosts.
-            if (getCommandContext().isDomainMode()) {
-                return true;
-            }
             AbstractDistributionCommand cmd = (AbstractDistributionCommand) command.getCommand();
-            PatchOperationTarget target = cmd.createPatchOperationTarget(getCommandContext());
-            PatchOperationBuilder streams = PatchOperationBuilder.Factory.streams();
-            // retrieve all streams.
-            ModelNode response = streams.execute(target);
-            final ModelNode result = response.get(ModelDescriptionConstants.RESULT);
-            if (!result.isDefined()) {
-                return true;
-            }
-            // retrieve patches in stream.
-            List<ModelNode> list = response.get(ModelDescriptionConstants.RESULT).asList();
-            for (ModelNode s : list) {
-                PatchOperationBuilder info = PatchOperationBuilder.Factory.info(s.asString());
-                ModelNode resp = info.execute(target);
-                ModelNode res = resp.get(ModelDescriptionConstants.RESULT);
-                List<ModelNode> patches = res.get(Constants.PATCHES).asList();
-                if (!patches.isEmpty()) {
-                    return true;
+            if (getCommandContext().isDomainMode()) {
+                // Lookup hosts.
+                List<String> hosts = Util.getHosts(getCommandContext().getModelControllerClient());
+                for (String host : hosts) {
+                    boolean hasPatch = hasPatchs(PatchOperationTarget.
+                            createHost(host, getCommandContext().getModelControllerClient()));
+                    if (hasPatch) {
+                        return true;
+                    }
                 }
+                return false;
+            } else {
+                return hasPatchs(cmd.createPatchOperationTarget(getCommandContext()));
             }
-            return false;
         } catch (Exception ex) {
             return true;
         }
+    }
+
+    private boolean hasPatchs(PatchOperationTarget target) throws PatchingException {
+        PatchOperationBuilder streams = PatchOperationBuilder.Factory.streams();
+        // retrieve all streams.
+        ModelNode response = streams.execute(target);
+        final ModelNode result = response.get(ModelDescriptionConstants.RESULT);
+        if (!result.isDefined()) {
+            return true;
+        }
+        // retrieve patches in stream.
+        List<ModelNode> list = response.get(ModelDescriptionConstants.RESULT).asList();
+        for (ModelNode s : list) {
+            PatchOperationBuilder info = PatchOperationBuilder.Factory.info(s.asString());
+            ModelNode resp = info.execute(target);
+            ModelNode res = resp.get(ModelDescriptionConstants.RESULT);
+            List<ModelNode> patches = res.get(Constants.PATCHES).asList();
+            if (!patches.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

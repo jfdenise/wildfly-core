@@ -28,14 +28,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.Executors;
-import org.aesh.command.option.Arguments;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
+import org.aesh.command.option.Argument;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.Attachments.ConsumeListener;
 import org.jboss.as.cli.CommandContext;
@@ -79,10 +78,9 @@ public class DeployArchiveCommand extends CommandWithPermissions implements Comm
     @Option(hasValue = true, required = false)
     public String script;
 
-    // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',',
+    @Argument(required = true,
             completer = FileCompleter.class, converter = FileConverter.class)
-    public List<File> file;
+    public File file;
 
     public DeployArchiveCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, AccessRequirements.deployArchiveAccess(permissions), permissions);
@@ -141,16 +139,15 @@ public class DeployArchiveCommand extends CommandWithPermissions implements Comm
     }
 
     private void checkArgument() throws CommandException {
-        if (file == null || file.isEmpty()) {
+        if (file == null) {
             throw new CommandException("No archive file");
         }
-        File f = file.get(0);
-        if (!f.exists()) {
-            throw new CommandException("Path " + f.getAbsolutePath()
+        if (!file.exists()) {
+            throw new CommandException("Path " + file.getAbsolutePath()
                     + " doesn't exist.");
         }
-        if (!isCliArchive(f)) {
-            throw new CommandException("Not a CLI archive " + f.getAbsolutePath());
+        if (!isCliArchive(file)) {
+            throw new CommandException("Not a CLI archive " + file.getAbsolutePath());
         }
     }
 
@@ -178,18 +175,17 @@ public class DeployArchiveCommand extends CommandWithPermissions implements Comm
     public ModelNode buildRequest(CommandContext context, Attachments attachments)
             throws CommandFormatException {
         CommandContext ctx = context;
-        File f = file.get(0);
         TempFileProvider tempFileProvider;
         MountHandle root;
         try {
             String name = "cli-" + System.currentTimeMillis();
             tempFileProvider = TempFileProvider.create(name,
                     Executors.newSingleThreadScheduledExecutor(), true);
-            root = extractArchive(f, tempFileProvider, name);
+            root = extractArchive(file, tempFileProvider, name);
         } catch (IOException e) {
             e.printStackTrace();
             throw new OperationFormatException("Unable to extract archive '"
-                    + f.getAbsolutePath() + "' to temporary location");
+                    + file.getAbsolutePath() + "' to temporary location");
         }
         ConsumeListener cl = (a) -> {
             VFSUtils.safeClose(root, tempFileProvider);

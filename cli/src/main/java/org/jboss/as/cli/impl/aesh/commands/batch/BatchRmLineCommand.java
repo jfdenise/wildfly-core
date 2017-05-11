@@ -21,12 +21,11 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.batch;
 
-import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.batch.Batch;
@@ -46,9 +45,8 @@ public class BatchRmLineCommand implements Command<CLICommandInvocation>, Legacy
     @Option(name = "help", hasValue = false, activator = HideOptionActivator.class)
     protected boolean help;
 
-    // XXX JFDENISE AESH-401
-    @Arguments(activator = HideOptionActivator.class)
-    public List<Integer> line;
+    @Argument(required = true)
+    public Integer line;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -58,7 +56,7 @@ public class BatchRmLineCommand implements Command<CLICommandInvocation>, Legacy
             return CommandResult.SUCCESS;
         }
 
-        if (line == null || line.isEmpty()) {
+        if (line == null) {
             //Legacy compliance
             CommandResult res = BatchCommand.handle(commandInvocation, BatchCommand.REMOVE_LINE);
             if (res != null) {
@@ -71,7 +69,6 @@ public class BatchRmLineCommand implements Command<CLICommandInvocation>, Legacy
     @Override
     public CommandResult execute(CommandContext ctx)
             throws CommandException {
-        Integer l = (line == null || line.isEmpty()) ? null : line.get(0);
         BatchManager batchManager = ctx.getBatchManager();
         if (!batchManager.isBatchActive()) {
             throw new CommandException("No active batch.");
@@ -86,11 +83,11 @@ public class BatchRmLineCommand implements Command<CLICommandInvocation>, Legacy
             throw new CommandException("Missing line number.");
         }
 
-        if (l < 1 || l > batchSize) {
+        if (line < 1 || line > batchSize) {
             throw new CommandException(line + " isn't in range [1.." + batchSize + "].");
         }
 
-        batch.remove(l - 1);
+        batch.remove(line - 1);
         return CommandResult.SUCCESS;
     }
 }

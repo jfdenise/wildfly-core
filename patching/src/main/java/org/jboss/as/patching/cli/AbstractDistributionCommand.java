@@ -169,6 +169,10 @@ public abstract class AbstractDistributionCommand implements Command<CLICommandI
         this.action = action;
     }
 
+    String getHost() {
+        return host;
+    }
+
     String getPatchStream() {
         return null;
     }

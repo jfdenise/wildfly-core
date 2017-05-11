@@ -25,11 +25,10 @@ import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.converter.Converter;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.command.validator.OptionValidatorException;
 import org.jboss.as.cli.CommandContext;
@@ -68,10 +67,9 @@ public class DeployUrlCommand extends AbstractDeployContentCommand {
             activator = NameActivator.class)
     public String name;
 
-    // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', activator = UrlActivator.class,
+    @Argument(required = true, activator = UrlActivator.class,
             converter = UrlConverter.class)
-    public List<URL> url;
+    public URL deploymentUrl;
 
     public DeployUrlCommand(CommandContext ctx, Permissions permissions) {
         super(ctx, permissions);
@@ -84,7 +82,7 @@ public class DeployUrlCommand extends AbstractDeployContentCommand {
 
     @Override
     protected void checkArgument() throws CommandException {
-        if (url == null || url.isEmpty()) {
+        if (deploymentUrl == null) {
             throw new CommandException("No deployment url");
         }
     }
@@ -94,7 +92,6 @@ public class DeployUrlCommand extends AbstractDeployContentCommand {
         if (name != null) {
             return name;
         }
-        URL deploymentUrl = url.get(0);
         String name = deploymentUrl.getPath();
         // strip trailing slash if present
         if (name.charAt(name.length() - 1) == '/') {
@@ -109,7 +106,7 @@ public class DeployUrlCommand extends AbstractDeployContentCommand {
 
     @Override
     protected void addContent(CommandContext ctx, ModelNode content) throws OperationFormatException {
-        content.get(Util.URL).set(url.get(0).toExternalForm());
+        content.get(Util.URL).set(deploymentUrl.toExternalForm());
     }
 
     @Override

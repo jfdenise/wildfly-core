@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.batch;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
@@ -34,6 +35,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
@@ -129,11 +131,40 @@ public class BatchEditLineCommand implements Command<CLICommandInvocation> {
         return CommandResult.SUCCESS;
     }
 
-    private static class CommandCompleter implements OptionCompleter<CLICompleterInvocation> {
+    public static class CommandCompleter implements OptionCompleter<CLICompleterInvocation> {
 
         @Override
         public void complete(CLICompleterInvocation completerInvocation) {
-            // XXX TODO, We need entry point in Aesh to complete a command.
+            BatchEditLineCommand cmd = (BatchEditLineCommand) completerInvocation.getCommand();
+            StringBuilder existingBuilder = new StringBuilder();
+            List<String> command = cmd.cmd;
+            if (command != null) {
+                for (int i = 0; i < command.size(); i++) {
+                    existingBuilder.append(command.get(i));
+                    existingBuilder.append(" ");
+                }
+            }
+            List<String> candidates = new ArrayList<>();
+            String existingCommand = existingBuilder.toString();
+            String buffer = existingCommand
+                    + (completerInvocation.getGivenCompleteValue() != null ? completerInvocation.getGivenCompleteValue() : "");
+            int cursor = buffer.length();
+            CommandContext ctx = completerInvocation.getCommandContext();
+            int offset = ctx.getDefaultCommandCompleter().complete(ctx,
+                    buffer,
+                    cursor,
+                    candidates);
+            if (!candidates.isEmpty()) {
+                if (OperationCommandContainer.isOperation(buffer)) {
+                    completerInvocation.addAllCompleterValues(candidates);
+                    if (offset >= 0) {
+                        completerInvocation.setOffset(cursor - offset);
+                    }
+                    completerInvocation.setAppendSpace(false);
+                } else {
+                    // XXX JFDENISE TODO
+                }
+            }
         }
 
     }

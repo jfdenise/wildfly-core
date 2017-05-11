@@ -22,14 +22,12 @@
 package org.jboss.as.cli.impl.aesh.commands.batch;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.internal.ProcessedCommand;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
@@ -91,9 +89,9 @@ public class BatchCommand implements Command<CLICommandInvocation> {
     private boolean list;
 
     @Deprecated
-    @Arguments(activator = HideLegacyOptionActivator.class,
+    @Argument(activator = HideLegacyOptionActivator.class,
             completer = BatchReactivateCommand.BatchNameCompleter.class)
-    private List<String> name;
+    private String name;
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation)
@@ -120,7 +118,7 @@ public class BatchCommand implements Command<CLICommandInvocation> {
 
     /**
      * We have a legacy behavior batch {batch-name} to re-activate a batch. In
-     * case we have a clasj between action and batch name, the legacy behavior
+     * case we have a clash between action and batch name, the legacy behavior
      * wins and the action name is considered a batch name.
      *
      * @param ctx
@@ -129,9 +127,7 @@ public class BatchCommand implements Command<CLICommandInvocation> {
      */
     static CommandResult handle(CLICommandInvocation invocation, String cmd) throws CommandException {
         if (invocation.getCommandContext().getBatchManager().getHeldbackNames().contains(cmd)) {
-            List<String> lst = new ArrayList<>();
-            lst.add(cmd);
-            return BatchReactivateCommand.handle(invocation, lst);
+            return BatchReactivateCommand.handle(invocation, cmd);
         }
         return null;
     }

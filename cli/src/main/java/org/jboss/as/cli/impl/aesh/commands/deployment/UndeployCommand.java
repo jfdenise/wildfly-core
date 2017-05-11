@@ -23,9 +23,8 @@ package org.jboss.as.cli.impl.aesh.commands.deployment;
 
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Activators;
 import org.jboss.as.cli.impl.aesh.commands.deployment.security.Permissions;
-import java.util.List;
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 
@@ -37,9 +36,9 @@ import org.jboss.as.cli.impl.aesh.commands.security.ControlledCommandActivator;
 public class UndeployCommand extends AbstractUndeployCommand {
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', activator = Activators.UndeployNameActivator.class,
+    @Argument(required = true, activator = Activators.UndeployNameActivator.class,
             completer = EnableCommand.NameCompleter.class)
-    public List<String> name;
+    public String name;
 
     // XXX jfdenise, is public for compat reason. Make it private when removing compat code.
     public UndeployCommand(CommandContext ctx, Permissions permissions) {
@@ -58,10 +57,7 @@ public class UndeployCommand extends AbstractUndeployCommand {
 
     @Override
     protected String getName() {
-        if (name == null || name.isEmpty()) {
-            return null;
-        }
-        return name.get(0);
+        return name;
     }
 
     @Override

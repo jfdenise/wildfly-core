@@ -24,7 +24,6 @@ package org.jboss.as.cli.handlers;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -297,8 +296,7 @@ public class DeployHandler extends DeploymentHandler {
                 command.allServerGroups = allServerGroups;
                 command.headers = headersNode;
                 command.serverGroups = serverGroups;
-                command.name = new ArrayList<>();
-                command.name.add(name);
+                command.name = name;
                 try {
                     command.execute(ctx);
                 } catch (CommandException ex) {
@@ -316,8 +314,7 @@ public class DeployHandler extends DeploymentHandler {
             LegacyBridge c;
             if (DeployArchiveCommand.isCliArchive(f)) {
                 DeployArchiveCommand command = new DeployArchiveCommand(ctx);
-                command.file = new ArrayList<>();
-                command.file.add(f);
+                command.file = f;
                 command.script = this.script.getValue(args);
                 c = command;
             } else {
@@ -349,9 +346,8 @@ public class DeployHandler extends DeploymentHandler {
             DeployUrlCommand command = new DeployUrlCommand(ctx);
             command.allServerGroups = allServerGroups;
             command.disabled = disabled;
-            command.url = new ArrayList<>();
             try {
-                command.url.add(new URL(url));
+                command.deploymentUrl = new URL(url);
             } catch (MalformedURLException ex) {
                 throw new CommandLineException(ex);
             }
@@ -412,8 +408,7 @@ public class DeployHandler extends DeploymentHandler {
                 command.allServerGroups = allServerGroups;
                 command.headers = headersNode;
                 command.serverGroups = serverGroups;
-                command.name = new ArrayList<>();
-                command.name.add(name);
+                command.name = name;
                 return command.buildRequest(ctx);
             }
         }
@@ -426,8 +421,7 @@ public class DeployHandler extends DeploymentHandler {
             DMRCommand c;
             if (DeployArchiveCommand.isCliArchive(f)) {
                 DeployArchiveCommand command = new DeployArchiveCommand(ctx);
-                command.file = new ArrayList<>();
-                command.file.add(f);
+                command.file = f;
                 command.script = this.script.getValue(args);
                 c = command;
             } else {
@@ -454,9 +448,8 @@ public class DeployHandler extends DeploymentHandler {
             DeployUrlCommand command = new DeployUrlCommand(ctx);
             command.allServerGroups = allServerGroups;
             command.disabled = disabled;
-            command.url = new ArrayList<>();
             try {
-                command.url.add(new URL(url));
+                command.deploymentUrl = new URL(url);
             } catch (MalformedURLException ex) {
                 throw new CommandFormatException(ex);
             }

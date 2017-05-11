@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -74,8 +74,8 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
     protected boolean help;
 
     // Argument comes first, aesh behavior.
-    @Arguments(valueSeparator = ',', completer = EnableCommand.NameCompleter.class)
-    public List<String> name;
+    @Argument(completer = EnableCommand.NameCompleter.class)
+    public String deploymentName;
 
     @Option(converter = HeadersConverter.class, completer = HeadersCompleter.class,
             required = false, parser = HeadersParser.class)
@@ -99,7 +99,6 @@ public class InfoCommand extends CommandWithPermissions implements DMRCommand {
     }
 
     private String getName() {
-        String deploymentName = (name == null || name.isEmpty()) ? null : name.get(0);
         return deploymentName;
     }
 

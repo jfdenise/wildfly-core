@@ -21,7 +21,6 @@
  */
 package org.jboss.as.cli.handlers.batch;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.aesh.command.CommandException;
 
@@ -76,8 +75,7 @@ public class BatchRemoveLineHandler extends CommandHandlerWithHelp {
 
         try {
             BatchRmLineCommand cmd = new BatchRmLineCommand();
-            cmd.line = new ArrayList<>();
-            cmd.line.add(lineNumber);
+            cmd.line = lineNumber;
             cmd.execute(ctx);
         } catch (CommandException ex) {
             throw new CommandFormatException(ex.getLocalizedMessage());

@@ -40,6 +40,7 @@ import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.core.testrunner.WildflyTestRunner;
@@ -126,6 +127,7 @@ public class DeployTestCase {
     }
 
     @Test
+    @Ignore // No more valid, completion not active for legacy commands.
     public void testDeployAllCompletion() throws Exception {
         {
             String cmd = "deploy --name=";

@@ -76,7 +76,7 @@ public abstract class AbstractUndeployCommand extends CommandWithPermissions
                 @Override
                 protected Collection<String> getAllCandidates(CommandContext ctx) {
                     try {
-                        return Util.getServerGroupsReferencingDeployment(rc.name.get(0), ctx.getModelControllerClient());
+                        return Util.getServerGroupsReferencingDeployment(rc.name, ctx.getModelControllerClient());
                     } catch (CommandLineException ex) {
                         return Collections.emptyList();
                     }
