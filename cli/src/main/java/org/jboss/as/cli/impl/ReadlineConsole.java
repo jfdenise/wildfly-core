@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -419,17 +420,12 @@ public class ReadlineConsole implements Console {
                 // then, whatever the output being redefined or not, the terminal
                 // will be NOT a system terminal, that is the TerminalBuilder behavior.
                 .system(!settings.isOutputRedefined())
+                .charset(Charset.defaultCharset())
                 .build();
         CLITerminalConnection c = new CLITerminalConnection(terminal);
         if (LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, "New Terminal {0}", terminal.getClass());
         }
-        c.setCloseHandler((t) -> {
-            if (LOG.isLoggable(Level.FINER)) {
-                LOG.finer("Calling clasHandler");
-            }
-            printNewLine();
-        });
         c.setSignalHandler(signal -> {
             if (signal == Signal.INT) {
                 if (LOG.isLoggable(Level.FINER)) {
@@ -553,6 +549,9 @@ public class ReadlineConsole implements Console {
             LOG.finer("Not started");
         }
         String[] out = new String[1];
+        if (connection.suspended()) {
+            connection.awake();
+        }
         readline.readline(connection, new Prompt(prompt, mask), newLine -> {
             out[0] = newLine;
             if (LOG.isLoggable(Level.FINER)) {
@@ -588,15 +587,18 @@ public class ReadlineConsole implements Console {
         }
         CountDownLatch latch = new CountDownLatch(1);
         readline.readline(connection, new Prompt(prompt, mask), newLine -> {
-            // Ask the connection to be suspended, no terminal reading during
-            // command execution.
-            connection.suspend();
             out[0] = newLine;
             if (LOG.isLoggable(Level.FINER)) {
                 LOG.finer("Got some input");
             }
             latch.countDown();
         });
+        // The connection should be in suspended state. It has been suspended
+        // by the current command that requires prompting.
+        // We must awake it for it to read from the input.
+//        if (connection.suspended()) {
+//            connection.awake();
+//        }
         try {
             latch.await();
         } catch (InterruptedException ex) {
@@ -644,7 +646,7 @@ public class ReadlineConsole implements Console {
     @Override
     public void start() throws IOException {
         if (closed) {
-            throw new IllegalStateException("Console has already bee closed");
+            throw new IllegalStateException("Console has already been closed");
         }
         if (!started) {
             startThread = Thread.currentThread();
@@ -686,13 +688,6 @@ public class ReadlineConsole implements Console {
                     loop();
                     return;
                 }
-                // This callback is done in the main thread.
-                // Suspend the connection to avoid it to read on the terminal
-                // prior to have the executed runnable to be done.
-                // The command could close the connection and we want it the connection
-                // to exit immediately.
-                // The connection will be automaticaly awaken by readline.
-                connection.suspend();
                 executor.submit(() -> {
                     try {
                         callback.accept(line);
@@ -704,7 +699,7 @@ public class ReadlineConsole implements Console {
                         loop();
                     }
                 });
-            }, completions, preProcessors, readlineHistory);
+            }, completions, preProcessors, readlineHistory, null);
         }
     }
 
