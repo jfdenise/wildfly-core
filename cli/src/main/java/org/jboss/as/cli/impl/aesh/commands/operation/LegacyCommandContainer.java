@@ -44,6 +44,7 @@ import org.aesh.parser.ParsedLineIterator;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.impl.CommandContextImpl;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
+import org.wildfly.core.cli.command.aesh.activator.AbstractCommandActivator;
 
 /**
  *
@@ -68,16 +69,19 @@ public class LegacyCommandContainer extends DefaultCommandContainer<Command> {
         }
     }
 
+    private class Activator extends AbstractCommandActivator {
+
+        @Override
+        public boolean isActivated(ProcessedCommand cmd) {
+            return handler.isAvailable(getCommandContext());
+        }
+    }
+
     public class OperationParser implements CommandLineParser<Command> {
 
         @Override
         public ProcessedCommand<Command> getProcessedCommand() {
-            try {
-                return new ProcessedCommandBuilder().command(command).name(name).
-                        aliases(aliases).create();
-            } catch (CommandLineParserException ex) {
-                throw new RuntimeException(ex);
-            }
+            return processedCommand;
         }
 
         @Override
@@ -190,12 +194,15 @@ public class LegacyCommandContainer extends DefaultCommandContainer<Command> {
     private final String name;
     private final CommandHandler handler;
     private final List<String> aliases;
+    private final ProcessedCommand processedCommand;
 
-    public LegacyCommandContainer(CommandContextImpl ctx, String[] names, CommandHandler handler) {
+    public LegacyCommandContainer(CommandContextImpl ctx, String[] names, CommandHandler handler) throws CommandLineParserException {
         this.ctx = ctx;
         this.name = names[0];
         this.aliases = names.length > 1 ? Arrays.asList(Arrays.copyOfRange(names, 1, names.length)) : Collections.emptyList();
         this.handler = handler;
+        processedCommand = new ProcessedCommandBuilder().command(command).name(name).
+                aliases(aliases).activator(new Activator()).create();
     }
 
     @Override

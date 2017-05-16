@@ -159,6 +159,7 @@ import org.jboss.as.cli.impl.aesh.commands.CommandTimeoutCommand;
 import org.jboss.as.cli.impl.aesh.commands.ConnectCommand;
 import org.jboss.as.cli.impl.aesh.commands.ConnectionInfoCommand;
 import org.jboss.as.cli.impl.aesh.commands.HelpCommand;
+import org.jboss.as.cli.impl.aesh.commands.ListAvailableCommands;
 import org.jboss.as.cli.impl.aesh.commands.LsCommand;
 import org.jboss.as.cli.impl.aesh.commands.PwdCommand;
 import org.jboss.as.cli.impl.aesh.commands.QuitCommand;
@@ -524,9 +525,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             aeshCommands.getRegistry().addCommand(new ConnectCommand());
             aeshCommands.getRegistry().addCommand(new ConnectionInfoCommand());
             DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
-            aeshCommands.getRegistry().addCommand(new HelpCommand(aeshCommands.getRegistry(),
-                    cmdRegistry));
+            aeshCommands.getRegistry().addCommand(new HelpCommand(aeshCommands.getRegistry()));
+            aeshCommands.getRegistry().addCommand(new ListAvailableCommands(aeshCommands.getRegistry()));
             LsCommand.registerLsCommand(this, aeshCommands);
+
             aeshCommands.getRegistry().addCommand(new PwdCommand());
             aeshCommands.getRegistry().addCommand(new QuitCommand());
             aeshCommands.getRegistry().addCommand(new VersionCommand());

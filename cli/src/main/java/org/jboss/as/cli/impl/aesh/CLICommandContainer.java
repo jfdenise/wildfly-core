@@ -43,6 +43,7 @@ import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.parser.ParsedLineIterator;
 import org.aesh.parser.ParsedLine;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.impl.aesh.commands.operation.LegacyCommandContainer;
 
 /**
  * Wrapping of container to plug CLI Help support.
@@ -313,6 +314,10 @@ public class CLICommandContainer extends DefaultCommandContainer<Command> {
     }
 
     private String doPrintHelp() {
-        return HelpSupport.getCommandHelp(parser);
+        if (container.getParser() instanceof LegacyCommandContainer.OperationParser) {
+            return container.getParser().printHelp();
+        } else {
+            return HelpSupport.getCommandHelp(parser);
+        }
     }
 }

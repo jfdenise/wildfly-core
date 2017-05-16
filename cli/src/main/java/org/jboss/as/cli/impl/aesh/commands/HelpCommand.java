@@ -28,7 +28,6 @@ import java.util.List;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
-import org.aesh.command.activator.CommandActivator;
 import org.aesh.command.activator.OptionActivator;
 import org.aesh.command.completer.OptionCompleter;
 import org.aesh.command.impl.internal.ProcessedCommand;
@@ -41,12 +40,12 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.cli.handlers.GenericTypeOperationHandler;
 import org.jboss.as.cli.impl.aesh.HelpSupport;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
+import org.jboss.as.cli.impl.aesh.commands.operation.LegacyCommandContainer.LegacyCommand;
 import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer;
 import org.wildfly.core.cli.command.aesh.CLICompleterInvocation;
 import org.jboss.as.cli.operation.OperationRequestAddress;
@@ -55,6 +54,7 @@ import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.AbstractRejectOptionActivator;
+import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
@@ -116,7 +116,6 @@ public class HelpCommand implements Command<CLICommandInvocation> {
             }
 
             List<String> allExposed = new ArrayList<>(cmd.aeshRegistry.getExposedCommands());
-            allExposed.addAll(cmd.handlersRegistry.getTabCompletionCommands());
             List<String> candidates = new ArrayList<>();
             if (mainCommand == null) {
                 // need to add all aesh and handler commands
@@ -170,14 +169,13 @@ public class HelpCommand implements Command<CLICommandInvocation> {
     private List<String> command;
 
     private final CLICommandRegistry aeshRegistry;
-    private final CommandRegistry handlersRegistry;
 
-    @Option(hasValue = false, activator = CommandsActivator.class)
+    @Deprecated
+    @Option(hasValue = false, activator = HideOptionActivator.class)
     private boolean commands;
 
-    public HelpCommand(CLICommandRegistry aeshRegistry, CommandRegistry handlersRegistry) {
+    public HelpCommand(CLICommandRegistry aeshRegistry) {
         this.aeshRegistry = aeshRegistry;
-        this.handlersRegistry = handlersRegistry;
     }
 
     @Override
@@ -185,29 +183,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
         CommandContext ctx = commandInvocation.getCommandContext();
         if (command == null || command.isEmpty()) {
             if (commands) {
-                List<String> lst = new ArrayList<>();
-                for (String c : aeshRegistry.getAllCommandNames()) {
-                    CommandLineParser cmdParser;
-                    try {
-                        cmdParser = aeshRegistry.findCommand(c, null);
-                    } catch (CommandNotFoundException ex) {
-                        continue;
-                    }
-                    CommandActivator activator = cmdParser.getProcessedCommand().getActivator();
-                    if (activator.isActivated(cmdParser.getProcessedCommand())) {
-                        lst.add(c);
-                    }
-                }
-                for (String cmd : handlersRegistry.getTabCompletionCommands()) {
-                    CommandHandler handler = handlersRegistry.getCommandHandler(cmd);
-                    if (handler.isAvailable(commandInvocation.getCommandContext())) {
-                        lst.add(cmd);
-                    }
-                }
-                lst.sort(null);
-                ctx.println("Commands available in the current context:");
-                ctx.printColumns(lst);
-                ctx.println("To read a description of a specific command execute 'help <command name>'.");
+                new ListAvailableCommands(aeshRegistry).execute(commandInvocation);
             } else {
                 ctx.println(commandInvocation.getHelpInfo("help"));
             }
@@ -233,27 +209,29 @@ public class HelpCommand implements Command<CLICommandInvocation> {
 
         try {
             CommandLineParser parser = aeshRegistry.findCommand(mainCommand, builder.toString());
-            ctx.println(parser.printHelp());
-        } catch (CommandNotFoundException ex) {
-            CommandHandler ch = handlersRegistry.getCommandHandler(mainCommand);
-            if (ch == null) {
-                throw new CommandException("Command not found " + builder.toString());
-            }
-            if (ch instanceof GenericTypeOperationHandler) {
-                try {
-                    ((GenericTypeOperationHandler) ch).printDescription(commandInvocation.getCommandContext());
-                } catch (CommandLineException ex1) {
-                    throw new CommandException(ex1);
-                }
-            } else if (ch instanceof CommandHandlerWithHelp) {
-                try {
-                    ((CommandHandlerWithHelp) ch).printHelp(commandInvocation.getCommandContext());
-                } catch (CommandLineException ex1) {
-                    throw new CommandException(ex1);
+            // Special case for generic command that generates the help content on the fly.
+            if (parser.getProcessedCommand().getCommand() instanceof LegacyCommand) {
+                CommandHandler handler = ((LegacyCommand) parser.getProcessedCommand().getCommand()).getCommandHandler();
+                if (handler instanceof GenericTypeOperationHandler) {
+                    try {
+                        ((GenericTypeOperationHandler) handler).printDescription(commandInvocation.getCommandContext());
+                    } catch (CommandLineException ex1) {
+                        throw new CommandException(ex1);
+                    }
+                    // We can only rely on handler, handler hides the actual file path
+                    // to its help. eg: remove-batch-line is actually batch-remove-line.txt
+                } else if (handler instanceof CommandHandlerWithHelp) {
+                    try {
+                        ((CommandHandlerWithHelp) handler).printHelp(commandInvocation.getCommandContext());
+                    } catch (CommandLineException ex1) {
+                        throw new CommandException(ex1);
+                    }
                 }
             } else {
-                throw new CommandException("Command " + builder.toString() + " has no help");
+                ctx.println(parser.printHelp());
             }
+        } catch (CommandNotFoundException ex) {
+            throw new CommandException("Command " + builder.toString() + " has no help");
         }
         return CommandResult.SUCCESS;
     }

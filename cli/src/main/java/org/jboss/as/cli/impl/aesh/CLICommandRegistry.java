@@ -190,10 +190,16 @@ public class CLICommandRegistry extends CommandRegistry implements org.aesh.comm
         if (tabComplete) {
             try {
                 addLegacyCommand(handler, names);
-            } catch (CommandLineException ex) {
+            } catch (CommandLineException | CommandLineParserException ex) {
                 throw new RegisterHandlerException(ex.getLocalizedMessage());
             }
         }
+    }
+
+    @Override
+    public CommandHandler remove(String cmdName) {
+        removeCommand(cmdName);
+        return super.remove(cmdName);
     }
 
     private CommandContainer addCommandContainer(CommandContainer container) throws CommandLineException {
@@ -360,7 +366,7 @@ public class CLICommandRegistry extends CommandRegistry implements org.aesh.comm
         reg.removeRegistrationListener(listener);
     }
 
-    void addLegacyCommand(CommandHandler handler, String... names) throws CommandLineException {
+    void addLegacyCommand(CommandHandler handler, String... names) throws CommandLineException, CommandLineParserException {
         addCommand(new LegacyCommandContainer(ctx, names, handler));
     }
 }

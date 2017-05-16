@@ -26,6 +26,7 @@ import org.aesh.command.option.Option;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
+import org.jboss.as.cli.impl.aesh.commands.activator.ConnectedActivator;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
@@ -34,7 +35,8 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
  * @author jdenise@redhat.com
  */
 @GroupCommandDefinition(name = "attachment", description = "", groupCommands
-        = {AttachmentDisplayCommand.class, AttachmentSaveCommand.class})
+        = {AttachmentDisplayCommand.class, AttachmentSaveCommand.class},
+        activator = ConnectedActivator.class)
 public class AttachmentCommand implements Command<CLICommandInvocation> {
 
     @Deprecated
