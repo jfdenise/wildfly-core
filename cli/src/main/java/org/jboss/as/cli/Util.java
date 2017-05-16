@@ -381,6 +381,34 @@ public class Util {
         return false;
     }
 
+    public static ModelNode getAddressNode(CommandContext ctx,
+            OperationRequestAddress address, ModelNode op) throws CommandFormatException {
+        ModelNode addressNode = op.get(Util.ADDRESS);
+
+        if (address.isEmpty()) {
+            addressNode.setEmptyList();
+        } else {
+            Iterator<Node> iterator = address.iterator();
+            while (iterator.hasNext()) {
+                OperationRequestAddress.Node node = iterator.next();
+                if (node.getName() != null) {
+                    if (node.getName().equals("*")) {
+                        throw new CommandFormatException("* is not supported in node path argument");
+                    }
+                    addressNode.add(node.getType(), node.getName());
+                } else if (iterator.hasNext()) {
+                    throw new OperationFormatException(
+                            "Expected a node name for type '"
+                            + node.getType()
+                            + "' in path '"
+                            + ctx.getNodePathFormatter().format(
+                                    address) + "'");
+                }
+            }
+        }
+        return op;
+    }
+
     public static List<String> getAllEnabledServerGroups(String deploymentName, ModelControllerClient client) {
 
         List<String> serverGroups = getServerGroups(client);
