@@ -890,9 +890,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             if(log.isDebugEnabled()) {
                 log.debug("Failed to handle '" + line + "'", t);
             }
-
-            t.printStackTrace();
-
             throw new CommandLineException("Failed to handle '" + line + "'", t);
         } finally {
             // so that getArgumentsString() doesn't return this line

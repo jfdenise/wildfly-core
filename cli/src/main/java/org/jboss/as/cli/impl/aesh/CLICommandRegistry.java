@@ -25,6 +25,7 @@ package org.jboss.as.cli.impl.aesh;
 import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.aesh.readline.completion.CompleteOperation;
@@ -176,6 +177,7 @@ public class CLICommandRegistry extends CommandRegistry implements org.aesh.comm
     private final MutableCommandRegistry reg = new MutableCommandRegistryImpl();
     private final AeshCommandContainerBuilder containerBuilder = new AeshCommandContainerBuilder();
     private final List<String> exposedCommands = new ArrayList<>();
+    private final Set<String> deprecatedCommands = new HashSet<>();
     private final CommandContextImpl ctx;
     private final OperationCommandContainer op;
 
@@ -193,6 +195,8 @@ public class CLICommandRegistry extends CommandRegistry implements org.aesh.comm
             } catch (CommandLineException | CommandLineParserException ex) {
                 throw new RegisterHandlerException(ex.getLocalizedMessage());
             }
+        } else {
+            deprecatedCommands.add(names[0]);
         }
     }
 
@@ -314,9 +318,16 @@ public class CLICommandRegistry extends CommandRegistry implements org.aesh.comm
         return reg.getAllCommandNames();
     }
 
+    public Set<String> getDeprecatedCommandNames() {
+        return new HashSet<>(deprecatedCommands);
+    }
+
     public void removeCommand(String name) {
         if (exposedCommands.contains(name)) {
             exposedCommands.remove(name);
+        }
+        if (deprecatedCommands.contains(name)) {
+            deprecatedCommands.remove(name);
         }
         reg.removeCommand(name);
     }

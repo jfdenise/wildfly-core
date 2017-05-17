@@ -24,50 +24,35 @@ package org.jboss.as.cli.impl.aesh.commands.plugins;
 import java.util.ArrayList;
 import java.util.List;
 import org.aesh.command.Command;
+import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommand;
-import org.aesh.command.GroupCommandDefinition;
-import org.aesh.command.option.Option;
+import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
 /**
  *
  * @author jdenise@redhat.com
  */
-@GroupCommandDefinition(name = "commands", description = "")
-public class CommandsCommand implements GroupCommand<CLICommandInvocation, Command> {
-
-    @Deprecated
-    @Option(hasValue = false, activator = HideOptionActivator.class)
-    private boolean help;
+@CommandDefinition(name = "list-all", description = "")
+public class CommandsListAll implements Command<CLICommandInvocation> {
 
     private final CLICommandRegistry aeshRegistry;
 
-    public CommandsCommand(CLICommandRegistry aeshRegistry) {
+    public CommandsListAll(CLICommandRegistry aeshRegistry) {
         this.aeshRegistry = aeshRegistry;
     }
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
-        if (help) {
-            commandInvocation.println(commandInvocation.getHelpInfo("commands"));
-            return CommandResult.SUCCESS;
-        }
-        throw new CommandException("Command action is missing.");
+        CommandContext ctx = commandInvocation.getCommandContext();
+        List<String> lst = new ArrayList<>(aeshRegistry.getAllCommandNames());
+        lst.sort(null);
+        ctx.printColumns(lst);
+        ctx.println("To read a description of a specific command execute 'help <command name>'.");
+
+        return CommandResult.SUCCESS;
     }
 
-    @Override
-    public List<Command> getCommands() {
-        List<Command> commands = new ArrayList<>();
-        commands.add(new CommandsLoadModulePlugins());
-        commands.add(new CommandsListAvailable(aeshRegistry));
-        commands.add(new CommandsListPlugins());
-        commands.add(new CommandsLoadJarPlugins());
-        commands.add(new CommandsListAll(aeshRegistry));
-        commands.add(new CommandsListDeprecated(aeshRegistry));
-        return commands;
-    }
 }
