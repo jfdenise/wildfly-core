@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl.aesh.commands;
 
+import org.jboss.as.cli.impl.aesh.commands.plugins.CommandsListAvailable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -183,7 +184,7 @@ public class HelpCommand implements Command<CLICommandInvocation> {
         CommandContext ctx = commandInvocation.getCommandContext();
         if (command == null || command.isEmpty()) {
             if (commands) {
-                new ListAvailableCommands(aeshRegistry).execute(commandInvocation);
+                new CommandsListAvailable(aeshRegistry).execute(commandInvocation);
             } else {
                 ctx.println(commandInvocation.getHelpInfo("help"));
             }

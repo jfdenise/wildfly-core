@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,6 +57,7 @@ import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.as.controller.client.OperationResponse;
 import org.jboss.dmr.ModelNode;
+import org.jboss.modules.ModuleLoadException;
 import org.jboss.threads.AsyncFuture;
 
 /**
@@ -645,6 +647,16 @@ public class CommandExecutor {
         @Override
         public ModelNode execute(Operation op, String description) throws CommandLineException, IOException {
             return wrapped.execute(op, description);
+        }
+
+        @Override
+        public void loadPlugins(File path, String name) throws CommandLineException, ModuleLoadException {
+            wrapped.loadPlugins(path, name);
+        }
+
+        @Override
+        public Set<String> getPlugins() {
+            return wrapped.getPlugins();
         }
     }
 

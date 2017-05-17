@@ -296,6 +296,9 @@ public class CliLauncher {
             cmdCtx.interact();
         } catch(Throwable t) {
             System.out.println(Util.getMessagesFromThrowable(t));
+
+            t.printStackTrace();
+
             exitCode = 1;
         } finally {
             if((cmdCtx != null) && !gui) {

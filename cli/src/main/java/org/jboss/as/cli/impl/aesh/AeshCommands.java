@@ -27,8 +27,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.TreeSet;
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.validator.CommandValidatorException;
 import org.aesh.command.validator.OptionValidatorException;
@@ -41,6 +44,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
 import org.aesh.command.CommandRuntime;
 import org.aesh.command.Execution;
+import org.aesh.command.container.CommandContainer;
 import org.aesh.command.operator.OperatorType;
 import org.aesh.command.parser.CommandLineParserException;
 import org.aesh.io.FileResource;
@@ -54,9 +58,11 @@ import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.CommandExecutor;
 import org.jboss.as.cli.impl.CommandExecutor.ExecutableBuilder;
 import org.jboss.as.cli.impl.ReadlineConsole;
+import org.jboss.as.cli.impl.aesh.PluginsLoader.Loader;
 import org.jboss.as.cli.impl.aesh.commands.operation.LegacyCommandContainer.LegacyCommand;
 import org.jboss.as.cli.impl.aesh.commands.operation.OperationCommandContainer.OperationCommand;
 import org.jboss.as.cli.impl.aesh.commands.operation.SpecialCommand;
+import org.jboss.modules.ModuleLoadException;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
@@ -155,6 +161,8 @@ public class AeshCommands {
     private final CLICommandRegistry registry;
     private final CLICompletionHandler completionHandler;
 
+    private final Set<String> plugins = new HashSet<>();
+
     public AeshCommands(CommandContextImpl ctx, OperationCommandContainer op) throws CliInitializationException {
         this(ctx, null, op);
     }
@@ -239,9 +247,28 @@ public class AeshCommands {
     }
 
     public void registerExtraCommands() throws CommandLineException {
-        ServiceLoader<Command> loader2 = ServiceLoader.load(Command.class);
-        for (Command command : loader2) {
-            getRegistry().addCommand(command);
+        ServiceLoader<Command> loader = ServiceLoader.load(Command.class);
+        addExtensions(loader);
+    }
+
+
+    /**
+     * Load extensions.
+     */
+    public void loadPlugins(File path, String name) throws CommandLineException, ModuleLoadException {
+        Loader loader = PluginsLoader.newPluginsLoader();
+        Iterable<Command> it = loader.loadPlugins(path, name, Command.class);
+        addExtensions(it);
+    }
+
+    private void addExtensions(Iterable<Command> loader) throws CommandLineException {
+        for (Command command : loader) {
+            CommandContainer c = getRegistry().addCommand(command);
+            plugins.add(c.getParser().getProcessedCommand().name());
         }
+    }
+
+    public Set<String> getPlugins() {
+        return new TreeSet<>(plugins);
     }
 }

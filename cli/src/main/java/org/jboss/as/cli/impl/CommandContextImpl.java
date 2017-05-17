@@ -78,7 +78,6 @@ import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.readline.Prompt;
 import org.aesh.util.Config;
 import org.aesh.util.FileAccessPermission;
-import org.jboss.aesh.extensions.grep.Grep;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -155,11 +154,11 @@ import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecutor;
 import org.jboss.as.cli.impl.aesh.commands.AttachmentCommand;
 import org.jboss.as.cli.impl.aesh.commands.CdCommand;
 import org.jboss.as.cli.impl.aesh.commands.ClearCommand;
+import org.jboss.as.cli.impl.aesh.commands.plugins.CommandsCommand;
 import org.jboss.as.cli.impl.aesh.commands.CommandTimeoutCommand;
 import org.jboss.as.cli.impl.aesh.commands.ConnectCommand;
 import org.jboss.as.cli.impl.aesh.commands.ConnectionInfoCommand;
 import org.jboss.as.cli.impl.aesh.commands.HelpCommand;
-import org.jboss.as.cli.impl.aesh.commands.ListAvailableCommands;
 import org.jboss.as.cli.impl.aesh.commands.LsCommand;
 import org.jboss.as.cli.impl.aesh.commands.PwdCommand;
 import org.jboss.as.cli.impl.aesh.commands.QuitCommand;
@@ -192,6 +191,7 @@ import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
+import org.jboss.modules.ModuleLoadException;
 import org.jboss.stdio.StdioContext;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.core.cli.command.BatchCompliantCommand;
@@ -526,7 +526,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             aeshCommands.getRegistry().addCommand(new ConnectionInfoCommand());
             DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
             aeshCommands.getRegistry().addCommand(new HelpCommand(aeshCommands.getRegistry()));
-            aeshCommands.getRegistry().addCommand(new ListAvailableCommands(aeshCommands.getRegistry()));
             LsCommand.registerLsCommand(this, aeshCommands);
 
             aeshCommands.getRegistry().addCommand(new PwdCommand());
@@ -535,10 +534,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } catch (CommandLineException ex) {
             throw new CliInitializationException(ex);
         }
-
-        // Extensions
-        aeshCommands.getRegistry().addCommand(new Grep());
-
+        aeshCommands.getRegistry().addCommand(new CommandsCommand(aeshCommands.getRegistry()));
         // Registration in cmdRegistry automaticaly registers the legacy commands
         // in the Aesh registry.
         //cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
@@ -1895,6 +1891,16 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     @Override
     public Collection<String> getVariables() {
         return variables == null ? Collections.<String>emptySet() : variables.keySet();
+    }
+
+    @Override
+    public void loadPlugins(File path, String name) throws CommandLineException, ModuleLoadException {
+        aeshCommands.loadPlugins(path, name);
+    }
+
+    @Override
+    public Set<String> getPlugins() {
+        return aeshCommands.getPlugins();
     }
 
     private class AuthenticationCallbackHandler implements CallbackHandler {

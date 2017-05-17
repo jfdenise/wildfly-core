@@ -30,7 +30,6 @@
     <resources>
         <artifact name="${org.aesh:aesh-readline}"/>
         <artifact name="${org.jboss.aesh:aesh}"/>
-         <artifact name="${org.jboss.aesh:aesh-extensions}"/>
     </resources>
     
     <dependencies>
