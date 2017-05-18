@@ -21,42 +21,32 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.plugins;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.option.Argument;
-import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandContextImpl;
-import org.jboss.modules.ModuleLoadException;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.FileCompleter;
-import org.wildfly.core.cli.command.aesh.FileConverter;
 
-/**
- *
- * @author jdenise@redhat.com
- */
-@CommandDefinition(name = "load-jar-plugins", description = "")
-public class CommandsLoadJarPlugins implements Command<CLICommandInvocation> {
-
-    @Argument(completer = FileCompleter.class, required = true, converter = FileConverter.class)
-    private File path;
+@CommandDefinition(name = "list-extensions", description = "", activator = ModularActivator.class)
+public class CommandsListExtensions implements Command<CLICommandInvocation> {
 
     private final CommandContextImpl ctx;
 
-    CommandsLoadJarPlugins(CommandContextImpl ctx) {
+    CommandsListExtensions(CommandContextImpl ctx) {
         this.ctx = ctx;
     }
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
-        try {
-            ctx.loadPlugins(path, null);
-        } catch (CommandLineException | ModuleLoadException ex) {
-            throw new CommandException(ex);
-        }
+        List<String> lst = new ArrayList<>(ctx.getExtensions());
+        lst.sort(null);
+        ctx.println("Loaded commands from extensions:");
+        ctx.printColumns(lst);
+
         return CommandResult.SUCCESS;
     }
+
 }

@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
-import java.util.Set;
 
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -37,7 +36,6 @@ import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
-import org.jboss.modules.ModuleLoadException;
 
 
 /**
@@ -652,8 +650,4 @@ public interface CommandContext {
     default boolean isLegacyMode() {
         return false;
     }
-
-    void loadPlugins(File path, String name) throws CommandLineException, ModuleLoadException;
-
-    Set<String> getPlugins();
 }

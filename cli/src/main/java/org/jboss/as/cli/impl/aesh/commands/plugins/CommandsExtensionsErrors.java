@@ -21,42 +21,37 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.plugins;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.option.Argument;
-import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.CommandContextImpl;
-import org.jboss.modules.ModuleLoadException;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.FileCompleter;
-import org.wildfly.core.cli.command.aesh.FileConverter;
 
-/**
- *
- * @author jdenise@redhat.com
- */
-@CommandDefinition(name = "load-jar-plugins", description = "")
-public class CommandsLoadJarPlugins implements Command<CLICommandInvocation> {
-
-    @Argument(completer = FileCompleter.class, required = true, converter = FileConverter.class)
-    private File path;
+@CommandDefinition(name = "display-extensions-errors", description = "", activator = ModularActivator.class)
+public class CommandsExtensionsErrors implements Command<CLICommandInvocation> {
 
     private final CommandContextImpl ctx;
 
-    CommandsLoadJarPlugins(CommandContextImpl ctx) {
+    CommandsExtensionsErrors(CommandContextImpl ctx) {
         this.ctx = ctx;
     }
 
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
-        try {
-            ctx.loadPlugins(path, null);
-        } catch (CommandLineException | ModuleLoadException ex) {
-            throw new CommandException(ex);
+        List<String> errors = new ArrayList<>(ctx.getExtensionsErrors());
+        final StringBuilder buf = new StringBuilder();
+        buf.append("The following problems were encountered while looking for additional commands in extensions:\n");
+        for (int i = 0; i < errors.size(); ++i) {
+            final String error = errors.get(i);
+            buf.append(i + 1).append(") ").append(error).append(Util.LINE_SEPARATOR);
         }
+        ctx.printLine(buf.toString());
+
         return CommandResult.SUCCESS;
     }
+
 }

@@ -28,6 +28,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.modules.ModuleLoadException;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.FileCompleter;
@@ -46,10 +47,16 @@ public class CommandsLoadModulePlugins implements Command<CLICommandInvocation> 
     @Option(name = "name", required = true)
     private String name;
 
+    private final CommandContextImpl ctx;
+
+    CommandsLoadModulePlugins(CommandContextImpl ctx) {
+        this.ctx = ctx;
+    }
+
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
         try {
-            commandInvocation.getCommandContext().loadPlugins(path, name);
+            ctx.loadPlugins(path, name);
         } catch (CommandLineException | ModuleLoadException ex) {
             throw new CommandException(ex);
         }

@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEventListener;
@@ -56,7 +55,6 @@ import org.jboss.as.cli.operation.impl.DefaultPrefixFormatter;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
-import org.jboss.modules.ModuleLoadException;
 
 /**
  *
@@ -485,16 +483,6 @@ public class MockCommandContext implements CommandContext {
 
     @Override
     public void connectController(String controller, String clientAddress) throws CommandLineException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void loadPlugins(File path, String name) throws CommandLineException, ModuleLoadException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Set<String> getPlugins() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

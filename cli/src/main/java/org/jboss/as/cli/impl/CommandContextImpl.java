@@ -534,7 +534,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } catch (CommandLineException ex) {
             throw new CliInitializationException(ex);
         }
-        aeshCommands.getRegistry().addCommand(new CommandsCommand(aeshCommands.getRegistry()));
+        aeshCommands.getRegistry().addCommand(new CommandsCommand(aeshCommands.getRegistry(), this));
         // Registration in cmdRegistry automaticaly registers the legacy commands
         // in the Aesh registry.
         //cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
@@ -1890,14 +1890,20 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         return variables == null ? Collections.<String>emptySet() : variables.keySet();
     }
 
-    @Override
     public void loadPlugins(File path, String name) throws CommandLineException, ModuleLoadException {
         aeshCommands.loadPlugins(path, name);
     }
 
-    @Override
     public Set<String> getPlugins() {
         return aeshCommands.getPlugins();
+    }
+
+    public Set<String> getExtensions() {
+        return extLoader.getExtensions();
+    }
+
+    public List<String> getExtensionsErrors() {
+        return extLoader.getExtensionsErrors();
     }
 
     private class AuthenticationCallbackHandler implements CallbackHandler {

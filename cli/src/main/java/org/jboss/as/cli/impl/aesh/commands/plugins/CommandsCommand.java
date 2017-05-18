@@ -29,6 +29,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommand;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
+import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
@@ -45,9 +46,11 @@ public class CommandsCommand implements GroupCommand<CLICommandInvocation, Comma
     private boolean help;
 
     private final CLICommandRegistry aeshRegistry;
+    private final CommandContextImpl ctx;
 
-    public CommandsCommand(CLICommandRegistry aeshRegistry) {
+    public CommandsCommand(CLICommandRegistry aeshRegistry, CommandContextImpl ctx) {
         this.aeshRegistry = aeshRegistry;
+        this.ctx = ctx;
     }
 
     @Override
@@ -62,10 +65,12 @@ public class CommandsCommand implements GroupCommand<CLICommandInvocation, Comma
     @Override
     public List<Command> getCommands() {
         List<Command> commands = new ArrayList<>();
-        commands.add(new CommandsLoadModulePlugins());
+        commands.add(new CommandsLoadModulePlugins(ctx));
         commands.add(new CommandsListAvailable(aeshRegistry));
-        commands.add(new CommandsListPlugins());
-        commands.add(new CommandsLoadJarPlugins());
+        commands.add(new CommandsListPlugins(ctx));
+        commands.add(new CommandsListExtensions(ctx));
+        commands.add(new CommandsExtensionsErrors(ctx));
+        commands.add(new CommandsLoadJarPlugins(ctx));
         commands.add(new CommandsListAll(aeshRegistry));
         commands.add(new CommandsListDeprecated(aeshRegistry));
         return commands;

@@ -21,12 +21,13 @@
  */
 package org.jboss.as.cli.impl.aesh.commands.plugins;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.impl.CommandContextImpl;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 
 /**
@@ -36,10 +37,16 @@ import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
 @CommandDefinition(name = "list-plugins", description = "")
 public class CommandsListPlugins implements Command<CLICommandInvocation> {
 
+    private final CommandContextImpl ctx;
+
+    CommandsListPlugins(CommandContextImpl ctx) {
+        this.ctx = ctx;
+    }
+
     @Override
     public CommandResult execute(CLICommandInvocation commandInvocation) throws CommandException, InterruptedException {
-        CommandContext ctx = commandInvocation.getCommandContext();
-        Set<String> lst = ctx.getPlugins();
+        List<String> lst = new ArrayList<>(ctx.getPlugins());
+        lst.sort(null);
         ctx.println("Loaded plugins:");
         ctx.printColumns(lst);
 

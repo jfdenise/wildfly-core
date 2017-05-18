@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
 import org.aesh.command.Command;
 import org.aesh.command.container.CommandContainer;
 
@@ -100,6 +102,16 @@ class ExtensionsLoader {
         errors = Collections.emptyList();
         loadedHandlers = Collections.emptyList();
         loadedCommands = Collections.emptyList();
+    }
+
+    Set<String> getExtensions() {
+        Set<String> all = new HashSet<>(loadedHandlers);
+        all.addAll(loadedCommands);
+        return all;
+    }
+
+    List<String> getExtensionsErrors() {
+        return new ArrayList<>(errors);
     }
 
     /**
