@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,8 +45,8 @@ import org.aesh.terminal.Terminal;
 import org.aesh.readline.terminal.TerminalBuilder;
 import org.aesh.terminal.tty.Signal;
 import org.aesh.readline.tty.terminal.TerminalConnection;
-import org.aesh.util.ANSI;
-import org.aesh.util.Config;
+import org.aesh.utils.ANSI;
+import org.aesh.utils.Config;
 import org.aesh.util.FileAccessPermission;
 import org.aesh.util.Parser;
 import org.jboss.as.cli.CommandContext;
@@ -420,7 +419,6 @@ public class ReadlineConsole implements Console {
                 // then, whatever the output being redefined or not, the terminal
                 // will be NOT a system terminal, that is the TerminalBuilder behavior.
                 .system(!settings.isOutputRedefined())
-                .charset(Charset.defaultCharset())
                 .build();
         CLITerminalConnection c = new CLITerminalConnection(terminal);
         if (LOG.isLoggable(Level.FINER)) {
@@ -631,14 +629,14 @@ public class ReadlineConsole implements Console {
 
     private int getHeight() {
         if (connection instanceof TerminalConnection) {
-            return ((TerminalConnection) connection).getTerminal().getHeight();
+            return ((TerminalConnection) connection).getTerminal().getSize().getHeight();
         }
         return connection.size().getHeight();
     }
 
     private int getWidth() {
         if (connection instanceof TerminalConnection) {
-            return ((TerminalConnection) connection).getTerminal().getWidth();
+            return ((TerminalConnection) connection).getTerminal().getSize().getWidth();
         }
         return connection.size().getWidth();
     }
