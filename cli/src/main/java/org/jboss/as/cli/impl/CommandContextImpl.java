@@ -853,8 +853,13 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         exitCode = 0;
         try {
             handle(line);
-        } catch(Throwable t) {
-            error(Util.getMessagesFromThrowable(t));
+        } catch (Throwable t) {
+            if (isConnectionInterrupted()) {
+                // Don't concider it an error.
+                printLine(Util.INTERRUPTION_MESSAGE);
+            } else {
+                error(Util.getMessagesFromThrowable(t));
+            }
         }
     }
 
@@ -1087,7 +1092,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     log.debug("connecting to " + connectionAddress.getHost() + ':' + connectionAddress.getPort() + " as " + username);
                 }
                 ModelControllerClient tempClient = ModelControllerClientFactory.CUSTOM.getClient(connectionAddress, cbh,
-                        disableLocalAuth, sslContext, defaultSslContext, config.getConnectionTimeout(), this, timeoutHandler, clientBindAddress);
+                        disableLocalAuth, sslContext, defaultSslContext, config.getConnectionTimeout(), this, timeoutHandler,
+                        clientBindAddress, this::isConnectionInterrupted);
                 retry = false;
                 connInfoBean = new ConnectionInfoBean();
                 tryConnection(tempClient, connectionAddress);
@@ -1284,6 +1290,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             }
         } catch (Exception e) {
             try {
+                if (isConnectionInterrupted()) {
+                    throw new CommandLineException(Util.INTERRUPTION_MESSAGE);
+                }
                 Throwable current = e;
                 while (current != null) {
                     if (current instanceof SaslException) {
@@ -1688,6 +1697,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     @Override
     public Collection<String> getVariables() {
         return variables == null ? Collections.<String>emptySet() : variables.keySet();
+    }
+
+    @Override
+    public boolean isConnectionInterrupted() {
+        return console != null && console.hasBeenInterrupted();
     }
 
     private class AuthenticationCallbackHandler implements CallbackHandler {

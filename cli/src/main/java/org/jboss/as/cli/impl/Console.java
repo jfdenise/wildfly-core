@@ -69,6 +69,8 @@ public interface Console {
 
     void setPrompt(String prompt);
 
+    boolean hasBeenInterrupted();
+
     static final class Factory {
 
         public static Console getConsole(CommandContext ctx, Settings settings) throws CliInitializationException {

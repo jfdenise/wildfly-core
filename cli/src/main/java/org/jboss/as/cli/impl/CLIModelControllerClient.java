@@ -36,6 +36,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 import javax.security.auth.callback.CallbackHandler;
@@ -125,10 +126,11 @@ public class CLIModelControllerClient extends AbstractModelControllerClient
     private ManagementClientChannelStrategy strategy;
     private final ProtocolConnectionConfiguration channelConfig;
     private final AtomicInteger state = new AtomicInteger(CLOSED);
-
+    private final Supplier<Boolean> userInterruption;
     CLIModelControllerClient(final ControllerAddress address, CallbackHandler handler, int connectionTimeout,
             final ConnectionCloseHandler closeHandler, Map<String, String> saslOptions, SSLContext sslContext,
-            boolean fallbackSslContext, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress) throws IOException {
+            boolean fallbackSslContext, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress,
+            Supplier<Boolean> userInterruption) throws IOException {
         this.handler = handler;
         this.closeHandler = closeHandler;
 
@@ -175,6 +177,7 @@ public class CLIModelControllerClient extends AbstractModelControllerClient
             channelConfig.setConnectionTimeout(connectionTimeout);
         }
         channelConfig.setTimeoutHandler(timeoutHandler);
+        this.userInterruption = userInterruption;
     }
 
     @Override
@@ -314,6 +317,10 @@ public class CLIModelControllerClient extends AbstractModelControllerClient
                     }
                     lock.notifyAll();
                 }
+            }
+
+            if (userInterruption.get()) {
+                throw new CommandLineException(Util.INTERRUPTION_MESSAGE);
             }
 
             if (ioe != null) {

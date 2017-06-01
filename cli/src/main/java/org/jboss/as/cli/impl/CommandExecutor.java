@@ -630,6 +630,11 @@ public class CommandExecutor {
         public ModelNode execute(Operation op, String description) throws CommandLineException, IOException {
             return wrapped.execute(op, description);
         }
+
+        @Override
+        public boolean isConnectionInterrupted() {
+            return wrapped.isConnectionInterrupted();
+        }
     }
 
     private final CommandContext ctx;

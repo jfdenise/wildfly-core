@@ -24,6 +24,7 @@ package org.jboss.as.cli.impl;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 import javax.security.auth.callback.CallbackHandler;
@@ -51,13 +52,13 @@ public interface ModelControllerClientFactory {
 
     ModelControllerClient getClient(ControllerAddress address, CallbackHandler handler,
             boolean disableLocalAuth, SSLContext sslContext, boolean fallbackSslContext, int connectionTimeout,
-            ConnectionCloseHandler closeHandler, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress) throws IOException;
+            ConnectionCloseHandler closeHandler, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress, Supplier<Boolean> userInterruption) throws IOException;
 
     ModelControllerClientFactory DEFAULT = new ModelControllerClientFactory() {
         @Override
         public ModelControllerClient getClient(ControllerAddress address, CallbackHandler handler,
                 boolean disableLocalAuth, SSLContext sslContext, boolean fallbackSslContext, int connectionTimeout,
-                ConnectionCloseHandler closeHandler, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress) throws IOException {
+                ConnectionCloseHandler closeHandler, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress, Supplier<Boolean> userInterruption) throws IOException {
             // TODO - Make use of the ProtocolTimeoutHandler
             Map<String, String> saslOptions = disableLocalAuth ? DISABLED_LOCAL_AUTH : ENABLED_LOCAL_AUTH;
             ModelControllerClientConfiguration config = new ModelControllerClientConfiguration.Builder()
@@ -79,9 +80,9 @@ public interface ModelControllerClientFactory {
         @Override
         public ModelControllerClient getClient(ControllerAddress address,
                 final CallbackHandler handler, boolean disableLocalAuth, final SSLContext sslContext, final boolean fallbackSslContext,
-                final int connectionTimeout, final ConnectionCloseHandler closeHandler, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress) throws IOException {
+                final int connectionTimeout, final ConnectionCloseHandler closeHandler, ProtocolTimeoutHandler timeoutHandler, String clientBindAddress, Supplier<Boolean> userInterruption) throws IOException {
             Map<String, String> saslOptions = disableLocalAuth ? DISABLED_LOCAL_AUTH : ENABLED_LOCAL_AUTH;
-            return new CLIModelControllerClient(address, handler, connectionTimeout, closeHandler, saslOptions, sslContext, fallbackSslContext, timeoutHandler, clientBindAddress);
+            return new CLIModelControllerClient(address, handler, connectionTimeout, closeHandler, saslOptions, sslContext, fallbackSslContext, timeoutHandler, clientBindAddress, userInterruption);
         }};
 
 }

@@ -315,6 +315,12 @@ public class ReloadHandler extends BaseOperationCommand {
                 // throw that when the server-state / host-state is "stopping"
             }
 
+            if (ctx.isConnectionInterrupted()) {
+                // No need to continue,
+                ctx.disconnectController();
+                throw new CommandLineException(Util.INTERRUPTION_MESSAGE);
+            }
+
             if (System.currentTimeMillis() - start > timeoutMillis) {
                 if (!"starting".equals(serverState))  {
                     ctx.disconnectController();

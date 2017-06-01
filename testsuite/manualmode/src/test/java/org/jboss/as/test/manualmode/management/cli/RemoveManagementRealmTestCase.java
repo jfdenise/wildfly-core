@@ -118,7 +118,7 @@ public class RemoveManagementRealmTestCase {
         cli.clearOutput();
         boolean prompt = cli.pushLineAndWaitForResults(cmd, "Username:");
         assertTrue("Expected prompt not seen in output: " + cli.getOutput(), prompt);
-        assertTrue("Process not terminated. Output is: " + cli.getOutput(), cli.ctrlCAndWaitForClose());
+        assertTrue("Process not terminated. Output is: " + cli.getOutput(), cli.ctrlCAndWaitForClose(2));
     }
 
     @Test

@@ -211,6 +211,8 @@ public class Util {
 
     private static final String ENCODING_EXCEPTION_MESSAGE = "Encoding exception.";
 
+    public static final String INTERRUPTION_MESSAGE = "Connection Interrupted!";
+
     private static Logger LOG = Logger.getLogger(Util.class);
 
     public static boolean isWindows() {

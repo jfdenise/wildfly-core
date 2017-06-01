@@ -610,4 +610,12 @@ public interface CommandContext {
      */
     ModelNode execute(Operation op, String description)
             throws CommandLineException, IOException;
+
+    /**
+     * In case user interrupted a connection.
+     *
+     * @return
+     */
+    boolean isConnectionInterrupted();
+
 }

@@ -162,6 +162,26 @@ public class CliProcessWrapper extends CliProcessBuilder {
     }
 
     /**
+     * Push ctrl-c to CLI input and wait for process to end. Separate from
+     * normal 'push' because no newLine can be pushed after the ctrl-c
+     *
+     * @return Whether the process closed within the timeout or was forced.
+     */
+    public boolean ctrlCAndWaitForClose(int numCtrlC) throws IOException {
+        try {
+            if (cliProcess != null) {
+                for (int i = 0; i < numCtrlC; i++) {
+                    bufferedWriter.write('\u0003');
+                    bufferedWriter.flush();
+                }
+            }
+        } catch (IOException e) {
+            fail("Failed to push ctrl-c char, '\\u0003', to CLI input: " + e.getLocalizedMessage());
+        }
+        return waitForClose();
+    }
+
+    /**
      * Passthrough method to get the process exit value
      *
      * @return process exit value
@@ -239,9 +259,6 @@ public class CliProcessWrapper extends CliProcessBuilder {
     }
 
     private boolean waitForClose() throws IOException {
-        if( bufferedWriter != null ){
-            bufferedWriter.close();
-        }
 
         boolean closed = false;
         int waitingTime = 0;

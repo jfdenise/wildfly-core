@@ -45,6 +45,7 @@ import org.aesh.terminal.Terminal;
 import org.aesh.readline.terminal.TerminalBuilder;
 import org.aesh.terminal.tty.Signal;
 import org.aesh.readline.tty.terminal.TerminalConnection;
+import org.aesh.terminal.Attributes;
 import org.aesh.utils.ANSI;
 import org.aesh.utils.Config;
 import org.aesh.util.FileAccessPermission;
@@ -366,6 +367,10 @@ public class ReadlineConsole implements Console {
     private final AliasManager aliasManager;
     private final List<Function<String, Optional<String>>> preProcessors = new ArrayList<>();
 
+    private final Consumer<Signal> exitHandler;
+    private final Consumer<Signal> interruptHandler;
+    private boolean interrupted;
+
     ReadlineConsole(CommandContext cmdCtx, Settings settings) throws IOException {
         this.cmdCtx = cmdCtx;
         this.settings = settings;
@@ -381,12 +386,44 @@ public class ReadlineConsole implements Console {
         }
         connection = newConnection();
 
+        exitHandler = (signal) -> {
+            if (signal == Signal.INT) {
+                if (LOG.isLoggable(Level.FINER)) {
+                    LOG.finer("Calling exitHandler");
+                }
+                connection.write(Config.getLineSeparator());
+                interrupted = true;
+                settings.getInterrupt().run();
+            }
+        };
+        interruptHandler = (signal) -> {
+            if (signal == Signal.INT) {
+                if (LOG.isLoggable(Level.FINER)) {
+                    LOG.finer("Calling interruptHandler");
+                }
+                connection.write(Config.getLineSeparator());
+                interrupted = true;
+                readingThread.interrupt();
+            }
+        };
+        // Exit if no command is running.
+        connection.setSignalHandler(exitHandler);
+        // Do not display ^C
+        Attributes attr = connection.getAttributes();
+        attr.setLocalFlag(Attributes.LocalFlag.ECHOCTL, false);
+        connection.setAttributes(attr);
+
         aliasManager = new AliasManager(new File(Config.getHomeDir()
                 + Config.getPathSeparator() + ".aesh_aliases"), true);
         AliasPreProcessor aliasPreProcessor = new AliasPreProcessor(aliasManager);
         preProcessors.add(aliasPreProcessor);
         completions.add(new AliasCompletion(aliasManager));
         readline = new Readline();
+    }
+
+    @Override
+    public boolean hasBeenInterrupted() {
+        return interrupted;
     }
 
     @Override
@@ -424,15 +461,6 @@ public class ReadlineConsole implements Console {
         if (LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, "New Terminal {0}", terminal.getClass());
         }
-        c.setSignalHandler(signal -> {
-            if (signal == Signal.INT) {
-                if (LOG.isLoggable(Level.FINER)) {
-                    LOG.finer("Calling InterruptHandler");
-                }
-                c.write(Config.getLineSeparator());
-                settings.getInterrupt().run();
-            }
-        });
         return c;
     }
 
@@ -550,6 +578,7 @@ public class ReadlineConsole implements Console {
         if (connection.suspended()) {
             connection.awake();
         }
+        connection.setSignalHandler(exitHandler);
         readline.readline(connection, new Prompt(prompt, mask), newLine -> {
             out[0] = newLine;
             if (LOG.isLoggable(Level.FINER)) {
@@ -584,19 +613,16 @@ public class ReadlineConsole implements Console {
                     + "reading terminal input");
         }
         CountDownLatch latch = new CountDownLatch(1);
-        readline.readline(connection, new Prompt(prompt, mask), newLine -> {
+        connection.setSignalHandler(interruptHandler);
+        // We can't reuse readline when prompting from a command.
+        Readline rd = new Readline();
+        rd.readline(connection, new Prompt(prompt, mask), newLine -> {
             out[0] = newLine;
             if (LOG.isLoggable(Level.FINER)) {
                 LOG.finer("Got some input");
             }
             latch.countDown();
         });
-        // The connection should be in suspended state. It has been suspended
-        // by the current command that requires prompting.
-        // We must awake it for it to read from the input.
-//        if (connection.suspended()) {
-//            connection.awake();
-//        }
         try {
             latch.await();
         } catch (InterruptedException ex) {
@@ -673,6 +699,8 @@ public class ReadlineConsole implements Console {
         }
         // Console could have been closed during a command execution.
         if (!closed) {
+            interrupted = false;
+            connection.setSignalHandler(exitHandler);
             readline.readline(connection, new Prompt(prompt), line -> {
                 // All commands can lead to prompting the user. So require
                 // to be executed in a dedicated thread.
