@@ -171,7 +171,7 @@ public class PatchInspect implements Command<CLICommandInvocation> {
 
     private void displayPatchXml(CommandContext ctx, Patch patch) throws CommandException {
         final Identity identity = patch.getIdentity();
-        SimpleTable table = new SimpleTable(2);
+        SimpleTable table = new SimpleTable(2, ctx.getTerminalWidth());
         table.addLine(new String[]{"Patch ID:", patch.getPatchId()});
         table.addLine(new String[]{"Type:", identity.getPatchType().getName()});
         table.addLine(new String[]{"Identity name:", identity.getName()});
@@ -186,7 +186,7 @@ public class PatchInspect implements Command<CLICommandInvocation> {
             ctx.printLine("");
             ctx.printLine("ELEMENTS");
             for (PatchElement e : patch.getElements()) {
-                table = new SimpleTable(2);
+                table = new SimpleTable(2, ctx.getTerminalWidth());
                 table.addLine(new String[]{"Patch ID:", e.getId()});
                 table.addLine(new String[]{"Name:", e.getProvider().getName()});
                 table.addLine(new String[]{"Type:", e.getProvider().isAddOn() ? Constants.ADD_ON : Constants.LAYER});

@@ -40,7 +40,7 @@ public class CommandUtil {
         if (response.has(org.jboss.as.cli.Util.RESPONSE_HEADERS)) {
             final ModelNode headers = response.get(org.jboss.as.cli.Util.RESPONSE_HEADERS);
             final Set<String> keys = headers.keys();
-            final SimpleTable table = new SimpleTable(2);
+            final SimpleTable table = new SimpleTable(2, context.getTerminalWidth());
             for (String key : keys) {
                 table.addLine(new String[]{key + ':', headers.get(key).asString()});
             }

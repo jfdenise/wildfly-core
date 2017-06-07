@@ -78,6 +78,11 @@ public class PatchRollbackActivator extends AbstractCommandActivator {
             List<ModelNode> patches = res.get(Constants.PATCHES).asList();
             if (!patches.isEmpty()) {
                 return true;
+            } else {
+                List<ModelNode> cumulatives = res.get(Constants.CUMULATIVE).asList();
+                if (!cumulatives.isEmpty()) {
+                    return true;
+                }
             }
         }
         return false;

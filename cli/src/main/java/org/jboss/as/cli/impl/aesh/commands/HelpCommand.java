@@ -29,9 +29,7 @@ import java.util.List;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Option;
-import org.aesh.command.activator.OptionActivator;
 import org.aesh.command.completer.OptionCompleter;
-import org.aesh.command.impl.internal.ProcessedCommand;
 import org.aesh.command.impl.parser.CommandLineParser;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
@@ -145,16 +143,6 @@ public class HelpCommand implements Command<CLICommandInvocation> {
             }
             Collections.sort(candidates);
             completerInvocation.addAllCompleterValues(candidates);
-        }
-
-    }
-
-    public static class CommandsActivator implements OptionActivator {
-
-        @Override
-        public boolean isActivated(ProcessedCommand pc) {
-            return ((HelpCommand) pc.getCommand()).command == null
-                    || ((HelpCommand) pc.getCommand()).command.isEmpty();
         }
 
     }

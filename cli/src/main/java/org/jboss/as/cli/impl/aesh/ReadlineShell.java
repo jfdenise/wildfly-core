@@ -22,7 +22,7 @@
 package org.jboss.as.cli.impl.aesh;
 
 import org.aesh.readline.Prompt;
-import org.aesh.util.Config;
+import org.aesh.utils.Config;
 import org.aesh.command.Shell;
 import org.aesh.readline.terminal.Key;
 import org.aesh.terminal.tty.Capability;

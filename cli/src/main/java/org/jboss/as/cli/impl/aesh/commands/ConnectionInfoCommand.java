@@ -110,7 +110,7 @@ public class ConnectionInfoCommand implements Command<CLICommandInvocation> {
                 throw new RuntimeException("Failed to get the AS release info: " + e.getLocalizedMessage());
             }
 
-            SimpleTable st = new SimpleTable(2);
+            SimpleTable st = new SimpleTable(2, ctx.getTerminalWidth());
             st.addLine(new String[]{"Username", username});
             st.addLine(new String[]{"Logged since", connInfo.getLoggedSince().toString()});
             X509Certificate[] lastChain = connInfo.getServerCertificates();

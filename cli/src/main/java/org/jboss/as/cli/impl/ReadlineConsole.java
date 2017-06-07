@@ -41,8 +41,8 @@ import org.aesh.readline.alias.AliasPreProcessor;
 import org.aesh.readline.completion.Completion;
 import org.aesh.readline.history.FileHistory;
 import org.aesh.terminal.Terminal;
-import org.aesh.util.ANSI;
-import org.aesh.util.Config;
+import org.aesh.utils.ANSI;
+import org.aesh.utils.Config;
 import org.aesh.util.FileAccessPermission;
 import org.aesh.util.Parser;
 import org.aesh.readline.completion.CompleteOperation;
@@ -423,12 +423,6 @@ public class ReadlineConsole {
         if (LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, "New Terminal {0}", terminal.getClass());
         }
-        c.setCloseHandler((t) -> {
-            if (LOG.isLoggable(Level.FINER)) {
-                LOG.finer("Calling clasHandler");
-            }
-            printNewLine();
-        });
         c.setSignalHandler(signal -> {
             if (signal == Signal.INT) {
                 if (LOG.isLoggable(Level.FINER)) {
@@ -601,14 +595,14 @@ public class ReadlineConsole {
 
     private int getHeight() {
         if (connection instanceof TerminalConnection) {
-            return ((TerminalConnection) connection).getTerminal().getHeight();
+            return ((TerminalConnection) connection).getTerminal().getSize().getHeight();
         }
         return connection.size().getHeight();
     }
 
     private int getWidth() {
         if (connection instanceof TerminalConnection) {
-            return ((TerminalConnection) connection).getTerminal().getWidth();
+            return ((TerminalConnection) connection).getTerminal().getSize().getWidth();
         }
         return connection.size().getWidth();
     }
@@ -675,7 +669,7 @@ public class ReadlineConsole {
                         loop();
                     }
                 });
-            }, completions, preProcessors, readlineHistory);
+            }, completions, preProcessors, readlineHistory, null, null);
         }
     }
 

@@ -43,7 +43,7 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
-import org.aesh.util.Config;
+import org.aesh.utils.Config;
 import org.aesh.command.option.Argument;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.GroupCommandDefinition;

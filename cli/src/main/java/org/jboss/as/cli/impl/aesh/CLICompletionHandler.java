@@ -60,6 +60,7 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
         }
         if (buffer.isEmpty()) {
             co.addCompletionCandidate("/");
+            co.addCompletionCandidate(":");
         }
         aeshCommands.complete(co);
         if (LOG.isLoggable(Level.FINER)) {

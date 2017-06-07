@@ -49,6 +49,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.aesh.AeshCommands;
 import org.jboss.as.cli.impl.aesh.commands.CdCommand.OperationRequestAddressConverter;
 import org.jboss.as.cli.impl.aesh.commands.CdCommand.PathOptionCompleter;
+import org.jboss.as.cli.impl.aesh.commands.activator.ConnectedActivator;
 import org.jboss.as.cli.impl.aesh.commands.batch.CommandUtil;
 import org.jboss.as.cli.impl.aesh.completer.HeadersCompleter;
 import org.jboss.as.cli.impl.aesh.converter.HeadersConverter;
@@ -61,7 +62,6 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.wildfly.core.cli.command.DMRCommand;
 import org.wildfly.core.cli.command.aesh.CLICommandInvocation;
-import org.wildfly.core.cli.command.aesh.activator.AbstractCommandActivator;
 import org.wildfly.core.cli.command.aesh.activator.AbstractOptionActivator;
 import org.wildfly.core.cli.command.aesh.activator.HideOptionActivator;
 
@@ -80,10 +80,6 @@ public class LsCommand extends MapCommand<CLICommandInvocation> implements DMRCo
         public boolean isActivated(ProcessedCommand processedCommand) {
             try {
                 String path = processedCommand.getArgument().getValue();
-                // Workaround for Aesh parser bug.
-                if ("--".equals(path)) {
-                    path = "";
-                }
                 OperationRequestAddress address = OperationRequestAddressConverter.
                         convert(path, getCommandContext());
                 List<Boolean> resHolder = new ArrayList<>();
@@ -118,19 +114,6 @@ public class LsCommand extends MapCommand<CLICommandInvocation> implements DMRCo
                     consumer.accept(properties.hasDefined("resolve-expressions"));
                 }
             }
-        }
-    }
-
-    // XXX JFDENISE, we need to store values because each time
-    // the options are re-built we need to transfer options.
-    // Should be done at the Aesh level.
-    private List<ProcessedOption> previousOptions;
-
-    public static class LsActivator extends AbstractCommandActivator {
-
-        @Override
-        public boolean isActivated(ProcessedCommand command) {
-            return getCommandContext().getModelControllerClient() != null;
         }
     }
 
@@ -260,7 +243,7 @@ public class LsCommand extends MapCommand<CLICommandInvocation> implements DMRCo
                         type(String.class).
                         optionType(OptionType.ARGUMENT).
                         converter(OperationRequestAddressConverter.class).build()).
-                activator(new LsActivator()).
+                activator(new ConnectedActivator()).
                 command(this).create();
         return p;
     }
@@ -456,11 +439,12 @@ public class LsCommand extends MapCommand<CLICommandInvocation> implements DMRCo
                             for (String additional : additionalProps) {
                                 headers[i++] = additional.toUpperCase(Locale.ENGLISH);
                             }
-                            attrTable = new SimpleTable(headers);
+                            attrTable = new SimpleTable(headers, ctx.getTerminalWidth());
                         } else {
-                            attrTable = new SimpleTable(new String[]{"ATTRIBUTE", "VALUE", "TYPE"});
+                            attrTable = new SimpleTable(new String[]{"ATTRIBUTE", "VALUE", "TYPE"}, ctx.getTerminalWidth());
                         }
-                        SimpleTable childrenTable = childDescriptions == null ? null : new SimpleTable(new String[]{"CHILD", "MIN-OCCURS", "MAX-OCCURS"});
+                        SimpleTable childrenTable = childDescriptions == null ? null
+                                : new SimpleTable(new String[]{"CHILD", "MIN-OCCURS", "MAX-OCCURS"}, ctx.getTerminalWidth());
                         if (typeNames == null && attrTable == null && childrenTable == null) {
                             typeNames = new ArrayList<>();
                             names = typeNames;

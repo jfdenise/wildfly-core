@@ -27,7 +27,7 @@ import org.aesh.command.Command;
 import org.aesh.command.container.CommandContainer;
 import org.aesh.command.impl.container.AeshCommandContainerBuilder;
 import org.aesh.command.impl.parser.CommandLineParser;
-import org.aesh.util.Config;
+import org.aesh.utils.Config;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContextFactory;
 import org.junit.Assert;

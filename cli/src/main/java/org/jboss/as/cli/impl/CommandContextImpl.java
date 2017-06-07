@@ -76,7 +76,7 @@ import javax.security.sasl.SaslException;
 import org.aesh.command.impl.operator.OutputDelegate;
 import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.readline.Prompt;
-import org.aesh.util.Config;
+import org.aesh.utils.Config;
 import org.aesh.util.FileAccessPermission;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CliConfig;
@@ -972,9 +972,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         } catch (CommandLineException ex) {
             throw ex;
         } catch (Exception ex) {
-
-            ex.printStackTrace();
-
             throw new CommandLineException("Exception for " + msg, ex);
         }
     }
