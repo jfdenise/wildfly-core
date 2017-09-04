@@ -84,6 +84,35 @@ public interface CommandContext {
     void printLine(String message);
 
     /**
+     * Prints a string to the CLI's output.
+     *
+     * @param message the message to print
+     */
+    default void print(String message) {
+        printLine(message);
+    }
+
+    default void println(String message) {
+        printLine(message);
+    }
+
+    default String readLine(String prompt, boolean password) throws CommandLineException {
+        try {
+            return input(prompt, password);
+        } catch (InterruptedException ex) {
+            throw new CommandLineException(ex);
+        }
+    }
+
+    default String input(String prompt, boolean password) throws CommandLineException, InterruptedException {
+        return null;
+    }
+
+    default int[] input() throws CommandLineException, InterruptedException {
+        return null;
+    }
+
+    /**
      * Prints a collection of strings as columns to the CLI's output.
      * @param col  the collection of strings to print as columns.
      */
