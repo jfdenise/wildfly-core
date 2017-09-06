@@ -52,7 +52,9 @@ public enum Namespace {
 
     CLI_3_0("urn:jboss:cli:3.0"),
 
-    CLI_3_1("urn:jboss:cli:3.1");
+    CLI_3_1("urn:jboss:cli:3.1"),
+
+    CLI_STORED_COMMANDS_1_0("urn:jboss:cli-stored-commands:1.0");
 
     /**
      * The current namespace version.

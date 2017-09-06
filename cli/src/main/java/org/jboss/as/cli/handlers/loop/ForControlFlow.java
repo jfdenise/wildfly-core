@@ -90,7 +90,7 @@ class ForControlFlow implements CommandLineRedirection {
             }
 
             final String cmd = line.getOperationName();
-            if ("end-for".equals(cmd)) {
+            if ("done".equals(cmd)) {
                 registration.handle(line);
             } else {
                 forBlock.add(line.getOriginalLine());

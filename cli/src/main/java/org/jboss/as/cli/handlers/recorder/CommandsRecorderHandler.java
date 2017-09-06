@@ -19,28 +19,28 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.handlers.loop;
+package org.jboss.as.cli.handlers.recorder;
+
+
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
-import org.jboss.as.cli.impl.ArgumentWithoutValue;
 
 /**
  *
  * @author jfdenise
  */
-public class EndForHandler extends CommandHandlerWithHelp {
+public class CommandsRecorderHandler extends CommandHandlerWithHelp {
 
-    private final ArgumentWithoutValue verbose;
-
-    public EndForHandler() {
-        super("done", true);
-        verbose = new ArgumentWithoutValue(this, "--verbose", "-v");
+    public CommandsRecorderHandler() {
+        super("commands-recorder", true);
     }
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
-        return ForControlFlow.get(ctx) != null;
+        return CommandsRecorderControlFlow.get(ctx) == null && !ctx.getBatchManager().isBatchActive();
     }
 
     /* (non-Javadoc)
@@ -48,11 +48,24 @@ public class EndForHandler extends CommandHandlerWithHelp {
      */
     @Override
     protected void doHandle(CommandContext ctx) throws CommandLineException {
-
-        final ForControlFlow forCF = ForControlFlow.get(ctx);
-        if (forCF == null) {
-            throw new CommandLineException("end-for is not available outside 'for' loop");
+        final BatchManager batchManager = ctx.getBatchManager();
+        if (batchManager.isBatchActive()) {
+            throw new CommandFormatException("recording is not allowed while in batch mode.");
         }
-        forCF.run(ctx, verbose.isPresent(ctx.getParsedCommandLine()));
+        ctx.registerRedirection(new CommandsRecorderControlFlow(ctx));
+    }
+
+    /**
+     * It has to accept everything since we don't know what kind of command will
+     * be edited.
+     */
+    @Override
+    public boolean hasArgument(CommandContext ctx, int index) {
+        return true;
+    }
+
+    @Override
+    public boolean hasArgument(CommandContext ctx, String name) {
+        return true;
     }
 }

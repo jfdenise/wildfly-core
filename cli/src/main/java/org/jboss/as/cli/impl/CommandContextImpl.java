@@ -152,12 +152,16 @@ import org.jboss.as.cli.handlers.jca.XADataSourceAddCompositeHandler;
 import org.jboss.as.cli.handlers.loop.EndForHandler;
 import org.jboss.as.cli.handlers.loop.ForHandler;
 import org.jboss.as.cli.handlers.module.ASModuleHandler;
+import org.jboss.as.cli.handlers.recorder.CommandsRecorderHandler;
+import org.jboss.as.cli.handlers.recorder.StopRecording;
+import org.jboss.as.cli.handlers.recorder.StoredCommandHandler;
 import org.jboss.as.cli.handlers.trycatch.CatchHandler;
 import org.jboss.as.cli.handlers.trycatch.EndTryHandler;
 import org.jboss.as.cli.handlers.trycatch.FinallyHandler;
 import org.jboss.as.cli.handlers.trycatch.TryHandler;
 import org.jboss.as.cli.impl.ReadlineConsole.Settings;
 import org.jboss.as.cli.impl.ReadlineConsole.SettingsBuilder;
+import org.jboss.as.cli.impl.StoredCommands.StoredCommand;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -536,8 +540,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         // for
         cmdRegistry.registerHandler(new ForHandler(), "for");
-        cmdRegistry.registerHandler(new EndForHandler(), "end-for");
+        cmdRegistry.registerHandler(new EndForHandler(), "done");
 
+        // recording
+        cmdRegistry.registerHandler(new CommandsRecorderHandler(), "commands-recorder");
+        cmdRegistry.registerHandler(new StopRecording(), "stop-recording");
         // data-source
         final DefaultCompleter driverNameCompleter = new DefaultCompleter(JDBCDriverNameProvider.INSTANCE);
         final GenericTypeOperationHandler dsHandler = new GenericTypeOperationHandler(this, "/subsystem=datasources/data-source", null);
@@ -571,6 +578,10 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         registerExtraHandlers();
 
         extLoader = new ExtensionsLoader(cmdRegistry, this);
+
+        for(StoredCommand cmd : StoredCommands.loadCommands()) {
+            cmdRegistry.registerHandler(new StoredCommandHandler(cmd), cmd.getName());
+        }
     }
 
     private void registerExtraHandlers() throws CommandLineException {

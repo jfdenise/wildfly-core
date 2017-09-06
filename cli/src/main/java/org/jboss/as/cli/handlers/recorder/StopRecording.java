@@ -19,28 +19,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.cli.handlers.loop;
+package org.jboss.as.cli.handlers.recorder;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
-import org.jboss.as.cli.impl.ArgumentWithoutValue;
 
 /**
  *
  * @author jfdenise
  */
-public class EndForHandler extends CommandHandlerWithHelp {
+public class StopRecording extends CommandHandlerWithHelp {
 
-    private final ArgumentWithoutValue verbose;
 
-    public EndForHandler() {
-        super("done", true);
-        verbose = new ArgumentWithoutValue(this, "--verbose", "-v");
+    public StopRecording() {
+        super("stop-recording", true);
     }
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
-        return ForControlFlow.get(ctx) != null;
+        return CommandsRecorderControlFlow.get(ctx) != null;
     }
 
     /* (non-Javadoc)
@@ -49,10 +46,10 @@ public class EndForHandler extends CommandHandlerWithHelp {
     @Override
     protected void doHandle(CommandContext ctx) throws CommandLineException {
 
-        final ForControlFlow forCF = ForControlFlow.get(ctx);
-        if (forCF == null) {
+        final CommandsRecorderControlFlow crCF = CommandsRecorderControlFlow.get(ctx);
+        if (crCF == null) {
             throw new CommandLineException("end-for is not available outside 'for' loop");
         }
-        forCF.run(ctx, verbose.isPresent(ctx.getParsedCommandLine()));
+        crCF.run(ctx, ""+System.currentTimeMillis());
     }
 }
