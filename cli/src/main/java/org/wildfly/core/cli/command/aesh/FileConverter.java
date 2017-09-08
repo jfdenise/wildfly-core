@@ -42,7 +42,7 @@ public class FileConverter implements Converter<File, CLIConverterInvocation> {
         CommandContext ctx = converterInvocation.getCommandContext();
         FilenameTabCompleter pathCompleter = Util.isWindows() ? new WindowsFilenameTabCompleter(ctx) : new DefaultFilenameTabCompleter(ctx);
 
-        if (value != null) {
+        if (value != null && !value.isEmpty()) {
             if (value.length() >= 0 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
                 value = value.substring(1, value.length() - 1);
             }

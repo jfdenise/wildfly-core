@@ -85,6 +85,52 @@ public class CliCompletionTestCase {
                         cmd.length(), candidates);
                 assertEquals(candidates.toString(), Arrays.asList(","), candidates);
             }
+
+            {
+                String cmd = "commands ";
+                List<String> candidates = new ArrayList<>();
+                ctx.getDefaultCommandCompleter().complete(ctx, cmd,
+                        cmd.length(), candidates);
+                assertEquals(candidates.toString(), Arrays.asList("record"), candidates);
+            }
+
+            {
+                String cmd = "commands record ";
+                List<String> candidates = new ArrayList<>();
+                ctx.getDefaultCommandCompleter().complete(ctx, cmd,
+                        cmd.length(), candidates);
+                assertEquals(candidates.toString(), Arrays.asList(), candidates);
+            }
+
+            ctx.handle("commands record");
+            try {
+                {
+                    String cmd = "commands ";
+                    List<String> candidates = new ArrayList<>();
+                    ctx.getDefaultCommandCompleter().complete(ctx, cmd,
+                            cmd.length(), candidates);
+                    assertEquals(candidates.toString(), Arrays.asList("stop-record", "list-recorded", "rewind-record"), candidates);
+                }
+
+                {
+                    String cmd = "commands stop-record ";
+                    List<String> candidates = new ArrayList<>();
+                    ctx.getDefaultCommandCompleter().complete(ctx, cmd,
+                            cmd.length(), candidates);
+                    assertEquals(candidates.toString(), Arrays.asList("--store=", "--transient", "--export=", "--discard"), candidates);
+                }
+
+                {
+                    String cmd = "commands stop-record --export=";
+                    List<String> candidates = new ArrayList<>();
+                    ctx.getDefaultCommandCompleter().complete(ctx, cmd,
+                            cmd.length(), candidates);
+                    assertFalse(candidates.toString(), candidates.isEmpty());
+                }
+            } finally {
+                ctx.handle("commands stop-record --discard");
+            }
+
         } finally {
             ctx.terminateSession();
         }

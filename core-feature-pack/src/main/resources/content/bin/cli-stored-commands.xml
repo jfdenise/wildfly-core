@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- list of stored commands -->
+<cli-stored-commands xmlns="urn:jboss:cli-stored-commands:1.0">
+<!--
+  <stored-command name="stored-cmd-name">
+    <command>ls -l</command>
+    <command><![CDATA[:operation(arg="<requires escaping>")]]></command>
+  </stored-command>
+-->
+</cli-stored-commands>

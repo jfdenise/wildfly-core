@@ -62,6 +62,14 @@ public interface CommandLineRedirection {
      */
     void handle(CommandContext ctx) throws CommandLineException;
 
+    default String getPrompt() {
+        return null;
+    }
+
+    default void handleLineFormatError(String line) {
+        // NO-OP ignore.
+    }
+
     /**
      * Represents registration of the command line redirection
      */
@@ -92,5 +100,9 @@ public interface CommandLineRedirection {
          * @throws CommandLineException  in case the line failed to execute
          */
         void handle(ParsedCommandLine parsedLine) throws CommandLineException;
+
+        default String getPrompt() {
+            return null;
+        }
     }
 }
