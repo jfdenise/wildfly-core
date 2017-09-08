@@ -165,6 +165,7 @@ import org.jboss.as.cli.impl.aesh.AeshCommands;
 import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecution;
 import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecutor;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
+import org.jboss.as.cli.impl.aesh.commands.CommandsCommand;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -562,6 +563,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         cmdRegistry.registerHandler(new ElseHandler(), "else");
         cmdRegistry.registerHandler(new EndIfHandler(), "end-if");
 
+        cmdRegistry.addCommand(new CommandsCommand());
         // data-source
         final DefaultCompleter driverNameCompleter = new DefaultCompleter(JDBCDriverNameProvider.INSTANCE);
         final GenericTypeOperationHandler dsHandler = new GenericTypeOperationHandler(this, "/subsystem=datasources/data-source", null);
@@ -595,6 +597,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         registerExtraHandlers();
 
         extLoader = new ExtensionsLoader(cmdRegistry, aeshCommands.getRegistry(), this);
+
+        for(StoredCommands.StoredCommand cmd : StoredCommands.loadCommands()) {
+            cmdRegistry.addCommand(StoredCommands.newStoredCommand(cmd));
+        }
     }
 
     private void registerExtraHandlers() throws CommandLineException, CommandLineParserException {
@@ -1522,6 +1528,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
         if (isBatchMode()) {
             buffer.append(" #");
+        } else if (isWorkflowMode() && redirection.getPrompt() != null) {
+            buffer.append(redirection.getPrompt());
         }
         buffer.append("] ");
         return buffer.toString();
@@ -2210,11 +2218,16 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         }
 
         @Override
+        public String getPrompt() {
+            return target.getPrompt();
+        }
+
+        @Override
         public void handle(ParsedCommandLine parsedLine) throws CommandLineException {
 
             ensureActive();
 
-            final String line = parsedLine.getSubstitutedLine();
+            String line = parsedLine.getSubstitutedLine();
             try {
                 if (parsedLine.getFormat() == OperationFormat.INSTANCE) {
                     if (isBatchMode()) {
@@ -2261,7 +2274,51 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                             handler.handle(CommandContextImpl.this);
                         }
                     } else {
-                        throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
+                        line = parsedCmd.getSubstitutedLine();
+                        CLIExecutor cliExecutor = null;
+                        try {
+                            cliExecutor = aeshCommands.newExecutor(line);
+                        } catch (CommandNotFoundException ex) {
+                            throw new CommandLineException("Unexpected command '" + line + "'. Type 'help --commands' for the list of supported commands.");
+                        } catch (IOException t) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Failed to handle '" + line + "'", t);
+                            }
+                            throw new CommandLineException("Failed to handle '" + line + "'", t);
+                        }
+                        List<CLIExecution> lst = cliExecutor.getExecutions();
+                        if (!lst.isEmpty()) {
+                            CLIExecution exec = lst.get(0);
+                            BatchCompliantCommand bc = exec.getBatchCompliant();
+                            if (isBatchMode() && bc != null) {
+                                try {
+                                    Batch batch = getBatchManager().getActiveBatch();
+                                    BatchCompliantCommand.BatchResponseHandler request = bc.buildBatchResponseHandler(CommandContextImpl.this,
+                                            batch.getAttachments());
+
+                                    // Wrap into legacy API.
+                                    ResponseHandler rh = null;
+                                    if (request != null) {
+                                        rh = (ModelNode step, OperationResponse response) -> {
+                                            request.handleResponse(step, response);
+                                        };
+                                    }
+                                    BatchedCommand batchedCmd
+                                            = new DefaultBatchedCommand(CommandContextImpl.this, line,
+                                                    bc.buildRequest(CommandContextImpl.this, batch.getAttachments()), rh);
+                                    batch.add(batchedCmd);
+                                } catch (CommandFormatException e) {
+                                    throw new CommandFormatException("Failed to add to batch '" + line + "'", e);
+                                }
+                            } else {
+                                execute(() -> {
+                                    executor.execute(aeshCommands.newExecutableBuilder(exec),
+                                            timeout, TimeUnit.SECONDS);
+                                    return null;
+
+                                }, line);
+                            }
+                        }
                     }
                 }
             } finally {
