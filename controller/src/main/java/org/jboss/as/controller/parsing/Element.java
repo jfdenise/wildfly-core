@@ -169,6 +169,7 @@ public enum Element {
     ROLE_MAPPING("role-mapping"),
     ROLLOUT_PLANS("rollout-plans"),
 
+    SCRIPTS("scripts"),
     SEARCH_CREDENTIAL_REFERENCE("search-credential-reference"),
     SECRET("secret"),
     SECURITY_REALM("security-realm"),

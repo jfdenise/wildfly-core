@@ -71,8 +71,12 @@ import java.util.Set;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
+import org.jboss.as.controller.HashUtil;
 
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.HASH;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MANAGEMENT_CLIENT_CONTENT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCRIPTS;
 import org.jboss.as.controller.logging.ControllerLogger;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.Attribute;
@@ -265,9 +269,63 @@ class StandaloneXml_5 extends CommonXml implements ManagementXmlDelegate {
             parseDeploymentOverlays(reader, namespace, new ModelNode(), list, true, true);
             element = nextElement(reader, namespace);
         }
+
+        if (element == Element.MANAGEMENT_CLIENT_CONTENT) {
+            parseManagementClientContent(reader, address, namespace, list);
+            element = nextElement(reader, namespace);
+        } else if (element == null) {
+            // Always add op(s) to set up management-client-content resources
+            initializeScripts(address, list);
+        }
+
         if (element != null) {
             throw unexpectedElement(reader);
         }
+    }
+
+    private void initializeScripts(ModelNode address, List<ModelNode> list) {
+
+        ModelNode addAddress = address.clone().add(MANAGEMENT_CLIENT_CONTENT, SCRIPTS);
+        ModelNode addOp = Util.getEmptyOperation(ADD, addAddress);
+        list.add(addOp);
+    }
+
+    private void parseManagementClientContent(XMLExtendedStreamReader reader, ModelNode address, Namespace expectedNs, List<ModelNode> list) throws XMLStreamException {
+        requireNoAttributes(reader);
+
+        boolean scriptsAdded = false;
+        while (reader.nextTag() != END_ELEMENT) {
+            requireNamespace(reader, expectedNs);
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case SCRIPTS: {
+                    parseScripts(reader, address, list);
+                    scriptsAdded = true;
+                    break;
+                }
+                default: {
+                    throw unexpectedElement(reader);
+                }
+            }
+        }
+
+        if (!scriptsAdded) {
+            initializeScripts(address, list);
+        }
+    }
+
+    private void parseScripts(XMLExtendedStreamReader reader, ModelNode address, List<ModelNode> list) throws XMLStreamException {
+
+        String hash = reader.getAttributeValue(0);
+        ModelNode addAddress = address.clone().add(MANAGEMENT_CLIENT_CONTENT, SCRIPTS);
+        ModelNode addOp = Util.getEmptyOperation(ADD, addAddress);
+        try {
+            addOp.get(HASH).set(HashUtil.hexStringToByteArray(hash));
+        } catch (final Exception e) {
+            throw ControllerLogger.ROOT_LOGGER.invalidSha1Value(e, hash, Attribute.SHA1.getLocalName(), reader.getLocation());
+        }
+
+        list.add(addOp);
     }
 
     private void parseHttpManagementInterfaceAttributes(XMLExtendedStreamReader reader, ModelNode addOp) throws XMLStreamException {
@@ -720,8 +778,26 @@ class StandaloneXml_5 extends CommonXml implements ManagementXmlDelegate {
             writeDeploymentOverlays(writer, modelNode.get(DEPLOYMENT_OVERLAY));
             WriteUtils.writeNewLine(writer);
         }
+
+        if (modelNode.hasDefined(MANAGEMENT_CLIENT_CONTENT)) {
+            writeManagementClientContent(writer, modelNode.get(MANAGEMENT_CLIENT_CONTENT));
+        }
+
         writer.writeEndElement();
         writer.writeEndDocument();
+    }
+
+    private void writeManagementClientContent(XMLExtendedStreamWriter writer, ModelNode modelNode) throws XMLStreamException {
+        boolean hasRolloutPlans = modelNode.hasDefined(SCRIPTS) && modelNode.get(SCRIPTS).hasDefined(HASH);
+        boolean mustWrite = hasRolloutPlans; // || other elements we may add later
+        if (mustWrite) {
+            writer.writeStartElement(Element.MANAGEMENT_CLIENT_CONTENT.getLocalName());
+            if (hasRolloutPlans) {
+                writer.writeEmptyElement(Element.SCRIPTS.getLocalName());
+                writer.writeAttribute(Attribute.SHA1.getLocalName(), HashUtil.bytesToHexString(modelNode.get(SCRIPTS).get(HASH).asBytes()));
+            }
+            writer.writeEndElement();
+        }
     }
 
     private void writeServerDeployments(final XMLExtendedStreamWriter writer, final ModelNode modelNode)

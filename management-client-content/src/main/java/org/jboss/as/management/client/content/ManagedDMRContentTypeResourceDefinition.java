@@ -22,7 +22,6 @@
 
 package org.jboss.as.management.client.content;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROLLOUT_PLAN;
 
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
@@ -51,7 +50,7 @@ public class ManagedDMRContentTypeResourceDefinition extends SimpleResourceDefin
 
     private final ParameterValidator contentValidator;
     private final ResourceDescriptionResolver childResolver;
-
+    private final String childType;
     public ManagedDMRContentTypeResourceDefinition(final ContentRepository contentRepository,
                                                    final String childType,
                                                    final PathElement pathElement,
@@ -62,6 +61,7 @@ public class ManagedDMRContentTypeResourceDefinition extends SimpleResourceDefin
                 null, OperationEntry.Flag.RESTART_NONE, null);
         this.childResolver = childResolver;
         this.contentValidator = contentValidator;
+        this.childType = childType;
     }
 
 
@@ -74,8 +74,7 @@ public class ManagedDMRContentTypeResourceDefinition extends SimpleResourceDefin
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
-        ManagedDMRContentResourceDefinition planDef = ManagedDMRContentResourceDefinition.create(ROLLOUT_PLAN, contentValidator, childResolver);
-        resourceRegistration.registerSubModel(planDef);
-
+        ManagedDMRContentResourceDefinition childDef = ManagedDMRContentResourceDefinition.create(childType, contentValidator, childResolver);
+        resourceRegistration.registerSubModel(childDef);
     }
 }
