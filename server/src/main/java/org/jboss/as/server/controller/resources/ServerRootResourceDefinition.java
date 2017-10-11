@@ -21,6 +21,7 @@
 */
 package org.jboss.as.server.controller.resources;
 
+import java.util.List;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SERVER;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBDEPLOYMENT;
 
@@ -30,6 +31,7 @@ import org.jboss.as.controller.CapabilityRegistry;
 import org.jboss.as.controller.CompositeOperationHandler;
 import org.jboss.as.controller.ControlledProcessState;
 import org.jboss.as.controller.ModelOnlyWriteAttributeHandler;
+import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ProcessType;
 import org.jboss.as.controller.PropertiesAttributeDefinition;
@@ -43,6 +45,19 @@ import org.jboss.as.controller.access.management.DelegatingConfigurableAuthorize
 import org.jboss.as.controller.access.management.ManagementSecurityIdentitySupplier;
 import org.jboss.as.controller.audit.ManagedAuditLogger;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.CLI;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.COMMANDS;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.CONSOLE;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DESCRIPTION;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DMR;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DOMAIN;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.LEVEL;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MANAGEMENT_CLIENT_CONTENT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MODE;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCRIPT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCRIPTS;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.STANDALONE;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.TAGS;
 import org.jboss.as.controller.extension.ExtensionRegistry;
 import org.jboss.as.controller.extension.ExtensionRegistryType;
 import org.jboss.as.controller.extension.ExtensionResourceDefinition;
@@ -63,6 +78,7 @@ import org.jboss.as.controller.operations.common.XmlMarshallingHandler;
 import org.jboss.as.controller.operations.global.GlobalInstallationReportHandler;
 import org.jboss.as.controller.operations.global.GlobalNotifications;
 import org.jboss.as.controller.operations.global.GlobalOperationHandlers;
+import org.jboss.as.controller.operations.validation.AbstractParameterValidator;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.operations.validation.ParameterValidator;
@@ -74,6 +90,7 @@ import org.jboss.as.controller.services.path.PathResourceDefinition;
 import org.jboss.as.domain.management.CoreManagementResourceDefinition;
 import org.jboss.as.domain.management.audit.EnvironmentNameReader;
 import org.jboss.as.domain.management.security.WhoAmIOperation;
+import org.jboss.as.management.client.content.ManagedDMRContentTypeResourceDefinition;
 import org.jboss.as.platform.mbean.PlatformMBeanResourceRegistrar;
 import org.jboss.as.repository.ContentRepository;
 import org.jboss.as.server.DeployerChainAddHandler;
@@ -90,6 +107,7 @@ import org.jboss.as.server.deployment.DeploymentUploadBytesHandler;
 import org.jboss.as.server.deployment.DeploymentUploadStreamAttachmentHandler;
 import org.jboss.as.server.deployment.DeploymentUploadURLHandler;
 import org.jboss.as.server.deploymentoverlay.DeploymentOverlayDefinition;
+import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.as.server.mgmt.HttpManagementResourceDefinition;
 import org.jboss.as.server.mgmt.NativeManagementResourceDefinition;
 import org.jboss.as.server.mgmt.NativeRemotingManagementResourceDefinition;
@@ -117,7 +135,9 @@ import org.jboss.as.server.services.net.SpecifiedInterfaceRemoveHandler;
 import org.jboss.as.server.services.net.SpecifiedInterfaceResolveHandler;
 import org.jboss.as.server.services.security.AbstractVaultReader;
 import org.jboss.as.server.suspend.SuspendController;
+import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
+import org.wildfly.common.Assert;
 /**
  *
  * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
@@ -461,6 +481,12 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
         //capability registry
         resourceRegistration.registerSubModel(new CapabilityRegistryResourceDefinition(capabilityRegistry));
 
+        resourceRegistration.registerSubModel(
+                new ManagedDMRContentTypeResourceDefinition(contentRepository, SCRIPT,
+                PathElement.pathElement(MANAGEMENT_CLIENT_CONTENT, SCRIPTS),
+                        new ScriptValidator(), ServerDescriptions.getResourceDescriptionResolver(SCRIPTS),
+                        ServerDescriptions.getResourceDescriptionResolver(SCRIPT)));
+
         // Interfaces
         ManagementResourceRegistration interfaces = resourceRegistration.registerSubModel(new InterfaceResourceDefinition(
                 SpecifiedInterfaceAddHandler.INSTANCE,
@@ -490,4 +516,44 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(DeployerChainAddHandler.DEFINITION, DeployerChainAddHandler.INSTANCE, false);
     }
 
+    public static class ScriptValidator extends AbstractParameterValidator {
+
+        @Override
+        public void validateParameter(String parameterName, ModelNode script) throws OperationFailedException {
+            Assert.assertNotNull(script);
+            if (!script.hasDefined(COMMANDS)) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.requiredChildIsMissing(SCRIPT, COMMANDS, script.toString()));
+            }
+            if (!script.hasDefined(DESCRIPTION)) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.requiredChildIsMissing(SCRIPT, DESCRIPTION, script.toString()));
+            }
+            if (!script.hasDefined(TAGS)) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.requiredChildIsMissing(SCRIPT, TAGS, script.toString()));
+            }
+            if (!script.hasDefined(MODE)) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.requiredChildIsMissing(SCRIPT, MODE, script.toString()));
+            }
+            if (!script.hasDefined(LEVEL)) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.requiredChildIsMissing(SCRIPT, LEVEL, script.toString()));
+            }
+            List<ModelNode> commands = script.get(COMMANDS).asList();
+            if (commands.isEmpty()) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.requiredChildIsMissing(SCRIPT, COMMANDS, script.toString()));
+            }
+            List<ModelNode> tags = script.get(TAGS).asList();
+            if (tags.isEmpty()) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.requiredChildIsMissing(SCRIPT, TAGS, script.toString()));
+            }
+            String level = script.get(LEVEL).asString();
+            if (!level.equals(CLI) && !level.equals(DMR) && !level.equals(CONSOLE)) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.invalidValue(level,
+                        DMR + ", " + CLI + ", " + CONSOLE + " are supported"));
+            }
+            String mode = script.get(MODE).asString();
+            if (!mode.equals(STANDALONE) && !mode.equals(DOMAIN)) {
+                throw new OperationFailedException(ServerLogger.ROOT_LOGGER.invalidValue(mode,
+                        STANDALONE + ", " + DOMAIN + " are supported"));
+            }
+        }
+    }
 }

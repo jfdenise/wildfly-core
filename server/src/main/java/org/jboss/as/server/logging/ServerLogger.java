@@ -1285,4 +1285,10 @@ public interface ServerLogger extends BasicLogger {
 
     @Message(id = Message.NONE, value = "The attribute '%s' has changed from '%s' to '%s'")
     String jmxAttributeChange(String name, String oldState, String stateString);
+
+    @Message(id = Message.NONE, value = "%s is missing %s: %s")
+    String requiredChildIsMissing(String parent, String child, String parentSpec);
+
+    @Message(id = Message.NONE, value = "%s is not valid. %s")
+    InvalidObjectException invalidValue(String field, String expected);
 }

@@ -97,13 +97,16 @@ public class ModelDescriptionConstants {
     public static final String CHILD_TYPE = "child-type";
     public static final String CHILDREN = "children";
     public static final String CLASSIFICATION = "classification";
+    public static final String CLI = "cli";
     public static final String CLIENT_CERT_STORE = "client-certificate-store";
     public static final String CLIENT_MAPPINGS = "client-mappings";
     public static final String CLONE = "clone";
     public static final String CODE = "code";
+    public static final String COMMANDS = "commands";
     public static final String COMPACT = "compact";
     public static final String COMPOSITE = "composite";
     public static final String CONFIGURATION_CHANGES="configuration-changes";
+    public static final String CONSOLE = "console";
     public static final String CONSTRAINT = "constraint";
     public static final String CONCURRENT_GROUPS = "concurrent-groups";
     public static final String CONFIGURED_APPLICATION = "configured-application";
@@ -149,6 +152,7 @@ public class ModelDescriptionConstants {
     public static final String DISABLED_DUE_TO_FAILURE = "disabled-due-to-failure";
     public static final String DISCOVERY_OPTION = "discovery-option";
     public static final String DISCOVERY_OPTIONS = "discovery-options";
+    public static final String DMR = "dmr";
     public static final String DOMAIN = "domain";
     public static final String DOMAIN_CONFIG = "domain-config";
     public static final String DOMAIN_CONTROLLER = "domain-controller";
@@ -298,6 +302,7 @@ public class ModelDescriptionConstants {
     public static final String MIN_LENGTH = "min-length";
     public static final String MIN_OCCURS = "min-occurs";
     public static final String MISSING_TRANSITIVE_DEPENDENCY_PROBLEMS = "missing-transitive-dependency-problems";
+    public static final String MODE = "mode";
     public static final String MODEL_DESCRIPTION = "model-description";
     public static final String MODULE = "module";
     public static final String MODULE_LOADING = "module-loading";
@@ -479,6 +484,8 @@ public class ModelDescriptionConstants {
     public static final String RESUME = "resume";
     public static final String SASL_AUTHENTICATION_FACTORY = "sasl-authentication-factory";
     public static final String SASL_PROTOCOL = "sasl-protocol";
+    public static final String SCRIPT = "script";
+    public static final String SCRIPTS = "scripts";
     public static final String SELECT = "select";
     public static final String SERVER_LOGGER = "server-logger";
     public static final String SERVER_NAME = "server-name";
@@ -494,6 +501,7 @@ public class ModelDescriptionConstants {
     public static final String SOURCE_PORT = "source-port";
     public static final String SSL = "ssl";
     public static final String SSL_CONTEXT = "ssl-context";
+    public static final String STANDALONE = "standalone";
     public static final String STANDARD_ROLE_NAMES = "standard-role-names";
     public static final String START = "start";
     public static final String START_MODE = "start-mode";
@@ -522,6 +530,7 @@ public class ModelDescriptionConstants {
      * intention of re-adding it
      */
     public static final String SYNC_REMOVED_FOR_READD = "sync-dropped-for-readd";
+    public static final String TAGS = "tags";
     public static final String TAIL_COMMENT_ALLOWED = "tail-comment-allowed";
     public static final String TARGET_PATH = "target-path";
     public static final String TCP = "tcp";
