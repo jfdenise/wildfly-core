@@ -554,6 +554,8 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
                 throw new OperationFailedException(ServerLogger.ROOT_LOGGER.invalidValue(mode,
                         STANDALONE + ", " + DOMAIN + " are supported"));
             }
+            // XXX JFDENISE Evolve the operation in the validator...is it right?
+            script.get("timestamp").set(System.currentTimeMillis());
         }
     }
 }
