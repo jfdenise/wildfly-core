@@ -68,6 +68,11 @@ public class KnownIssuesValidationConfiguration extends ValidationConfiguration 
         MEMORY_POOL_CHILDREN_ADDR.add(NAME, "*");
         config.allowNullValueTypeForOperationReplyProperties(MEMORY_POOL_CHILDREN_ADDR, READ_RESOURCE_OPERATION);
 
+        ModelNode scripts = new ModelNode().add(MANAGEMENT_CLIENT_CONTENT, SCRIPTS).add(SCRIPT, "*");
+        config.allowNullValueTypeForAttribute(scripts, CONTENT);
+        config.allowNullValueTypeForOperationParameter(scripts, "store", CONTENT);
+        config.allowNullValueTypeForOperationParameter(scripts, ADD, CONTENT);
+
         return config;
     }
 
@@ -107,6 +112,11 @@ public class KnownIssuesValidationConfiguration extends ValidationConfiguration 
         config.allowNullValueTypeForAttribute(rolloutPlan, CONTENT);
         config.allowNullValueTypeForOperationParameter(rolloutPlan, "store", CONTENT);
         config.allowNullValueTypeForOperationParameter(rolloutPlan, ADD, CONTENT);
+
+        ModelNode scripts = new ModelNode().add(MANAGEMENT_CLIENT_CONTENT, SCRIPTS).add(SCRIPT, "*");
+        config.allowNullValueTypeForAttribute(scripts, CONTENT);
+        config.allowNullValueTypeForOperationParameter(scripts, "store", CONTENT);
+        config.allowNullValueTypeForOperationParameter(scripts, ADD, CONTENT);
         return config;
     }
 
