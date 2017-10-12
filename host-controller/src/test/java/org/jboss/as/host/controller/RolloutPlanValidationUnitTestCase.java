@@ -31,7 +31,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROL
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SERVER_GROUP;
 
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.domain.controller.resources.DomainRootDefinition;
+import org.jboss.as.management.client.content.RolloutPlanValidator;
 import org.jboss.dmr.ModelNode;
 import org.junit.Assert;
 import org.junit.Test;
@@ -286,6 +286,6 @@ public class RolloutPlanValidationUnitTestCase {
     }
 
     private void validateRolloutPlanStructure(ModelNode rolloutPlan) throws OperationFailedException {
-        new DomainRootDefinition.RolloutPlanValidator().validateParameter("plan", rolloutPlan);
+        new RolloutPlanValidator().validateParameter("plan", rolloutPlan);
     }
 }

@@ -21,28 +21,13 @@
 */
 package org.jboss.as.domain.controller.resources;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.CONCURRENT_GROUPS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DOMAIN;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.IN_SERIES;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MANAGEMENT_CLIENT_CONTENT;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MAX_FAILED_SERVERS;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MAX_FAILURE_PERCENTAGE;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROLLBACK_ACROSS_GROUPS;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROLLING_TO_SERVERS;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROLLOUT_PLAN;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROLLOUT_PLANS;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SERVER_GROUP;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ModelOnlyWriteAttributeHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
-import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ProcessType;
 import org.jboss.as.controller.PropertiesAttributeDefinition;
 import org.jboss.as.controller.ResourceDefinition;
@@ -67,7 +52,6 @@ import org.jboss.as.controller.operations.common.SnapshotTakeHandler;
 import org.jboss.as.controller.operations.common.ValidateAddressOperationHandler;
 import org.jboss.as.controller.operations.common.XmlMarshallingHandler;
 import org.jboss.as.controller.operations.global.GlobalInstallationReportHandler;
-import org.jboss.as.controller.operations.validation.AbstractParameterValidator;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.operations.validation.ParameterValidator;
@@ -79,7 +63,6 @@ import org.jboss.as.controller.services.path.PathResourceDefinition;
 import org.jboss.as.domain.controller.DomainController;
 import org.jboss.as.domain.controller.HostRegistrations;
 import org.jboss.as.domain.controller.LocalHostControllerInfo;
-import org.jboss.as.domain.controller.logging.DomainControllerLogger;
 import org.jboss.as.domain.controller.operations.ApplyExtensionsHandler;
 import org.jboss.as.domain.controller.operations.DomainServerLifecycleHandlers;
 import org.jboss.as.domain.controller.operations.GenericModelDescribeOperationHandler;
@@ -96,7 +79,7 @@ import org.jboss.as.domain.management.CoreManagementResourceDefinition;
 import org.jboss.as.host.controller.HostControllerEnvironment;
 import org.jboss.as.host.controller.ignored.IgnoredDomainResourceRegistry;
 import org.jboss.as.host.controller.mgmt.DomainHostExcludeRegistry;
-import org.jboss.as.management.client.content.ManagedDMRContentTypeResourceDefinition;
+import org.jboss.as.management.client.content.ClientContent;
 import org.jboss.as.repository.ContentRepository;
 import org.jboss.as.repository.HostFileRepository;
 import org.jboss.as.server.ServerEnvironment.LaunchType;
@@ -111,7 +94,6 @@ import org.jboss.as.server.services.net.InterfaceRemoveHandler;
 import org.jboss.as.server.services.net.InterfaceResourceDefinition;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
-import org.wildfly.common.Assert;
 
 /**
  * {@link org.jboss.as.controller.ResourceDefinition} for the root resource in the domain-wide model.
@@ -334,10 +316,8 @@ public class DomainRootDefinition extends SimpleResourceDefinition {
         //TODO socket-binding-group currently lives in controller and the child RDs live in domain so they currently need passing in from here
         resourceRegistration.registerSubModel(SocketBindingGroupResourceDefinition.INSTANCE);
 
-        //TODO perhaps all these descriptions and the validator log messages should be moved into management-client-content?
-        resourceRegistration.registerSubModel(
-                new ManagedDMRContentTypeResourceDefinition(contentRepo, ROLLOUT_PLAN,
-                PathElement.pathElement(MANAGEMENT_CLIENT_CONTENT, ROLLOUT_PLANS), new RolloutPlanValidator(), DomainResolver.getResolver(ROLLOUT_PLANS), DomainResolver.getResolver(ROLLOUT_PLAN)));
+        //Client content
+        ClientContent.registerDomain(resourceRegistration, contentRepo);
 
         // Extensions
         ExtensionRegistryType registryType = isMaster ? ExtensionRegistryType.MASTER : ExtensionRegistryType.SLAVE;
@@ -355,75 +335,4 @@ public class DomainRootDefinition extends SimpleResourceDefinition {
         registerOperations(resourceRegistration);
         registerChildren(resourceRegistration);
     }
-
-    public static class RolloutPlanValidator extends AbstractParameterValidator {
-        private static final List<String> ALLOWED_SERVER_GROUP_CHILDREN = Arrays.asList(ROLLING_TO_SERVERS, MAX_FAILURE_PERCENTAGE, MAX_FAILED_SERVERS);
-        @Override
-        public void validateParameter(String parameterName, ModelNode plan) throws OperationFailedException {
-            Assert.assertNotNull(plan);
-            if(!plan.hasDefined(ROLLOUT_PLAN)) {
-                throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.requiredChildIsMissing(ROLLOUT_PLAN, ROLLOUT_PLAN, plan.toString()));
-            }
-            ModelNode rolloutPlan1 = plan.get(ROLLOUT_PLAN);
-
-            final Set<String> keys;
-            try {
-                keys = rolloutPlan1.keys();
-            } catch (IllegalArgumentException e) {
-                throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.requiredChildIsMissing(ROLLOUT_PLAN, IN_SERIES, plan.toString()));
-            }
-            if(!keys.contains(IN_SERIES)) {
-                throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.requiredChildIsMissing(ROLLOUT_PLAN, IN_SERIES, plan.toString()));
-            }
-            if(keys.size() > 2 || keys.size() == 2 && !keys.contains(ROLLBACK_ACROSS_GROUPS)) {
-                throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.unrecognizedChildren(ROLLOUT_PLAN, IN_SERIES + ", " + ROLLBACK_ACROSS_GROUPS, plan.toString()));
-            }
-
-            final ModelNode inSeries = rolloutPlan1.get(IN_SERIES);
-            if(!inSeries.isDefined()) {
-                throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.requiredChildIsMissing(ROLLOUT_PLAN, IN_SERIES, plan.toString()));
-            }
-
-            final List<ModelNode> groups = inSeries.asList();
-            if(groups.isEmpty()) {
-                throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.inSeriesIsMissingGroups(plan.toString()));
-            }
-
-            for(ModelNode group : groups) {
-                if(group.hasDefined(SERVER_GROUP)) {
-                    final ModelNode serverGroup = group.get(SERVER_GROUP);
-                    final Set<String> groupKeys;
-                    try {
-                        groupKeys = serverGroup.keys();
-                    } catch(IllegalArgumentException e) {
-                        throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.serverGroupExpectsSingleChild(plan.toString()));
-                    }
-                    if(groupKeys.size() != 1) {
-                        throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.serverGroupExpectsSingleChild(plan.toString()));
-                    }
-                    validateInSeriesServerGroup(serverGroup.asProperty().getValue());
-                } else if(group.hasDefined(CONCURRENT_GROUPS)) {
-                    final ModelNode concurrent = group.get(CONCURRENT_GROUPS);
-                    for(ModelNode child: concurrent.asList()) {
-                        validateInSeriesServerGroup(child.asProperty().getValue());
-                    }
-                } else {
-                    throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.unexpectedInSeriesGroup(plan.toString()));
-                }
-            }
-        }
-
-        public static void validateInSeriesServerGroup(ModelNode serverGroup) throws OperationFailedException {
-            if(serverGroup.isDefined()) {
-                try {
-                    final Set<String> specKeys = serverGroup.keys();
-                    if(!ALLOWED_SERVER_GROUP_CHILDREN.containsAll(specKeys)) {
-                        throw new OperationFailedException(DomainControllerLogger.ROOT_LOGGER.unrecognizedChildren(SERVER_GROUP, ALLOWED_SERVER_GROUP_CHILDREN.toString(), specKeys.toString()));
-                    }
-                } catch(IllegalArgumentException e) {// ignore?
-                }
-            }
-        }
-    }
-
 }

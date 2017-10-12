@@ -534,6 +534,7 @@ public class ModelDescriptionConstants {
     public static final String TAIL_COMMENT_ALLOWED = "tail-comment-allowed";
     public static final String TARGET_PATH = "target-path";
     public static final String TCP = "tcp";
+    public static final String TIMESTAMP = "timestamp";
     public static final String TIMEOUT = "timeout";
     public static final String TLS = "tls";
     public static final String TO_PROFILE = "to-profile";

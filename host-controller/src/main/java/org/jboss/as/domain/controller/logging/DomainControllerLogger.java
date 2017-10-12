@@ -22,9 +22,6 @@
 
 package org.jboss.as.domain.controller.logging;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.CONCURRENT_GROUPS;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.IN_SERIES;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SERVER_GROUP;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
@@ -212,60 +209,61 @@ public interface DomainControllerLogger extends BasicLogger {
     @Message(id = 15, value = "There is already a registered host named '%s'")
     String slaveAlreadyRegistered(String slaveName);
 
-    /**
-     * Creates an exception message indicating that a parent is missing a required child.
-     *
-     * @param parent     the name of the parent element
-     * @param child      the name of the missing child element
-     * @param parentSpec the complete string representation of the parent element
-     *
-     * @return the error message
-     */
-    @Message(id = 16, value = "%s is missing %s: %s")
-    String requiredChildIsMissing(String parent, String child, String parentSpec);
-
-    /**
-     * Creates an exception message indicating that a parent recognizes only the specified children.
-     *
-     * @param parent     the name of the parent element
-     * @param children   recognized children
-     * @param parentSpec the complete string representation of the parent element
-     *
-     * @return the error message
-     */
-    @Message(id = 17, value = "%s recognizes only %s as children: %s")
-    String unrecognizedChildren(String parent, String children, String parentSpec);
-
-    /**
-     * Creates an exception message indicating that in-series is missing groups.
-     *
-     * @param rolloutPlan string representation of a rollout plan
-     *
-     * @return the error message
-     */
-    @Message(id = 18, value = IN_SERIES + " is missing groups: %s")
-    String inSeriesIsMissingGroups(String rolloutPlan);
-
-    /**
-     * Creates an exception message indicating that server-group expects one and only one child.
-     *
-     * @param rolloutPlan string representation of a rollout plan
-     *
-     * @return the error message
-     */
-    @Message(id = 19, value = SERVER_GROUP + " expects one and only one child: %s")
-    String serverGroupExpectsSingleChild(String rolloutPlan);
-
-    /**
-     * Creates an exception message indicating that one of the groups in rollout plan does not define neither
-     * server-group nor concurrent-groups.
-     *
-     * @param rolloutPlan string representation of a rollout plan
-     *
-     * @return the error message
-     */
-    @Message(id = 20, value = "One of the groups does not define neither " + SERVER_GROUP + " nor " + CONCURRENT_GROUPS + ": %s")
-    String unexpectedInSeriesGroup(String rolloutPlan);
+//    Have been moved to management-cient-content module.
+//    /**
+//     * Creates an exception message indicating that a parent is missing a required child.
+//     *
+//     * @param parent     the name of the parent element
+//     * @param child      the name of the missing child element
+//     * @param parentSpec the complete string representation of the parent element
+//     *
+//     * @return the error message
+//     */
+//    @Message(id = 16, value = "%s is missing %s: %s")
+//    String requiredChildIsMissing(String parent, String child, String parentSpec);
+//
+//    /**
+//     * Creates an exception message indicating that a parent recognizes only the specified children.
+//     *
+//     * @param parent     the name of the parent element
+//     * @param children   recognized children
+//     * @param parentSpec the complete string representation of the parent element
+//     *
+//     * @return the error message
+//     */
+//    @Message(id = 17, value = "%s recognizes only %s as children: %s")
+//    String unrecognizedChildren(String parent, String children, String parentSpec);
+//
+//    /**
+//     * Creates an exception message indicating that in-series is missing groups.
+//     *
+//     * @param rolloutPlan string representation of a rollout plan
+//     *
+//     * @return the error message
+//     */
+//    @Message(id = 18, value = IN_SERIES + " is missing groups: %s")
+//    String inSeriesIsMissingGroups(String rolloutPlan);
+//
+//    /**
+//     * Creates an exception message indicating that server-group expects one and only one child.
+//     *
+//     * @param rolloutPlan string representation of a rollout plan
+//     *
+//     * @return the error message
+//     */
+//    @Message(id = 19, value = SERVER_GROUP + " expects one and only one child: %s")
+//    String serverGroupExpectsSingleChild(String rolloutPlan);
+//
+//    /**
+//     * Creates an exception message indicating that one of the groups in rollout plan does not define neither
+//     * server-group nor concurrent-groups.
+//     *
+//     * @param rolloutPlan string representation of a rollout plan
+//     *
+//     * @return the error message
+//     */
+//    @Message(id = 20, value = "One of the groups does not define neither " + SERVER_GROUP + " nor " + CONCURRENT_GROUPS + ": %s")
+//    String unexpectedInSeriesGroup(String rolloutPlan);
 
     /**
      * A message indicating an unexplained failure.

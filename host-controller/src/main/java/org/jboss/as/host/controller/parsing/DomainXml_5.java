@@ -31,7 +31,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DEP
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DEPLOYMENT_OVERLAY;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DOMAIN_ORGANIZATION;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.EXTENSION;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.HASH;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.HOST_EXCLUDE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.INCLUDES;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.INTERFACE;
@@ -43,7 +42,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PATH;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PROFILE;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROLLOUT_PLANS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SERVER_GROUP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SOCKET_BINDING_GROUP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SOCKET_BINDING_PORT_OFFSET;
@@ -53,15 +51,10 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VAL
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.WRITE_ATTRIBUTE_OPERATION;
 import static org.jboss.as.controller.parsing.Namespace.CURRENT;
 import static org.jboss.as.controller.parsing.ParseUtils.isNoNamespaceAttribute;
-import static org.jboss.as.controller.parsing.ParseUtils.missingRequired;
 import static org.jboss.as.controller.parsing.ParseUtils.missingRequiredElement;
-import static org.jboss.as.controller.parsing.ParseUtils.nextElement;
-import static org.jboss.as.controller.parsing.ParseUtils.readStringAttributeElement;
 import static org.jboss.as.controller.parsing.ParseUtils.requireNamespace;
 import static org.jboss.as.controller.parsing.ParseUtils.requireNoAttributes;
 import static org.jboss.as.controller.parsing.ParseUtils.requireNoContent;
-import static org.jboss.as.controller.parsing.ParseUtils.unexpectedAttribute;
-import static org.jboss.as.controller.parsing.ParseUtils.unexpectedElement;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,7 +68,6 @@ import java.util.Set;
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLStreamException;
 
-import org.jboss.as.controller.HashUtil;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.extension.ExtensionRegistry;
@@ -108,6 +100,11 @@ import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
+import static org.jboss.as.controller.parsing.ParseUtils.missingRequired;
+import static org.jboss.as.controller.parsing.ParseUtils.nextElement;
+import static org.jboss.as.controller.parsing.ParseUtils.unexpectedAttribute;
+import static org.jboss.as.controller.parsing.ParseUtils.unexpectedElement;
+import org.jboss.as.management.client.content.ClientContentXml_5;
 
 /**
  * A mapper between an AS server's configuration model and XML representations, particularly {@code domain.xml}.
@@ -215,7 +212,7 @@ class DomainXml_5 extends CommonXml implements ManagementXmlDelegate {
             writeHostExcludes(writer, modelNode.get(HOST_EXCLUDE));
         }
         if (modelNode.hasDefined(MANAGEMENT_CLIENT_CONTENT)) {
-            writeManagementClientContent(writer, modelNode.get(MANAGEMENT_CLIENT_CONTENT));
+            ClientContentXml_5.DOMAIN.writeManagementClientContent(writer, modelNode.get(MANAGEMENT_CLIENT_CONTENT));
         }
 
         writer.writeEndElement();
@@ -280,11 +277,11 @@ class DomainXml_5 extends CommonXml implements ManagementXmlDelegate {
             element = nextElement(reader, namespace);
         }
         if (element == Element.MANAGEMENT_CLIENT_CONTENT) {
-            parseManagementClientContent(reader, address, namespace, list);
+            ClientContentXml_5.DOMAIN.parseManagementClientContent(reader, address, namespace, list);
             element = nextElement(reader, namespace);
         } else if (element == null) {
             // Always add op(s) to set up management-client-content resources
-            initializeRolloutPlans(address, list);
+            ClientContentXml_5.DOMAIN.initializeClientContent(address, list);
         } else {
             throw unexpectedElement(reader);
         }
@@ -656,52 +653,6 @@ class DomainXml_5 extends CommonXml implements ManagementXmlDelegate {
         }
     }
 
-    private void parseManagementClientContent(XMLExtendedStreamReader reader, ModelNode address, Namespace expectedNs, List<ModelNode> list) throws XMLStreamException {
-        requireNoAttributes(reader);
-
-        boolean rolloutPlansAdded = false;
-        while (reader.nextTag() != END_ELEMENT) {
-            requireNamespace(reader, expectedNs);
-            Element element = Element.forName(reader.getLocalName());
-            switch (element) {
-                case ROLLOUT_PLANS: {
-                    parseRolloutPlans(reader, address, list);
-                    rolloutPlansAdded = true;
-                    break;
-                }
-                default: {
-                    throw unexpectedElement(reader);
-                }
-            }
-        }
-
-        if (!rolloutPlansAdded) {
-            initializeRolloutPlans(address, list);
-        }
-    }
-
-    private void parseRolloutPlans(XMLExtendedStreamReader reader, ModelNode address, List<ModelNode> list) throws XMLStreamException {
-
-        String hash = readStringAttributeElement(reader, Attribute.SHA1.getLocalName());
-
-        ModelNode addAddress = address.clone().add(MANAGEMENT_CLIENT_CONTENT, ROLLOUT_PLANS);
-        ModelNode addOp = Util.getEmptyOperation(ADD, addAddress);
-        try {
-            addOp.get(HASH).set(HashUtil.hexStringToByteArray(hash));
-        } catch (final Exception e) {
-            throw ControllerLogger.ROOT_LOGGER.invalidSha1Value(e, hash, Attribute.SHA1.getLocalName(), reader.getLocation());
-        }
-
-        list.add(addOp);
-    }
-
-    private void initializeRolloutPlans(ModelNode address, List<ModelNode> list) {
-
-        ModelNode addAddress = address.clone().add(MANAGEMENT_CLIENT_CONTENT, ROLLOUT_PLANS);
-        ModelNode addOp = Util.getEmptyOperation(ADD, addAddress);
-        list.add(addOp);
-    }
-
     private void writeProfile(final XMLExtendedStreamWriter writer, final String profileName, final ModelNode profileNode, final ModelMarshallingContext context) throws XMLStreamException {
 
         writer.writeStartElement(Element.PROFILE.getLocalName());
@@ -802,19 +753,6 @@ class DomainXml_5 extends CommonXml implements ManagementXmlDelegate {
         }
 
         writer.writeEndElement();
-    }
-
-    private void writeManagementClientContent(XMLExtendedStreamWriter writer, ModelNode modelNode) throws XMLStreamException {
-        boolean hasRolloutPlans = modelNode.hasDefined(ROLLOUT_PLANS) && modelNode.get(ROLLOUT_PLANS).hasDefined(HASH);
-        boolean mustWrite = hasRolloutPlans; // || other elements we may add later
-        if (mustWrite) {
-            writer.writeStartElement(Element.MANAGEMENT_CLIENT_CONTENT.getLocalName());
-            if (hasRolloutPlans) {
-                writer.writeEmptyElement(Element.ROLLOUT_PLANS.getLocalName());
-                writer.writeAttribute(Attribute.SHA1.getLocalName(), HashUtil.bytesToHexString(modelNode.get(ROLLOUT_PLANS).get(HASH).asBytes()));
-            }
-            writer.writeEndElement();
-        }
     }
 
     /*
