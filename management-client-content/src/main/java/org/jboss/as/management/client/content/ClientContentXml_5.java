@@ -189,11 +189,7 @@ public class ClientContentXml_5 {
     }
 
     private static void initializeScripts(ModelNode address, List<ModelNode> list) {
-        {
-            ModelNode addAddress = address.clone().add(MANAGEMENT_CLIENT_CONTENT, SCRIPTS);
-            ModelNode addOp = Util.getEmptyOperation(ADD, addAddress);
-            list.add(addOp);
-        }
+        // NO-OP, we don't want this resource added in all cases.
     }
 
     private static void writeDomainManagementClientContent(XMLExtendedStreamWriter writer,

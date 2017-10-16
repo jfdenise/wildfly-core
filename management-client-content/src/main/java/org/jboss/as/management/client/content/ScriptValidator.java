@@ -34,7 +34,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MOD
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCRIPT;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.STANDALONE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.TAGS;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.TIMESTAMP;
 import org.jboss.as.controller.operations.validation.AbstractParameterValidator;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.common.Assert;
@@ -81,8 +80,5 @@ public class ScriptValidator extends AbstractParameterValidator {
             throw new OperationFailedException(ClientContentLogger.LOGGER.invalidValue(mode,
                     STANDALONE + ", " + DOMAIN + " are supported"));
         }
-
-        // WRONG, replayed by slaves...
-        script.get(TIMESTAMP).set(System.currentTimeMillis());
     }
 }
