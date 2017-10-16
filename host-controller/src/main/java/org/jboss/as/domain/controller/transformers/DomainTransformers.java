@@ -27,7 +27,10 @@ import java.util.Map;
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MANAGEMENT_CLIENT_CONTENT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCRIPTS;
 import org.jboss.as.controller.transform.OperationRejectionPolicy;
 import org.jboss.as.controller.transform.OperationResultTransformer;
 import org.jboss.as.controller.transform.OperationTransformer;
@@ -44,7 +47,6 @@ import org.jboss.as.domain.controller.logging.DomainControllerLogger;
 import org.jboss.as.domain.controller.operations.DomainServerLifecycleHandlers;
 import org.jboss.as.domain.controller.resources.HostExcludeResourceDefinition;
 import org.jboss.as.domain.controller.resources.ProfileResourceDefinition;
-import org.jboss.as.management.client.content.ClientContent;
 import org.jboss.as.version.Version;
 import org.jboss.dmr.ModelNode;
 
@@ -106,7 +108,6 @@ public class DomainTransformers {
         registerSocketBindingGroupTransformers(registry, CURRENT);
         registerDeploymentTransformers(registry, CURRENT);
         registerDeploymentOverlayTransformers(registry, CURRENT);
-        registerClientContentTransformers(registry, CURRENT);
     }
 
     private static void registerRootTransformers(TransformerRegistry registry) {
@@ -120,6 +121,10 @@ public class DomainTransformers {
         // TODO: WFCORE-3252 make this filtering depend on the slaves version and only send that and prior known values?
 
         builder.discardChildResource(HostExcludeResourceDefinition.PATH_ELEMENT);
+
+        // Suppress the scripts for earlier release.
+        // Scripts is a root child resource, doesn't work with ChainedTransformationDescriptionBuilder
+        builder.discardChildResource(PathElement.pathElement(MANAGEMENT_CLIENT_CONTENT, SCRIPTS));
 
         ModelVersion[] versions = {VERSION_4_1};
         for (ModelVersion version : versions){
@@ -219,11 +224,5 @@ public class DomainTransformers {
                 }
             }, OperationResultTransformer.ORIGINAL_RESULT);
         }
-    }
-
-    private static void registerClientContentTransformers(TransformerRegistry registry, ModelVersion CURRENT) {
-        ChainedTransformationDescriptionBuilder chainedBuilder = ClientContent.buildTransformerChain(CURRENT);
-        registerChainedTransformer(registry, chainedBuilder, VERSION_4_1, VERSION_4_0, VERSION_3_0,
-                VERSION_2_1, VERSION_2_0, VERSION_1_8, VERSION_1_7, VERSION_1_6, VERSION_1_5);
     }
 }

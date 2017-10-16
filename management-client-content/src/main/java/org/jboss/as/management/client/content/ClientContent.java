@@ -23,7 +23,6 @@ package org.jboss.as.management.client.content;
 
 import java.util.List;
 import javax.xml.stream.XMLStreamException;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathElement;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MANAGEMENT_CLIENT_CONTENT;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ROLLOUT_PLAN;
@@ -32,9 +31,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCR
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCRIPTS;
 import org.jboss.as.controller.parsing.Namespace;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.description.ChainedTransformationDescriptionBuilder;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
-import org.jboss.as.controller.transform.description.TransformationDescriptionBuilder;
 import org.jboss.as.repository.ContentRepository;
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
@@ -54,16 +50,6 @@ public class ClientContent {
         void initializeClientContent(ModelNode address, List<ModelNode> list);
 
         void parseManagementClientContent(XMLExtendedStreamReader reader, ModelNode address, Namespace expectedNs, List<ModelNode> list) throws XMLStreamException;
-    }
-
-    public static ChainedTransformationDescriptionBuilder buildTransformerChain(ModelVersion CURRENT) {
-        ChainedTransformationDescriptionBuilder chainedBuilder
-                = TransformationDescriptionBuilder.Factory.createChainedInstance(null, CURRENT);
-        ResourceTransformationDescriptionBuilder builder = chainedBuilder.createBuilder(CURRENT, ModelVersion.create(4, 1, 0));
-        builder.discardChildResource(PathElement.pathElement(MANAGEMENT_CLIENT_CONTENT, SCRIPTS));
-        ResourceTransformationDescriptionBuilder scriptsBuilder = builder.addChildResource(PathElement.pathElement(MANAGEMENT_CLIENT_CONTENT, SCRIPTS));
-        scriptsBuilder.discardChildResource(PathElement.pathElement(SCRIPT));
-        return chainedBuilder;
     }
 
     public static void register(ManagementResourceRegistration resourceRegistration, ContentRepository contentRepository) {
