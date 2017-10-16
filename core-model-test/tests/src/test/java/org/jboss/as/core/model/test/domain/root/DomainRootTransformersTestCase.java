@@ -25,6 +25,8 @@ import java.util.List;
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MANAGEMENT_CLIENT_CONTENT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCRIPTS;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.transform.OperationTransformer;
 import org.jboss.as.core.model.test.AbstractCoreModelTest;
@@ -96,6 +98,26 @@ public class DomainRootTransformersTestCase extends AbstractCoreModelTest {
         transOp = mainServices.transformOperation(modelVersion, stopServerOp); //this operation shouldn't be rejected
         Assert.assertFalse(transOp.getFailureDescription(), transOp.rejectOperation(success()));
 
+    }
+
+    @Test
+    public void testDiscardScriptsContent() throws Exception {
+        if (modelVersion.getMajor() > 4) {
+            return;
+        }
+        KernelServicesBuilder builder = createKernelServicesBuilder(TestModelType.DOMAIN)
+                .setModelInitializer(StandardServerGroupInitializers.XML_MODEL_INITIALIZER, StandardServerGroupInitializers.XML_MODEL_WRITE_SANITIZER);
+
+        // Add legacy subsystems
+        StandardServerGroupInitializers.addServerGroupInitializers(builder.createLegacyKernelServicesBuilder(modelVersion, testControllerVersion));
+        KernelServices mainServices = builder.build();
+
+        PathAddress address = PathAddress.pathAddress(MANAGEMENT_CLIENT_CONTENT, SCRIPTS);
+
+        //check that we discard :add
+        OperationTransformer.TransformedOperation transOp = mainServices.transformOperation(modelVersion, Util.createOperation("add", address));
+        ModelNode trans = transOp.getTransformedOperation();
+        Assert.assertTrue(modelVersion + " not discarded" + trans, trans == null);
     }
 
     private static ModelNode success() {
