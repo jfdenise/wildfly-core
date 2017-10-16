@@ -44,6 +44,7 @@ import org.jboss.as.domain.controller.logging.DomainControllerLogger;
 import org.jboss.as.domain.controller.operations.DomainServerLifecycleHandlers;
 import org.jboss.as.domain.controller.resources.HostExcludeResourceDefinition;
 import org.jboss.as.domain.controller.resources.ProfileResourceDefinition;
+import org.jboss.as.management.client.content.ClientContent;
 import org.jboss.as.version.Version;
 import org.jboss.dmr.ModelNode;
 
@@ -105,6 +106,7 @@ public class DomainTransformers {
         registerSocketBindingGroupTransformers(registry, CURRENT);
         registerDeploymentTransformers(registry, CURRENT);
         registerDeploymentOverlayTransformers(registry, CURRENT);
+        registerClientContentTransformers(registry, CURRENT);
     }
 
     private static void registerRootTransformers(TransformerRegistry registry) {
@@ -217,5 +219,11 @@ public class DomainTransformers {
                 }
             }, OperationResultTransformer.ORIGINAL_RESULT);
         }
+    }
+
+    private static void registerClientContentTransformers(TransformerRegistry registry, ModelVersion CURRENT) {
+        ChainedTransformationDescriptionBuilder chainedBuilder = ClientContent.buildTransformerChain(CURRENT);
+        registerChainedTransformer(registry, chainedBuilder, VERSION_4_1, VERSION_4_0, VERSION_3_0,
+                VERSION_2_1, VERSION_2_0, VERSION_1_8, VERSION_1_7, VERSION_1_6, VERSION_1_5);
     }
 }
