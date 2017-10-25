@@ -632,15 +632,6 @@ public class CliCompletionTestCase {
             }
 
             {
-                String cmd = "deploy ccc ";
-                List<String> candidates = new ArrayList<>();
-                ctx.getDefaultCommandCompleter().complete(ctx, cmd,
-                        cmd.length(), candidates);
-                assertFalse(candidates.toString(), candidates.contains("--url"));
-                assertTrue(candidates.toString(), candidates.contains("--name"));
-            }
-
-            {
                 String cmd = "deployment deploy-file ccc ";
                 List<String> candidates = new ArrayList<>();
                 ctx.getDefaultCommandCompleter().complete(ctx, cmd,

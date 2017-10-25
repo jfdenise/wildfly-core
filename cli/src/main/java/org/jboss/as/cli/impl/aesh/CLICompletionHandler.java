@@ -15,6 +15,7 @@ limitations under the License.
  */
 package org.jboss.as.cli.impl.aesh;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.aesh.complete.AeshCompleteOperation;
@@ -28,9 +29,13 @@ import org.jboss.as.cli.impl.CLICommandCompleter.Completer;
 import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.parsing.StateParser;
+import org.jboss.as.cli.parsing.operation.OperationFormat;
 import org.jboss.logmanager.Logger;
 
 /**
+ * The main entry point for completion. Whatever the type of command and
+ * operation, completion is done from this class. Variable completion is done in
+ * CLICommandCompleter.
  *
  * @author jdenise@redhat.com
  */
@@ -53,6 +58,7 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
         this.legacyCommandCompleter = legacyCommandCompleter;
 
     }
+
     @Override
     public void complete(AeshCompleteOperation co) {
 
@@ -88,30 +94,54 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
         if (co.getCompletionCandidates().isEmpty()) {
             return -1;
         }
+        Collections.sort(candidates);
         return co.getOffset();
     }
 
     @Override
     public void addAllCommandNames(CommandContext ctx, AeshCompleteOperation op) {
+        op.addCompletionCandidate(OperationFormat.INSTANCE.getAddressOperationSeparator());
         op.addCompletionCandidates(aeshCommands.getRegistry().getAvailableAeshCommands());
-        legacyCommandCompleter.addAllCommandNames(ctx, op);
+
     }
 
     @Override
     public void complete(CommandContext ctx, DefaultCallbackHandler parsedCmd, AeshCompleteOperation op) {
-        legacyCommandCompleter.complete(ctx, parsedCmd, op);
-        boolean hasLegacyContent = !op.getCompletionCandidates().isEmpty();
-        // Because Aesh parser doesn't handle variables, we need to ask completion with substituted command
-        // then correct offset.
+
+        // Completion occurs in Aesh runtime. That is required to properly handle operators.
         StateParser.SubstitutedLine substitutions = parsedCmd.getSubstitutions();
         // Build a CompleteOperation with substituted content.
         AeshCompleteOperation co = new AeshCompleteOperation(aeshCommands.getAeshContext(), parsedCmd.getSubstitutedLine(),
                 substitutions.getSubstitutedOffset(op.getCursor()));
-        aeshCommands.complete(co);
+        /**
+         * All can be completed by AeshCommands, in order to stay on the safe
+         * side (another layer of parsing), when no operator is in use, we are
+         * directly calling into the legacy completion for operation and legacy
+         * commands.
+         */
+        if (parsedCmd.hasOperator()) {
+            completeAeshCommands(co);
+        } else if (parsedCmd.getFormat() == OperationFormat.INSTANCE) {
+            legacyCommandCompleter.complete(ctx, parsedCmd, co);
+        } else if (aeshCommands.getRegistry().isLegacyCommand(parsedCmd.getOperationName())) {
+            //special case when there are no properties, we could have to complete a command name.
+            // name that could be the prefix of a legacy or new command
+            if (!parsedCmd.hasProperties()) {
+                completeAeshCommands(co);
+            } else {
+                legacyCommandCompleter.complete(ctx, parsedCmd, co);
+            }
+        } else {
+            completeAeshCommands(co);
+        }
         if (!co.getCompletionCandidates().isEmpty()) {
             int correctedValueOffset = substitutions.getOriginalOffset(co.getOffset());
             co.setOffset(correctedValueOffset);
             CLICommandCompleter.transferOperation(co, op);
         }
+    }
+
+    private void completeAeshCommands(AeshCompleteOperation co) {
+        aeshCommands.complete(co);
     }
 }
