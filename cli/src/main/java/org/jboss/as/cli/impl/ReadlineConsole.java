@@ -555,7 +555,7 @@ public class ReadlineConsole {
             // '\R' will match any line break.
             // -1 to keep empty lines at the end of content.
             String[] lines = line.split("\\R", -1);
-            int max = connection.getTerminal().getSize().getHeight();
+            int max = connection.size().getHeight();
             int currentLines = 0;
             int allLines = 0;
             while (allLines < lines.length) {
@@ -774,9 +774,6 @@ public class ReadlineConsole {
     private int getWidth() {
         if (connection == null) {
             return 80;
-        }
-        if (connection instanceof TerminalConnection) {
-            return ((TerminalConnection) connection).getTerminal().getSize().getWidth();
         }
         return connection.size().getWidth();
     }
