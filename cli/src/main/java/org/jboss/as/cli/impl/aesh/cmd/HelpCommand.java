@@ -135,6 +135,12 @@ public class HelpCommand implements Command<CLICommandInvocation> {
                     // XXX OK, no command. CommandHandler has no sub command.
                 }
             }
+
+            if(buff != null && candidates.size() == 1 && buff.equals(candidates.get(0))) {
+                candidates.set(0, " ");
+                completerInvocation.setOffset(0);
+            }
+
             Collections.sort(candidates);
             completerInvocation.addAllCompleterValues(candidates);
         }
