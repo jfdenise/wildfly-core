@@ -119,6 +119,29 @@
         </dependency>
 
         <dependency>
+            <groupId>org.aesh</groupId>
+            <artifactId>aesh-terminal-ssh</artifactId>
+        </dependency>
+            
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+        </dependency>
+        
+        <dependency>
             <groupId>org.jboss</groupId>
             <artifactId>staxmapper</artifactId>
         </dependency>

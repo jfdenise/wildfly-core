@@ -948,6 +948,18 @@
                 <artifactId>aesh-readline</artifactId>
                 <version>${version.org.aesh-readline}</version>
             </dependency>
+            
+            <dependency>
+                <groupId>org.aesh</groupId>
+                <artifactId>aesh-terminal-ssh</artifactId>
+                <version>${version.org.aesh-readline}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.aesh</groupId>
+                        <artifactId>aesh-terminal-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
             <dependency>
                 <groupId>org.aesh</groupId>
@@ -959,6 +971,45 @@
                 <groupId>org.aesh</groupId>
                 <artifactId>aesh</artifactId>
                 <version>${version.org.aesh}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.sshd</groupId>
+                <artifactId>sshd-core</artifactId>
+                <version>1.0.0</version>
+                <optional>true</optional>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-common</artifactId>
+                <version>4.0.31.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport</artifactId>
+                <version>4.0.31.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>4.0.31.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-buffer</artifactId>
+                <version>4.0.31.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec</artifactId>
+                <version>4.0.31.Final</version>
             </dependency>
 
             <dependency>

@@ -167,6 +167,7 @@ import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
 import org.jboss.as.cli.impl.aesh.cmd.HelpCommand;
 import org.jboss.as.cli.impl.aesh.cmd.deployment.DeploymentCommand;
 import org.jboss.as.cli.impl.aesh.cmd.operation.OperationCommandContainer;
+import org.jboss.as.cli.impl.ssh.SSHConsoleFactory;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -433,6 +434,58 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         CliLauncher.runcom(this);
     }
 
+    public CommandContextImpl(CommandContextConfiguration configuration, SSHConsoleFactory factory) throws CliInitializationException {
+        config = CliConfigImpl.load(this, configuration);
+        addressResolver = ControllerAddressResolver.newInstance(config, configuration.getController());
+
+        operationHandler = new OperationRequestHandler();
+
+        this.username = configuration.getUsername();
+        this.password = configuration.getPassword();
+        this.disableLocalAuth = configuration.isDisableLocalAuth();
+        this.clientBindAddress = configuration.getClientBindAddress();
+
+        SILENT = config.isSilent();
+        ERROR_ON_INTERACT = config.isErrorOnInteract();
+        echoCommand = config.isEchoCommand();
+        configTimeout = config.getCommandTimeout() == null ? DEFAULT_TIMEOUT : config.getCommandTimeout();
+        setCommandTimeout(configTimeout);
+        resolveParameterValues = config.isResolveParameterValues();
+        redefinedOutput = configuration.getConsoleOutput() != null;
+        cliPrintStream = !redefinedOutput ? new CLIPrintStream() : new CLIPrintStream(configuration.getConsoleOutput());
+        // System.out has been captured prior IO been replaced. That is required due to embed-server use case
+        // that will replace output.
+        initStdIO();
+        initSSLContext();
+        initJaasConfig();
+        try {
+            console = factory.createConsole(createSettings(configuration.getConsoleInput()));
+        } catch (Exception ex) {
+            throw new CliInitializationException("Failed to initialize console", ex);
+        }
+        console.setActionCallback((line) -> {
+            handleSafe(line);
+            if (console != null) {
+                console.setPrompt(getPrompt());
+            }
+        });
+        aeshCommands = new AeshCommands(this, console, new OperationCommandContainer(this));
+        this.cmdRegistry = aeshCommands.getRegistry();
+        legacyCmdCompleter = new CommandCompleter(cmdRegistry);
+        aeshCommands.setLegacyCommandCompleter(legacyCmdCompleter);
+        cmdCompleter = aeshCommands.getCommandCompleter();
+        this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
+
+        try {
+            initCommands();
+        } catch (CommandLineException | CommandLineParserException e) {
+            throw new CliInitializationException("Failed to initialize commands", e);
+        }
+
+        addShutdownHook();
+        CliLauncher.runcom(this);
+    }
+
     protected void addShutdownHook() {
         shutdownHook = new CliShutdownHook.Handler() {
             @Override
@@ -451,7 +504,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         assert console == null : "the console has already been initialized";
         Settings settings = createSettings(consoleInput);
         try {
-            this.console = new ReadlineConsole(settings);
+            this.console = new TerminalConsole(settings);
         } catch (IOException ex) {
             throw new CliInitializationException(ex);
         }

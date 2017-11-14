@@ -42,7 +42,6 @@ import org.aesh.readline.alias.AliasManager;
 import org.aesh.readline.alias.AliasPreProcessor;
 import org.aesh.readline.completion.Completion;
 import org.aesh.readline.history.FileHistory;
-import org.aesh.terminal.Terminal;
 import org.aesh.terminal.Attributes;
 import org.aesh.utils.ANSI;
 import org.aesh.utils.Config;
@@ -52,8 +51,6 @@ import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.CompletionHandler;
 import org.aesh.readline.editing.EditModeBuilder;
 import org.aesh.readline.terminal.Key;
-import org.aesh.readline.terminal.TerminalBuilder;
-import org.aesh.readline.tty.terminal.TerminalConnection;
 import org.aesh.terminal.Connection;
 import org.aesh.terminal.tty.Signal;
 import org.jboss.as.cli.CommandHistory;
@@ -81,10 +78,10 @@ import org.jboss.logging.Logger;
  *
  * @author jdenise@redhat.com
  */
-public class ReadlineConsole {
+public abstract class ReadlineConsole {
 
-    private static final Logger LOG = Logger.getLogger(ReadlineConsole.class.getName());
-    private static final boolean isTraceEnabled = LOG.isTraceEnabled();
+    protected static final Logger LOG = Logger.getLogger(ReadlineConsole.class.getName());
+    protected static final boolean isTraceEnabled = LOG.isTraceEnabled();
 
     public interface Settings {
 
@@ -127,67 +124,6 @@ public class ReadlineConsole {
          * @return the interrupt
          */
         Runnable getInterrupt();
-    }
-
-    /**
-     *
-     * All chars printed by commands and prompts go through this class that log
-     * any printed content. What is received by inputstream is echoed in the
-     * outputstream.
-     */
-    private static class CLITerminalConnection extends TerminalConnection {
-
-        private final Consumer<int[]> interceptor;
-        private Thread connectionThread;
-
-        CLITerminalConnection(Terminal terminal) {
-            super(terminal);
-            interceptor = (int[] ints) -> {
-                if (isTraceEnabled) {
-                    LOG.tracef("Writing %s",
-                            Parser.stripAwayAnsiCodes(Parser.fromCodePoints(ints)));
-                }
-                CLITerminalConnection.super.stdoutHandler().accept(ints);
-            };
-        }
-
-        @Override
-        public Consumer<int[]> stdoutHandler() {
-            return interceptor;
-        }
-
-        /**
-         * Required to close the connection reading on the terminal, otherwise
-         * it can't be interrupted.
-         *
-         * @throws InterruptedException
-         */
-        public void openBlockingInterruptable()
-                throws InterruptedException {
-            // We need to thread this call in order to interrupt it (when Ctrl-C occurs).
-            connectionThread = new Thread(() -> {
-                // This thread can't be interrupted from another thread.
-                // Will stay alive until System.exit is called.
-                Thread thr = new Thread(() -> super.openBlocking(),
-                        "CLI Terminal Connection (uninterruptable)");
-                thr.start();
-                try {
-                    thr.join();
-                } catch (InterruptedException ex) {
-                    // XXX OK, interrupted, just leaving.
-                }
-            }, "CLI Terminal Connection (interruptable)");
-            connectionThread.start();
-            connectionThread.join();
-        }
-
-        @Override
-        public void close() {
-            super.close();
-            if (connectionThread != null) {
-                connectionThread.interrupt();
-            }
-        }
     }
 
     private static class SettingsImpl implements Settings {
@@ -380,15 +316,13 @@ public class ReadlineConsole {
 
     private final List<Completion> completions = new ArrayList<>();
     private Readline readline;
-    private CLITerminalConnection connection;
     private final CommandHistory history = new HistoryImpl();
     private final FileHistory readlineHistory;
     private Prompt prompt;
-    private final Settings settings;
-    private volatile boolean started;
-    private volatile boolean closed;
-    private Thread startThread;
-    private Thread readingThread;
+    protected final Settings settings;
+    protected volatile boolean started;
+    protected volatile boolean closed;
+    protected Thread readingThread;
     private Consumer<String> callback;
 
     private final ExecutorService executor = Executors.newFixedThreadPool(1,
@@ -398,17 +332,15 @@ public class ReadlineConsole {
     private final AliasManager aliasManager;
     private final List<Function<String, Optional<String>>> preProcessors = new ArrayList<>();
 
-    private static final EnumMap<ReadlineFlag, Integer> READLINE_FLAGS = new EnumMap<>(ReadlineFlag.class);
+    protected static final EnumMap<ReadlineFlag, Integer> READLINE_FLAGS = new EnumMap<>(ReadlineFlag.class);
 
     static {
         READLINE_FLAGS.put(ReadlineFlag.NO_PROMPT_REDRAW_ON_INTR, Integer.MAX_VALUE);
     }
 
-    private Consumer<Signal> interruptHandler;
+    protected Consumer<Signal> interruptHandler;
 
-    private boolean isSystemTerminal;
-
-    ReadlineConsole(Settings settings) throws IOException {
+    protected ReadlineConsole(Settings settings) throws IOException {
         this.settings = settings;
         readlineHistory = new FileHistory(settings.getHistoryFile(),
                 settings.getHistorySize(), settings.getPermission(), false);
@@ -428,60 +360,13 @@ public class ReadlineConsole {
         readline = new Readline();
     }
 
-    private void initializeConnection() throws IOException {
-        if (connection == null) {
-            connection = newConnection();
-            interruptHandler = signal -> {
-                if (signal == Signal.INT) {
-                    LOG.trace("Calling InterruptHandler");
-                    connection.write(Config.getLineSeparator());
-                    connection.close();
-                }
-            };
-            connection.setSignalHandler(interruptHandler);
-            // Do not display ^C
-            Attributes attr = connection.getAttributes();
-            attr.setLocalFlag(Attributes.LocalFlag.ECHOCTL, false);
-            connection.setAttributes(attr);
-        }
-    }
-
     public void setActionCallback(Consumer<String> callback) {
         this.callback = callback;
     }
 
-    private CLITerminalConnection newConnection() throws IOException {
-        LOG.trace("Creating terminal connection");
-
-        // The choice of the outputstream to use is ruled by the following rules:
-        // - If the output is redefined in CLIPrintStream, the terminal use the CLIPrintStream
-        // - If some redirection have been establised ( <, or remote process), CLIPrintStream is to be used.
-        //   That is required to protect the CLI against embed-server I/O handling.
-        // - Otherwise, a system terminal is used. system terminals don't use System.out
-        //   so are protected against embed-server I/O handling.
-        Terminal terminal = TerminalBuilder.builder()
-                .input(settings.getInStream() == null
-                        ? System.in : settings.getInStream())
-                // Use CLI stream if not a system terminal, it protects against
-                // embed-server I/O redefinition
-                .output(settings.getOutStream())
-                .nativeSignals(true)
-                .name("CLI Terminal")
-                // We ask for a system terminal only if the Output has not been redefined.
-                // If the IO context is redirected ( <, or remote process usage),
-                // then, whatever the output being redefined or not, the terminal
-                // will be NOT a system terminal, that is the TerminalBuilder behavior.
-                .system(!settings.isOutputRedefined())
-                .build();
-        if (isTraceEnabled) {
-            LOG.tracef("New Terminal %s", terminal.getClass());
-        }
-        CLITerminalConnection c = new CLITerminalConnection(terminal);
-        isSystemTerminal = c.supportsAnsi();
-
-        return c;
+    private boolean isSystemTerminal() {
+        return getConnection() != null && getConnection().supportsAnsi();
     }
-
     /**
      * This has the side effect to create the internal readline instance.
      *
@@ -491,7 +376,7 @@ public class ReadlineConsole {
         readline = new Readline(EditModeBuilder.builder().create(), null, ch);
     }
 
-    private Readline getReadLine() {
+    protected Readline getReadLine() {
         if (readline == null) {
             readline = new Readline();
         }
@@ -506,9 +391,11 @@ public class ReadlineConsole {
         return history;
     }
 
+    public abstract Connection getConnection();
+
     public void clearScreen() {
-        if (connection != null) {
-            connection.stdoutHandler().accept(ANSI.CLEAR_SCREEN);
+        if (getConnection() != null) {
+            getConnection().stdoutHandler().accept(ANSI.CLEAR_SCREEN);
         }
     }
 
@@ -524,7 +411,7 @@ public class ReadlineConsole {
         LOG.tracef("Print %s", line);
         if (collect && outputCollector != null) {
             outputCollector.append(line);
-        } else if (connection == null) {
+        } else if (getConnection() == null) {
             OutputStream out = settings.getOutStream() == null ? System.out : settings.getOutStream();
             try {
                 out.write(line.getBytes());
@@ -532,7 +419,7 @@ public class ReadlineConsole {
                 LOG.tracef("Print exception %s", ex);
             }
         } else {
-            connection.write(line);
+            getConnection().write(line);
         }
     }
 
@@ -555,18 +442,18 @@ public class ReadlineConsole {
             // '\R' will match any line break.
             // -1 to keep empty lines at the end of content.
             String[] lines = line.split("\\R", -1);
-            int max = connection.getTerminal().getSize().getHeight();
+            int max = getConnection().size().getHeight();
             int currentLines = 0;
             int allLines = 0;
             while (allLines < lines.length) {
                 if (currentLines > max - 2) {
                     try {
-                        connection.write(ANSI.CURSOR_SAVE);
+                        getConnection().write(ANSI.CURSOR_SAVE);
                         int percentage = (allLines * 100) / lines.length;
-                        connection.write("--More(" + percentage + "%)--");
+                        getConnection().write("--More(" + percentage + "%)--");
                         Key k = readKey();
-                        connection.write(ANSI.CURSOR_RESTORE);
-                        connection.stdoutHandler().accept(ANSI.ERASE_LINE_FROM_CURSOR);
+                        getConnection().write(ANSI.CURSOR_RESTORE);
+                        getConnection().stdoutHandler().accept(ANSI.ERASE_LINE_FROM_CURSOR);
                         if (k == null) { // interrupted, exit.
                             allLines = lines.length;
                         } else {
@@ -603,13 +490,15 @@ public class ReadlineConsole {
                             continue;
                         }
                     }
-                    connection.write(l + Config.getLineSeparator());
+                    getConnection().write(l + Config.getLineSeparator());
                 }
             }
         } finally {
             outputCollector = null;
         }
     }
+
+    protected abstract void initializeConnection() throws IOException;
 
     public int[] read() throws InterruptedException, IOException {
         initializeConnection();
@@ -619,11 +508,11 @@ public class ReadlineConsole {
         // and thread needs to be interrupted.
         readingThread = Thread.currentThread();
         // We need to set the interrupt SignalHandler to interrupt the CLI.
-        Consumer<Signal> prevHandler = connection.getSignalHandler();
-        connection.setSignalHandler(interruptHandler);
+        Consumer<Signal> prevHandler = getConnection().getSignalHandler();
+        getConnection().setSignalHandler(interruptHandler);
         CountDownLatch latch = new CountDownLatch(1);
-        Attributes attributes = connection.enterRawMode();
-        connection.setStdinHandler(keys -> {
+        Attributes attributes = getConnection().enterRawMode();
+        getConnection().setStdinHandler(keys -> {
             decoder.add(keys);
             if (decoder.hasNext()) {
                 key[0] = decoder.next().buffer().array();
@@ -634,8 +523,8 @@ public class ReadlineConsole {
             // Wait until interrupted
             latch.await();
         } finally {
-            connection.setStdinHandler(null);
-            connection.setSignalHandler(prevHandler);
+            getConnection().setStdinHandler(null);
+            getConnection().setSignalHandler(prevHandler);
             readingThread = null;
         }
         return key[0];
@@ -672,6 +561,8 @@ public class ReadlineConsole {
         return readLine(new Prompt(prompt, mask));
     }
 
+    protected abstract String doReadLine(Prompt prompt) throws InterruptedException, IOException;
+
     public String readLine(Prompt prompt) throws InterruptedException, IOException {
         // If there are some output collected, flush it.
         printCollectedOutput();
@@ -682,75 +573,19 @@ public class ReadlineConsole {
         // and thread needs to be interrupted.
         readingThread = Thread.currentThread();
         try {
-            if (!started) {
-                // That is the case of the CLI connecting prior to start the terminal.
-                // No Terminal waiting in Main thread yet.
-                // We are opening the connection to the terminal until we have read
-                // something from prompt.
-                return promptFromNonStartedConsole(prompt);
-            } else {
-                return promptFromStartedConsole(prompt);
-            }
+            return doReadLine(prompt);
         } finally {
             readingThread = null;
         }
     }
 
     private StringBuilder createCollector() {
-        if (!isSystemTerminal) {
+        if (!isSystemTerminal()) {
             return null;
         }
         return new StringBuilder();
     }
 
-    private String promptFromNonStartedConsole(Prompt prompt) throws InterruptedException, IOException {
-        initializeConnection();
-        LOG.trace("Not started");
-        String[] out = new String[1];
-        if (connection.suspended()) {
-            connection.awake();
-        }
-        getReadLine().readline(connection, prompt, newLine -> {
-            out[0] = newLine;
-            LOG.trace("Got some input");
-
-            // We must call stopReading to stop reading from terminal
-            // and release this thread.
-            connection.stopReading();
-        }, null, null, null, null, READLINE_FLAGS);
-        connection.openBlockingInterruptable();
-        LOG.trace("Done for prompt");
-        return out[0];
-    }
-
-    private String promptFromStartedConsole(Prompt prompt) throws InterruptedException, IOException {
-        initializeConnection();
-        String[] out = new String[1];
-        // We must be called from another Thread. connection is reading in Main thread.
-        // calling readline will wakeup the Main thread that will execute
-        // the Prompt handling.
-        // We can safely wait.
-        if (readingThread == startThread) {
-            throw new RuntimeException("Can't prompt from the Thread that is "
-                    + "reading terminal input");
-        }
-        CountDownLatch latch = new CountDownLatch(1);
-        // We need to set the interrupt SignalHandler to interrupt the current thread.
-        Consumer<Signal> prevHandler = connection.getSignalHandler();
-        connection.setSignalHandler(interruptHandler);
-        readline.readline(connection, prompt, newLine -> {
-            out[0] = newLine;
-            LOG.trace("Got some input");
-            latch.countDown();
-        }, null, null, null, null, READLINE_FLAGS);
-        try {
-            latch.await();
-        } finally {
-            connection.setSignalHandler(prevHandler);
-        }
-        LOG.trace("Done for prompt");
-        return out[0];
-    }
 
     private void logPromptMask(String prompt, Character mask) {
         LOG.tracef("Prompt %s mask %s", prompt, mask);
@@ -765,53 +600,36 @@ public class ReadlineConsole {
     }
 
     private int getHeight() {
-        if (connection == null) {
+        if (getConnection() == null) {
             return 40;
         }
-        return connection.size().getHeight();
+        return getConnection().size().getHeight();
     }
 
     private int getWidth() {
-        if (connection == null) {
+        if (getConnection() == null) {
             return 80;
         }
-        if (connection instanceof TerminalConnection) {
-            return ((TerminalConnection) connection).getTerminal().getSize().getWidth();
-        }
-        return connection.size().getWidth();
+        return getConnection().size().getWidth();
     }
 
     public void start() throws IOException {
         if (closed) {
             throw new IllegalStateException("Console has already been closed");
         }
-        if (!started) {
-            initializeConnection();
-            startThread = Thread.currentThread();
-            started = true;
-            loop();
-            LOG.tracef("Started in thread %s. Waiting...",
-                    startThread.getName());
-
-            try {
-                connection.openBlockingInterruptable();
-            } catch (InterruptedException ex) {
-                // OK leaving
-            }
-            LOG.trace("Leaving console");
-        } else {
-            LOG.trace("Already started");
-        }
+        doStart();
     }
 
-    private void loop() {
+    protected abstract void doStart() throws IOException;
+
+    protected void loop() {
         try {
             if (isTraceEnabled) {
                 LOG.tracef("Set a readline callback with prompt %s", prompt);
             }
             // Console could have been closed during a command execution.
             if (!closed) {
-                getReadLine().readline(connection, prompt, line -> {
+                getReadLine().readline(getConnection(), prompt, line -> {
                     // All commands can lead to prompting the user. So require
                     // to be executed in a dedicated thread.
                     // This can happen if a security configuration occurs
@@ -822,9 +640,9 @@ public class ReadlineConsole {
                         return;
                     }
                     executor.submit(() -> {
-                        Consumer<Signal> handler = connection.getSignalHandler();
+                        Consumer<Signal> handler = getConnection().getSignalHandler();
                         Thread callingThread = Thread.currentThread();
-                        connection.setSignalHandler((signal) -> {
+                        getConnection().setSignalHandler((signal) -> {
                             // Interrupting the current command thread.
                             switch (signal) {
                                 case INT: {
@@ -837,14 +655,14 @@ public class ReadlineConsole {
                             outputCollector = createCollector();
                             callback.accept(line);
                         } catch (Throwable thr) {
-                            connection.write("Unexpected exception");
+                            getConnection().write("Unexpected exception");
                             thr.printStackTrace();
                         } finally {
                             printCollectedOutput();
                             // The current thread could have been interrupted.
                             // Clear the flag to safely interact with aesh-readline
                             Thread.interrupted();
-                            connection.setSignalHandler(handler);
+                            getConnection().setSignalHandler(handler);
                             LOG.tracef("Done Executing command %s", line);
                             loop();
                         }
@@ -852,7 +670,7 @@ public class ReadlineConsole {
                 }, completions, preProcessors, readlineHistory, null, READLINE_FLAGS);
             }
         } catch (Exception ex) {
-            connection.write("Unexpected exception");
+            getConnection().write("Unexpected exception");
             ex.printStackTrace();
         }
     }
@@ -888,8 +706,8 @@ public class ReadlineConsole {
                 aliasManager.persist();
             }
             executor.shutdown();
-            if (connection != null) {
-                connection.close();
+            if (getConnection() != null) {
+                getConnection().close();
             }
         }
     }
@@ -908,10 +726,6 @@ public class ReadlineConsole {
 
     public Prompt getPrompt() {
         return prompt;
-    }
-
-    public Connection getConnection() {
-        return connection;
     }
 
     public String handleBuiltins(String line) {

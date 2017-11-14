@@ -40,6 +40,7 @@ import org.jboss.as.cli.gui.GuiMain;
 import org.jboss.as.cli.handlers.FilenameTabCompleter;
 import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.cli.impl.aesh.HelpSupport;
+import org.jboss.as.cli.impl.ssh.SSHCliServer;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.logging.Logger;
 import org.wildfly.security.manager.WildFlySecurityManager;
@@ -66,6 +67,7 @@ public class CliLauncher {
             boolean connect = false;
             boolean version = false;
             int connectionTimeout = -1;
+            boolean ssh = false;
 
             final CommandContextConfiguration.Builder ctxBuilder = new CommandContextConfiguration.Builder();
             ctxBuilder.setErrorOnInteract(errorOnInteract);
@@ -169,6 +171,8 @@ public class CliLauncher {
                 } else if (arg.startsWith("--command-timeout=")) {
                     ctxBuilder.
                             setCommandTimeout(Integer.parseInt(arg.substring(18)));
+                } else if (arg.equals("--ssh")) {
+                    ssh = true;
                 } else if (arg.equals("--error-on-interact")) {
                     ctxBuilder.setErrorOnInteract(true);
                     errorOnInteract = true;
@@ -296,7 +300,11 @@ public class CliLauncher {
                 processGui(cmdCtx);
                 return;
             }
-
+            if (ssh) {
+                SSHCliServer server = new SSHCliServer(ctxBuilder.build(), null);
+                server.start();
+                return;
+            }
             // Interactive mode
             ctxBuilder.setInitConsole(true);
             cmdCtx = initCommandContext(ctxBuilder.build(), connect);

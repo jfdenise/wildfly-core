@@ -31,10 +31,19 @@
         <artifact name="${org.aesh:aesh-extensions}"/>
         <artifact name="${org.aesh:aesh-readline}"/>
         <artifact name="${org.aesh:aesh}"/>
+        <artifact name="${org.aesh:aesh-terminal-ssh}"/>
+        <artifact name="${io.netty:netty-common}"/>
+        <artifact name="${io.netty:netty-transport}"/>
+        <artifact name="${io.netty:netty-handler}"/>
+        <artifact name="${io.netty:netty-buffer}"/>
+        <artifact name="${io.netty:netty-codec}"/>
+        <artifact name="${org.apache.sshd:sshd-core}"/>
     </resources>
 
     <dependencies>
         <module name="org.fusesource.jansi" />
+        <module name="org.slf4j" />
+        <module name="javax.api" />
         <!-- required to handle native signals -->
         <module name="sun.jdk" />
     </dependencies>
