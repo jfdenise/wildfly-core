@@ -112,7 +112,6 @@ import org.jboss.as.cli.handlers.AttachmentHandler;
 import org.jboss.as.cli.handlers.ClearScreenHandler;
 import org.jboss.as.cli.handlers.CommandCommandHandler;
 import org.jboss.as.cli.handlers.CommandTimeoutHandler;
-import org.jboss.as.cli.handlers.ConnectHandler;
 import org.jboss.as.cli.handlers.ConnectionInfoHandler;
 import org.jboss.as.cli.handlers.DeployHandler;
 import org.jboss.as.cli.handlers.DeploymentInfoHandler;
@@ -164,6 +163,7 @@ import org.jboss.as.cli.impl.ReadlineConsole.SettingsBuilder;
 import org.jboss.as.cli.impl.aesh.AeshCommands;
 import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecution;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
+import org.jboss.as.cli.impl.aesh.cmd.ConnectCommand;
 import org.jboss.as.cli.impl.aesh.cmd.HelpCommand;
 import org.jboss.as.cli.impl.aesh.cmd.deployment.DeploymentCommand;
 import org.jboss.as.cli.impl.aesh.cmd.operation.OperationCommandContainer;
@@ -512,6 +512,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     private void initCommands() throws CommandLineException, CommandLineParserException {
         // aesh commands
         cmdRegistry.addCommand(new HelpCommand(cmdRegistry));
+        cmdRegistry.addCommand(new ConnectCommand());
         DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
 
         // aesh extensions, for now add grep to make | operator
@@ -522,7 +523,6 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
         cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
         cmdRegistry.registerHandler(new CommandCommandHandler(cmdRegistry), "command");
-        cmdRegistry.registerHandler(new ConnectHandler(), "connect");
         cmdRegistry.registerHandler(new EchoDMRHandler(), "echo-dmr");
         cmdRegistry.registerHandler(new HistoryHandler(), "history");
         cmdRegistry.registerHandler(new LsHandler(this), "ls");
@@ -1135,6 +1135,11 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
     @Override
     public void connectController(String controller) throws CommandLineException {
+        connectController(controller, null);
+    }
+
+    @Override
+    public void connectController(String controller, String clientAddress) throws CommandLineException {
 
         connectionAddress = addressResolver.resolveAddress(controller);
 
@@ -1150,7 +1155,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                     log.debugf("connecting to %s:%d as %s", connectionAddress.getHost(), connectionAddress.getPort(), username);
                 }
                 ModelControllerClient tempClient = ModelControllerClientFactory.CUSTOM.getClient(connectionAddress, cbh,
-                        disableLocalAuth, sslContextFactory, defaultSslContext, config.getConnectionTimeout(), this, timeoutHandler, clientBindAddress);
+                        disableLocalAuth, sslContextFactory, defaultSslContext, config.getConnectionTimeout(), this, timeoutHandler, clientAddress == null ? clientBindAddress : clientAddress);
                 retry = false;
                 connInfoBean = new ConnectionInfoBean();
                 tryConnection(tempClient, connectionAddress);
