@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +42,7 @@ import org.jboss.as.cli.handlers.FilenameTabCompleter;
 import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.cli.impl.aesh.HelpSupport;
 import org.jboss.as.cli.impl.ssh.SSHCliServer;
+import org.jboss.as.cli.impl.ssh.SSHConfiguration;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.logging.Logger;
 import org.wildfly.security.manager.WildFlySecurityManager;
@@ -68,7 +70,7 @@ public class CliLauncher {
             boolean version = false;
             int connectionTimeout = -1;
             boolean ssh = false;
-
+            SSHConfiguration.Builder sshConfig = new SSHConfiguration.Builder();
             final CommandContextConfiguration.Builder ctxBuilder = new CommandContextConfiguration.Builder();
             ctxBuilder.setErrorOnInteract(errorOnInteract);
 
@@ -173,6 +175,16 @@ public class CliLauncher {
                             setCommandTimeout(Integer.parseInt(arg.substring(18)));
                 } else if (arg.equals("--ssh")) {
                     ssh = true;
+                } else if (arg.startsWith("--ssh-port=")) {
+                    sshConfig.setPort(Integer.parseInt(arg.substring(11)));
+                } else if (arg.startsWith("--ssh-address=")) {
+                    sshConfig.setAddress(arg.substring(14));
+                } else if (arg.startsWith("--ssh-user-name=")) {
+                    sshConfig.setAuthUserName(arg.substring(16));
+                } else if (arg.startsWith("--ssh-user-password=")) {
+                    sshConfig.setAuthUserPassword(arg.substring(20));
+                } else if (arg.startsWith("--ssh-authorized-keys-file=")) {
+                    sshConfig.setAutorizedKeysPath(Paths.get(FilenameTabCompleter.expand(arg.substring(27))));
                 } else if (arg.equals("--error-on-interact")) {
                     ctxBuilder.setErrorOnInteract(true);
                     errorOnInteract = true;
@@ -301,7 +313,7 @@ public class CliLauncher {
                 return;
             }
             if (ssh) {
-                SSHCliServer server = new SSHCliServer(ctxBuilder.build(), null);
+                SSHCliServer server = new SSHCliServer(ctxBuilder.build(), sshConfig.build());
                 server.start();
                 return;
             }

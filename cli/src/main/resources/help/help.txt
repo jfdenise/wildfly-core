@@ -104,6 +104,18 @@ Usage:
  --no-operation-validation  - disable the pre validation of the operations from the CLI.
                               Operations will be only validated by the server.
 
+ --ssh              - Starts CLI as an sshd agent on localhost, port 5000, no authentication.
+
+--ssh-port          - Port to listen for ssh client connections.
+
+--ssh-address       - Adress to listen for ssh client connections.
+
+--ssh-user-name     - Authenticated user name
+
+--ssh-user-password - Authenticated user password
+
+--ssh-authorized-keys-file  - Path to authorized keys file.
+
 For a list of available commands, once the CLI is started, execute:
 
   help --commands

@@ -1,0 +1,14 @@
+DEPENDENCIES:
+- You need to build and install aesh-readline 1.2-SNAPSHOT
+
+PROTOTYPED:
+- Launch CLI as SSH agent
+- Support multiple connections in //
+- Authentication password and public key supported.
+- Authentication configuration items (jboss-cli.sh --help for a complete list).
+
+
+TODO:
+- server private/public key pair generation and storing. For now generated in a file
+hardcoded size and algorithm.
+- Support for non interactive mode: ssh username@localhost -p 5000 :read-resource
