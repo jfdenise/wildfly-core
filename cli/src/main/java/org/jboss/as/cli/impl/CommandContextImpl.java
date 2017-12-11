@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -167,6 +168,7 @@ import org.jboss.as.cli.impl.aesh.cmd.ConnectCommand;
 import org.jboss.as.cli.impl.aesh.cmd.HelpCommand;
 import org.jboss.as.cli.impl.aesh.cmd.deployment.DeploymentCommand;
 import org.jboss.as.cli.impl.aesh.cmd.operation.OperationCommandContainer;
+import org.jboss.as.cli.impl.aesh.cmd.security.SecurityCommand;
 import org.jboss.as.cli.operation.CommandLineParser;
 import org.jboss.as.cli.operation.NodePathFormatter;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -604,6 +606,9 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         final AtomicReference<EmbeddedProcessLaunch> embeddedServerLaunch = EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(cmdRegistry, this);
         cmdRegistry.registerHandler(new ReloadHandler(this, embeddedServerLaunch), "reload");
         cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
+
+        cmdRegistry.addCommand(new SecurityCommand(this, embeddedServerLaunch));
+
         registerExtraHandlers();
 
         extLoader = new ExtensionsLoader(cmdRegistry, aeshCommands.getRegistry(), this);
@@ -2181,7 +2186,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                         theTrustStore.load(null);
                     }
                     for (X509Certificate current : temporarilyTrusted) {
-                        theTrustStore.setCertificateEntry(current.getSubjectX500Principal().getName(), current);
+                        theTrustStore.setCertificateEntry(UUID.randomUUID().toString(), current);
                     }
                     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     trustManagerFactory.init(theTrustStore);
