@@ -91,6 +91,39 @@ public class DefaultResourceNames {
         return HTTPServer.DEFAULT_SERVER;
     }
 
+    public static String buildUserPropertiesDefaultRealmName(CommandContext ctx,
+            PropertiesRealmConfiguration config) throws OperationFormatException, IOException {
+        String name = new File(config.getUserPropertiesFile()).getName();
+        int i = 1;
+        String computedName = name;
+        while (ElytronUtil.serverPropertiesRealmExists(ctx, computedName)) {
+            computedName = name + "_" + i;
+            i += 1;
+        }
+        return computedName;
+    }
+
+    public static String buildDefaultSecurityDomainName(Realm realm, CommandContext ctx) throws OperationFormatException, IOException {
+        int i = 1;
+        String suffix = realm == null ? "" : "-" + realm.getResourceName();
+        String computedName = "security-domain" + suffix;
+        while (ElytronUtil.securityDomainExists(ctx, computedName)) {
+            computedName = "security-domain-" + suffix + "_" + i;
+            i += 1;
+        }
+        return computedName;
+    }
+
+    public static String buildDefaultAuthFactoryName(AuthMechanism meca, AuthFactorySpec spec, CommandContext ctx) throws OperationFormatException, IOException {
+        int i = 1;
+        String computedName = spec.getName() + "-factory-" + meca.getType().toLowerCase();
+        while (ElytronUtil.factoryExists(ctx, computedName, spec)) {
+            computedName = spec.getName() + "-factory-" + meca.getType().toLowerCase() + "_" + i;
+            i += 1;
+        }
+        return computedName;
+    }
+
     static String getDefaultApplicationLegacyRealm() {
         return Util.APPLICATION_REALM;
     }

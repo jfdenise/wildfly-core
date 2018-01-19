@@ -18,6 +18,7 @@ package org.jboss.as.cli.impl.aesh.cmd.security;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.aesh.command.Command;
@@ -28,8 +29,16 @@ import org.aesh.command.GroupCommandDefinition;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.embedded.EmbeddedProcessLaunch;
+import org.jboss.as.cli.impl.aesh.cmd.AbstractCommaCompleter;
 import org.jboss.as.cli.impl.aesh.cmd.AbstractCompleter;
+import org.jboss.as.cli.impl.aesh.cmd.security.auth.AbstractDisableAuthenticationCommand;
+import org.jboss.as.cli.impl.aesh.cmd.security.auth.AbstractEnableAuthenticationCommand;
+import org.jboss.as.cli.impl.aesh.cmd.security.auth.AbstractReorderSASLCommand;
+import org.jboss.as.cli.impl.aesh.cmd.security.model.AuthFactory;
+import org.jboss.as.cli.impl.aesh.cmd.security.model.AuthFactorySpec;
+import org.jboss.as.cli.impl.aesh.cmd.security.model.AuthMechanism;
 import org.jboss.as.cli.impl.aesh.cmd.security.model.ElytronUtil;
+import org.jboss.as.cli.impl.aesh.cmd.security.model.ServerSSLContext;
 import org.jboss.as.cli.impl.aesh.cmd.security.ssl.HTTPServerDisableSSLCommand;
 import org.jboss.as.cli.impl.aesh.cmd.security.ssl.HTTPServerEnableSSLCommand;
 import org.jboss.as.cli.impl.aesh.cmd.security.ssl.ManagementDisableSSLCommand;
@@ -64,6 +73,78 @@ public class SecurityCommand implements GroupCommand<CLICommandInvocation, Comma
     }
 
     public static class OptionCompleters {
+
+        public static class FileSystemRealmCompleter extends AbstractCompleter {
+
+            @Override
+            protected List<String> getItems(CLICompleterInvocation completerInvocation) {
+                return ElytronUtil.getFileSystemRealmNames(completerInvocation.getCommandContext().
+                        getModelControllerClient());
+            }
+        }
+
+        public static class MechanismCompleter extends AbstractCompleter {
+
+            @Override
+            protected List<String> getItems(CLICompleterInvocation completerInvocation) {
+                AbstractEnableAuthenticationCommand cmd = (AbstractEnableAuthenticationCommand) completerInvocation.getCommand();
+
+                try {
+                    return ElytronUtil.getMechanisms(completerInvocation.getCommandContext(),
+                            cmd.getFactorySpec(),
+                            cmd.getTargetedFactory(completerInvocation.getCommandContext()));
+                } catch (Exception ex) {
+                    return Collections.emptyList();
+                }
+            }
+        }
+
+        public static class MechanismDisableCompleter extends AbstractCompleter {
+
+            @Override
+            protected List<String> getItems(CLICompleterInvocation completerInvocation) {
+                AbstractDisableAuthenticationCommand cmd = (AbstractDisableAuthenticationCommand) completerInvocation.getCommand();
+
+                try {
+                    return ElytronUtil.getMechanisms(completerInvocation.getCommandContext(),
+                            cmd.getEnabledFactory(completerInvocation.getCommandContext()), cmd.getFactorySpec());
+                } catch (Exception ex) {
+                    return Collections.emptyList();
+                }
+            }
+        }
+
+        public static class SimpleDecoderCompleter extends AbstractCompleter {
+
+            @Override
+            protected List<String> getItems(CLICompleterInvocation completerInvocation) {
+                return ElytronUtil.getSimpleDecoderNames(completerInvocation.getCommandContext().
+                        getModelControllerClient());
+            }
+        }
+
+        public static class MechanismsCompleter extends AbstractCommaCompleter {
+
+            @Override
+            protected List<String> getItems(CLICompleterInvocation completerInvocation) {
+                AbstractReorderSASLCommand cmd = (AbstractReorderSASLCommand) completerInvocation.getCommand();
+                try {
+                    return ElytronUtil.getMechanisms(completerInvocation.getCommandContext(),
+                            cmd.getSASLFactoryName(completerInvocation.getCommandContext()),
+                            AuthFactorySpec.SASL);
+                } catch (Exception ex) {
+                    return Collections.emptyList();
+                }
+            }
+        }
+
+        public static class SecurityDomainCompleter extends AbstractCompleter {
+
+            @Override
+            protected List<String> getItems(CLICompleterInvocation completerInvocation) {
+                return Util.getUndertowSecurityDomains(completerInvocation.getCommandContext().getModelControllerClient());
+            }
+        }
 
         public static class KeyStoreNameCompleter extends AbstractCompleter {
 
@@ -187,6 +268,31 @@ public class SecurityCommand implements GroupCommand<CLICommandInvocation, Comma
             }
         } else {
             ctx.printLine("Warning: server has not been reloaded. Call 'reload' to apply changes.");
+        }
+    }
+
+    public static void displayAuthSecurityInfo(CommandContext context, String factoryName, String itf, AuthFactorySpec spec) {
+        context.printLine(spec.getName() + " authentication enabled: " + (factoryName != null));
+        if (factoryName != null) {
+            AuthFactory factory = ElytronUtil.getAuthFactory(factoryName, spec, context);
+            context.printLine("Authentication Factory: " + factory.getName());
+            context.printLine("Security Domain: " + factory.getSecurityDomain().getName());
+            context.printLine("Mechanisms:");
+            for (AuthMechanism m : factory.getMechanisms()) {
+                context.printLine(m.getType()
+                        + (m.getConfig().getRealmMapper() != null ? " realm-mapper=" + m.getConfig().getRealmMapper() : "")
+                        + (m.getConfig().getRealmName() != null ? " realm-name=" + m.getConfig().getRealmName() : ""));
+            }
+        }
+    }
+
+    public static void displaySSLSecurityInfo(CommandContext context, String sslContextName) {
+        context.printLine("SSL enabled: " + (sslContextName != null));
+        if (sslContextName != null) {
+            ServerSSLContext sslContext = ElytronUtil.getServerSSLContext(context, sslContextName);
+            context.printLine("Server SSLContext: " + sslContext.getName());
+            context.printLine("Key Manager: " + sslContext.getKeyManager().getName());
+            context.printLine("Key Store: " + sslContext.getKeyManager().getKeyStore().getName());
         }
     }
 }
