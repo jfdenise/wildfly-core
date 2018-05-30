@@ -51,11 +51,14 @@ import org.aesh.readline.util.Parser;
 import org.aesh.readline.completion.CompleteOperation;
 import org.aesh.readline.completion.CompletionHandler;
 import org.aesh.readline.editing.EditModeBuilder;
+import org.aesh.readline.history.History;
+import org.aesh.readline.history.InMemoryHistory;
 import org.aesh.readline.terminal.Key;
 import org.aesh.readline.terminal.TerminalBuilder;
 import org.aesh.readline.tty.terminal.TerminalConnection;
 import org.aesh.terminal.Connection;
 import org.aesh.terminal.tty.Signal;
+import org.aesh.terminal.tty.Size;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.logging.Logger;
 
@@ -410,6 +413,9 @@ public class ReadlineConsole {
 
     private boolean forcePaging;
 
+    private History searchHistory = new InMemoryHistory();
+    private PagingState state;
+
     ReadlineConsole(Settings settings) throws IOException {
         this.settings = settings;
         readlineHistory = new FileHistory(settings.getHistoryFile(),
@@ -433,6 +439,14 @@ public class ReadlineConsole {
     private void initializeConnection() throws IOException {
         if (connection == null) {
             connection = newConnection();
+            connection.setSizeHandler(new Consumer<Size>() {
+                @Override
+                public void accept(Size t) {
+                    if (state != null) {
+                        state.redraw(connection.getTerminal().getSize());
+                    }
+                }
+            });
             interruptHandler = signal -> {
                 if (signal == Signal.INT) {
                     LOG.trace("Calling InterruptHandler");
@@ -553,6 +567,250 @@ public class ReadlineConsole {
         return Key.findStartKey(read());
     }
 
+    private class PagingState {
+
+        private boolean notFound;
+        private boolean searchingMode;
+        private int currentLines;
+        private int allLines;
+        private int lastScrolledLines;
+        private List<String> lines;
+        private final String[] splitLines;
+        private int jumpIndex = -1;
+        private String pattern;
+        private int max;
+
+        PagingState(String output, Size termSize) {
+            // '\R' will match any line break.
+            // -1 to keep empty lines at the end of content.
+            splitLines = output.split("\\R", -1);
+            lines = buildLines(termSize);
+            lastScrolledLines = lines.size();
+            max = termSize.getHeight() - 1;
+        }
+
+        private List<String> buildLines(Size size) {
+            List<String> lst = new ArrayList<>();
+            for (String l : splitLines) {
+                String remaining = l;
+                do {
+                    String st = remaining.substring(0, Math.min(remaining.length(), size.getWidth()));
+                    lst.add(st);
+                    remaining = remaining.substring(Math.min(remaining.length(), size.getWidth()));
+                } while (!remaining.isEmpty());
+            }
+            return lst;
+        }
+
+        int getMax() {
+            return max;
+        }
+        boolean needPrompt() {
+            return (currentLines > getMax() - 1 && jumpIndex == -1) || (endBuffer() && searchingMode);
+        }
+
+        boolean inWorkflow() {
+            return allLines < lines.size() || searchingMode;
+        }
+
+        void exit() {
+            lastScrolledLines = allLines;
+            allLines = lines.size();
+            searchingMode = false;
+        }
+
+        void pageDown() {
+            notFound = false;
+            currentLines = 0;
+            // Exit the workflow.
+            if (endBuffer()) {
+                exit();
+            }
+        }
+
+        void pageUp() {
+            notFound = false;
+            currentLines = 0;
+            if (allLines > 2 * getMax()) {
+                //Move one screen up
+                allLines -= 2 * getMax();
+            } else {
+                //Move to the start of input
+                allLines = 0;
+            }
+        }
+
+        boolean previousMatch() {
+            if (searchingMode) {
+                if (allLines <= getMax()) {
+                    notFound = true;
+                }
+                int previous = previousMatch(pattern, lines, allLines - getMax() - 1);
+                if (previous >= 0) {
+                    jumpIndex = allLines - previous - 1;
+                    notFound = false;
+                } else {
+                    notFound = true;
+                }
+                currentLines = 0;
+                allLines = 0;
+                return true;
+            }
+            return false;
+        }
+
+        private int previousMatch(String pattern, List<String> lines, int currentLine) {
+            int previous = 0;
+            for (int i = currentLine; i >= 0; i--) {
+                String l = lines.get(i);
+                if (l.contains(pattern)) {
+                    return previous;
+                }
+                previous += 1;
+            }
+            return -1;
+        }
+
+        private boolean nextMatch() {
+            if (searchingMode) {
+                if (endBuffer()) {
+                    notFound = true;
+                } else {
+                    int start = allLines - getMax() < 0 ? 0 : allLines - getMax();
+                    int next = nextMatch(pattern, lines, start + 1);
+                    if (next >= 0) {
+                        jumpIndex = allLines + next + 1;
+                        currentLines = 0;
+                        allLines = 0;
+                        notFound = false;
+                        return true;
+                    } else {
+                        notFound = true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private int nextMatch(String pattern, List<String> lines, int currentLine) {
+            int next = 0;
+            for (int i = currentLine; i < lines.size(); i++) {
+                String l = lines.get(i);
+                if (l.contains(pattern)) {
+                    return next;
+                }
+                next += 1;
+            }
+            return -1;
+        }
+
+        private void search(String pattern) {
+            if (pattern == null || pattern.isEmpty()) {
+                // needed to redraw in order to clear pattern prompt.
+                jumpIndex = allLines;
+            } else {
+                this.pattern = pattern;
+                int start = allLines - getMax() < 0 ? 0 : allLines - getMax();
+                int next = nextMatch(pattern, lines, start);
+                if (next >= 0) {
+                    jumpIndex = allLines + next;
+                    searchingMode = true;
+                    notFound = false;
+                } else {
+                    notFound = true;
+                    // do we have something from the beginning
+                    int n = nextMatch(pattern, lines, 0);
+                    if (n >= 0) {
+                        searchingMode = true;
+                    }
+                    // needed to redraw in order to clear pattern prompt.
+                    jumpIndex = allLines;
+                }
+            }
+            allLines = 0;
+            currentLines = 0;
+        }
+
+        private boolean lineUp() {
+            notFound = false;
+            if (allLines > getMax()) {
+                currentLines = 0;
+                //Move one line up
+                allLines -= getMax() + 1;
+                return true;
+            }
+            return false;
+        }
+
+        private void lineDown() {
+            notFound = false;
+            // Exit the workflow
+            if (endBuffer()) {
+                exit();
+            }
+            currentLines -= 1;
+        }
+
+        private int getPercentage() {
+            return (allLines * 100) / lines.size();
+        }
+
+        private String nextCurrentLine() {
+            String currentLine = lines.get(allLines);
+            currentLines += 1;
+            allLines += 1;
+            if (jumpIndex == allLines) {
+                currentLines = getMax();
+                jumpIndex = -1;
+            }
+            return currentLine;
+        }
+
+        private boolean endBuffer() {
+            return allLines == lines.size() - 1;
+        }
+
+        private void redraw(Size size) {
+            int oldMax = max;
+            max = size.getHeight() - 1;
+            lines = buildLines(size);
+            jumpIndex = allLines + (max - oldMax);
+            allLines = 0;
+            currentLines = 0;
+            clearScreen();
+            while (inWorkflow()) {
+                if (!needPrompt()) {
+                    String l = state.nextCurrentLine();
+                    // Do not add an extra \n
+                    // The \n has been added by the previous line.
+                    if (state.endBuffer()) {
+                        if (l.isEmpty()) {
+                            continue;
+                        }
+                    }
+                    if (state.searchingMode) {
+                        displayHightlighted(state.pattern, l);
+                    } else {
+                        connection.write(l + Config.getLineSeparator());
+                    }
+                } else {
+                    drawPrompt();
+                    return;
+                }
+            }
+        }
+
+        private void drawPrompt() {
+            if (notFound) {
+                connection.write(ANSI.INVERT_BACKGROUND);
+                connection.write("Pattern not found");
+                connection.write(ANSI.RESET);
+            } else {
+                connection.write("--More(" + state.getPercentage() + "%)--");
+            }
+        }
+    }
+
     // handle "a la" 'more' scrolling
     // Doesn't take into account wrapped lines (lines that are longer than the
     // terminal width. This could make a page to skip some lines.
@@ -565,68 +823,67 @@ public class ReadlineConsole {
             if (line.isEmpty()) {
                 return;
             }
-            // '\R' will match any line break.
-            // -1 to keep empty lines at the end of content.
-            String[] lines = line.split("\\R", -1);
-            int max = connection.size().getHeight();
-            int currentLines = 0;
-            int allLines = 0;
-            int lastScrolledLines = lines.length;
             connection.write(ANSI.ALTERNATE_BUFFER);
             clearScreen();
-            while (allLines < lines.length) {
-                if (currentLines > max - 2) {
+            state = new PagingState(line, connection.size());
+            while (state.inWorkflow()) {
+                if (state.needPrompt()) {
                     try {
                         connection.write(ANSI.CURSOR_SAVE);
-                        int percentage = (allLines * 100) / lines.length;
-                        connection.write("--More(" + percentage + "%)--");
+                        state.drawPrompt();
                         Key k = readKey();
+                        //state.promptDrawn();
                         connection.write(ANSI.CURSOR_RESTORE);
                         connection.stdoutHandler().accept(ANSI.ERASE_LINE_FROM_CURSOR);
                         if (k == null) { // interrupted, exit.
-                            lastScrolledLines = allLines;
-                            allLines = lines.length;
+                            state.exit();
                         } else {
                             switch (k) {
                                 case PGDOWN:
                                 case SPACE: {
-                                    currentLines = 0;
+                                    state.pageDown();
                                     break;
                                 }
-                                case SLASH:
+                                case BACKSLASH:
                                 case PGUP: {
                                     clearScreen();
-                                    currentLines = 0;
-                                    if (allLines > 2 * (max - 1)) {
-                                        //Move one screen up
-                                        allLines -= 2 * (max - 1);
-                                    } else {
-                                        //Move to the start of input
-                                        allLines = 0;
+                                    state.pageUp();
+                                    break;
+                                }
+                                case N: {
+                                    if (state.previousMatch()) {
+                                        clearScreen();
                                     }
+                                    break;
+                                }
+                                case n: {
+                                    if (state.nextMatch()) {
+                                        clearScreen();
+                                    }
+                                    break;
+                                }
+                                case SLASH: {
+                                    state.search(readPattern());
+                                    clearScreen();
                                     break;
                                 }
                                 case SEMI_COLON:
                                 case UP: {
-                                    if (allLines > (max - 1)) {
+                                    if (state.lineUp()) {
                                         clearScreen();
-                                        currentLines = 0;
-                                        //Move one line up
-                                        allLines -= max;
                                     }
                                     break;
                                 }
                                 case DOWN:
                                 case ENTER:
                                 case CTRL_M: { // On Mac, CTRL_M...
-                                    currentLines -= 1;
+                                    state.lineDown();
                                     break;
                                 }
                                 case Q:
                                 case ESC:
                                 case q: {
-                                    lastScrolledLines = allLines;
-                                    allLines = lines.length;
+                                    state.exit();
                                     break;
                                 }
                             }
@@ -638,26 +895,28 @@ public class ReadlineConsole {
                         throw new RuntimeException(ex);
                     }
                 } else {
-                    String l = lines[allLines];
-                    currentLines += 1;
-                    allLines += 1;
+                    String l = state.nextCurrentLine();
                     // Do not add an extra \n
                     // The \n has been added by the previous line.
-                    if (allLines == lines.length) {
+                    if (state.endBuffer()) {
                         if (l.isEmpty()) {
                             continue;
                         }
                     }
-                    connection.write(l + Config.getLineSeparator());
+                    if (state.searchingMode) {
+                        displayHightlighted(state.pattern, l);
+                    } else {
+                        connection.write(l + Config.getLineSeparator());
+                    }
                 }
             }
             connection.write(ANSI.MAIN_BUFFER);
             //Print the output to main buffer (from start until the last scrolled position)
-            for (int i = 0; i < lastScrolledLines; i++) {
-                String l = lines[i];
+            for (int i = 0; i < state.lastScrolledLines; i++) {
+                String l = state.lines.get(i);
                 // Do not add an extra \n
                 // The \n has been added by the previous line.
-                if (i + 1 == lastScrolledLines) {
+                if (i + 1 == state.lastScrolledLines) {
                     if (l.isEmpty()) {
                         continue;
                     }
@@ -665,8 +924,24 @@ public class ReadlineConsole {
                 connection.write(l + Config.getLineSeparator());
             }
         } finally {
+            // guarantee that we use the main buffer in case something wrong occurs.
+            connection.write(ANSI.MAIN_BUFFER);
+            state = null;
             outputCollector = null;
         }
+    }
+
+    private void displayHightlighted(String pattern, String l) {
+        int o = l.indexOf(pattern);
+        while (o >= 0) {
+            connection.write(l.substring(0, o));
+            connection.write(ANSI.INVERT_BACKGROUND);
+            connection.write(pattern);
+            connection.write(ANSI.RESET);
+            l = l.substring(o + pattern.length());
+            o = l.indexOf(pattern);
+        }
+        connection.write(l + Config.getLineSeparator());
     }
 
     public int[] read() throws InterruptedException, IOException {
@@ -703,7 +978,7 @@ public class ReadlineConsole {
                     the get/set call is stuck when reading sub
                     process output and is unblocked when a key is typed in the terminal.
                     So one key is swallowed and the key must be typed twice to operate.
-                */
+                 */
                 connection.setStdinHandler(null);
                 latch.countDown();
             }
@@ -773,8 +1048,19 @@ public class ReadlineConsole {
                 // something from prompt.
                 return promptFromNonStartedConsole(prompt, completer);
             } else {
-                return promptFromStartedConsole(prompt, completer);
+                return promptFromStartedConsole(prompt, completer, null);
             }
+        } finally {
+            readingThread = null;
+        }
+    }
+
+    private String readPattern() throws InterruptedException, IOException {
+        // Keep a reference on the caller thread in case Ctrl-C is pressed
+        // and thread needs to be interrupted.
+        readingThread = Thread.currentThread();
+        try {
+            return promptFromStartedConsole(new Prompt("/", (Character) null), null, searchHistory);
         } finally {
             readingThread = null;
         }
@@ -812,7 +1098,7 @@ public class ReadlineConsole {
         return out[0];
     }
 
-    private String promptFromStartedConsole(Prompt prompt, Completion completer) throws InterruptedException, IOException {
+    private String promptFromStartedConsole(Prompt prompt, Completion completer, History history) throws InterruptedException, IOException {
         initializeConnection();
         String[] out = new String[1];
         // We must be called from another Thread. connection is reading in Main thread.
@@ -836,7 +1122,7 @@ public class ReadlineConsole {
             out[0] = newLine;
             LOG.trace("Got some input");
             latch.countDown();
-        }, lst, null, null, null, READLINE_FLAGS);
+        }, lst, null, history, null, READLINE_FLAGS);
         try {
             latch.await();
         } finally {
