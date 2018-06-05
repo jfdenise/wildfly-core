@@ -24,9 +24,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -42,7 +45,10 @@ import org.aesh.readline.alias.AliasCompletion;
 import org.aesh.readline.alias.AliasManager;
 import org.aesh.readline.alias.AliasPreProcessor;
 import org.aesh.readline.completion.Completion;
+import org.aesh.readline.cursor.CursorListener;
+import org.aesh.readline.cursor.Line;
 import org.aesh.readline.history.FileHistory;
+import org.aesh.readline.terminal.formatting.Color;
 import org.aesh.terminal.Terminal;
 import org.aesh.terminal.Attributes;
 import org.aesh.utils.ANSI;
@@ -87,6 +93,135 @@ public class ReadlineConsole {
 
     private static final Logger LOG = Logger.getLogger(ReadlineConsole.class.getName());
     private static final boolean isTraceEnabled = LOG.isTraceEnabled();
+
+    private static final class CharacterMatcher {
+
+        private static final List<Character> endSeparators = Arrays.asList('}', ']', ')');
+        private static final List<Character> startSeparators = Arrays.asList('{', '[', '(');
+        private static final Map<Character, Character> endStartSeparators = new HashMap<>();
+        private static final Map<Character, Character> startEndSeparators = new HashMap<>();
+
+        static {
+            endStartSeparators.put('}', '{');
+            endStartSeparators.put(']', '[');
+            endStartSeparators.put(')', '(');
+            startEndSeparators.put('{', '}');
+            startEndSeparators.put('[', ']');
+            startEndSeparators.put('(', ')');
+        }
+
+        private TerminalConnection connection;
+        private int lastIndex = -1;
+        private Line lastLine;
+
+        public CharacterMatcher(TerminalConnection connection) {
+            this.connection = connection;
+        }
+
+        void clear() {
+            if (lastLine != null) {
+                if (lastIndex >= 0) {
+                    Line.CursorTransactionBuilder builder = lastLine.newCursorTransactionBuilder();
+                    builder.colorize(lastIndex, Color.DEFAULT, Color.DEFAULT, false);
+                    builder.build().run();
+                }
+            }
+        }
+
+        void match(Line line) {
+            lastLine = line;
+            clear();
+
+            char separator = (char) line.getCharacterAtCursor();
+
+            if (endSeparators.contains(separator)) {
+                String l = line.getLineToCursor();
+                char startChar = endStartSeparators.get(separator);
+                int index = findStart(l, startChar, separator);
+                if (index == -1) {
+                    lastIndex = colorizeWrongEnd(line);
+                    return;
+                }
+
+                lastIndex = colorize(line, index);
+            } else if (startSeparators.contains(separator)) {
+                String l = line.getLineFromCursor();
+                char endChar = startEndSeparators.get(separator);
+                int index = findEnd(l, line.toString().length(), separator, endChar);
+                if (index == -1) {
+                    lastIndex = colorizeWrongEnd(line);
+                    return;
+                }
+
+                lastIndex = colorize(line, index);
+            } else {
+                lastIndex = -1;
+            }
+        }
+
+        private int findStart(String l, char start, char end) {
+            int endCount = 0;
+            char[] chars = l.toCharArray();
+
+            for (int i = chars.length - 1; i >= 0; i--) {
+                char c = chars[i];
+                if (c == start) {
+                    if (endCount == 0) {
+                        return i;
+                    } else {
+                        endCount--;
+                    }
+                }
+
+                if (c == end) {
+                    endCount += 1;
+                }
+            }
+
+            return -1;
+        }
+
+        private int findEnd(String l, int length, char start, char end) {
+            if (l.length() <= 1) {
+                return -1;
+            }
+
+            int endCount = 0;
+            char[] chars = l.toCharArray();
+            int pos = length - chars.length;
+
+            for (int i = 0; i < chars.length; i++) {
+                char c = chars[i];
+                if (c == end) {
+                    if (endCount == 1) {
+                        return pos + i;
+                    } else {
+                        endCount--;
+                    }
+                }
+
+                if (c == start) {
+                    endCount += 1;
+                }
+            }
+
+            return -1;
+        }
+
+        private int colorize(Line line, int index) {
+            Line.CursorTransactionBuilder builder = line.newCursorTransactionBuilder();
+            builder.colorize(index, Color.DEFAULT, Color.GREEN, true);
+            builder.build().run();
+            return index;
+        }
+
+        private int colorizeWrongEnd(Line line) {
+            Line.CursorTransactionBuilder builder = line.newCursorTransactionBuilder();
+            builder.colorize(line.getCurrentCharacterIndex(), Color.DEFAULT, Color.RED, true);
+            builder.build().run();
+            return line.getCurrentCharacterIndex();
+        }
+    }
 
     public interface Settings {
 
@@ -434,6 +569,14 @@ public class ReadlineConsole {
     private boolean forcePaging;
     private PagingSupport pagingSupport;
 
+    private final CharacterMatcher matcher;
+    private final CursorListener cursorListener = new CursorListener() {
+        @Override
+        public void moved(Line line) {
+            matcher.match(line);
+        }
+    };
+
     ReadlineConsole(Settings settings) throws IOException {
         this.settings = settings;
         readlineHistory = new FileHistory(settings.getHistoryFile(),
@@ -452,6 +595,7 @@ public class ReadlineConsole {
         preProcessors.add(aliasPreProcessor);
         completions.add(new AliasCompletion(aliasManager));
         readline = new Readline();
+        matcher = new CharacterMatcher(connection);
     }
 
     private void initializeConnection() throws IOException {
@@ -862,7 +1006,7 @@ public class ReadlineConsole {
                             }
                         }
                     });
-                }, completions, preProcessors, readlineHistory, null, READLINE_FLAGS);
+                }, completions, preProcessors, readlineHistory, cursorListener, READLINE_FLAGS);
             }
         } catch (Exception ex) {
             connection.write("Unexpected exception");
