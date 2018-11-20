@@ -605,6 +605,7 @@ public class ReadlineConsole {
             interruptHandler = signal -> {
                 if (signal == Signal.INT) {
                     LOG.trace("Calling InterruptHandler");
+                    matcher.clear();
                     connection.write(Config.getLineSeparator());
                     connection.close();
                 }
