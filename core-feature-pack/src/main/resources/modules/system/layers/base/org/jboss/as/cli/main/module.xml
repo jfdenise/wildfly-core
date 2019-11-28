@@ -77,6 +77,7 @@
         <module name="org.picketbox" optional="true"/>
         <module name="org.wildfly.common"/>
         <module name="org.wildfly.embedded"/>
+        <module name="org.jboss.as.controller" optional="true"/>
     </dependencies>
 
 </module>
