@@ -18,13 +18,20 @@ package org.jboss.as.cli;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Properties;
 import org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import org.jboss.as.cli.impl.CommandContextConfiguration;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.protocol.StreamUtils;
+import org.jboss.logging.Logger;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -33,10 +40,13 @@ import org.wildfly.security.manager.WildFlySecurityManager;
  */
 public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
 
+    private static final Logger logger = Logger.getLogger(BootScriptInvoker.class);
+
     @Override
     public void runCliScript(ModelControllerClient client, File file) {
         CommandContext ctx;
         String props = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.properties", null);
+
         if (props != null) {
             File propsFile = new File(props);
             if (!propsFile.exists()) {
@@ -45,16 +55,45 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
             }
             handleProperties(propsFile);
         }
+        File logFile = null;
+        String logFilePath = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.output.file", null);
+        if (logFilePath != null) {
+            logFile = new File(logFilePath);
+        }
+        String log = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.logging", "false");
         try {
-            ctx = CommandContextFactory.getInstance().newCommandContext();
+            CommandContextConfiguration.Builder ctxBuilder = new CommandContextConfiguration.Builder();
+            if (logFile != null) {
+                ctxBuilder.setConsoleOutput(new FileOutputStream(logFile));
+            }
+            ctx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
             ctx.bindClient(client);
-        } catch (CliInitializationException ex) {
+            final LogManager logManager = LogManager.getLogManager();
+            // Turnoff logger
+            if (!Boolean.parseBoolean(log)) {
+                if (logManager instanceof org.jboss.logmanager.LogManager) {
+                    org.jboss.logmanager.LogManager jbossLogManager = (org.jboss.logmanager.LogManager) logManager;
+                    jbossLogManager.getLogger(CommandContext.class.getName()).setLevel(Level.OFF);
+                }
+            }
+            processFile(file, ctx);
+        } catch (Exception ex) {
+            logger.error("Error applying " + file + " CLI script.");
+            try {
+                for (String line : Files.readAllLines(file.toPath())) {
+                    logger.error(line);
+                }
+            } catch (IOException ex1) {
+                RuntimeException rtex = new RuntimeException(ex1);
+                rtex.addSuppressed(ex);
+                throw rtex;
+            }
             throw new RuntimeException(ex);
         }
-        processFile(file, ctx);
+
     }
 
-    private static void processFile(File file, final CommandContext cmdCtx) {
+    private static void processFile(File file, final CommandContext cmdCtx) throws IOException {
 
         BufferedReader reader = null;
         try {
@@ -68,6 +107,31 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
             throw new IllegalStateException("Failed to process file '" + file.getAbsolutePath() + "'", e);
         } finally {
             StreamUtils.safeClose(reader);
+        }
+        String warnFile = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.warn.file", null);
+        if (warnFile != null) {
+            File warns = new File(warnFile);
+            if (warns.exists()) {
+                for (String line : Files.readAllLines(warns.toPath())) {
+                    logger.warn(line);
+                }
+            }
+
+        }
+        String errorFile = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.error.file", null);
+        if (errorFile != null) {
+            File errors = new File(errorFile);
+            if (errors.exists()) {
+                logger.error("Error applying " + file + " CLI script. The Operations were executed but "
+                        + "there were unexpected values. See list of errors in " + errors);
+                for (String line : Files.readAllLines(errors.toPath())) {
+                    logger.error(line);
+                }
+            }
+
+        }
+        if (cmdCtx.getExitCode() != 0 || cmdCtx.isTerminated()) {
+            throw new RuntimeException("Error applying " + file + " CLI script.");
         }
     }
 
