@@ -399,6 +399,7 @@ public final class ServerService extends AbstractControllerService {
                 }
 
                 ok = boot(bootOps, failOnRuntime);
+
                 if (ok) {
                     finishBoot(suspend);
                 }
@@ -416,6 +417,9 @@ public final class ServerService extends AbstractControllerService {
                     PathElement.pathElement(SERVICE, MANAGEMENT_OPERATIONS)), ServerLogger.AS_ROOT_LOGGER.bootComplete());
             getNotificationSupport().emit(notification);
             bootstrapListener.printBootStatistics();
+
+            executeAdditionalCliBootScript();
+
         } else {
             // Die!
             final String message = ServerLogger.ROOT_LOGGER.unsuccessfulBoot();

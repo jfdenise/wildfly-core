@@ -3562,4 +3562,15 @@ public interface ControllerLogger extends BasicLogger {
     @Message(id = 458, value = "Disallowed HTTP Header name '%s'")
     OperationFailedException disallowedHeaderName(String value);
 
+    @Message(id = 459, value = "The system property '%s' can only be used with a standalone server")
+    IllegalStateException propertyCanOnlyBeUsedWithStandaloneServer(String propertyName);
+
+    @Message(id = 460, value = "The system property '%s' can only be used with an admin-only server")
+    IllegalStateException propertyCanOnlyBeUsedWithAdminOnlyModeServer(String propertyName);
+
+    @Message(id = 461, value = "Could not find the file '%s' specified by the system property '%s'")
+    IllegalStateException couldNotFindFileSpecifiedByProperty(String fileName, String propertyName);
+
+    @Message(id = 462, value = "More than one instance of AdditionalBootCliScriptInvoker found. Have: '%s'; found: '%s")
+    IllegalStateException moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(String name, String name1);
 }
