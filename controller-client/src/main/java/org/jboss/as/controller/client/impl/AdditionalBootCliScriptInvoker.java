@@ -16,13 +16,15 @@
  * limitations under the License.
  */
 
-package org.jboss.as.controller;
+package org.jboss.as.controller.client.impl;
 
 import java.io.File;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
 /**
+ * This is for internal use only.
+ *
  * @author <a href="mailto:kabir.khan@jboss.com">Kabir Khan</a>
  */
 public interface AdditionalBootCliScriptInvoker {

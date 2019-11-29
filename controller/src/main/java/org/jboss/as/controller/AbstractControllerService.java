@@ -48,6 +48,7 @@ import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationAttachments;
 import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.as.controller.client.OperationResponse;
+import org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker;
 import org.jboss.as.controller.descriptions.DescriptionProvider;
 import org.jboss.as.controller.extension.MutableRootResourceRegistrationProvider;
 import org.jboss.as.controller.logging.ControllerLogger;
