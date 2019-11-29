@@ -24,6 +24,7 @@ package org.jboss.as.controller;
 
 import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -42,6 +43,7 @@ import org.jboss.as.controller.capability.RuntimeCapability;
 import org.jboss.as.controller.capability.registry.CapabilityScope;
 import org.jboss.as.controller.capability.registry.RegistrationPoint;
 import org.jboss.as.controller.capability.registry.RuntimeCapabilityRegistration;
+import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationAttachments;
 import org.jboss.as.controller.client.OperationMessageHandler;
@@ -58,6 +60,10 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.dmr.ModelNode;
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleClassLoader;
+import org.jboss.modules.ModuleLoadException;
+import org.jboss.modules.ModuleLoader;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceContainer;
@@ -717,6 +723,48 @@ public abstract class AbstractControllerService implements Service<ModelControll
         return null;
     }
 
+    protected void executeAdditionalCliBootScript() {
+        final String propertyName = "org.wildfly.additional.cli.boot.script";
+        String additionalBootCliScriptPath = WildFlySecurityManager.getPropertyPrivileged(propertyName, null);
+        if (additionalBootCliScriptPath != null) {
+            if (processType != ProcessType.STANDALONE_SERVER) {
+                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(propertyName);
+            }
+            if (runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
+                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(propertyName);
+            }
+            File additionalBootCliScriptFile = new File(additionalBootCliScriptPath);
+            if (!additionalBootCliScriptFile.exists()) {
+                throw ROOT_LOGGER.couldNotFindFileSpecifiedByProperty(additionalBootCliScriptPath, propertyName);
+            }
+            ModuleClassLoader classLoader = (ModuleClassLoader)WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
+            ModuleLoader loader = classLoader.getModule().getModuleLoader();
+            Module module = null;
+            try {
+                module = loader.loadModule("org.jboss.as.cli");
+            } catch (ModuleLoadException e) {
+                throw new RuntimeException(e);
+            }
+            ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
+            AdditionalBootCliScriptInvoker invoker = null;
+            for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
+                if (invoker != null) {
+                    throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
+                }
+                invoker = currentInvoker;
+            }
+
+            try (ModelControllerClient client = controller.createClient(executorService.get())) {
+                invoker.runCliScript(client, additionalBootCliScriptFile);
+
+                WildFlySecurityManager.clearPropertyPrivileged(propertyName);
+                ModelNode reload = Util.createOperation("reload", PathAddress.EMPTY_ADDRESS);
+                client.execute(reload);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
     /**
      * Operation step handler performing initialisation of the {@link ModelControllerServiceInitialization} instances.
      *
