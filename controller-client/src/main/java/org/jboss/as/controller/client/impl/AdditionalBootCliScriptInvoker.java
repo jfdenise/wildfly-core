@@ -30,6 +30,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 public interface AdditionalBootCliScriptInvoker {
     String CLI_SCRIPT_PROPERTY = "org.wildfly.additional.cli.boot.script";
     String SKIP_RELOAD_PROPERTY = "org.wildfly.additional.cli.reload.skip";
+    String MARKER_PROPERTY = "org.wildfly.additional.cli.done.marker";
 
     void runCliScript(ModelControllerClient client, File file);
 }

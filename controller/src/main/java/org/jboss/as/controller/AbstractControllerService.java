@@ -23,6 +23,7 @@
 package org.jboss.as.controller;
 
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.CLI_SCRIPT_PROPERTY;
+import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.MARKER_PROPERTY;
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.SKIP_RELOAD_PROPERTY;
 import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
@@ -728,6 +729,13 @@ public abstract class AbstractControllerService implements Service<ModelControll
 
     protected void executeAdditionalCliBootScript() {
         try {
+            File doneMarkerFile = null;
+            String doneMarkerProperty = WildFlySecurityManager.getPropertyPrivileged(MARKER_PROPERTY, null);
+            if (doneMarkerProperty != null) {
+                doneMarkerFile = new File(doneMarkerProperty);
+                doneMarkerFile.delete();
+            }
+
             final String additionalBootCliScriptPath =
                     WildFlySecurityManager.getPropertyPrivileged(CLI_SCRIPT_PROPERTY, null);
             if (additionalBootCliScriptPath != null) {
@@ -768,6 +776,14 @@ public abstract class AbstractControllerService implements Service<ModelControll
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
+                } finally {
+                    try {
+                        if (doneMarkerFile != null) {
+                            doneMarkerFile.createNewFile();
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         } finally {
