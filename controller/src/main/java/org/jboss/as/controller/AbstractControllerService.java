@@ -22,6 +22,8 @@
 
 package org.jboss.as.controller;
 
+import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.CLI_SCRIPT_PROPERTY;
+import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.SKIP_RELOAD_PROPERTY;
 import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
 import java.io.File;
@@ -725,45 +727,52 @@ public abstract class AbstractControllerService implements Service<ModelControll
     }
 
     protected void executeAdditionalCliBootScript() {
-        final String propertyName = "org.wildfly.additional.cli.boot.script";
-        String additionalBootCliScriptPath = WildFlySecurityManager.getPropertyPrivileged(propertyName, null);
-        if (additionalBootCliScriptPath != null) {
-            if (processType != ProcessType.STANDALONE_SERVER) {
-                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(propertyName);
-            }
-            if (runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
-                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(propertyName);
-            }
-            File additionalBootCliScriptFile = new File(additionalBootCliScriptPath);
-            if (!additionalBootCliScriptFile.exists()) {
-                throw ROOT_LOGGER.couldNotFindFileSpecifiedByProperty(additionalBootCliScriptPath, propertyName);
-            }
-            ModuleClassLoader classLoader = (ModuleClassLoader)WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
-            ModuleLoader loader = classLoader.getModule().getModuleLoader();
-            Module module = null;
-            try {
-                module = loader.loadModule("org.jboss.as.cli");
-            } catch (ModuleLoadException e) {
-                throw new RuntimeException(e);
-            }
-            ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
-            AdditionalBootCliScriptInvoker invoker = null;
-            for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
-                if (invoker != null) {
-                    throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
+        try {
+            final String additionalBootCliScriptPath =
+                    WildFlySecurityManager.getPropertyPrivileged(CLI_SCRIPT_PROPERTY, null);
+            if (additionalBootCliScriptPath != null) {
+                if (processType != ProcessType.STANDALONE_SERVER) {
+                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(CLI_SCRIPT_PROPERTY);
                 }
-                invoker = currentInvoker;
-            }
+                if (runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
+                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(CLI_SCRIPT_PROPERTY);
+                }
+                File additionalBootCliScriptFile = new File(additionalBootCliScriptPath);
+                if (!additionalBootCliScriptFile.exists()) {
+                    throw ROOT_LOGGER.couldNotFindFileSpecifiedByProperty(additionalBootCliScriptPath, CLI_SCRIPT_PROPERTY);
+                }
+                ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
+                ModuleLoader loader = classLoader.getModule().getModuleLoader();
+                Module module = null;
+                try {
+                    module = loader.loadModule("org.jboss.as.cli");
+                } catch (ModuleLoadException e) {
+                    throw new RuntimeException(e);
+                }
+                ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
+                AdditionalBootCliScriptInvoker invoker = null;
+                for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
+                    if (invoker != null) {
+                        throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
+                    }
+                    invoker = currentInvoker;
+                }
 
-            try (ModelControllerClient client = controller.createClient(executorService.get())) {
-                invoker.runCliScript(client, additionalBootCliScriptFile);
+                try (ModelControllerClient client = controller.createClient(executorService.get())) {
+                    invoker.runCliScript(client, additionalBootCliScriptFile);
 
-                WildFlySecurityManager.clearPropertyPrivileged(propertyName);
-                ModelNode reload = Util.createOperation("reload", PathAddress.EMPTY_ADDRESS);
-                client.execute(reload);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                    final boolean doReload = !Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
+                    if (doReload) {
+                        ModelNode reload = Util.createOperation("reload", PathAddress.EMPTY_ADDRESS);
+                        client.execute(reload);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
+        } finally {
+            WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
+            WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
         }
     }
     /**

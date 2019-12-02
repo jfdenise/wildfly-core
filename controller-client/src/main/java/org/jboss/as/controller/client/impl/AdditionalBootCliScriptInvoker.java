@@ -28,5 +28,8 @@ import org.jboss.as.controller.client.ModelControllerClient;
  * @author <a href="mailto:kabir.khan@jboss.com">Kabir Khan</a>
  */
 public interface AdditionalBootCliScriptInvoker {
+    String CLI_SCRIPT_PROPERTY = "org.wildfly.additional.cli.boot.script";
+    String SKIP_RELOAD_PROPERTY = "org.wildfly.additional.cli.reload.skip";
+
     void runCliScript(ModelControllerClient client, File file);
 }
