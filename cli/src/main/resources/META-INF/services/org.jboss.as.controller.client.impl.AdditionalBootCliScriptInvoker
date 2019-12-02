@@ -1,1 +1,1 @@
-org.jboss.as.cli.BootScriptInvoker
+org.jboss.as.cli.impl.BootScriptInvoker

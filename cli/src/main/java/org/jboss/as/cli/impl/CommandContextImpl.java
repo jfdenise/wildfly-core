@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -344,12 +345,14 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
     private boolean colourOutput;
 
+    private final boolean bootInvoker;
     /**
      * Version mode - only used when --version is called from the command line.
      *
      * @throws CliInitializationException
      */
     CommandContextImpl() throws CliInitializationException {
+        bootInvoker = false;
         this.console = null;
         this.operationCandidatesProvider = null;
         this.cmdCompleter = null;
@@ -388,6 +391,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
      *
      */
     CommandContextImpl(CommandContextConfiguration configuration) throws CliInitializationException {
+        bootInvoker = false;
         config = CliConfigImpl.load(this, configuration);
         addressResolver = ControllerAddressResolver.newInstance(config, configuration.getController());
 
@@ -443,6 +447,43 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
         addShutdownHook();
         CliLauncher.runcom(this);
+    }
+
+    /**
+     * Constructor called from Boot invoker, minimal configuration.
+     *
+     */
+    CommandContextImpl(OutputStream output) throws CliInitializationException {
+        bootInvoker = true;
+        config = CliConfigImpl.load(this);
+        addressResolver = ControllerAddressResolver.newInstance(config, null);
+
+        operationHandler = new OperationRequestHandler();
+
+        this.username = null;
+        this.password = null;
+        this.disableLocalAuth = false;
+        this.clientBindAddress = null;
+
+        SILENT = config.isSilent();
+        ERROR_ON_INTERACT = config.isErrorOnInteract();
+        echoCommand = config.isEchoCommand();
+        configTimeout = config.getCommandTimeout() == null ? DEFAULT_TIMEOUT : config.getCommandTimeout();
+        resolveParameterValues = config.isResolveParameterValues();
+        redefinedOutput = output != null;
+        cliPrintStream = !redefinedOutput ? new CLIPrintStream() : new CLIPrintStream(output);
+
+        aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
+        this.cmdRegistry = aeshCommands.getRegistry();
+        this.cmdCompleter = null;
+        this.legacyCmdCompleter = null;
+        this.operationCandidatesProvider = null;
+
+        try {
+            initCommands(true);
+        } catch (CommandLineException | CommandLineParserException e) {
+            throw new CliInitializationException("Failed to initialize commands", e);
+        }
     }
 
     protected void addShutdownHook() {
@@ -523,10 +564,16 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     }
 
     private void initCommands() throws CommandLineException, CommandLineParserException {
+        initCommands(false);
+    }
+
+    private void initCommands(boolean bootInvoker) throws CommandLineException, CommandLineParserException {
         // aesh commands
         cmdRegistry.addCommand(new VersionCommand());
         cmdRegistry.addCommand(new HelpCommand(cmdRegistry));
-        cmdRegistry.addCommand(new ConnectCommand());
+        if (!bootInvoker) {
+            cmdRegistry.addCommand(new ConnectCommand());
+        }
         DeploymentCommand.registerDeploymentCommands(this, aeshCommands.getRegistry());
         // aesh extensions, for now add grep to make | operator
         // usable.
@@ -534,7 +581,9 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
         cmdRegistry.registerHandler(new AttachmentHandler(this), "attachment");
         cmdRegistry.registerHandler(new PrefixHandler(), "cd", "cn");
-        cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
+        if (!bootInvoker) {
+            cmdRegistry.registerHandler(new ClearScreenHandler(), "clear", "cls");
+        }
         cmdRegistry.registerHandler(new CommandCommandHandler(cmdRegistry), "command");
         cmdRegistry.registerHandler(new EchoDMRHandler(), "echo-dmr");
         cmdRegistry.registerHandler(new HistoryHandler(), "history");
@@ -613,14 +662,18 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         // supported but hidden from tab-completion until stable implementation
         cmdRegistry.registerHandler(new ArchiveHandler(this), false, "archive");
 
-        final AtomicReference<EmbeddedProcessLaunch> embeddedServerLaunch = EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(cmdRegistry, this);
-        cmdRegistry.registerHandler(new ReloadHandler(this, embeddedServerLaunch), "reload");
-        cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
+        AtomicReference<EmbeddedProcessLaunch> embeddedServerLaunch = null;
+        if (!bootInvoker) {
+            embeddedServerLaunch = EmbeddedControllerHandlerRegistrar.registerEmbeddedCommands(cmdRegistry, this);
+            cmdRegistry.registerHandler(new ReloadHandler(this, embeddedServerLaunch), "reload");
+            cmdRegistry.registerHandler(new ShutdownHandler(this, embeddedServerLaunch), "shutdown");
+        }
 
         cmdRegistry.addCommand(new SecurityCommand(this, embeddedServerLaunch));
 
-        registerExtraHandlers();
-
+        if (!bootInvoker) {
+            registerExtraHandlers();
+        }
         extLoader = new ExtensionsLoader(cmdRegistry, aeshCommands.getRegistry(), this);
     }
 

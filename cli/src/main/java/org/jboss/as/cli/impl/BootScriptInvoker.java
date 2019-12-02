@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-package org.jboss.as.cli;
+package org.jboss.as.cli.impl;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,19 +22,22 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Properties;
 import org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import org.jboss.as.cli.impl.CommandContextConfiguration;
+import org.jboss.as.cli.CommandContext;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.logging.Logger;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
+ * CLI script invoker. This is instantiated inside a server during boot in
+ * admin-mode.
  *
  * @author jdenise
  */
@@ -44,7 +47,18 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
 
     @Override
     public void runCliScript(ModelControllerClient client, File file) {
-        CommandContext ctx;
+        logger.info("Executing CLI Script invoker for file " + file);
+
+        String log = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.logging", "false");
+        final LogManager logManager = LogManager.getLogManager();
+        // Turnoff logger
+        if (!Boolean.parseBoolean(log)) {
+            if (logManager instanceof org.jboss.logmanager.LogManager) {
+                org.jboss.logmanager.LogManager jbossLogManager = (org.jboss.logmanager.LogManager) logManager;
+                jbossLogManager.getLogger(CommandContext.class.getName()).setLevel(Level.OFF);
+            }
+        }
+        CommandContextImpl ctx;
         String props = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.properties", null);
 
         if (props != null) {
@@ -60,27 +74,24 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
         if (logFilePath != null) {
             logFile = new File(logFilePath);
         }
-        String log = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.logging", "false");
+
         try {
-            CommandContextConfiguration.Builder ctxBuilder = new CommandContextConfiguration.Builder();
+            OutputStream output = null;
             if (logFile != null) {
-                ctxBuilder.setConsoleOutput(new FileOutputStream(logFile));
+                output = new FileOutputStream(logFile);
             }
-            ctx = CommandContextFactory.getInstance().newCommandContext(ctxBuilder.build());
+            ctx = new CommandContextImpl(output);
             ctx.bindClient(client);
-            final LogManager logManager = LogManager.getLogManager();
-            // Turnoff logger
-            if (!Boolean.parseBoolean(log)) {
-                if (logManager instanceof org.jboss.logmanager.LogManager) {
-                    org.jboss.logmanager.LogManager jbossLogManager = (org.jboss.logmanager.LogManager) logManager;
-                    jbossLogManager.getLogger(CommandContext.class.getName()).setLevel(Level.OFF);
-                }
-            }
+
             processFile(file, ctx);
         } catch (Exception ex) {
-            logger.error("Error applying " + file + " CLI script.");
             try {
+                logger.error("Error applying " + file + " CLI script:");
                 for (String line : Files.readAllLines(file.toPath())) {
+                    logger.error(line);
+                }
+                logger.error("CLI execution output:");
+                for (String line : Files.readAllLines(logFile.toPath())) {
                     logger.error(line);
                 }
             } catch (IOException ex1) {
@@ -90,20 +101,21 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
             }
             throw new RuntimeException(ex);
         }
-
+        logger.info("Done executing CLI Script invoker for file " + file);
     }
 
     private static void processFile(File file, final CommandContext cmdCtx) throws IOException {
-
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine();
             while (cmdCtx.getExitCode() == 0 && !cmdCtx.isTerminated() && line != null) {
+                logger.debug("Executing command " + line.trim());
                 cmdCtx.handleSafe(line.trim());
                 line = reader.readLine();
             }
         } catch (Throwable e) {
+            logger.error("Unexpected exception processing commands ", e);
             throw new IllegalStateException("Failed to process file '" + file.getAbsolutePath() + "'", e);
         } finally {
             StreamUtils.safeClose(reader);
@@ -149,4 +161,5 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
             WildFlySecurityManager.setPropertyPrivileged(key, props.getProperty(key));
         }
     }
+
 }
