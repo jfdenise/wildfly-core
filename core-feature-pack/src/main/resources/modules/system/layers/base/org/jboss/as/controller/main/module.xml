@@ -59,7 +59,5 @@
         <module name="org.jboss.threads"/>
         <module name="org.projectodd.vdx"/>
         <module name="org.eclipse.jgit" export="true"/>
-        <!-- to load boot script file -->
-        <module name="org.jboss.as.cli" optional="true" services="import"/>
     </dependencies>
 </module>
