@@ -26,6 +26,9 @@ import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.MARKER_DIRECTORY_PROPERTY;
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.SKIP_RELOAD_PROPERTY;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAILED;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RELOAD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RESTART;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SHUTDOWN;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
@@ -33,6 +36,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
@@ -867,15 +871,17 @@ public abstract class AbstractControllerService implements Service<ModelControll
 
     private static class AdditionalBootCliScriptInvocation {
         private final AbstractControllerService controllerService;
-        private final File additionalBootCliScriptFile;
+        private final File additionalBootCliScript;
         private final boolean keepAlive;
-        private final File doneMarkerFile;
+        private final File doneMarker;
+        private final File shutdownInitiated;
 
-        public AdditionalBootCliScriptInvocation(AbstractControllerService controllerService, File additionalBootCliScriptFile, boolean keepAlive, File doneMarkerFile) {
+        public AdditionalBootCliScriptInvocation(AbstractControllerService controllerService, File additionalBootCliScript, boolean keepAlive, File markerDirectory) {
             this.controllerService = controllerService;
-            this.additionalBootCliScriptFile = additionalBootCliScriptFile;
+            this.additionalBootCliScript = additionalBootCliScript;
             this.keepAlive = keepAlive;
-            this.doneMarkerFile = doneMarkerFile;
+            this.doneMarker = new File(markerDirectory, "wf-cli-invoker-result");
+            this.shutdownInitiated = new File(markerDirectory, "wf-cli-shutdown-initiated");
         }
 
         static AdditionalBootCliScriptInvocation create(AbstractControllerService controllerService) {
@@ -899,26 +905,39 @@ public abstract class AbstractControllerService implements Service<ModelControll
                     throw ROOT_LOGGER.cliScriptPropertyDefinedWithoutMarkerDirectory(CLI_SCRIPT_PROPERTY, MARKER_DIRECTORY_PROPERTY);
                 }
                 File markerDirectory = new File(markerDirectoryProperty);
-                File doneMarkerFile = new File(markerDirectory, "wf-cli-invoker-result");
-                if (doneMarkerFile.exists()) {
-                    doneMarkerFile.delete();
+                if (!markerDirectory.exists()) {
+                    throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(markerDirectoryProperty, MARKER_DIRECTORY_PROPERTY);
                 }
 
                 boolean keepAlive = Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
 
-                return new AdditionalBootCliScriptInvocation(controllerService, additionalBootCliScriptFile, keepAlive, doneMarkerFile);
+                return new AdditionalBootCliScriptInvocation(controllerService, additionalBootCliScriptFile, keepAlive, markerDirectory);
             }
             return null;
         }
 
         void invoke() {
-            executeAdditionalCliScript();
+            if (shutdownInitiated.exists()) {
+                try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
+                    // The shutdown takes us back to admin-only mode, we now need to reload into normal mode
+                    // remove the marker first
+                    Files.delete(shutdownInitiated.toPath());
+
+                    executeReload(client);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                executeAdditionalCliScript();
+            }
         }
 
         private void executeAdditionalCliScript() {
             boolean success = false;
             try {
-
+                if (doneMarker.exists()) {
+                    Files.delete(doneMarker.toPath());
+                }
                 final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
                 final ModuleLoader loader = classLoader.getModule().getModuleLoader();
                 final Module module;
@@ -937,43 +956,72 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 }
 
                 try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
-                    invoker.runCliScript(client, additionalBootCliScriptFile);
+                    invoker.runCliScript(client, additionalBootCliScript);
 
                     if (!keepAlive) {
-                        // Not used yet
-                        //boolean restart = controllerService.processState.checkRestartRequired();
-                        executeReload(client);
+                        boolean restart = controllerService.processState.checkRestartRequired();
+                        if (restart) {
+                            executeShutdown(client);
+                        } else {
+                            executeReload(client);
+                        }
                     }
                     success = true;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             } finally {
                 try {
-                    if (doneMarkerFile != null) {
-                        doneMarkerFile.createNewFile();
-                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(doneMarkerFile))) {
+                    if (doneMarker != null) {
+                        doneMarker.createNewFile();
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(doneMarker))) {
                             writer.write(success ? SUCCESS : FAILED);
                             writer.write('\n');
                         }
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
-                } finally {
-                    WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
-                    WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
-                    WildFlySecurityManager.clearPropertyPrivileged(MARKER_DIRECTORY_PROPERTY);
                 }
+            }
+        }
+
+        private void executeShutdown(ModelControllerClient client) {
+            try {
+                ModelNode shutdown = Util.createOperation(SHUTDOWN, PathAddress.EMPTY_ADDRESS);
+                shutdown.get(RESTART).set(true);
+                // Since we cannot clear system properties for a shutdown, we write a marker here to
+                // skip running the cli script again
+                Files.createFile(shutdownInitiated.toPath());
+                shutdownInitiated.createNewFile();
+                client.execute(shutdown);
+            } catch (IOException e) {
+                if (Files.exists(shutdownInitiated.toPath())) {
+                    try {
+                        Files.delete(shutdownInitiated.toPath());
+                    } catch (IOException ex) {
+                        e = ex;
+                    }
+                }
+                throw new RuntimeException(e);
             }
         }
 
         private void executeReload(ModelControllerClient client) {
             try {
-                ModelNode reload = Util.createOperation("reload", PathAddress.EMPTY_ADDRESS);
+                ModelNode reload = Util.createOperation(RELOAD, PathAddress.EMPTY_ADDRESS);
+                clearProperties();
                 client.execute(reload);
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } finally {
+                clearProperties();
             }
+        }
+
+        private void clearProperties() {
+            WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
+            WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
+            WildFlySecurityManager.clearPropertyPrivileged(MARKER_DIRECTORY_PROPERTY);
         }
     }
 }
