@@ -876,63 +876,75 @@ public abstract class AbstractControllerService implements Service<ModelControll
         // Will be null if keepAlive=true
         private final File doneMarker;
         // Will be null if keepAlive=true
-        private final File shutdownInitiated;
+        private final File restartInitiated;
 
         public AdditionalBootCliScriptInvocation(AbstractControllerService controllerService, File additionalBootCliScript, boolean keepAlive, File markerDirectory) {
             this.controllerService = controllerService;
             this.additionalBootCliScript = additionalBootCliScript;
             this.keepAlive = keepAlive;
             this.doneMarker = markerDirectory == null ? null : new File(markerDirectory, "wf-cli-invoker-result");
-            this.shutdownInitiated = markerDirectory == null ? null : new File(markerDirectory, "wf-cli-shutdown-initiated");
+            this.restartInitiated = markerDirectory == null ? null : new File(markerDirectory, "wf-cli-shutdown-initiated");
         }
 
         static AdditionalBootCliScriptInvocation create(AbstractControllerService controllerService) {
             final String additionalBootCliScriptPath =
                     WildFlySecurityManager.getPropertyPrivileged(CLI_SCRIPT_PROPERTY, null);
-            if (additionalBootCliScriptPath != null) {
-                if (controllerService.processType != ProcessType.STANDALONE_SERVER) {
-                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(CLI_SCRIPT_PROPERTY);
-                }
-                if (controllerService.runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
-                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(CLI_SCRIPT_PROPERTY);
-                }
-                File additionalBootCliScriptFile = new File(additionalBootCliScriptPath);
-                if (!additionalBootCliScriptFile.exists()) {
-                    throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(additionalBootCliScriptPath, CLI_SCRIPT_PROPERTY);
-                }
 
-                boolean keepAlive = Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
-                final String markerDirectoryProperty =
-                        WildFlySecurityManager.getPropertyPrivileged(MARKER_DIRECTORY_PROPERTY, null);
-                if (keepAlive && markerDirectoryProperty == null) {
-                    throw ROOT_LOGGER.cliScriptPropertyDefinedWithoutMarkerDirectoryWhenNotSkippingReload(SKIP_RELOAD_PROPERTY, CLI_SCRIPT_PROPERTY, MARKER_DIRECTORY_PROPERTY);
-                }
-
-                File markerDirectory = null;
-                if (markerDirectoryProperty != null) {
-                    markerDirectory = new File(markerDirectoryProperty);
-                    if (!markerDirectory.exists()) {
-                        throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(markerDirectoryProperty, MARKER_DIRECTORY_PROPERTY);
-                    }
-                }
-
-                return new AdditionalBootCliScriptInvocation(controllerService, additionalBootCliScriptFile, keepAlive, markerDirectory);
+            ROOT_LOGGER.debug("Checking -D" + CLI_SCRIPT_PROPERTY + " to see if additional CLI operations are needed");
+            if (additionalBootCliScriptPath == null) {
+                ROOT_LOGGER.debug("No additional CLI operations are needed");
+                return null;
             }
-            return null;
+
+            boolean keepAlive = Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
+            final String markerDirectoryProperty =
+                    WildFlySecurityManager.getPropertyPrivileged(MARKER_DIRECTORY_PROPERTY, null);
+            if (keepAlive && markerDirectoryProperty == null) {
+                throw ROOT_LOGGER.cliScriptPropertyDefinedWithoutMarkerDirectoryWhenNotSkippingReload(SKIP_RELOAD_PROPERTY, CLI_SCRIPT_PROPERTY, MARKER_DIRECTORY_PROPERTY);
+            }
+
+            if (controllerService.processType != ProcessType.STANDALONE_SERVER) {
+                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(CLI_SCRIPT_PROPERTY);
+            }
+            if (controllerService.runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
+                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(CLI_SCRIPT_PROPERTY);
+            }
+            File additionalBootCliScriptFile = new File(additionalBootCliScriptPath);
+            if (!additionalBootCliScriptFile.exists()) {
+                throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(additionalBootCliScriptPath, CLI_SCRIPT_PROPERTY);
+            }
+
+            File markerDirectory = null;
+            if (markerDirectoryProperty != null) {
+                markerDirectory = new File(markerDirectoryProperty);
+                if (!markerDirectory.exists()) {
+                    throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(markerDirectoryProperty, MARKER_DIRECTORY_PROPERTY);
+                }
+            }
+
+            return new AdditionalBootCliScriptInvocation(controllerService, additionalBootCliScriptFile, keepAlive, markerDirectory);
         }
 
         void invoke() {
-            if (shutdownInitiated != null && shutdownInitiated.exists()) {
+            ROOT_LOGGER.checkingForPresenceOfRestartMarkerFile();
+            if (restartInitiated != null && restartInitiated.exists()) {
+                ROOT_LOGGER.foundRestartMarkerFile(restartInitiated);
                 try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
                     // The shutdown takes us back to admin-only mode, we now need to reload into normal mode
                     // remove the marker first
-                    Files.delete(shutdownInitiated.toPath());
+                    Files.delete(restartInitiated.toPath());
 
-                    executeReload(client);
+                    executeReload(client, true);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             } else {
+                ROOT_LOGGER.noRestartMarkerFile();
+                if (keepAlive) {
+                    ROOT_LOGGER.initialisedAdditionalBootCliScriptSystemKeepingAlive(additionalBootCliScript, doneMarker);
+                } else {
+                    ROOT_LOGGER.initialisedAdditionalBootCliScriptSystemNotKeepingAlive(additionalBootCliScript);
+                }
                 executeAdditionalCliScript();
             }
         }
@@ -961,14 +973,19 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 }
 
                 try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
+
+                    ROOT_LOGGER.executingBootCliScript(additionalBootCliScript);
+
                     invoker.runCliScript(client, additionalBootCliScript);
+
+                    ROOT_LOGGER.completedRunningBootCliScript();
 
                     if (!keepAlive) {
                         boolean restart = controllerService.processState.checkRestartRequired();
                         if (restart) {
-                            executeShutdown(client);
+                            executeRestart(client);
                         } else {
-                            executeReload(client);
+                            executeReload(client, false);
                         }
                     }
                     success = true;
@@ -991,19 +1008,21 @@ public abstract class AbstractControllerService implements Service<ModelControll
             }
         }
 
-        private void executeShutdown(ModelControllerClient client) {
+        private void executeRestart(ModelControllerClient client) {
             try {
                 ModelNode shutdown = Util.createOperation(SHUTDOWN, PathAddress.EMPTY_ADDRESS);
                 shutdown.get(RESTART).set(true);
                 // Since we cannot clear system properties for a shutdown, we write a marker here to
                 // skip running the cli script again
-                Files.createFile(shutdownInitiated.toPath());
-                shutdownInitiated.createNewFile();
+                Files.createFile(restartInitiated.toPath());
+
+                ROOT_LOGGER.restartingServerAfterBootCliScript(restartInitiated, CLI_SCRIPT_PROPERTY, SKIP_RELOAD_PROPERTY, MARKER_DIRECTORY_PROPERTY);
+
                 client.execute(shutdown);
             } catch (IOException e) {
-                if (Files.exists(shutdownInitiated.toPath())) {
+                if (Files.exists(restartInitiated.toPath())) {
                     try {
-                        Files.delete(shutdownInitiated.toPath());
+                        Files.delete(restartInitiated.toPath());
                     } catch (IOException ex) {
                         e = ex;
                     }
@@ -1012,10 +1031,15 @@ public abstract class AbstractControllerService implements Service<ModelControll
             }
         }
 
-        private void executeReload(ModelControllerClient client) {
+        private void executeReload(ModelControllerClient client, boolean afterRestart) {
             try {
                 ModelNode reload = Util.createOperation(RELOAD, PathAddress.EMPTY_ADDRESS);
                 clearProperties();
+                if (!afterRestart) {
+                    ROOT_LOGGER.reloadingServerToNormalModeAfterAdditionalBootCliScript(CLI_SCRIPT_PROPERTY, SKIP_RELOAD_PROPERTY, MARKER_DIRECTORY_PROPERTY);
+                } else {
+                    ROOT_LOGGER.reloadingServerToNormalModeAfterRestartAfterAdditionalBootCliScript(CLI_SCRIPT_PROPERTY, SKIP_RELOAD_PROPERTY, MARKER_DIRECTORY_PROPERTY);
+                }
                 client.execute(reload);
             } catch (IOException e) {
                 throw new RuntimeException(e);
