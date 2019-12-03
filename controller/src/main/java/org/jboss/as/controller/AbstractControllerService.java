@@ -25,9 +25,13 @@ package org.jboss.as.controller;
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.CLI_SCRIPT_PROPERTY;
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.MARKER_PROPERTY;
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.SKIP_RELOAD_PROPERTY;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAILED;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -728,12 +732,15 @@ public abstract class AbstractControllerService implements Service<ModelControll
     }
 
     protected void executeAdditionalCliBootScript() {
+        File doneMarkerFile = null;
+        boolean success = false;
         try {
-            File doneMarkerFile = null;
             String doneMarkerProperty = WildFlySecurityManager.getPropertyPrivileged(MARKER_PROPERTY, null);
             if (doneMarkerProperty != null) {
                 doneMarkerFile = new File(doneMarkerProperty);
-                doneMarkerFile.delete();
+                if (doneMarkerFile.exists()) {
+                    doneMarkerFile.delete();
+                }
             }
 
             final String additionalBootCliScriptPath =
@@ -774,21 +781,27 @@ public abstract class AbstractControllerService implements Service<ModelControll
                         ModelNode reload = Util.createOperation("reload", PathAddress.EMPTY_ADDRESS);
                         client.execute(reload);
                     }
+                    success = true;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
-                } finally {
-                    try {
-                        if (doneMarkerFile != null) {
-                            doneMarkerFile.createNewFile();
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
                 }
             }
         } finally {
-            WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
-            WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
+            try {
+                if (doneMarkerFile != null) {
+                    doneMarkerFile.createNewFile();
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(doneMarkerFile))) {
+                        writer.write(success ? SUCCESS : FAILED);
+                        writer.write('\n');
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
+                WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
+                WildFlySecurityManager.clearPropertyPrivileged(MARKER_PROPERTY);
+            }
         }
     }
     /**
