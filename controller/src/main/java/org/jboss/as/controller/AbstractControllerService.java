@@ -873,15 +873,17 @@ public abstract class AbstractControllerService implements Service<ModelControll
         private final AbstractControllerService controllerService;
         private final File additionalBootCliScript;
         private final boolean keepAlive;
+        // Will be null if keepAlive=true
         private final File doneMarker;
+        // Will be null if keepAlive=true
         private final File shutdownInitiated;
 
         public AdditionalBootCliScriptInvocation(AbstractControllerService controllerService, File additionalBootCliScript, boolean keepAlive, File markerDirectory) {
             this.controllerService = controllerService;
             this.additionalBootCliScript = additionalBootCliScript;
             this.keepAlive = keepAlive;
-            this.doneMarker = new File(markerDirectory, "wf-cli-invoker-result");
-            this.shutdownInitiated = new File(markerDirectory, "wf-cli-shutdown-initiated");
+            this.doneMarker = markerDirectory == null ? null : new File(markerDirectory, "wf-cli-invoker-result");
+            this.shutdownInitiated = markerDirectory == null ? null : new File(markerDirectory, "wf-cli-shutdown-initiated");
         }
 
         static AdditionalBootCliScriptInvocation create(AbstractControllerService controllerService) {
@@ -899,17 +901,20 @@ public abstract class AbstractControllerService implements Service<ModelControll
                     throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(additionalBootCliScriptPath, CLI_SCRIPT_PROPERTY);
                 }
 
+                boolean keepAlive = Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
                 final String markerDirectoryProperty =
                         WildFlySecurityManager.getPropertyPrivileged(MARKER_DIRECTORY_PROPERTY, null);
-                if (markerDirectoryProperty == null) {
-                    throw ROOT_LOGGER.cliScriptPropertyDefinedWithoutMarkerDirectory(CLI_SCRIPT_PROPERTY, MARKER_DIRECTORY_PROPERTY);
-                }
-                File markerDirectory = new File(markerDirectoryProperty);
-                if (!markerDirectory.exists()) {
-                    throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(markerDirectoryProperty, MARKER_DIRECTORY_PROPERTY);
+                if (keepAlive && markerDirectoryProperty == null) {
+                    throw ROOT_LOGGER.cliScriptPropertyDefinedWithoutMarkerDirectoryWhenNotSkippingReload(SKIP_RELOAD_PROPERTY, CLI_SCRIPT_PROPERTY, MARKER_DIRECTORY_PROPERTY);
                 }
 
-                boolean keepAlive = Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
+                File markerDirectory = null;
+                if (markerDirectoryProperty != null) {
+                    markerDirectory = new File(markerDirectoryProperty);
+                    if (!markerDirectory.exists()) {
+                        throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(markerDirectoryProperty, MARKER_DIRECTORY_PROPERTY);
+                    }
+                }
 
                 return new AdditionalBootCliScriptInvocation(controllerService, additionalBootCliScriptFile, keepAlive, markerDirectory);
             }
@@ -917,7 +922,7 @@ public abstract class AbstractControllerService implements Service<ModelControll
         }
 
         void invoke() {
-            if (shutdownInitiated.exists()) {
+            if (shutdownInitiated != null && shutdownInitiated.exists()) {
                 try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
                     // The shutdown takes us back to admin-only mode, we now need to reload into normal mode
                     // remove the marker first
@@ -935,7 +940,7 @@ public abstract class AbstractControllerService implements Service<ModelControll
         private void executeAdditionalCliScript() {
             boolean success = false;
             try {
-                if (doneMarker.exists()) {
+                if (doneMarker != null && doneMarker.exists()) {
                     Files.delete(doneMarker.toPath());
                 }
                 final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
