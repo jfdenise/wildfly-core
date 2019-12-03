@@ -3576,4 +3576,45 @@ public interface ControllerLogger extends BasicLogger {
 
     @Message(id = 463, value = "If using %s=true, when you use -D%s you need to set -D%s")
     IllegalStateException cliScriptPropertyDefinedWithoutMarkerDirectoryWhenNotSkippingReload(String skipProperty, String scriptProperty, String markerDirectoryProperty);
+
+    @LogMessage(level = INFO)
+    @Message(id = 464, value = "Initialised the additional boot CLI script functionality. The CLI commands will be read from %s. The server will remain running in admin-only mode after these have been executed, and the result of the cli operations will be written to %s")
+    void initialisedAdditionalBootCliScriptSystemKeepingAlive(File additionalBootCliScript, File doneMarker);
+
+    @LogMessage(level = INFO)
+    @Message(id = 465, value = "Initialised the additional boot CLI script functionality. The CLI commands will be read from %s. The server will be rebooted to normal mode after these have been executed")
+    void initialisedAdditionalBootCliScriptSystemNotKeepingAlive(File additionalBootCliScript);
+
+    @LogMessage(level = INFO)
+    @Message(id = 466, value = "Running the additional commands from the CLI script %s against the server which is running in admin-only mode")
+    void executingBootCliScript(File additionalBootCliScript);
+
+    @LogMessage(level = INFO)
+    @Message(id = 467, value = "Completed running the commands from the CLI script")
+    void completedRunningBootCliScript();
+
+    @LogMessage(level = INFO)
+    @Message(id = 468, value = "Restarting the server since the additional commands from the CLI script requires a restart. This will record that the restart has been initiated in the marker file %s since the restart mechanism will preserve all properties pertaining to the additional boot CLI script functionality (%s, %s, %s). The restart maintains the admin-only running mode, so a subsequent reload will happen")
+    void restartingServerAfterBootCliScript(File shutdownInitiated, String cliScriptProperty, String skipReloadProperty, String markerDirectoryProperty);
+
+    @LogMessage(level = INFO)
+    @Message(id = 469, value = "Reloading the server to normal mode after execution of the additional commands from the CLI script. This will clear the properties triggering the additional boot cli script functionality if they were set (%s, %s, %s), and delete the marker file indicating the server was restarted")
+    void reloadingServerToNormalModeAfterAdditionalBootCliScript(String cliScriptProperty, String skipReloadProperty, String markerDirectoryProperty);
+
+    @LogMessage(level = INFO)
+    @Message(id = 470, value = "Reloading the server to normal mode after restart follwoing execution of the additional commands from the CLI script. This will clear the properties triggering the additional boot cli script functionality if they were set (%s, %s, %s)")
+    void reloadingServerToNormalModeAfterRestartAfterAdditionalBootCliScript(String cliScriptProperty, String skipReloadProperty, String markerDirectoryProperty);
+
+    @LogMessage(level = INFO)
+    @Message(id = 471, value = "Checking for presence of marker file indicating that the server has been restarted following execution of the additional commands from the CLI script")
+    void checkingForPresenceOfRestartMarkerFile();
+
+    @LogMessage(level = INFO)
+    @Message(id = 472, value = "Marker file indicating that the server has been restarted following execution of the additional commands from the CLI script found at %s")
+    void foundRestartMarkerFile(File file);
+
+    @LogMessage(level = INFO)
+    @Message(id = 473, value = "No marker file found indicating that the server has been restarted following execution of the additional commands from the CLI script")
+    void noRestartMarkerFile();
+
 }
