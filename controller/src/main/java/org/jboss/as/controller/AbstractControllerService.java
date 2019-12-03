@@ -971,6 +971,7 @@ public abstract class AbstractControllerService implements Service<ModelControll
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } finally {
+                clearProperties();
                 try {
                     if (doneMarker != null) {
                         doneMarker.createNewFile();
