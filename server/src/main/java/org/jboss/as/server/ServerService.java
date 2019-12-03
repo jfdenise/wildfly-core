@@ -417,9 +417,6 @@ public final class ServerService extends AbstractControllerService {
                     PathElement.pathElement(SERVICE, MANAGEMENT_OPERATIONS)), ServerLogger.AS_ROOT_LOGGER.bootComplete());
             getNotificationSupport().emit(notification);
             bootstrapListener.printBootStatistics();
-
-            executeAdditionalCliBootScript();
-
         } else {
             // Die!
             final String message = ServerLogger.ROOT_LOGGER.unsuccessfulBoot();
@@ -438,6 +435,11 @@ public final class ServerService extends AbstractControllerService {
         if (!suspend) {
             suspendController.resume();
         }
+    }
+
+    @Override
+    protected void postBoot() {
+        executeAdditionalCliBootScript();
     }
 
     protected boolean boot(List<ModelNode> bootOperations, boolean rollbackOnRuntimeFailure) throws ConfigurationPersistenceException {

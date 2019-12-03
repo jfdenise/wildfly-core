@@ -23,7 +23,7 @@
 package org.jboss.as.controller;
 
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.CLI_SCRIPT_PROPERTY;
-import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.MARKER_PROPERTY;
+import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.MARKER_DIRECTORY_PROPERTY;
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.SKIP_RELOAD_PROPERTY;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAILED;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
@@ -414,6 +414,7 @@ public abstract class AbstractControllerService implements Service<ModelControll
                     } finally {
                         processState.setRunning();
                     }
+                    postBoot();
                 } catch (Throwable t) {
                     container.shutdown();
                     if (t instanceof StackOverflowError) {
@@ -577,6 +578,9 @@ public abstract class AbstractControllerService implements Service<ModelControll
 
     }
 
+    protected void postBoot() {
+    }
+
     protected NotificationSupport getNotificationSupport() {
         return controller.getNotificationSupport();
     }
@@ -732,76 +736,9 @@ public abstract class AbstractControllerService implements Service<ModelControll
     }
 
     protected void executeAdditionalCliBootScript() {
-        File doneMarkerFile = null;
-        boolean success = false;
-        try {
-            String doneMarkerProperty = WildFlySecurityManager.getPropertyPrivileged(MARKER_PROPERTY, null);
-            if (doneMarkerProperty != null) {
-                doneMarkerFile = new File(doneMarkerProperty);
-                if (doneMarkerFile.exists()) {
-                    doneMarkerFile.delete();
-                }
-            }
-
-            final String additionalBootCliScriptPath =
-                    WildFlySecurityManager.getPropertyPrivileged(CLI_SCRIPT_PROPERTY, null);
-            if (additionalBootCliScriptPath != null) {
-                if (processType != ProcessType.STANDALONE_SERVER) {
-                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(CLI_SCRIPT_PROPERTY);
-                }
-                if (runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
-                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(CLI_SCRIPT_PROPERTY);
-                }
-                File additionalBootCliScriptFile = new File(additionalBootCliScriptPath);
-                if (!additionalBootCliScriptFile.exists()) {
-                    throw ROOT_LOGGER.couldNotFindFileSpecifiedByProperty(additionalBootCliScriptPath, CLI_SCRIPT_PROPERTY);
-                }
-                ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
-                ModuleLoader loader = classLoader.getModule().getModuleLoader();
-                Module module = null;
-                try {
-                    module = loader.loadModule("org.jboss.as.cli");
-                } catch (ModuleLoadException e) {
-                    throw new RuntimeException(e);
-                }
-                ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
-                AdditionalBootCliScriptInvoker invoker = null;
-                for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
-                    if (invoker != null) {
-                        throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
-                    }
-                    invoker = currentInvoker;
-                }
-
-                try (ModelControllerClient client = controller.createClient(executorService.get())) {
-                    invoker.runCliScript(client, additionalBootCliScriptFile);
-
-                    final boolean doReload = !Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
-                    if (doReload) {
-                        ModelNode reload = Util.createOperation("reload", PathAddress.EMPTY_ADDRESS);
-                        client.execute(reload);
-                    }
-                    success = true;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        } finally {
-            try {
-                if (doneMarkerFile != null) {
-                    doneMarkerFile.createNewFile();
-                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(doneMarkerFile))) {
-                        writer.write(success ? SUCCESS : FAILED);
-                        writer.write('\n');
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } finally {
-                WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
-                WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
-                WildFlySecurityManager.clearPropertyPrivileged(MARKER_PROPERTY);
-            }
+        AdditionalBootCliScriptInvocation invocation = AdditionalBootCliScriptInvocation.create(this);
+        if (invocation != null) {
+            invocation.invoke();
         }
     }
     /**
@@ -928,4 +865,115 @@ public abstract class AbstractControllerService implements Service<ModelControll
         }
     }
 
+    private static class AdditionalBootCliScriptInvocation {
+        private final AbstractControllerService controllerService;
+        private final File additionalBootCliScriptFile;
+        private final boolean keepAlive;
+        private final File doneMarkerFile;
+
+        public AdditionalBootCliScriptInvocation(AbstractControllerService controllerService, File additionalBootCliScriptFile, boolean keepAlive, File doneMarkerFile) {
+            this.controllerService = controllerService;
+            this.additionalBootCliScriptFile = additionalBootCliScriptFile;
+            this.keepAlive = keepAlive;
+            this.doneMarkerFile = doneMarkerFile;
+        }
+
+        static AdditionalBootCliScriptInvocation create(AbstractControllerService controllerService) {
+            final String additionalBootCliScriptPath =
+                    WildFlySecurityManager.getPropertyPrivileged(CLI_SCRIPT_PROPERTY, null);
+            if (additionalBootCliScriptPath != null) {
+                if (controllerService.processType != ProcessType.STANDALONE_SERVER) {
+                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(CLI_SCRIPT_PROPERTY);
+                }
+                if (controllerService.runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
+                    throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(CLI_SCRIPT_PROPERTY);
+                }
+                File additionalBootCliScriptFile = new File(additionalBootCliScriptPath);
+                if (!additionalBootCliScriptFile.exists()) {
+                    throw ROOT_LOGGER.couldNotFindDirectorySpecifiedByProperty(additionalBootCliScriptPath, CLI_SCRIPT_PROPERTY);
+                }
+
+                final String markerDirectoryProperty =
+                        WildFlySecurityManager.getPropertyPrivileged(MARKER_DIRECTORY_PROPERTY, null);
+                if (markerDirectoryProperty == null) {
+                    throw ROOT_LOGGER.cliScriptPropertyDefinedWithoutMarkerDirectory(CLI_SCRIPT_PROPERTY, MARKER_DIRECTORY_PROPERTY);
+                }
+                File markerDirectory = new File(markerDirectoryProperty);
+                File doneMarkerFile = new File(markerDirectory, "wf-cli-invoker-result");
+                if (doneMarkerFile.exists()) {
+                    doneMarkerFile.delete();
+                }
+
+                boolean keepAlive = Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged(SKIP_RELOAD_PROPERTY, "false"));
+
+                return new AdditionalBootCliScriptInvocation(controllerService, additionalBootCliScriptFile, keepAlive, doneMarkerFile);
+            }
+            return null;
+        }
+
+        void invoke() {
+            executeAdditionalCliScript();
+        }
+
+        private void executeAdditionalCliScript() {
+            boolean success = false;
+            try {
+
+                final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
+                final ModuleLoader loader = classLoader.getModule().getModuleLoader();
+                final Module module;
+                try {
+                    module = loader.loadModule("org.jboss.as.cli");
+                } catch (ModuleLoadException e) {
+                    throw new RuntimeException(e);
+                }
+                ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
+                AdditionalBootCliScriptInvoker invoker = null;
+                for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
+                    if (invoker != null) {
+                        throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
+                    }
+                    invoker = currentInvoker;
+                }
+
+                try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
+                    invoker.runCliScript(client, additionalBootCliScriptFile);
+
+                    if (!keepAlive) {
+                        // Not used yet
+                        //boolean restart = controllerService.processState.checkRestartRequired();
+                        executeReload(client);
+                    }
+                    success = true;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } finally {
+                try {
+                    if (doneMarkerFile != null) {
+                        doneMarkerFile.createNewFile();
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(doneMarkerFile))) {
+                            writer.write(success ? SUCCESS : FAILED);
+                            writer.write('\n');
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
+                    WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
+                    WildFlySecurityManager.clearPropertyPrivileged(MARKER_DIRECTORY_PROPERTY);
+                }
+            }
+        }
+
+        private void executeReload(ModelControllerClient client) {
+            try {
+                ModelNode reload = Util.createOperation("reload", PathAddress.EMPTY_ADDRESS);
+                client.execute(reload);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 }

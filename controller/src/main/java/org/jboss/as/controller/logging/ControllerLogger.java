@@ -3568,9 +3568,12 @@ public interface ControllerLogger extends BasicLogger {
     @Message(id = 460, value = "The system property '%s' can only be used with an admin-only server")
     IllegalStateException propertyCanOnlyBeUsedWithAdminOnlyModeServer(String propertyName);
 
-    @Message(id = 461, value = "Could not find the file '%s' specified by the system property '%s'")
-    IllegalStateException couldNotFindFileSpecifiedByProperty(String fileName, String propertyName);
+    @Message(id = 461, value = "Could not find the directory '%s' specified by the system property '%s'. Please make sure it exists")
+    IllegalStateException couldNotFindDirectorySpecifiedByProperty(String fileName, String propertyName);
 
     @Message(id = 462, value = "More than one instance of AdditionalBootCliScriptInvoker found. Have: '%s'; found: '%s")
     IllegalStateException moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(String name, String name1);
+
+    @Message(id = 463, value = "-D%s was defined without specifying -D%s")
+    IllegalStateException cliScriptPropertyDefinedWithoutMarkerDirectory(String scriptProperty, String markerDirectoryProperty);
 }
