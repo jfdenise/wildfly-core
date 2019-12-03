@@ -3574,6 +3574,6 @@ public interface ControllerLogger extends BasicLogger {
     @Message(id = 462, value = "More than one instance of AdditionalBootCliScriptInvoker found. Have: '%s'; found: '%s")
     IllegalStateException moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(String name, String name1);
 
-    @Message(id = 463, value = "-D%s was defined without specifying -D%s")
-    IllegalStateException cliScriptPropertyDefinedWithoutMarkerDirectory(String scriptProperty, String markerDirectoryProperty);
+    @Message(id = 463, value = "If using %s=true, when you use -D%s you need to set -D%s")
+    IllegalStateException cliScriptPropertyDefinedWithoutMarkerDirectoryWhenNotSkippingReload(String skipProperty, String scriptProperty, String markerDirectoryProperty);
 }
