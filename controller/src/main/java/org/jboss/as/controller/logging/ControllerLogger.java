@@ -3566,8 +3566,8 @@ public interface ControllerLogger extends BasicLogger {
     @Message(id = 459, value = "Triggering roll back due to missing management services.")
     void missingManagementServices();
 
-    @Message(id = 460, value = "The system property '%s' can only be used with a standalone server")
-    IllegalStateException propertyCanOnlyBeUsedWithStandaloneServer(String propertyName);
+    @Message(id = 460, value = "The system property '%s' can only be used with a standalone or embedded server")
+    IllegalStateException propertyCanOnlyBeUsedWithStandaloneOrEmbeddedServer(String propertyName);
 
     @Message(id = 461, value = "The system property '%s' can only be used with an admin-only server")
     IllegalStateException propertyCanOnlyBeUsedWithAdminOnlyModeServer(String propertyName);

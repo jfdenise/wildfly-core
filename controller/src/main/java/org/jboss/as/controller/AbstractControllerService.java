@@ -903,8 +903,9 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 throw ROOT_LOGGER.cliScriptPropertyDefinedWithoutMarkerDirectoryWhenNotSkippingReload(SKIP_RELOAD_PROPERTY, CLI_SCRIPT_PROPERTY, MARKER_DIRECTORY_PROPERTY);
             }
 
-            if (controllerService.processType != ProcessType.STANDALONE_SERVER) {
-                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneServer(CLI_SCRIPT_PROPERTY);
+            if (controllerService.processType != ProcessType.STANDALONE_SERVER &&
+                    controllerService.processType != ProcessType.EMBEDDED_SERVER) {
+                throw ROOT_LOGGER.propertyCanOnlyBeUsedWithStandaloneOrEmbeddedServer(CLI_SCRIPT_PROPERTY);
             }
             if (controllerService.runningModeControl.getRunningMode() != RunningMode.ADMIN_ONLY) {
                 throw ROOT_LOGGER.propertyCanOnlyBeUsedWithAdminOnlyModeServer(CLI_SCRIPT_PROPERTY);
