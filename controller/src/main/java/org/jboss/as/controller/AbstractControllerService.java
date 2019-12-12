@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
@@ -936,7 +937,7 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
                     // The shutdown takes us back to admin-only mode, we now need to reload into normal mode
                     // remove the marker first
-                    Files.delete(restartInitiated.toPath());
+                    deleteFile(restartInitiated);
 
                     executeReload(client, true);
                 } catch (IOException e) {
@@ -956,9 +957,9 @@ public abstract class AbstractControllerService implements Service<ModelControll
         private void executeAdditionalCliScript() {
             boolean success = false;
             try {
-                if (doneMarker != null && doneMarker.exists()) {
-                    Files.delete(doneMarker.toPath());
-                }
+                deleteFile(doneMarker);
+                deleteFile(embeddedServerNeedsRestart);
+
                 final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
                 final ModuleLoader loader = classLoader.getModule().getModuleLoader();
                 final Module module;
@@ -1032,12 +1033,10 @@ public abstract class AbstractControllerService implements Service<ModelControll
 
                 client.execute(shutdown);
             } catch (IOException e) {
-                if (Files.exists(restartInitiated.toPath())) {
-                    try {
-                        Files.delete(restartInitiated.toPath());
-                    } catch (IOException ex) {
-                        e = ex;
-                    }
+                try {
+                    deleteFile(restartInitiated);
+                } catch (IOException ex) {
+                    e = ex;
                 }
                 throw new RuntimeException(e);
             }
@@ -1072,6 +1071,15 @@ public abstract class AbstractControllerService implements Service<ModelControll
             WildFlySecurityManager.clearPropertyPrivileged(CLI_SCRIPT_PROPERTY);
             WildFlySecurityManager.clearPropertyPrivileged(SKIP_RELOAD_PROPERTY);
             WildFlySecurityManager.clearPropertyPrivileged(MARKER_DIRECTORY_PROPERTY);
+        }
+
+        private void deleteFile(File file) throws IOException {
+            if (file != null) {
+                Path path = file.toPath();
+                if (Files.exists(path)) {
+                    Files.delete(path);
+                }
+            }
         }
     }
 }
