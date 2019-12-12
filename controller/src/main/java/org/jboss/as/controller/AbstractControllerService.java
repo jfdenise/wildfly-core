@@ -877,6 +877,8 @@ public abstract class AbstractControllerService implements Service<ModelControll
         private final File doneMarker;
         // Will be null if keepAlive=true
         private final File restartInitiated;
+        // Will be null if keepAlive=true
+        private final File embeddedServerNeedsRestart;
 
         public AdditionalBootCliScriptInvocation(AbstractControllerService controllerService, File additionalBootCliScript, boolean keepAlive, File markerDirectory) {
             this.controllerService = controllerService;
@@ -884,6 +886,7 @@ public abstract class AbstractControllerService implements Service<ModelControll
             this.keepAlive = keepAlive;
             this.doneMarker = markerDirectory == null ? null : new File(markerDirectory, "wf-cli-invoker-result");
             this.restartInitiated = markerDirectory == null ? null : new File(markerDirectory, "wf-cli-shutdown-initiated");
+            this.embeddedServerNeedsRestart = markerDirectory == null ? null : new File(markerDirectory, "wf-restart-embedded-server");
         }
 
         static AdditionalBootCliScriptInvocation create(AbstractControllerService controllerService) {
@@ -1010,6 +1013,14 @@ public abstract class AbstractControllerService implements Service<ModelControll
         }
 
         private void executeRestart(ModelControllerClient client) {
+            if (controllerService.processType == ProcessType.STANDALONE_SERVER) {
+                executeRestartNormalServer(client);
+            } else {
+                recordRestartEmbeddedServer();
+            }
+        }
+
+        private void executeRestartNormalServer(ModelControllerClient client) {
             try {
                 ModelNode shutdown = Util.createOperation(SHUTDOWN, PathAddress.EMPTY_ADDRESS);
                 shutdown.get(RESTART).set(true);
@@ -1028,6 +1039,14 @@ public abstract class AbstractControllerService implements Service<ModelControll
                         e = ex;
                     }
                 }
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void recordRestartEmbeddedServer() {
+            try {
+                Files.createFile(embeddedServerNeedsRestart.toPath());
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
