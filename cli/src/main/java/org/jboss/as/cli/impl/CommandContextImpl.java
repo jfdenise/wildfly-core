@@ -82,6 +82,7 @@ import org.aesh.extensions.grep.Grep;
 import org.aesh.readline.Prompt;
 import org.aesh.terminal.utils.Config;
 import org.aesh.readline.util.FileAccessPermission;
+import org.jboss.as.cli.UtilFormat;
 import org.jboss.as.cli.Attachments;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliEvent;
@@ -429,7 +430,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
             if (config.isColorOutput()) {
                 colourOutput = true;
-                Util.configureColors(this);
+                UtilFormat.configureColors(this);
             }
         } else {
             aeshCommands = new AeshCommands(this, new OperationCommandContainer(this));
@@ -1053,16 +1054,16 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         if (outcome != null && !outcome.isEmpty()) {
             switch (outcome) {
                 case "success":
-                    return Util.formatSuccessMessage(message);
+                    return UtilFormat.formatSuccessMessage(message);
                 case "fail":
                 case "failed":
                 case "failure":
                 case "error":
-                    return Util.formatErrorMessage(message);
+                    return UtilFormat.formatErrorMessage(message);
                 case "cancelled":
                 case "warn":
                 case "warning":
-                    return Util.formatWarnMessage(message);
+                    return UtilFormat.formatWarnMessage(message);
             }
         }
 
@@ -1605,7 +1606,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         }
 
         if (isColorOutput()) {
-            Util.formatPrompt(buffer);
+            UtilFormat.formatPrompt(buffer);
         }
 
         if (prefix.isEmpty()) {
@@ -1620,7 +1621,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
         if (isBatchMode()) {
             if (isColorOutput()) {
-                buffer.append(Util.formatWorkflowPrompt(" #"));
+                buffer.append(UtilFormat.formatWorkflowPrompt(" #"));
             } else {
                 buffer.append(" #");
             }
@@ -1628,7 +1629,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
         if (isWorkflowMode()) {
             if (isColorOutput()) {
-                buffer.append(Util.formatWorkflowPrompt(" ..."));
+                buffer.append(UtilFormat.formatWorkflowPrompt(" ..."));
             } else {
                 buffer.append(" ...");
             }

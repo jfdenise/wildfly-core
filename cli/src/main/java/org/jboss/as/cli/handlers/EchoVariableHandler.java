@@ -37,8 +37,15 @@ import org.jboss.as.cli.util.CLIExpressionResolver;
  */
 public class EchoVariableHandler extends CommandHandlerWithHelp {
 
+    private final boolean handleOperator;
+
     public EchoVariableHandler() {
+        this(false);
+    }
+
+    public EchoVariableHandler(boolean handleOperator) {
         super("echo");
+        this.handleOperator = handleOperator;
         // The line takes benefit of top level operation/command completer
         // that does handle variable completion of any value starting with '$'
         // and followed by 0 to n characters.
@@ -54,6 +61,19 @@ public class EchoVariableHandler extends CommandHandlerWithHelp {
     protected void doHandle(CommandContext ctx) throws CommandFormatException {
         final ParsedCommandLine line = ctx.getParsedCommandLine();
         String result = line.getSubstitutedLine().trim().substring(line.getOperationName().length()).trim();
+        if (handleOperator) {
+            int i = result.lastIndexOf(">>");
+            if (i != -1) {
+                result = result.substring(0, i);
+                result = result.trim();
+            } else {
+                i = result.lastIndexOf(">");
+                if (i != -1) {
+                    result = result.substring(0, i);
+                    result = result.trim();
+                }
+            }
+        }
         if(ctx.isResolveParameterValues()) {
             result = CLIExpressionResolver.resolve(result);
         }

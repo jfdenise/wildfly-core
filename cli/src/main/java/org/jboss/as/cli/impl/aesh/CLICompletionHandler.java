@@ -26,7 +26,7 @@ import org.aesh.readline.completion.CompletionHandler;
 import org.aesh.readline.terminal.formatting.TerminalString;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineCompleter;
-import org.jboss.as.cli.Util;
+import org.jboss.as.cli.UtilFormat;
 import org.jboss.as.cli.impl.CLICommandCompleter;
 import org.jboss.as.cli.impl.CLICommandCompleter.Completer;
 import org.jboss.as.cli.impl.CommandContextImpl;
@@ -73,7 +73,7 @@ class CLICompletionHandler extends CompletionHandler<AeshCompleteOperation> impl
             List<TerminalString> requiredCandidates = new ArrayList<>();
             for (TerminalString candidate : completionCandidates) {
                 if (candidate.toString().endsWith("*") && !"*".equals(candidate.toString())) {
-                    TerminalString newCandidate = Util.formatRequired(candidate);
+                    TerminalString newCandidate = UtilFormat.formatRequired(candidate);
                     requiredCandidates.add(newCandidate);
                 }
             }

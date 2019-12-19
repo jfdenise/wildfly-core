@@ -95,6 +95,10 @@ class CliConfigImpl implements CliConfig {
         return load(ctx, null);
     }
 
+    static CliConfig getDefault() throws CliInitializationException {
+        return new CliConfigImpl();
+    }
+
     static CliConfig load(final CommandContext ctx, CommandContextConfiguration configuration) throws CliInitializationException {
         File jbossCliFile = findCLIFileFromSystemProperty();
 

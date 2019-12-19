@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.controller.client.ModelControllerClient;
-import org.jboss.as.protocol.StreamUtils;
 import org.jboss.logging.Logger;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
@@ -61,7 +60,7 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
                 jbossLogManager.getLogger(CommandContext.class.getName()).setLevel(Level.OFF);
             }
         }
-        CommandContextImpl ctx;
+        BootCommandContext ctx = null;
         String props = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.properties", null);
 
         if (props != null) {
@@ -83,7 +82,7 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
             if (logFile != null) {
                 output = new FileOutputStream(logFile);
             }
-            ctx = new CommandContextImpl(output);
+            ctx = new BootCommandContext(output);
             ctx.bindClient(client);
 
             processFile(file, ctx);
@@ -106,26 +105,25 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
             }
             throw new RuntimeException(ex);
         } finally {
+            if (ctx != null) {
+                ctx.terminateSession();
+            }
             clearProperties();
         }
         LOGGER.info("Done executing CLI Script invoker for file " + file);
     }
 
     private static void processFile(File file, final CommandContext cmdCtx) throws IOException {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(file));
+        try ( BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line = reader.readLine();
             while (cmdCtx.getExitCode() == 0 && !cmdCtx.isTerminated() && line != null) {
                 LOGGER.debug("Executing command " + line.trim());
-                cmdCtx.handleSafe(line.trim());
+                cmdCtx.handle(line.trim());
                 line = reader.readLine();
             }
         } catch (Throwable e) {
             LOGGER.error("Unexpected exception processing commands ", e);
             throw new IllegalStateException("Failed to process file '" + file.getAbsolutePath() + "'", e);
-        } finally {
-            StreamUtils.safeClose(reader);
         }
         String warnFile = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.warn.file", null);
         if (warnFile != null) {

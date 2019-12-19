@@ -16,11 +16,7 @@ limitations under the License.
 package org.jboss.as.cli.parsing;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import org.aesh.command.operator.OperatorType;
 import org.jboss.as.cli.CommandFormatException;
 
 /**
@@ -36,25 +32,8 @@ public class OperatorState {
     private static final List<OpState> OPERATORS = new ArrayList<>();
     public static final String ID = "OPERATOR_OP";
     static {
-        Map<Character, List<String>> map = new HashMap<>();
-        for (OperatorType ot : OperatorType.values()) {
-            // We don't want other operators.
-            if (ot.value().startsWith(">") || ot.value().startsWith("|")) {
-                if (!ot.value().isEmpty()) {
-                    char c = ot.value().charAt(0);
-                    List<String> operators = map.get(c);
-                    if (operators == null) {
-                        operators = new ArrayList<>();
-                        map.put(c, operators);
-                    }
-                    operators.add(ot.value());
-                }
-            }
-        }
-        for (Entry<Character, List<String>> entry : map.entrySet()) {
-            OPERATORS.add(new OpState(entry.getKey() == '>' ? OutputTargetState.ID : ID,
-                    entry.getKey()));
-        }
+        OPERATORS.add(new OpState(OutputTargetState.ID, '>'));
+        OPERATORS.add(new OpState(ID, '|'));
     }
 
     public static class OpState extends DefaultParsingState {
