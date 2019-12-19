@@ -26,6 +26,8 @@ import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.MARKER_DIRECTORY_PROPERTY;
 import static org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker.SKIP_RELOAD_PROPERTY;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAILED;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAILURE_DESCRIPTION;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RELOAD;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RESTART;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SHUTDOWN;
@@ -960,22 +962,9 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 deleteFile(doneMarker);
                 deleteFile(embeddedServerNeedsRestart);
 
-                final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
-                final ModuleLoader loader = classLoader.getModule().getModuleLoader();
-                final Module module;
-                try {
-                    module = loader.loadModule("org.jboss.as.cli");
-                } catch (ModuleLoadException e) {
-                    throw new RuntimeException(e);
-                }
-                ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
-                AdditionalBootCliScriptInvoker invoker = null;
-                for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
-                    if (invoker != null) {
-                        throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
-                    }
-                    invoker = currentInvoker;
-                }
+                AdditionalBootCliScriptInvoker invoker = loadInvoker();
+
+                assert invoker != null : "No invoker found";
 
                 try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
 
@@ -1031,7 +1020,10 @@ public abstract class AbstractControllerService implements Service<ModelControll
 
                 ROOT_LOGGER.restartingServerAfterBootCliScript(restartInitiated, CLI_SCRIPT_PROPERTY, SKIP_RELOAD_PROPERTY, MARKER_DIRECTORY_PROPERTY);
 
-                client.execute(shutdown);
+                ModelNode result = client.execute(shutdown);
+                if (result.get(OUTCOME).asString().equals(FAILED)) {
+                    throw new RuntimeException(result.get(FAILURE_DESCRIPTION).asString());
+                }
             } catch (IOException e) {
                 try {
                     deleteFile(restartInitiated);
@@ -1059,7 +1051,10 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 } else {
                     ROOT_LOGGER.reloadingServerToNormalModeAfterRestartAfterAdditionalBootCliScript(CLI_SCRIPT_PROPERTY, SKIP_RELOAD_PROPERTY, MARKER_DIRECTORY_PROPERTY);
                 }
-                client.execute(reload);
+                ModelNode result = client.execute(reload);
+                if (result.get(OUTCOME).asString().equals(FAILED)) {
+                    throw new RuntimeException(result.get(FAILURE_DESCRIPTION).asString());
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } finally {
@@ -1081,5 +1076,38 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 }
             }
         }
+
+        private AdditionalBootCliScriptInvoker loadInvoker() {
+            // Ability to override the invoker in unit tests where we don't have all the modules set up
+            String testInvoker = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.test.override.cli.boot.invoker", null);
+            if (testInvoker != null) {
+                try {
+                    return (AdditionalBootCliScriptInvoker)Class.forName(testInvoker).newInstance();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            // We are running in a proper server, load the invoker normally
+            final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
+            final ModuleLoader loader = classLoader.getModule().getModuleLoader();
+            final Module module;
+            try {
+                module = loader.loadModule("org.jboss.as.cli");
+            } catch (ModuleLoadException e) {
+                throw new RuntimeException(e);
+            }
+            ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
+            AdditionalBootCliScriptInvoker invoker = null;
+            for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
+                if (invoker != null) {
+                    throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
+                }
+                invoker = currentInvoker;
+            }
+            return invoker;
+        }
+
+
     }
 }
