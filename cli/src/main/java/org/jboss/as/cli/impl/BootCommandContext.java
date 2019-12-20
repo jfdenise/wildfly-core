@@ -108,7 +108,7 @@ import org.jboss.logging.Logger.Level;
 
 /**
  *
- * @author Alexey Loubyansky
+ * @author jfdenise
  */
 public class BootCommandContext implements CommandContext, ModelControllerClientFactory.ConnectionCloseHandler {
 
@@ -224,7 +224,7 @@ public class BootCommandContext implements CommandContext, ModelControllerClient
      * Constructor called from Boot invoker, minimal configuration.
      *
      */
-    BootCommandContext(OutputStream output) throws CliInitializationException {
+    public BootCommandContext(OutputStream output) throws CliInitializationException {
         config = CliConfigImpl.getDefault();
         operationHandler = new OperationRequestHandler();
 
@@ -814,7 +814,20 @@ public class BootCommandContext implements CommandContext, ModelControllerClient
                 op.append(line.substring(line.indexOf(':')));
                 return new HandledRequest(request, null);
             }
-            return null;
+            final CommandHandler handler = cmdRegistry.getCommandHandler(parsedCmd.getOperationName());
+            if (handler != null) {
+                if (batchMode) {
+                    if (!handler.isBatchMode(this)) {
+                        throw new OperationFormatException("The command is not allowed in a batch.");
+                    }
+                    Batch batch = getBatchManager().getActiveBatch();
+                    return ((OperationCommand) handler).buildHandledRequest(this, batch.getAttachments());
+                } else if (!(handler instanceof OperationCommand)) {
+                    throw new OperationFormatException("The command does not translate to an operation request.");
+                }
+                return new HandledRequest(((OperationCommand) handler).buildRequest(this), null);
+            }
+            throw new CommandFormatException("Unknown command " + parsedCmd.getOperationName());
         } finally {
             clear(Scope.REQUEST);
             this.parsedCmd = originalParsedArguments;
