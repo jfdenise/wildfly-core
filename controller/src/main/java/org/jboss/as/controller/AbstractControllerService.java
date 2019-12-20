@@ -35,6 +35,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUC
 import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -965,27 +966,28 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 deleteFile(doneMarker);
                 deleteFile(embeddedServerNeedsRestart);
 
-                AdditionalBootCliScriptInvoker invoker = loadInvoker();
+                try ( InvokerLoader loader = new InvokerLoader()) {
 
-                assert invoker != null : "No invoker found";
+                    assert loader.getInvoker() != null : "No invoker found";
 
-                try (ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
+                    try ( ModelControllerClient client = controllerService.controller.createClient(controllerService.executorService.get())) {
 
-                    ROOT_LOGGER.executingBootCliScript(additionalBootCliScript);
+                        ROOT_LOGGER.executingBootCliScript(additionalBootCliScript);
 
-                    invoker.runCliScript(client, additionalBootCliScript);
+                        loader.getInvoker().runCliScript(client, additionalBootCliScript);
 
-                    ROOT_LOGGER.completedRunningBootCliScript();
+                        ROOT_LOGGER.completedRunningBootCliScript();
 
-                    if (!keepAlive) {
-                        boolean restart = controllerService.processState.checkRestartRequired();
-                        if (restart) {
-                            executeRestart(client);
-                        } else {
-                            executeReload(client, false);
+                        if (!keepAlive) {
+                            boolean restart = controllerService.processState.checkRestartRequired();
+                            if (restart) {
+                                executeRestart(client);
+                            } else {
+                                executeReload(client, false);
+                            }
                         }
+                        success = true;
                     }
-                    success = true;
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -1080,61 +1082,82 @@ public abstract class AbstractControllerService implements Service<ModelControll
             }
         }
 
-        private AdditionalBootCliScriptInvoker loadInvoker() {
-            // Ability to override the invoker in unit tests where we don't have all the modules set up
-            String testInvoker = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.test.override.cli.boot.invoker", null);
-            if (testInvoker != null) {
+        private static class InvokerLoader implements Closeable {
+
+            private final AdditionalBootCliScriptInvoker invoker;
+            private LocalModuleFinder cliModuleFinder;
+
+            private InvokerLoader() {
+                // Ability to override the invoker in unit tests where we don't have all the modules set up
+                String testInvoker = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.test.override.cli.boot.invoker", null);
+                if (testInvoker != null) {
+                    try {
+                        invoker = (AdditionalBootCliScriptInvoker) Class.forName(testInvoker).newInstance();
+                        return;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                // We are running in a proper server, load the invoker normally
+                final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
+                final ModuleLoader systemLoader = classLoader.getModule().getModuleLoader();
+
+                File[] roots = _TempLayeredModulePathFactory.resolveLayeredModulePath(getModulePathFiles());
+                PathFilter filter = new PathFilter() {
+                    @Override
+                    public boolean accept(String path) {
+                        return path.startsWith("org/jboss/as/cli/main") || path.startsWith("org/aesh/main");
+                    }
+                };
                 try {
-                    return (AdditionalBootCliScriptInvoker)Class.forName(testInvoker).newInstance();
-                } catch (Exception e) {
+                    cliModuleFinder = new LocalModuleFinder(roots, filter);
+                    DelegatingModuleLoader cliLoader = new DelegatingModuleLoader(systemLoader, cliModuleFinder);
+                    Module module = cliLoader.loadModule("org.jboss.as.cli");
+                    ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
+                    AdditionalBootCliScriptInvoker invoker = null;
+                    for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
+                        if (invoker != null) {
+                            throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
+                        }
+                        invoker = currentInvoker;
+                    }
+                    this.invoker = invoker;
+                } catch (ModuleLoadException e) {
                     throw new RuntimeException(e);
                 }
             }
 
-            // We are running in a proper server, load the invoker normally
-            final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
-            final ModuleLoader systemLoader = classLoader.getModule().getModuleLoader();
-
-            File[] roots = _TempLayeredModulePathFactory.resolveLayeredModulePath(getModulePathFiles());
-            PathFilter filter = new PathFilter() {
-                @Override
-                public boolean accept(String path) {
-                    return path.startsWith("org/jboss/as/cli/main");
-                }
-            };
-            try (LocalModuleFinder cliModuleFinder = new LocalModuleFinder(roots, filter)) {
-                DelegatingModuleLoader cliLoader = new DelegatingModuleLoader(systemLoader, cliModuleFinder);
-                Module module = cliLoader.loadModule("org.jboss.as.cli");
-                ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
-                AdditionalBootCliScriptInvoker invoker = null;
-                for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
-                    if (invoker != null) {
-                        throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
-                    }
-                    invoker = currentInvoker;
-                }
+            private AdditionalBootCliScriptInvoker getInvoker() {
                 return invoker;
-            } catch (ModuleLoadException e) {
-                throw new RuntimeException(e);
             }
-        }
 
-        private static File[] getModulePathFiles() {
-            return getFiles(System.getProperty("module.path", System.getenv("JAVA_MODULEPATH")), 0, 0);
-        }
-
-        private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
-            if (modulePath == null) return new File[0];
-            final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
-            final File[] files;
-            if (i == -1) {
-                files = new File[arrayIdx + 1];
-                files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
-            } else {
-                files = getFiles(modulePath, i + 1, arrayIdx + 1);
-                files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
+            private static File[] getModulePathFiles() {
+                return getFiles(System.getProperty("module.path", System.getenv("JAVA_MODULEPATH")), 0, 0);
             }
-            return files;
+
+            private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
+                if (modulePath == null) {
+                    return new File[0];
+                }
+                final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
+                final File[] files;
+                if (i == -1) {
+                    files = new File[arrayIdx + 1];
+                    files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
+                } else {
+                    files = getFiles(modulePath, i + 1, arrayIdx + 1);
+                    files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
+                }
+                return files;
+            }
+
+            @Override
+            public void close() throws IOException {
+                if (cliModuleFinder != null) {
+                    cliModuleFinder.close();
+                }
+            }
         }
     }
 
