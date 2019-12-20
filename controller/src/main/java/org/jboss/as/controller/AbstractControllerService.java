@@ -75,10 +75,13 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.dmr.ModelNode;
+import org.jboss.modules.DelegatingModuleLoader;
+import org.jboss.modules.LocalModuleFinder;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
+import org.jboss.modules.filter.PathFilter;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceContainer;
@@ -1090,24 +1093,49 @@ public abstract class AbstractControllerService implements Service<ModelControll
 
             // We are running in a proper server, load the invoker normally
             final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
-            final ModuleLoader loader = classLoader.getModule().getModuleLoader();
-            final Module module;
-            try {
-                module = loader.loadModule("org.jboss.as.cli");
+            final ModuleLoader systemLoader = classLoader.getModule().getModuleLoader();
+
+            File[] roots = _TempLayeredModulePathFactory.resolveLayeredModulePath(getModulePathFiles());
+            PathFilter filter = new PathFilter() {
+                @Override
+                public boolean accept(String path) {
+                    return path.startsWith("org/jboss/as/cli/main");
+                }
+            };
+            try (LocalModuleFinder cliModuleFinder = new LocalModuleFinder(roots, filter)) {
+                DelegatingModuleLoader cliLoader = new DelegatingModuleLoader(systemLoader, cliModuleFinder);
+                Module module = cliLoader.loadModule("org.jboss.as.cli");
+                ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
+                AdditionalBootCliScriptInvoker invoker = null;
+                for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
+                    if (invoker != null) {
+                        throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
+                    }
+                    invoker = currentInvoker;
+                }
+                return invoker;
             } catch (ModuleLoadException e) {
                 throw new RuntimeException(e);
             }
-            ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
-            AdditionalBootCliScriptInvoker invoker = null;
-            for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
-                if (invoker != null) {
-                    throw ROOT_LOGGER.moreThanOneInstanceOfAdditionalBootCliScriptInvokerFound(invoker.getClass().getName(), currentInvoker.getClass().getName());
-                }
-                invoker = currentInvoker;
-            }
-            return invoker;
         }
 
+        private static File[] getModulePathFiles() {
+            return getFiles(System.getProperty("module.path", System.getenv("JAVA_MODULEPATH")), 0, 0);
+        }
 
+        private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
+            if (modulePath == null) return new File[0];
+            final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
+            final File[] files;
+            if (i == -1) {
+                files = new File[arrayIdx + 1];
+                files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
+            } else {
+                files = getFiles(modulePath, i + 1, arrayIdx + 1);
+                files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
+            }
+            return files;
+        }
     }
+
 }
