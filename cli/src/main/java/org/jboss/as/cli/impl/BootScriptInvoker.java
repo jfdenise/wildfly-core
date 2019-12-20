@@ -26,11 +26,12 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Properties;
-import org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.impl.AdditionalBootCliScriptInvoker;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.logging.Logger;
 import org.wildfly.security.manager.WildFlySecurityManager;
@@ -47,6 +48,7 @@ public class BootScriptInvoker implements AdditionalBootCliScriptInvoker {
 
     @Override
     public void runCliScript(ModelControllerClient client, File file) {
+        System.out.println(this.getClass().getClassLoader());
         logger.info("Executing CLI Script invoker for file " + file);
 
         String log = WildFlySecurityManager.getPropertyPrivileged("org.wildfly.cli.boot.script.logging", "false");
