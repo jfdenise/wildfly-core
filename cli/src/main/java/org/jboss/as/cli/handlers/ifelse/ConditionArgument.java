@@ -33,6 +33,7 @@ import org.jboss.as.cli.parsing.DefaultStateWithEndCharacter;
 import org.jboss.as.cli.parsing.EscapeCharacterState;
 import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.ParsingContext;
 import org.jboss.as.cli.parsing.ParsingState;
 import org.jboss.as.cli.parsing.ParsingStateCallbackHandler;
@@ -46,55 +47,70 @@ import org.jboss.as.cli.parsing.StateParser;
  */
 public class ConditionArgument extends ArgumentWithValue {
 
-    private static final ParsingState AND = new OperationParsingState(AndOperation.SYMBOL) {
+    static {
+        ParsingStaticClearer.add(ConditionArgument.class);
+    }
+
+    public static void staticClear() {
+        AND = null;
+        OR = null;
+        GT = null;
+        LT = null;
+        NEQ = null;
+        EQ = null;
+        NGT = null;
+        NLT = null;
+        MCH = null;
+    }
+    private static ParsingState AND = new OperationParsingState(AndOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new AndOperation();
         }
     };
-    private static final ParsingState OR = new OperationParsingState(OrOperation.SYMBOL) {
+    private static ParsingState OR = new OperationParsingState(OrOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new OrOperation();
         }
     };
-    private static final ParsingState GT = new OperationParsingState(GreaterThanOperation.SYMBOL) {
+    private static ParsingState GT = new OperationParsingState(GreaterThanOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new GreaterThanOperation();
         }
     };
-    private static final ParsingState LT = new OperationParsingState(LesserThanOperation.SYMBOL) {
+    private static ParsingState LT = new OperationParsingState(LesserThanOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new LesserThanOperation();
         }
     };
-    private static final ParsingState NEQ = new OperationParsingState(NotEqualsOperation.SYMBOL) {
+    private static ParsingState NEQ = new OperationParsingState(NotEqualsOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new NotEqualsOperation();
         }
     };
-    private static final ParsingState EQ = new OperationParsingState(EqualsOperation.SYMBOL) {
+    private static ParsingState EQ = new OperationParsingState(EqualsOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new EqualsOperation();
         }
     };
-    private static final ParsingState NGT = new OperationParsingState(NotGreaterThanOperation.SYMBOL) {
+    private static ParsingState NGT = new OperationParsingState(NotGreaterThanOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new NotGreaterThanOperation();
         }
     };
-    private static final ParsingState NLT = new OperationParsingState(NotLesserThanOperation.SYMBOL) {
+    private static ParsingState NLT = new OperationParsingState(NotLesserThanOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new NotLesserThanOperation();
         }
     };
-    private static final ParsingState MCH = new OperationParsingState(MatchOperation.SYMBOL) {
+    private static ParsingState MCH = new OperationParsingState(MatchOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
             return new MatchOperation();

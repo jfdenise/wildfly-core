@@ -29,6 +29,7 @@ import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.OperatorState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -37,9 +38,15 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class CommandState extends DefaultParsingState {
 
-    public static final CommandState INSTANCE = new CommandState();
+    public static CommandState INSTANCE = new CommandState();
     public static final String ID = "CMD";
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
+    static {
+        ParsingStaticClearer.add(CommandState.class);
+    }
     CommandState() {
         this(AddressCommandSeparatorState.INSTANCE, ArgumentListState.INSTANCE);
     }

@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.operation.PropertyListState;
 
 
@@ -36,9 +37,15 @@ import org.jboss.as.cli.parsing.operation.PropertyListState;
  */
 public class RolloutPlanState extends DefaultParsingState {
 
-    public static final RolloutPlanState INSTANCE = new RolloutPlanState();
+    public static RolloutPlanState INSTANCE = new RolloutPlanState();
     public static final String ID = "ROLLOUT_PLAN_HEADER";
 
+    static {
+        ParsingStaticClearer.add(RolloutPlanState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     RolloutPlanState() {
         this(ServerGroupListState.INSTANCE, new PropertyListState(' ', ' ', ';', '}'));
     }

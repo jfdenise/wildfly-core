@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.parsing.operation;
 
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.CommandLineFormat;
 
 /**
@@ -29,8 +30,13 @@ import org.jboss.as.cli.CommandLineFormat;
  */
 public class OperationFormat implements CommandLineFormat {
 
-    public static final OperationFormat INSTANCE = new OperationFormat();
-
+    public static OperationFormat INSTANCE = new OperationFormat();
+    static {
+        ParsingStaticClearer.add(OperationFormat.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     /* (non-Javadoc)
      * @see org.jboss.as.cli.CommandLineFormat#getPropertyListStart()
      */

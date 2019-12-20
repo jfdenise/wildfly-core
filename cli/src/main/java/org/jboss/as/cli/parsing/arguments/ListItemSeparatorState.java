@@ -23,6 +23,7 @@ package org.jboss.as.cli.parsing.arguments;
 
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -32,8 +33,14 @@ public class ListItemSeparatorState extends DefaultParsingState {
 
     public static final String ID = "LIST_ITEM_SEP";
 
-    public static final ListItemSeparatorState INSTANCE = new ListItemSeparatorState();
+    public static ListItemSeparatorState INSTANCE = new ListItemSeparatorState();
 
+    static {
+        ParsingStaticClearer.add(ListItemSeparatorState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public ListItemSeparatorState() {
         super(ID);
         setEnterHandler(GlobalCharacterHandlers.LEAVE_STATE_HANDLER);

@@ -26,6 +26,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -34,9 +35,15 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class ServerGroupSeparatorState extends DefaultParsingState {
 
-    public static final ServerGroupSeparatorState INSTANCE = new ServerGroupSeparatorState();
+    public static ServerGroupSeparatorState INSTANCE = new ServerGroupSeparatorState();
     public static final String ID = "SG_SEPARATOR";
 
+    static {
+        ParsingStaticClearer.add(ServerGroupSeparatorState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     ServerGroupSeparatorState() {
         this(ServerGroupState.INSTANCE);
     }

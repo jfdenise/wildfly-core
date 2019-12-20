@@ -35,7 +35,15 @@ public class GlobalCharacterHandlers {
 
     private static final Map<Character, CharacterHandler> handlers = new HashMap<Character, CharacterHandler>();
 
-    static final CharacterHandlerMap GLOBAL_ENTER_STATE_HANDLERS = new CharacterHandlerMap() {
+    public static void staticClear() {
+        handlers.clear();
+        CONTENT_CHARACTER_HANDLER = null;
+        GLOBAL_ENTER_STATE_HANDLERS = null;
+        LEAVE_STATE_HANDLER = null;
+        NOOP_CHARACTER_HANDLER = null;
+    }
+
+    static CharacterHandlerMap GLOBAL_ENTER_STATE_HANDLERS = new CharacterHandlerMap() {
         @Override
         public CharacterHandler getHandler(char ch) {
             return GlobalCharacterHandlers.getHandler(ch, null);
@@ -51,7 +59,7 @@ public class GlobalCharacterHandlers {
             throw new UnsupportedOperationException();
         }};
 
-    public static final CharacterHandler NOOP_CHARACTER_HANDLER = new CharacterHandler(){
+    public static CharacterHandler NOOP_CHARACTER_HANDLER = new CharacterHandler() {
         @Override
         public void handle(ParsingContext ctx)
                 throws OperationFormatException {
@@ -61,7 +69,7 @@ public class GlobalCharacterHandlers {
         }
     };
 
-    public static final CharacterHandler CONTENT_CHARACTER_HANDLER = new CharacterHandler() {
+    public static CharacterHandler CONTENT_CHARACTER_HANDLER = new CharacterHandler() {
 
         @Override
         public void handle(ParsingContext ctx)
@@ -70,7 +78,7 @@ public class GlobalCharacterHandlers {
         }
     };
 
-    public static final CharacterHandler LEAVE_STATE_HANDLER = new CharacterHandler() {
+    public static CharacterHandler LEAVE_STATE_HANDLER = new CharacterHandler() {
 
         @Override
         public void handle(ParsingContext ctx)

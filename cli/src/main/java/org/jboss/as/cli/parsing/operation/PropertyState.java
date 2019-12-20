@@ -28,6 +28,7 @@ import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
 
@@ -37,9 +38,15 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
  */
 public class PropertyState extends ExpressionBaseState {
 
-    public static final PropertyState INSTANCE = new PropertyState();
+    public static PropertyState INSTANCE = new PropertyState();
     public static final String ID = "PROP";
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
+    static {
+        ParsingStaticClearer.add(PropertyState.class);
+    }
     PropertyState() {
         this(PropertyValueState.INSTANCE);
     }

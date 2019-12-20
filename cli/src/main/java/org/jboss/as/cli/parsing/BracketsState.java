@@ -27,8 +27,16 @@ package org.jboss.as.cli.parsing;
  */
 public class BracketsState extends DefaultParsingState {
 
-    static final BracketsState QUOTES_EXCLUDED = new BracketsState(false);
-    static final BracketsState QUOTES_INCLUDED = new BracketsState(true);
+    static BracketsState QUOTES_EXCLUDED = new BracketsState(false);
+    static BracketsState QUOTES_INCLUDED = new BracketsState(true);
+
+    static {
+        ParsingStaticClearer.add(BracketsState.class);
+    }
+    public static void staticClear() {
+        QUOTES_EXCLUDED = null;
+        QUOTES_INCLUDED = null;
+    }
 
     public BracketsState(boolean quotesInContent) {
         super("BRACKETS", quotesInContent);

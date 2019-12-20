@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -35,8 +36,14 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class ServerGroupListState extends DefaultParsingState {
 
-    public static final ServerGroupListState INSTANCE = new ServerGroupListState();
+    public static ServerGroupListState INSTANCE = new ServerGroupListState();
     public static final String ID = "SG_LIST";
+    static {
+        ParsingStaticClearer.add(ServerGroupListState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
     ServerGroupListState() {
         this(ServerGroupState.INSTANCE, ServerGroupSeparatorState.INSTANCE, ConcurrentSignState.INSTANCE);

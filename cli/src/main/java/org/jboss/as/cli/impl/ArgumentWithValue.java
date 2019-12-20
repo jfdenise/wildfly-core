@@ -33,6 +33,7 @@ import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.ParsingContext;
 import org.jboss.as.cli.parsing.ParsingState;
 import org.jboss.as.cli.parsing.ParsingStateCallbackHandler;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.StateParser;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 import org.jboss.dmr.ModelNode;
@@ -43,12 +44,16 @@ import org.jboss.dmr.ModelNode;
  */
 public class ArgumentWithValue extends ArgumentWithoutValue {
 
-    private static final ParsingState DEFAULT_EXPRESSION_STATE;
+    private static ParsingState DEFAULT_EXPRESSION_STATE;
 
+    public static void staticClear() {
+        DEFAULT_EXPRESSION_STATE = null;
+    }
     static {
         final ExpressionBaseState state = new ExpressionBaseState("EXPR", true, false);
         state.setDefaultHandler(WordCharacterHandler.IGNORE_LB_ESCAPE_ON);
         DEFAULT_EXPRESSION_STATE = state;
+        ParsingStaticClearer.add(ArgumentWithValue.class);
     }
 
     private final CommandLineCompleter valueCompleter;

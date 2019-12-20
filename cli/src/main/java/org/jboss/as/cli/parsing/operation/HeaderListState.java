@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -35,9 +36,15 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class HeaderListState extends DefaultParsingState {
 
-    public static final HeaderListState INSTANCE = new HeaderListState();
+    public static HeaderListState INSTANCE = new HeaderListState();
     public static final String ID = "HEADER_LIST";
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
+    static {
+        ParsingStaticClearer.add(HeaderListState.class);
+    }
     HeaderListState() {
         this(HeaderState.INSTANCE);
     }

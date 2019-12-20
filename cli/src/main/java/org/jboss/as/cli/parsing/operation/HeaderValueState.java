@@ -26,6 +26,7 @@ import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.QuotesState;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
@@ -35,9 +36,15 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
  */
 public class HeaderValueState extends ExpressionBaseState {
 
-    public static final HeaderValueState INSTANCE = new HeaderValueState();
+    public static HeaderValueState INSTANCE = new HeaderValueState();
     public static final String ID = "HEADER_VALUE";
 
+    static {
+        ParsingStaticClearer.add(HeaderValueState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     HeaderValueState() {
         super(ID);
         putHandler(';', GlobalCharacterHandlers.LEAVE_STATE_HANDLER);

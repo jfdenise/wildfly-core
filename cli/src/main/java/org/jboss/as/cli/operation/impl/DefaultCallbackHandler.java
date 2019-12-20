@@ -40,6 +40,7 @@ import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.operation.ParsedOperationRequestHeader;
 import org.jboss.as.cli.parsing.ParserUtil;
 import org.jboss.as.cli.parsing.ParsingStateCallbackHandler;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.StateParser;
 import org.jboss.as.cli.parsing.operation.OperationFormat;
 import org.jboss.as.cli.parsing.operation.header.RolloutPlanHeaderCallbackHandler;
@@ -63,8 +64,15 @@ public class DefaultCallbackHandler extends ValidatingCallbackHandler implements
     private static final int SEPARATOR_HEADER = 9;
     private static final int SEPARATOR_NOT_OPERATOR = 10;
 
-    private static final DefaultOperationRequestAddress EMPTY_ADDRESS = new DefaultOperationRequestAddress();
+    private static DefaultOperationRequestAddress EMPTY_ADDRESS = new DefaultOperationRequestAddress();
 
+    static {
+        ParsingStaticClearer.add(DefaultCallbackHandler.class);
+    }
+
+    public static void staticClear() {
+        EMPTY_ADDRESS = null;
+    }
     private int separator = SEPARATOR_NONE;
     private int lastSeparatorIndex = -1;
     private int lastNotOperatorIndex = -1;

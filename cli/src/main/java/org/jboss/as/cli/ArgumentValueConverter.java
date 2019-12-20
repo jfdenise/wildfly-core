@@ -24,6 +24,7 @@ package org.jboss.as.cli;
 
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.StateParser;
 import org.jboss.as.cli.parsing.arguments.ArgumentValueCallbackHandler;
 import org.jboss.as.cli.parsing.arguments.ArgumentValueInitialState;
@@ -38,9 +39,19 @@ import org.jboss.dmr.ModelNode;
  *
  * @author Alexey Loubyansky
  */
-public interface ArgumentValueConverter {
+public abstract class ArgumentValueConverter {
 
-    abstract class DMRWithFallbackConverter implements ArgumentValueConverter {
+    static {
+        ParsingStaticClearer.add(ArgumentValueConverter.class);
+    }
+    public static void staticClear() {
+        DEFAULT = null;
+        NON_OBJECT = null;
+        LIST = null;
+        PROPERTIES = null;
+    }
+
+    public abstract static class DMRWithFallbackConverter extends ArgumentValueConverter {
         @Override
         public ModelNode fromString(CommandContext ctx, String value) throws CommandFormatException {
             if(value == null) {
@@ -59,7 +70,7 @@ public interface ArgumentValueConverter {
         protected abstract ModelNode fromNonDMRString(CommandContext ctx, String value) throws CommandFormatException;
     }
 
-    ArgumentValueConverter DEFAULT = new ArgumentValueConverter() {
+    public static ArgumentValueConverter DEFAULT = new ArgumentValueConverter() {
         @Override
         public ModelNode fromString(CommandContext ctx, String value) throws CommandFormatException {
             if (value == null) {
@@ -83,7 +94,7 @@ public interface ArgumentValueConverter {
     /**
      * Basically, for STRING with support for expressions.
      */
-    ArgumentValueConverter NON_OBJECT = new DMRWithFallbackConverter() {
+    public static ArgumentValueConverter NON_OBJECT = new DMRWithFallbackConverter() {
         final DefaultParsingState initialState = new DefaultParsingState("IE"){
             {
                 setDefaultHandler(new EnterStateCharacterHandler(NonObjectArgumentValueState.INSTANCE));
@@ -97,7 +108,7 @@ public interface ArgumentValueConverter {
         }
     };
 
-    ArgumentValueConverter LIST = new DMRWithFallbackConverter() {
+    public static ArgumentValueConverter LIST = new DMRWithFallbackConverter() {
         final DefaultParsingState initialState = new DefaultParsingState("IL"){
             {
                 setDefaultHandler(new EnterStateCharacterHandler(new CompositeState(true, ArgumentValueState.INSTANCE)));
@@ -111,7 +122,7 @@ public interface ArgumentValueConverter {
         }
     };
 
-    ArgumentValueConverter PROPERTIES = new DMRWithFallbackConverter() {
+    public static ArgumentValueConverter PROPERTIES = new DMRWithFallbackConverter() {
         final DefaultParsingState initialState = new DefaultParsingState("IPL"){
             {
                 setDefaultHandler(new EnterStateCharacterHandler(new CompositeState(true, ArgumentValueState.INSTANCE)));
@@ -125,5 +136,5 @@ public interface ArgumentValueConverter {
         }
     };
 
-    ModelNode fromString(CommandContext ctx, String value) throws CommandFormatException;
+    public abstract ModelNode fromString(CommandContext ctx, String value) throws CommandFormatException;
 }

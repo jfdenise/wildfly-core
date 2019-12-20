@@ -23,6 +23,7 @@ package org.jboss.as.cli.parsing.arguments;
 
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -30,8 +31,14 @@ import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
  */
 public class ArgumentValueInitialState extends DefaultParsingState {
 
-    public static final ArgumentValueInitialState INSTANCE = new ArgumentValueInitialState();
+    public static ArgumentValueInitialState INSTANCE = new ArgumentValueInitialState();
 
+    static {
+        ParsingStaticClearer.add(ArgumentValueInitialState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public ArgumentValueInitialState() {
         super("ARG_VALUE_INIT");
         final CompositeState complexValueState = new CompositeState(ArgumentValueState.INSTANCE);

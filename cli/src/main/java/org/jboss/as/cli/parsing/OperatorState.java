@@ -34,6 +34,11 @@ public class OperatorState {
     static {
         OPERATORS.add(new OpState(OutputTargetState.ID, '>'));
         OPERATORS.add(new OpState(ID, '|'));
+        ParsingStaticClearer.add(OperatorState.class);
+    }
+
+    public static void staticClear() {
+        OPERATORS.clear();
     }
 
     public static class OpState extends DefaultParsingState {

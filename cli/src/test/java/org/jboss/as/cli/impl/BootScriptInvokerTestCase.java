@@ -34,6 +34,7 @@ import org.jboss.threads.AsyncFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
@@ -170,6 +171,11 @@ public class BootScriptInvokerTestCase {
         public void close() throws IOException {
         }
 
+    }
+
+    @BeforeClass
+    public static void init() {
+        BootScriptInvoker.staticCleanup = false;
     }
 
     @Test

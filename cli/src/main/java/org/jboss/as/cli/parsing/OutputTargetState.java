@@ -29,8 +29,14 @@ package org.jboss.as.cli.parsing;
 public class OutputTargetState extends DefaultParsingState {
 
     public static final String ID = "OUT_REDIRECT";
-    public static final OutputTargetState INSTANCE = new OutputTargetState();
+    public static OutputTargetState INSTANCE = new OutputTargetState();
     public static final char OUTPUT_REDIRECT_CHAR = '>';
+    static {
+        ParsingStaticClearer.add(OutputTargetState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
     public OutputTargetState() {
         super(ID);

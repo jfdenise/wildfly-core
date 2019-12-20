@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.OperatorState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -36,8 +37,14 @@ import org.jboss.as.cli.parsing.ParsingContext;
 public class OperationRequestState extends DefaultParsingState {
 
     public static final String ID = "OP_REQ";
-    public static final OperationRequestState INSTANCE = new OperationRequestState();
+    public static OperationRequestState INSTANCE = new OperationRequestState();
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
+    static {
+        ParsingStaticClearer.add(OperationRequestState.class);
+    }
     public OperationRequestState() {
         this(NodeState.INSTANCE, AddressOperationSeparatorState.INSTANCE, PropertyListState.INSTANCE, HeaderListState.INSTANCE);
     }

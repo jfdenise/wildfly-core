@@ -26,6 +26,7 @@ import org.jboss.as.cli.parsing.BackQuotesState;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.QuotesState;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
@@ -37,11 +38,17 @@ public class NonObjectArgumentValueState extends DefaultParsingState {
 
     public static final String ID = ArgumentValueState.ID;
 
-    public static final NonObjectArgumentValueState INSTANCE = new NonObjectArgumentValueState();
+    public static NonObjectArgumentValueState INSTANCE = new NonObjectArgumentValueState();
 
+    static {
+        ParsingStaticClearer.add(NonObjectArgumentValueState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public NonObjectArgumentValueState() {
         super(ID);
-        setEnterHandler(new CharacterHandler(){
+        setEnterHandler(new CharacterHandler() {
             @Override
             public void handle(ParsingContext ctx) throws CommandFormatException {
                 final char ch = ctx.getCharacter();

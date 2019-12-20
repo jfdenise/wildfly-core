@@ -29,9 +29,16 @@ public class BackQuotesState extends DefaultParsingState {
 
     public static final String ID = "BQUOTES";
 
-    public static final BackQuotesState QUOTES_INCLUDED = new BackQuotesState(true);
-    public static final BackQuotesState QUOTES_INCLUDED_KEEP_ESCAPES = new BackQuotesState(true, EscapeCharacterState.KEEP_ESCAPE);
+    public static BackQuotesState QUOTES_INCLUDED = new BackQuotesState(true);
+    public static BackQuotesState QUOTES_INCLUDED_KEEP_ESCAPES = new BackQuotesState(true, EscapeCharacterState.KEEP_ESCAPE);
 
+    static {
+        ParsingStaticClearer.add(BackQuotesState.class);
+    }
+    public static void staticClear() {
+        QUOTES_INCLUDED = null;
+        QUOTES_INCLUDED_KEEP_ESCAPES = null;
+    }
     public BackQuotesState(boolean quotesInContent) {
         this(quotesInContent, true);
     }
@@ -42,7 +49,6 @@ public class BackQuotesState extends DefaultParsingState {
 
     public BackQuotesState(boolean quotesInContent, EscapeCharacterState escape) {
         super(ID, quotesInContent);
-
         this.setEndContentHandler(new ErrorCharacterHandler("The closing ` is missing."));
         this.putHandler('`', GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
         if(escape != null) {

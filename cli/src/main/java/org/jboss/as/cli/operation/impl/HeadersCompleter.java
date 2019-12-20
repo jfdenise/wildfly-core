@@ -27,6 +27,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -34,8 +35,15 @@ import org.jboss.as.cli.operation.OperationRequestCompleter;
  */
 public class HeadersCompleter implements CommandLineCompleter {
 
-    public static final HeadersCompleter INSTANCE = new HeadersCompleter();
+    public static HeadersCompleter INSTANCE = new HeadersCompleter();
 
+    static {
+        ParsingStaticClearer.add(HeadersCompleter.class);
+    }
+
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     private final DefaultCallbackHandler handler = new DefaultCallbackHandler();
 
     @Override

@@ -22,6 +22,7 @@
 package org.jboss.as.cli.parsing.command;
 
 import org.jboss.as.cli.CommandLineFormat;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -29,7 +30,14 @@ import org.jboss.as.cli.CommandLineFormat;
  */
 public class CommandFormat implements CommandLineFormat {
 
-    public static final CommandFormat INSTANCE = new CommandFormat();
+    public static CommandFormat INSTANCE = new CommandFormat();
+
+    static {
+        ParsingStaticClearer.add(CommandFormat.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
     /* (non-Javadoc)
      * @see org.jboss.as.cli.CommandLineFormat#getPropertyListStart()

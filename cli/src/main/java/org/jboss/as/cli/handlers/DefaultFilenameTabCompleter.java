@@ -26,6 +26,7 @@ import java.util.List;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.EscapeSelector;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -33,19 +34,28 @@ import org.jboss.as.cli.Util;
  */
 public class DefaultFilenameTabCompleter extends FilenameTabCompleter {
 
-    private static final EscapeSelector ESCAPE_SELECTOR = new EscapeSelector() {
+    private static EscapeSelector ESCAPE_SELECTOR = new EscapeSelector() {
        @Override
        public boolean isEscape(char ch) {
            return ch == '\\' || ch == ' ' || ch == '"';
        }
     };
 
-    private static final EscapeSelector QUOTES_ONLY_ESCAPE_SELECTOR = new EscapeSelector() {
+    private static EscapeSelector QUOTES_ONLY_ESCAPE_SELECTOR = new EscapeSelector() {
         @Override
         public boolean isEscape(char ch) {
             return ch == '"';
         }
     };
+
+    static {
+        ParsingStaticClearer.add(DefaultFilenameTabCompleter.class);
+    }
+
+    public static void staticClear() {
+        QUOTES_ONLY_ESCAPE_SELECTOR = null;
+        ESCAPE_SELECTOR = null;
+    }
 
    public DefaultFilenameTabCompleter(CommandContext ctx) {
        super(ctx);

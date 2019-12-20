@@ -26,6 +26,7 @@ import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.QuotesState;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
@@ -36,12 +37,17 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
 public class NodeState extends ExpressionBaseState {
 
     public static final String ID = "NODE";
-    public static final NodeState INSTANCE = new NodeState();
+    public static NodeState INSTANCE = new NodeState();
 
+    static {
+        ParsingStaticClearer.add(NodeState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public NodeState() {
         super(ID);
-
-        setEnterHandler(new CharacterHandler(){
+        setEnterHandler(new CharacterHandler() {
 
             @Override
             public void handle(ParsingContext ctx)

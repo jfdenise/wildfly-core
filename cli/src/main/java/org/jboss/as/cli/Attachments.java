@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -32,8 +33,15 @@ import java.util.function.Consumer;
  */
 public final class Attachments {
 
-    public static final Attachments IMMUTABLE_ATTACHMENTS = new Attachments(true);
+    public static Attachments IMMUTABLE_ATTACHMENTS = new Attachments(true);
 
+    static {
+        ParsingStaticClearer.add(Attachments.class);
+    }
+
+    public static void staticClear() {
+        IMMUTABLE_ATTACHMENTS = null;
+    }
     private final boolean immutable;
     private final List<String> paths = new ArrayList<>();
     private final List<Consumer<Attachments>> listeners = new ArrayList<>();

@@ -28,6 +28,7 @@ import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.operation.PropertyListState;
 
 
@@ -37,9 +38,15 @@ import org.jboss.as.cli.parsing.operation.PropertyListState;
  */
 public class ServerGroupState extends DefaultParsingState {
 
-    public static final ServerGroupState INSTANCE = new ServerGroupState();
+    public static ServerGroupState INSTANCE = new ServerGroupState();
     public static final String ID = "SG";
 
+    static {
+        ParsingStaticClearer.add(ServerGroupState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     ServerGroupState() {
         this(ServerGroupNameState.INSTANCE, PropertyListState.INSTANCE);
     }

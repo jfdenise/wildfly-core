@@ -28,6 +28,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.OperatorState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -36,16 +37,22 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class ArgumentListState extends DefaultParsingState {
 
-    public static final ArgumentListState INSTANCE = new ArgumentListState();
+    public static ArgumentListState INSTANCE = new ArgumentListState();
     public static final String ID = "PROP_LIST";
 
+    static {
+        ParsingStaticClearer.add(ArgumentListState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     ArgumentListState() {
         this(ArgumentState.INSTANCE, ArgumentValueState.INSTANCE);
     }
 
     ArgumentListState(ArgumentState argState, final ArgumentValueState valueState) {
         super(ID);
-        setEnterHandler(new CharacterHandler(){
+        setEnterHandler(new CharacterHandler() {
             @Override
             public void handle(ParsingContext ctx) throws CommandFormatException {
                 final CharacterHandler handler = getHandler(ctx.getCharacter());

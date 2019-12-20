@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.OperatorState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
 
@@ -37,8 +38,14 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
 public final class OperationNameState extends ExpressionBaseState {
 
     public static final String ID = "OP_NAME";
-    public static final OperationNameState INSTANCE = new OperationNameState();
+    public static OperationNameState INSTANCE = new OperationNameState();
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
+    static {
+        ParsingStaticClearer.add(OperationNameState.class);
+    }
     public OperationNameState() {
         super(ID);
         setIgnoreWhitespaces(true);

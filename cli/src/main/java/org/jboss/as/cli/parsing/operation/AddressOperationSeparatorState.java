@@ -24,6 +24,7 @@ package org.jboss.as.cli.parsing.operation;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -31,8 +32,14 @@ import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
  */
 public class AddressOperationSeparatorState extends DefaultParsingState {
 
-    public static final AddressOperationSeparatorState INSTANCE = new AddressOperationSeparatorState();
+    public static AddressOperationSeparatorState INSTANCE = new AddressOperationSeparatorState();
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
+    static {
+        ParsingStaticClearer.add(AddressOperationSeparatorState.class);
+    }
     public AddressOperationSeparatorState() {
         this(OperationNameState.INSTANCE);
     }

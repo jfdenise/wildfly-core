@@ -25,6 +25,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -33,9 +34,15 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class InSeriesState extends DefaultParsingState {
 
-    public static final InSeriesState INSTANCE = new InSeriesState();
+    public static InSeriesState INSTANCE = new InSeriesState();
     public static final String ID = "IN_SERIES";
 
+    static {
+        ParsingStaticClearer.add(InSeriesState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     InSeriesState() {
         super(ID);
         setDefaultHandler(new CharacterHandler(){

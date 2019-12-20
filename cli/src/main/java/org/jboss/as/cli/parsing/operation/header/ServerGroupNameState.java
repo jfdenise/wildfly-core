@@ -23,6 +23,7 @@ package org.jboss.as.cli.parsing.operation.header;
 
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
 
@@ -32,9 +33,15 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
  */
 public class ServerGroupNameState extends DefaultParsingState {
 
-    public static final ServerGroupNameState INSTANCE = new ServerGroupNameState();
+    public static ServerGroupNameState INSTANCE = new ServerGroupNameState();
     public static final String ID = "SG_NAME";
 
+    static {
+        ParsingStaticClearer.add(ServerGroupNameState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     ServerGroupNameState() {
         super(ID);
         setEnterHandler(GlobalCharacterHandlers.CONTENT_CHARACTER_HANDLER);

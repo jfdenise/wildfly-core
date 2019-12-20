@@ -35,13 +35,20 @@ public final class EscapeCharacterState extends BaseParsingState {
     "Error parsing escaped character: the character after '\' is missing.");
 */
 
-    public static final EscapeCharacterState INSTANCE = new EscapeCharacterState(false);
+    public static EscapeCharacterState INSTANCE = new EscapeCharacterState(false);
     /**
      * This one is useful when the escaping should be recognized but postponed
      * (for characters that otherwise would have affected the parsing flow, such as '"').
      */
-    public static final EscapeCharacterState KEEP_ESCAPE = new EscapeCharacterState(true);
+    public static EscapeCharacterState KEEP_ESCAPE = new EscapeCharacterState(true);
+    public static void staticClear() {
+        KEEP_ESCAPE = null;
+        INSTANCE = null;
+    }
 
+    static {
+        ParsingStaticClearer.add(EscapeCharacterState.class);
+    }
     private final CharacterHandler handler = new CharacterHandler() {
         @Override
         public void handle(ParsingContext ctx)

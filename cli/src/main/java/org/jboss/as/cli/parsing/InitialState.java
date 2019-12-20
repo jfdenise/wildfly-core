@@ -33,13 +33,19 @@ import org.jboss.as.cli.parsing.operation.OperationRequestState;
  */
 public class InitialState extends DefaultParsingState {
 
-    public static final InitialState INSTANCE;
+    public static InitialState INSTANCE;
     static {
         OperationRequestState opState = new OperationRequestState();
         opState.setHandleEntrance(true);
         INSTANCE = new InitialState(opState, CommandState.INSTANCE);
     }
     public static final String ID = "INITIAL";
+    static {
+        ParsingStaticClearer.add(InitialState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
 
     InitialState() {
         this(OperationRequestState.INSTANCE, CommandState.INSTANCE);

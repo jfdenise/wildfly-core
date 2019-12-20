@@ -29,9 +29,17 @@ import org.jboss.as.cli.CommandFormatException;
  */
 public class WordCharacterHandler extends LineBreakHandler {
 
-    public static final WordCharacterHandler IGNORE_LB_ESCAPE_ON = new WordCharacterHandler(false, true);
-    public static final WordCharacterHandler IGNORE_LB_ESCAPE_OFF = new WordCharacterHandler(false, false);
-    public static final WordCharacterHandler LB_LEAVE_ESCAPE_ON = new WordCharacterHandler(true, true);
+    public static WordCharacterHandler IGNORE_LB_ESCAPE_ON = new WordCharacterHandler(false, true);
+    public static WordCharacterHandler IGNORE_LB_ESCAPE_OFF = new WordCharacterHandler(false, false);
+    public static WordCharacterHandler LB_LEAVE_ESCAPE_ON = new WordCharacterHandler(true, true);
+    static {
+        ParsingStaticClearer.add(WordCharacterHandler.class);
+    }
+    public static void staticClear() {
+        IGNORE_LB_ESCAPE_OFF = null;
+        IGNORE_LB_ESCAPE_ON = null;
+        LB_LEAVE_ESCAPE_ON = null;
+    }
 
     public WordCharacterHandler(boolean leaveOnLnBreak, boolean fallbackToEscape) {
         super(leaveOnLnBreak, fallbackToEscape);

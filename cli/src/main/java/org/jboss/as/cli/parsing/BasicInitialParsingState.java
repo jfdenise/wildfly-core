@@ -22,6 +22,7 @@
 package org.jboss.as.cli.parsing;
 
 import org.jboss.as.cli.CommandFormatException;
+import static org.jboss.as.cli.parsing.operation.header.ServerGroupSeparatorState.INSTANCE;
 
 
 /**
@@ -30,14 +31,21 @@ import org.jboss.as.cli.CommandFormatException;
  */
 public class BasicInitialParsingState extends DefaultParsingState {
 
-    public static final BasicInitialParsingState INSTANCE = new BasicInitialParsingState("DEFAULT");
+    public static BasicInitialParsingState INSTANCE = new BasicInitialParsingState("DEFAULT");
 
-    private static final ParsingState DEFAULT_STATE = new DefaultParsingState("STRING", false, GlobalCharacterHandlers.GLOBAL_ENTER_STATE_HANDLERS){
+    public static ParsingState DEFAULT_STATE = new DefaultParsingState("STRING", false, GlobalCharacterHandlers.GLOBAL_ENTER_STATE_HANDLERS) {
         {
             this.setEnterHandler(GlobalCharacterHandlers.CONTENT_CHARACTER_HANDLER);
             this.setDefaultHandler(GlobalCharacterHandlers.CONTENT_CHARACTER_HANDLER);
         }
     };
+    static {
+        ParsingStaticClearer.add(BasicInitialParsingState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+        DEFAULT_STATE = null;
+    }
 
     BasicInitialParsingState(String id) {
         super(id, false, GlobalCharacterHandlers.GLOBAL_ENTER_STATE_HANDLERS);

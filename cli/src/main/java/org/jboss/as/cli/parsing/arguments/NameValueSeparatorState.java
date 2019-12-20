@@ -25,6 +25,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -34,11 +35,17 @@ public class NameValueSeparatorState extends DefaultParsingState {
 
     public static final String ID = "NAME_VALUE_SEP";
 
-    public static final NameValueSeparatorState INSTANCE = new NameValueSeparatorState();
+    public static NameValueSeparatorState INSTANCE = new NameValueSeparatorState();
 
+    static {
+        ParsingStaticClearer.add(NameValueSeparatorState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public NameValueSeparatorState() {
         super(ID);
-        setEnterHandler(new CharacterHandler(){
+        setEnterHandler(new CharacterHandler() {
             @Override
             public void handle(ParsingContext ctx) throws CommandFormatException {
                 try {

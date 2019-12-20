@@ -26,6 +26,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -34,9 +35,15 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class ConcurrentSignState extends DefaultParsingState {
 
-    public static final ConcurrentSignState INSTANCE = new ConcurrentSignState();
+    public static ConcurrentSignState INSTANCE = new ConcurrentSignState();
     public static final String ID = "CONCURRENT";
 
+    static {
+        ParsingStaticClearer.add(ConcurrentSignState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     ConcurrentSignState() {
         this(ServerGroupState.INSTANCE);
     }

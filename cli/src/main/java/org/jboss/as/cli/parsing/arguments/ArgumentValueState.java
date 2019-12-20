@@ -26,6 +26,7 @@ import org.jboss.as.cli.parsing.BackQuotesState;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.QuotesState;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
@@ -37,14 +38,20 @@ public class ArgumentValueState extends DefaultParsingState {
 
     public static final String ID = "ARG_VALUE";
 
-    public static final ArgumentValueState INSTANCE = new ArgumentValueState();
+    public static ArgumentValueState INSTANCE = new ArgumentValueState();
 
+    static {
+        ParsingStaticClearer.add(ArgumentValueState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public static final String BYTES_TOKEN = "bytes{";
     private static final char[] BYTES_TOKEN_CHARS = BYTES_TOKEN.toCharArray();
 
     public ArgumentValueState() {
         super(ID);
-        setEnterHandler(new CharacterHandler(){
+        setEnterHandler(new CharacterHandler() {
             @Override
             public void handle(ParsingContext ctx) throws CommandFormatException {
                 final char ch = ctx.getCharacter();

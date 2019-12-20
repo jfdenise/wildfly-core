@@ -23,6 +23,7 @@ package org.jboss.as.cli.parsing.arguments;
 
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -32,8 +33,14 @@ public class BytesValueState extends DefaultParsingState {
 
     public static final String ID = "BYTES_VALUE";
 
-    public static final BytesValueState INSTANCE = new BytesValueState();
+    public static BytesValueState INSTANCE = new BytesValueState();
 
+    static {
+        ParsingStaticClearer.add(BytesValueState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public BytesValueState() {
         super(ID);
         setDefaultHandler((ParsingContext ctx) -> {

@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 /**
  *
@@ -34,15 +35,21 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class AddressCommandSeparatorState extends DefaultParsingState {
 
-    public static final AddressCommandSeparatorState INSTANCE = new AddressCommandSeparatorState();
+    public static AddressCommandSeparatorState INSTANCE = new AddressCommandSeparatorState();
 
+    static {
+        ParsingStaticClearer.add(AddressCommandSeparatorState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public AddressCommandSeparatorState() {
         this(CommandNameState.INSTANCE);
     }
 
     public AddressCommandSeparatorState(final CommandNameState opName) {
         super("ADDR_OP_SEP");
-        setEnterHandler(new CharacterHandler(){
+        setEnterHandler(new CharacterHandler() {
             @Override
             public void handle(ParsingContext ctx) throws CommandFormatException {
                 if(ctx.isEndOfContent()) {

@@ -29,6 +29,7 @@ import org.jboss.as.cli.parsing.EnterStateCharacterHandler;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
 
@@ -38,9 +39,15 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
  */
 public class ArgumentState extends DefaultParsingState {
 
-    public static final ArgumentState INSTANCE = new ArgumentState();
+    public static ArgumentState INSTANCE = new ArgumentState();
     public static final String ID = "PROP";
 
+    static {
+        ParsingStaticClearer.add(ArgumentState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     ArgumentState() {
         this(ArgumentValueState.INSTANCE);
     }

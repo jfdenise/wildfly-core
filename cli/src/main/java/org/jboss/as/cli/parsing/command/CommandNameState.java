@@ -26,6 +26,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
 
@@ -35,9 +36,15 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
  */
 public class CommandNameState extends ExpressionBaseState {
 
-    public static final CommandNameState INSTANCE = new CommandNameState();
+    public static CommandNameState INSTANCE = new CommandNameState();
     public static final String ID = "OP_NAME";
 
+    static {
+        ParsingStaticClearer.add(CommandNameState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     CommandNameState() {
         super(ID);
         setLeaveOnWhitespace(true);

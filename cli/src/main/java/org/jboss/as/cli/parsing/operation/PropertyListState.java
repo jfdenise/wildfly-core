@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.LineBreakHandler;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 
 
 /**
@@ -35,9 +36,15 @@ import org.jboss.as.cli.parsing.ParsingContext;
  */
 public class PropertyListState extends DefaultParsingState {
 
-    public static final PropertyListState INSTANCE = new PropertyListState();
+    public static PropertyListState INSTANCE = new PropertyListState();
     public static final String ID = "PROP_LIST";
 
+    static {
+        ParsingStaticClearer.add(PropertyListState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     PropertyListState() {
         this(PropertyState.INSTANCE);
     }
@@ -52,7 +59,7 @@ public class PropertyListState extends DefaultParsingState {
 
     PropertyListState(final char listStart, char propSeparator, final PropertyState propState, final char... listEnd) {
         super(ID);
-        for(int i = 0; i < listEnd.length; ++i) {
+        for (int i = 0; i < listEnd.length; ++i) {
             putHandler(listEnd[i], GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
         }
         setEnterHandler(new CharacterHandler(){

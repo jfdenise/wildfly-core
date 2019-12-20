@@ -30,6 +30,7 @@ import org.jboss.as.cli.operation.ParsedOperationRequestHeader;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.ParserUtil;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.operation.HeaderListState;
 import org.jboss.dmr.ModelNode;
 
@@ -39,12 +40,19 @@ import org.jboss.dmr.ModelNode;
 */
 public final class HeadersArgumentValueConverter extends DMRWithFallbackConverter {
 
-    public static final HeadersArgumentValueConverter INSTANCE = new HeadersArgumentValueConverter();
+    public static HeadersArgumentValueConverter INSTANCE = new HeadersArgumentValueConverter();
 
     private final DefaultCallbackHandler callback = new DefaultCallbackHandler();
     private final DefaultParsingState initialState = new DefaultParsingState("INITIAL_STATE");
     {
         initialState.enterState('{', HeaderListState.INSTANCE);
+    }
+
+    static {
+        ParsingStaticClearer.add(HeadersArgumentValueConverter.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
     }
 
     @Override

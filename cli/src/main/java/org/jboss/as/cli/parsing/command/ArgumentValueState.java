@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultStateWithEndCharacter;
 import org.jboss.as.cli.parsing.ExpressionBaseState;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.QuotesState;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
@@ -36,9 +37,15 @@ import org.jboss.as.cli.parsing.WordCharacterHandler;
  */
 public class ArgumentValueState extends ExpressionBaseState {
 
-    public static final ArgumentValueState INSTANCE = new ArgumentValueState();
+    public static ArgumentValueState INSTANCE = new ArgumentValueState();
     public static final String ID = "PROP_VALUE";
+    static {
+        ParsingStaticClearer.add(ArgumentValueState.class);
+    }
 
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     ArgumentValueState() {
         super(ID, false);
         this.setEnterHandler(new CharacterHandler() {

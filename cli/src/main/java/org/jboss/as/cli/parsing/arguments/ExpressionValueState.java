@@ -27,6 +27,7 @@ import org.jboss.as.cli.parsing.CharacterHandler;
 import org.jboss.as.cli.parsing.DefaultParsingState;
 import org.jboss.as.cli.parsing.GlobalCharacterHandlers;
 import org.jboss.as.cli.parsing.ParsingContext;
+import org.jboss.as.cli.parsing.ParsingStaticClearer;
 import org.jboss.as.cli.parsing.WordCharacterHandler;
 
 /**
@@ -37,8 +38,14 @@ public class ExpressionValueState extends DefaultParsingState {
 
     public static final String ID = "EXPR_VALUE";
 
-    public static final ExpressionValueState INSTANCE = new ExpressionValueState();
+    public static ExpressionValueState INSTANCE = new ExpressionValueState();
 
+    static {
+        ParsingStaticClearer.add(ExpressionValueState.class);
+    }
+    public static void staticClear() {
+        INSTANCE = null;
+    }
     public ExpressionValueState() {
         super(ID);
         setEnterHandler(GlobalCharacterHandlers.CONTENT_CHARACTER_HANDLER);
