@@ -76,12 +76,8 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.dmr.ModelNode;
-import org.jboss.modules.DelegatingModuleLoader;
-import org.jboss.modules.LocalModuleFinder;
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleLoadException;
-import org.jboss.modules.ModuleLoader;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
@@ -1085,7 +1081,7 @@ public abstract class AbstractControllerService implements Service<ModelControll
         private static class InvokerLoader implements Closeable {
 
             private final AdditionalBootCliScriptInvoker invoker;
-            private LocalModuleFinder cliModuleFinder;
+            private TemporaryModuleLayer tempModuleLayer;
 
             private InvokerLoader() {
                 // Ability to override the invoker in unit tests where we don't have all the modules set up
@@ -1100,20 +1096,15 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 }
 
                 // We are running in a proper server, load the invoker normally
-                final ModuleClassLoader classLoader = (ModuleClassLoader) WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
-                final ModuleLoader systemLoader = classLoader.getModule().getModuleLoader();
-
-                File[] roots = _TempLayeredModulePathFactory.resolveLayeredModulePath(getModulePathFiles());
-                PathFilter filter = new PathFilter() {
+                this.tempModuleLayer = TemporaryModuleLayer.create(new PathFilter() {
                     @Override
                     public boolean accept(String path) {
                         return path.startsWith("org/jboss/as/cli/main") || path.startsWith("org/aesh/main");
                     }
-                };
+                });
+
                 try {
-                    cliModuleFinder = new LocalModuleFinder(roots, filter);
-                    DelegatingModuleLoader cliLoader = new DelegatingModuleLoader(systemLoader, cliModuleFinder);
-                    Module module = cliLoader.loadModule("org.jboss.as.cli");
+                    Module module = tempModuleLayer.getModuleLoader().loadModule("org.jboss.as.cli");
                     ServiceLoader<AdditionalBootCliScriptInvoker> sl = module.loadService(AdditionalBootCliScriptInvoker.class);
                     AdditionalBootCliScriptInvoker invoker = null;
                     for (AdditionalBootCliScriptInvoker currentInvoker : sl) {
@@ -1132,30 +1123,10 @@ public abstract class AbstractControllerService implements Service<ModelControll
                 return invoker;
             }
 
-            private static File[] getModulePathFiles() {
-                return getFiles(System.getProperty("module.path", System.getenv("JAVA_MODULEPATH")), 0, 0);
-            }
-
-            private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
-                if (modulePath == null) {
-                    return new File[0];
-                }
-                final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
-                final File[] files;
-                if (i == -1) {
-                    files = new File[arrayIdx + 1];
-                    files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
-                } else {
-                    files = getFiles(modulePath, i + 1, arrayIdx + 1);
-                    files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
-                }
-                return files;
-            }
-
             @Override
             public void close() throws IOException {
-                if (cliModuleFinder != null) {
-                    cliModuleFinder.close();
+                if (tempModuleLayer != null) {
+                    tempModuleLayer.close();
                 }
             }
         }
