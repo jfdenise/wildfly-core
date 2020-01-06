@@ -451,11 +451,12 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
 
     /**
      * Constructor called from Boot invoker, minimal configuration.
+     * public for testing purpose.
      *
      */
-    CommandContextImpl(OutputStream output) throws CliInitializationException {
+    public CommandContextImpl(OutputStream output) throws CliInitializationException {
         bootInvoker = true;
-        config = CliConfigImpl.load(this);
+        config = CliConfigImpl.newBootConfig();
         addressResolver = ControllerAddressResolver.newInstance(config, null);
 
         operationHandler = new OperationRequestHandler();
@@ -1356,19 +1357,22 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             if (connInfoBean != null) {
                 this.connInfoBean.setControllerAddress(address);
             }
+            if (!bootInvoker) {
+                List<String> nodeTypes = Util.getNodeTypes(newClient, new DefaultOperationRequestAddress());
+                // this is present even if the host hasn't been added yet.
+                domainMode = nodeTypes.contains(Util.HOST);
 
-            List<String> nodeTypes = Util.getNodeTypes(newClient, new DefaultOperationRequestAddress());
-            // this is present even if the host hasn't been added yet.
-            domainMode = nodeTypes.contains(Util.HOST);
-
-            // if we're going to add a host manually, don't try to read the extensions,
-            // as they won't be there until after the /host:add()
-            if (! (nodeTypes.size() == 1 && nodeTypes.get(0).equals(Util.HOST))) {
-                try {
-                    extLoader.loadHandlers(currentAddress);
-                } catch (CommandLineException | CommandLineParserException e) {
-                    printLine(Util.getMessagesFromThrowable(e));
+                // if we're going to add a host manually, don't try to read the extensions,
+                // as they won't be there until after the /host:add()
+                if (!(nodeTypes.size() == 1 && nodeTypes.get(0).equals(Util.HOST))) {
+                    try {
+                        extLoader.loadHandlers(currentAddress);
+                    } catch (CommandLineException | CommandLineParserException e) {
+                        printLine(Util.getMessagesFromThrowable(e));
+                    }
                 }
+            } else {
+                domainMode = false;
             }
         }
     }
@@ -1523,7 +1527,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     @Override
     public void disconnectController() {
         if (this.client != null) {
-            StreamUtils.safeClose(client);
+            // Closed by caller
+            if (!bootInvoker) {
+                StreamUtils.safeClose(client);
+            }
             // if(loggingEnabled) {
             // printLine("Closed connection to " + this.controllerHost + ':' +
             // this.controllerPort);
@@ -1533,7 +1540,9 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             domainMode = false;
             notifyListeners(CliEvent.DISCONNECTED);
             connInfoBean = null;
-            extLoader.resetHandlers();
+            if (extLoader != null) {
+                extLoader.resetHandlers();
+            }
         }
         promptConnectPart = null;
         if(console != null && terminate == RUNNING) {
