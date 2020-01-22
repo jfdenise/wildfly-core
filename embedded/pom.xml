@@ -197,7 +197,21 @@
             </exclusions>
             <scope>provided</scope>
         </dependency>
-
+        
+        <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-version</artifactId>
+            <!-- As far as embedded is concerned, this is compile time only as it's just used
+                 to import a single constant. At runtime the module is used transitively, but not
+                 directly by the code in this maven module. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
+        </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>

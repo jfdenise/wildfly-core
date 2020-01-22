@@ -67,6 +67,7 @@ public class EmbeddedProcessFactory {
 
     private static final String HOST_FACTORY = "org.wildfly.core.embedded.EmbeddedHostControllerFactory";
     private static final String SERVER_FACTORY = "org.wildfly.core.embedded.EmbeddedStandaloneServerFactory";
+    private static final String SERVER_WITHENV_FACTORY = "org.wildfly.core.embedded.EmbeddedStandaloneServerWithEnvFactory";
     /**
      * Valid types of embedded managed processes.
      */
@@ -192,6 +193,60 @@ public class EmbeddedProcessFactory {
     }
 
     /**
+     * Create an embedded standalone server with an already established module
+     * loader and env.
+     *
+     * @param configuration the configuration for the embedded server
+     * @param startSuspended
+     * @param isEmbedded
+     * @param isAdminMode
+     * @param isReadOnly
+     * @return the running embedded server. Will not be {@code null}
+     */
+    public static StandaloneServer createStandaloneServerWithEnv(final Configuration configuration,
+            final boolean startSuspended, final boolean isEmbedded, final boolean isAdminMode, final boolean isReadOnly) {
+        final ChainedContext context = new ChainedContext();
+        context.add(new StandaloneSystemPropertyContext(configuration.getJBossHome()));
+        context.add(new LoggerContext(configuration.getModuleLoader()));
+        final ModuleLoader moduleLoader = configuration.getModuleLoader();
+
+        setupVfsModule(moduleLoader);
+
+        // Load the Embedded Server Module
+        final Module embeddedModule;
+        try {
+            embeddedModule = moduleLoader.loadModule(MODULE_ID_EMBEDDED);
+        } catch (final ModuleLoadException mle) {
+            throw EmbeddedLogger.ROOT_LOGGER.moduleLoaderError(mle, MODULE_ID_EMBEDDED, moduleLoader);
+        }
+
+        // Load the Embedded Server Factory via the modular environment
+        final ModuleClassLoader embeddedModuleCL = embeddedModule.getClassLoader();
+        final Class<?> embeddedServerFactoryClass;
+        final Class<?> standaloneServerClass;
+        try {
+            embeddedServerFactoryClass = embeddedModuleCL.loadClass(SERVER_WITHENV_FACTORY);
+            standaloneServerClass = embeddedModuleCL.loadClass(StandaloneServer.class.getName());
+        } catch (final ClassNotFoundException cnfe) {
+            throw EmbeddedLogger.ROOT_LOGGER.cannotLoadEmbeddedServerFactory(cnfe, SERVER_WITHENV_FACTORY);
+        }
+
+        // Get a handle to the method which will create the server
+        Method createServerMethod;
+        try {
+            createServerMethod = embeddedServerFactoryClass.getMethod("create", File.class,
+                    ModuleLoader.class, Properties.class, Map.class, ClassLoader.class,
+                    Boolean.TYPE, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE);
+        } catch (final NoSuchMethodException nsme) {
+            throw EmbeddedLogger.ROOT_LOGGER.cannotGetReflectiveMethod(nsme, "create", embeddedServerFactoryClass.getName());
+        }
+        // Create the server
+        Object standaloneServerImpl = createManagedProcessWithEnv(createServerMethod, configuration, embeddedModuleCL,
+                startSuspended, isEmbedded, isAdminMode, isReadOnly);
+        return new EmbeddedManagedProcessImpl(standaloneServerClass, standaloneServerImpl, context);
+    }
+
+    /**
      * Create an embedded host controller.
      *
      * @param jbossHomePath the location of the root of the host controller installation. Cannot be {@code null} or empty.
@@ -288,6 +343,24 @@ public class EmbeddedProcessFactory {
         // Create the server
         Object hostControllerImpl = createManagedProcess(ProcessType.HOST_CONTROLLER, createServerMethod, configuration, useClMethod ? embeddedModuleCL : null);
         return new EmbeddedManagedProcessImpl(hostControllerClass, hostControllerImpl, context);
+    }
+
+    private static Object createManagedProcessWithEnv(final Method createServerMethod,
+            final Configuration configuration, ModuleClassLoader embeddedModuleCL,
+            boolean startSuspended, boolean isEmbedded, boolean isAdminMode, boolean isReadOnly) {
+        Object serverImpl;
+        try {
+            Properties sysprops = getSystemPropertiesPrivileged();
+            Map<String, String> sysenv = getSystemEnvironmentPrivileged();
+            serverImpl = createServerMethod.invoke(null, configuration.getJBossHome().toFile(),
+                    configuration.getModuleLoader(), sysprops, sysenv, embeddedModuleCL,
+                    startSuspended, isEmbedded, isAdminMode, isReadOnly);
+        } catch (final InvocationTargetException ite) {
+            throw EmbeddedLogger.ROOT_LOGGER.cannotCreateStandaloneServer(ite.getCause(), createServerMethod);
+        } catch (final IllegalAccessException iae) {
+            throw EmbeddedLogger.ROOT_LOGGER.cannotCreateStandaloneServer(iae, createServerMethod);
+        }
+        return serverImpl;
     }
 
     private static void setupVfsModule(final ModuleLoader moduleLoader) {
