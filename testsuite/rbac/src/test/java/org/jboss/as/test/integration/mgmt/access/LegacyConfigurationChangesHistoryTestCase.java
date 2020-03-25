@@ -80,9 +80,11 @@ import org.jboss.as.test.integration.management.interfaces.CliManagementInterfac
 import org.jboss.as.test.integration.management.interfaces.ManagementInterface;
 import org.jboss.as.test.integration.management.rbac.RbacAdminCallbackHandler;
 import org.jboss.as.test.integration.management.util.ServerReload;
+import org.jboss.as.test.shared.AssumeUtils;
 import org.jboss.dmr.ModelNode;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.core.testrunner.ManagementClient;
@@ -122,6 +124,12 @@ public class LegacyConfigurationChangesHistoryTestCase extends AbstractManagemen
             .append(CORE_SERVICE, MANAGEMENT)
             .append(ACCESS, AUDIT)
             .append(IN_MEMORY_HANDLER, "test");
+
+    @BeforeClass
+    public static void setup() {
+        // Read-only configuration
+        AssumeUtils.assumeBootableJarProfileEnabled();
+    }
 
     @Before
     public void createConfigurationChanges() throws Exception {

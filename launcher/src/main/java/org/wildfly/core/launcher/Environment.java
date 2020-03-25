@@ -65,6 +65,13 @@ class Environment {
         jvm = Jvm.current();
     }
 
+    Environment(final Path path, boolean bootable) {
+        this.wildflyHome = bootable ? validateBootableJar(path) : validateWildFlyDir(path);
+        modulesDirs = new ArrayList<>();
+        addDefaultModuleDir = bootable ? false : true;
+        jvm = Jvm.current();
+    }
+
     /**
      * Returns the WildFly Home directory.
      *
@@ -239,5 +246,20 @@ class Environment {
             throw LauncherMessages.MESSAGES.invalidDirectory(MODULES_JAR_NAME, wildflyHome);
         }
         return result;
+    }
+
+    static Path validateBootableJar(final Path bootableJar) {
+        if (bootableJar == null || Files.notExists(bootableJar)) {
+            throw LauncherMessages.MESSAGES.pathDoesNotExist(bootableJar);
+        }
+        if (Files.isDirectory(bootableJar)) {
+            throw LauncherMessages.MESSAGES.pathNotAFile(bootableJar);
+        }
+        final Path result = bootableJar.toAbsolutePath().normalize();
+        return result;
+    }
+
+    static Path validateBootableJar(final String bootableJar) {
+        return validateBootableJar(Paths.get(bootableJar));
     }
 }
