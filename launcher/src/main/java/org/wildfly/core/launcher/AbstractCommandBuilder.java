@@ -43,6 +43,7 @@ abstract class AbstractCommandBuilder<T extends AbstractCommandBuilder<T>> imple
     static final String SECURITY_MANAGER_ARG = "-secmgr";
     static final String SECURITY_MANAGER_PROP = "java.security.manager";
     static final String[] DEFAULT_VM_ARGUMENTS;
+    static final String[] BOOTABLE_DEFAULT_VM_ARGUMENTS;
     static final Collection<String> DEFAULT_MODULAR_VM_ARGUMENTS;
 
     static {
@@ -50,6 +51,7 @@ abstract class AbstractCommandBuilder<T extends AbstractCommandBuilder<T>> imple
         final Collection<String> javaOpts = new ArrayList<>();
         javaOpts.add("-Xms64m");
         javaOpts.add("-Xmx512m");
+        BOOTABLE_DEFAULT_VM_ARGUMENTS = javaOpts.toArray(new String[javaOpts.size()]);
         javaOpts.add("-Djava.net.preferIPv4Stack=true");
         javaOpts.add("-Djava.awt.headless=true");
         javaOpts.add("-Djboss.modules.system.pkgs=org.jboss.byteman");
@@ -76,8 +78,18 @@ abstract class AbstractCommandBuilder<T extends AbstractCommandBuilder<T>> imple
         this(wildflyHome, null);
     }
 
+    protected AbstractCommandBuilder(final Path path, boolean isBootable) {
+        this(path, isBootable, null);
+    }
+
     protected AbstractCommandBuilder(final Path wildflyHome, final Jvm jvm) {
         environment = new Environment(wildflyHome).setJvm(jvm);
+        useSecMgr = false;
+        serverArgs = new Arguments();
+    }
+
+    protected AbstractCommandBuilder(final Path path, boolean isBootable, final Jvm jvm) {
+        environment = new Environment(path, isBootable).setJvm(jvm);
         useSecMgr = false;
         serverArgs = new Arguments();
     }
