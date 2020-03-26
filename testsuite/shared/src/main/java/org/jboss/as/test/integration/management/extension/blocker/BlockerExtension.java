@@ -157,7 +157,7 @@ public class BlockerExtension implements Extension {
             log.info("block requested by " + CALLER.resolveModelAttribute(context, operation).asString() + " for " +
                 targetHost.asString() + "/" + targetServer.asString() + "(" + blockPoint + ")");
             boolean forMe = false;
-            if (context.getProcessType() == ProcessType.STANDALONE_SERVER) {
+            if (context.getProcessType() == ProcessType.STANDALONE_SERVER || context.getProcessType() == ProcessType.EMBEDDED_SERVER) {
                 forMe = true;
                 // WFCORE-3406 explicitly get the exclusive lock for standalone server
                 context.acquireControllerLock();
