@@ -28,6 +28,7 @@ import javax.inject.Inject;
 
 import org.apache.http.client.methods.HttpGet;
 import org.jboss.as.test.integration.management.util.ServerReload;
+import static org.jboss.as.test.shared.AssumeUtils.assumeBootableJarProfileEnabled;
 import org.jboss.as.test.shared.TestSuiteEnvironment;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +49,7 @@ public class WebConsoleRedirectionTestCase {
 
     @Test
     public void testRedirectionInAdminMode() throws Exception {
+        assumeBootableJarProfileEnabled();
         ServerReload.executeReloadAndWaitForCompletion(managementClient.getControllerClient(), true);
         try {
             final HttpURLConnection connection = getConnection();
