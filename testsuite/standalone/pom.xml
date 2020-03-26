@@ -175,7 +175,7 @@
                         <phase>process-test-resources</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.build.testOutputDirectory}/mgmt-users.properties" todir="${project.build.directory}/wildfly-core/standalone/configuration" overwrite="true" />
+                                <copy file="${project.build.testOutputDirectory}/wildfly/standalone/configuration/mgmt-users.properties" todir="${project.build.directory}/wildfly-core/standalone/configuration" overwrite="true" />
                             </target>
                         </configuration>
                         <goals>
@@ -327,7 +327,7 @@
                                 <configuration>
                                     <output-file-name>test-wildfly.jar</output-file-name>
                                     <hollowJar>true</hollowJar>
-                                    <!--<install-dir>${project.build.directory}/${server.output.dir.prefix}</install-dir>-->
+                                    <extraServerContent>src/test/resources/wildfly</extraServerContent>
                                     <record-state>false</record-state>
                                     <log-time>${galleon.log.time}</log-time>
                                     <offline>true</offline>
