@@ -385,7 +385,7 @@
                                         </property>
                                         <property>
                                             <name>wildfly.bootable.jar.install.dir</name>
-                                            <value>target/foo</value>
+                                            <value>${project.build.directory}/${server.output.dir.prefix}</value>
                                         </property>
                                     </systemProperties>
                                     <excludes>
