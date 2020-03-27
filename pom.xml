@@ -2278,7 +2278,7 @@
                 </plugins>
             </build>
         </profile>
-        <!-- -Dts.layers -->
+        <!-- -Dts.bootable -->
         <profile>
             <id>ts.bootable</id>
             <activation>
