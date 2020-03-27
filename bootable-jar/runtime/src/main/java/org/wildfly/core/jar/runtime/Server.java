@@ -23,7 +23,6 @@ import static java.lang.System.getSecurityManager;
 import static java.lang.System.getenv;
 import static java.lang.System.setProperty;
 import java.nio.file.Path;
-import java.security.AccessController;
 import static java.security.AccessController.doPrivileged;
 import java.security.PrivilegedAction;
 import java.util.Collections;
@@ -54,7 +53,7 @@ import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.value.Value;
 import org.wildfly.core.jar.runtime._private.BootableJarLogger;
 
-class Server {
+final class Server {
 
     interface ShutdownHandler {
 
@@ -94,7 +93,7 @@ class Server {
         };
     }
 
-    public static Server newSever(Path jbossHome, String[] cmdargs, ModuleLoader moduleLoader, ShutdownHandler shutdownHandler) {
+    static Server newSever(Path jbossHome, String[] cmdargs, ModuleLoader moduleLoader, ShutdownHandler shutdownHandler) {
         setPropertyPrivileged(ServerEnvironment.HOME_DIR, jbossHome.toString());
         setupVfsModule(moduleLoader);
         Properties sysprops = getSystemPropertiesPrivileged();
@@ -143,7 +142,7 @@ class Server {
         return doPrivileged((PrivilegedAction<Properties>) System::getProperties);
     }
 
-    public synchronized ModelControllerClient getModelControllerClient() {
+    synchronized ModelControllerClient getModelControllerClient() {
         return modelControllerClient == null ? null : new DelegatingModelControllerClient(new DelegatingModelControllerClient.DelegateProvider() {
             @Override
             public ModelControllerClient getDelegate() {
@@ -152,7 +151,7 @@ class Server {
         });
     }
 
-    public void start() throws Exception {
+    void start() throws Exception {
         Bootstrap bootstrap = null;
         try {
             final long startTime = System.currentTimeMillis();

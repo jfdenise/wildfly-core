@@ -82,7 +82,7 @@ import org.wildfly.core.jar.runtime.Server.ShutdownHandler;
  *
  * @author jdenise
  */
-public class BootableJar implements ShutdownHandler {
+public final class BootableJar implements ShutdownHandler {
 
     private static final String DEP_1 = "ff";
     private static final String DEP_2 = "00";

@@ -31,7 +31,7 @@ import org.wildfly.core.jar.runtime._private.BootableJarLogger;
  *
  * @author jdenise
  */
-public class Arguments {
+final class Arguments {
 
     private Arguments() {
 

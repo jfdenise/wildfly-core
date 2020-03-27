@@ -33,10 +33,11 @@ import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 
 /**
+ * Bootable jar Main class.
  *
  * @author jdenise
  */
-public class Main {
+public final class Main {
 
     private static final String SYSPROP_KEY_CLASS_PATH = "java.class.path";
     private static final String SYSPROP_KEY_MODULE_PATH = "module.path";

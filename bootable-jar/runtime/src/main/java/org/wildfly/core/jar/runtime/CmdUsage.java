@@ -26,7 +26,7 @@ import org.wildfly.core.jar.runtime._private.BootableJarLogger;
  *
  * @author jdenise
  */
-public class CmdUsage extends CommandLineArgumentUsage {
+final class CmdUsage extends CommandLineArgumentUsage {
     public static void init() {
 
         addArguments(Constants.DEPLOYMENT_ARG + "=<value>");
