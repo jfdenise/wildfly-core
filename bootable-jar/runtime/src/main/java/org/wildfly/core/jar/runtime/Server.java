@@ -67,7 +67,6 @@ class Server {
     private final Properties systemProps;
     private final Map<String, String> systemEnv;
     private final ModuleLoader moduleLoader;
-    private final ClassLoader bootableModuleCL;
     private ServiceContainer serviceContainer;
     private ControlledProcessState.State currentProcessState;
     private ModelControllerClient modelControllerClient;
@@ -77,13 +76,11 @@ class Server {
 
     private Server(String[] cmdargs, Properties systemProps,
             Map<String, String> systemEnv, ModuleLoader moduleLoader,
-            ClassLoader bootableModuleCL,
             ShutdownHandler shutdownHandler) {
         this.cmdargs = cmdargs;
         this.systemProps = systemProps;
         this.systemEnv = systemEnv;
         this.moduleLoader = moduleLoader;
-        this.bootableModuleCL = bootableModuleCL;
         this.shutdownHandler = shutdownHandler;
 
         processStateListener = new PropertyChangeListener() {
@@ -97,12 +94,12 @@ class Server {
         };
     }
 
-    public static Server newSever(Path jbossHome, String[] cmdargs, ModuleLoader moduleLoader, ClassLoader bootableModuleCL, ShutdownHandler shutdownHandler) {
+    public static Server newSever(Path jbossHome, String[] cmdargs, ModuleLoader moduleLoader, ShutdownHandler shutdownHandler) {
         setPropertyPrivileged(ServerEnvironment.HOME_DIR, jbossHome.toString());
         setupVfsModule(moduleLoader);
         Properties sysprops = getSystemPropertiesPrivileged();
         Map<String, String> sysenv = getSystemEnvironmentPrivileged();
-        return new Server(cmdargs, sysprops, sysenv, moduleLoader, bootableModuleCL, shutdownHandler);
+        return new Server(cmdargs, sysprops, sysenv, moduleLoader, shutdownHandler);
     }
 
     static String setPropertyPrivileged(final String name, final String value) {
@@ -156,34 +153,31 @@ class Server {
     }
 
     public void start() throws Exception {
-        ClassLoader tccl = getTccl();
+        Bootstrap bootstrap = null;
         try {
-            setTccl(bootableModuleCL);
-            Bootstrap bootstrap = null;
-            try {
-                final long startTime = System.currentTimeMillis();
+            final long startTime = System.currentTimeMillis();
 
-                // Take control of server use of System.exit
-                // In order to control jbossHome cleanup being done after server stop.
-                SystemExiter.initialize(new SystemExiter.Exiter() {
-                    @Override
-                    public void exit(int status) {
-                        Server.this.exit();
-                        shutdownHandler.shutdown(status);
-                    }
-                });
-
-                // Determine the ServerEnvironment
-                ServerEnvironment serverEnvironment = Main.determineEnvironment(cmdargs, systemProps, systemEnv, ServerEnvironment.LaunchType.STANDALONE, startTime).getServerEnvironment();
-                if (serverEnvironment == null) {
-                    // Nothing to do
-                    return;
+            // Take control of server use of System.exit
+            // In order to control jbossHome cleanup being done after server stop.
+            SystemExiter.initialize(new SystemExiter.Exiter() {
+                @Override
+                public void exit(int status) {
+                    Server.this.exit();
+                    shutdownHandler.shutdown(status);
                 }
-                bootstrap = Bootstrap.Factory.newInstance();
+            });
 
-                Bootstrap.Configuration configuration = new Bootstrap.Configuration(serverEnvironment);
+            // Determine the ServerEnvironment
+            ServerEnvironment serverEnvironment = Main.determineEnvironment(cmdargs, systemProps, systemEnv, ServerEnvironment.LaunchType.STANDALONE, startTime).getServerEnvironment();
+            if (serverEnvironment == null) {
+                // Nothing to do
+                return;
+            }
+            bootstrap = Bootstrap.Factory.newInstance();
 
-                /*
+            Bootstrap.Configuration configuration = new Bootstrap.Configuration(serverEnvironment);
+
+            /*
                      * This would setup an {@link TransientConfigurationPersister} which does not persist anything
                      *
                     final ExtensionRegistry extensionRegistry = configuration.getExtensionRegistry();
@@ -204,34 +198,31 @@ class Server {
                         }
                     };
                     configuration.setConfigurationPersisterFactory(configurationPersisterFactory);
-                 */
-                configuration.setModuleLoader(moduleLoader);
+             */
+            configuration.setModuleLoader(moduleLoader);
 
-                Future<ServiceContainer> future = bootstrap.startup(configuration, Collections.<ServiceActivator>emptyList());
+            Future<ServiceContainer> future = bootstrap.startup(configuration, Collections.<ServiceActivator>emptyList());
 
-                serviceContainer = future.get();
+            serviceContainer = future.get();
 
-                executorService = Executors.newCachedThreadPool();
+            executorService = Executors.newCachedThreadPool();
 
-                @SuppressWarnings({"unchecked", "deprecation"})
-                final Value<ProcessStateNotifier> processStateNotifierValue = (Value<ProcessStateNotifier>) serviceContainer.getRequiredService(ControlledProcessStateService.SERVICE_NAME);
-                processStateNotifier = processStateNotifierValue.getValue();
-                processStateNotifier.addPropertyChangeListener(processStateListener);
-                establishModelControllerClient(processStateNotifier.getCurrentState(), true);
+            @SuppressWarnings({"unchecked", "deprecation"})
+            final Value<ProcessStateNotifier> processStateNotifierValue = (Value<ProcessStateNotifier>) serviceContainer.getRequiredService(ControlledProcessStateService.SERVICE_NAME);
+            processStateNotifier = processStateNotifierValue.getValue();
+            processStateNotifier.addPropertyChangeListener(processStateListener);
+            establishModelControllerClient(processStateNotifier.getCurrentState(), true);
 
-            } catch (RuntimeException rte) {
-                if (bootstrap != null) {
-                    bootstrap.failed();
-                }
-                throw rte;
-            } catch (Exception ex) {
-                if (bootstrap != null) {
-                    bootstrap.failed();
-                }
-                throw BootableJarLogger.ROOT_LOGGER.cannotStartServer(ex);
+        } catch (RuntimeException rte) {
+            if (bootstrap != null) {
+                bootstrap.failed();
             }
-        } finally {
-            setTccl(tccl);
+            throw rte;
+        } catch (Exception ex) {
+            if (bootstrap != null) {
+                bootstrap.failed();
+            }
+            throw BootableJarLogger.ROOT_LOGGER.cannotStartServer(ex);
         }
     }
 
@@ -321,32 +312,6 @@ class Server {
             default: {
                 return modelControllerClient;
             }
-        }
-    }
-
-    static ClassLoader getTccl() {
-        if (System.getSecurityManager() == null) {
-            return Thread.currentThread().getContextClassLoader();
-        }
-        return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-            @Override
-            public ClassLoader run() {
-                return Thread.currentThread().getContextClassLoader();
-            }
-        });
-    }
-
-    static void setTccl(final ClassLoader cl) {
-        if (System.getSecurityManager() == null) {
-            Thread.currentThread().setContextClassLoader(cl);
-        } else {
-            AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                @Override
-                public Object run() {
-                    Thread.currentThread().setContextClassLoader(cl);
-                    return null;
-                }
-            });
         }
     }
 }

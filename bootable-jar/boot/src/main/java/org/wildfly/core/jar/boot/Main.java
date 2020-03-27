@@ -166,8 +166,7 @@ public class Main {
             System.clearProperty(SYSPROP_KEY_CLASS_PATH);
             System.setProperty(SYSPROP_KEY_MODULE_PATH, modulePath);
 
-            // XXX Logging, if logging is not in system packages, Bootable jar logging is not printed.
-            final StringBuilder packages = new StringBuilder("org.jboss.modules,org.jboss.logging,org.jboss.logmanager");
+            final StringBuilder packages = new StringBuilder("org.jboss.modules");
             if (systemPackages != null) {
                 for (String packageName : systemPackages) {
                     packages.append(",");

@@ -395,9 +395,9 @@
                                         <!-- Manipulates the legacy security realm ManagementRealm.
                                              TODO determine if we want that used for management in this installation -->
                                         <exclude>org.jboss.as.test.integration.credential.store.ManagementAuthenticationUsersTestCase.java</exclude>
-                                        
-                                        <!-- Need a new release of jboss-modules to fix this. We can't use any custom handlers, formatters or filters if the log manager is on the boot class path. -->
-                                        <exclude>org.jboss.as.test.integration.logging.syslog.*TestCase.java</exclude>
+
+                                        <!-- No snapshot, readonly config -->
+                                        <exclude>org.wildfly.core.test.standalone.mgmt.api.ModelPersistenceTestCase.java</exclude>
                                     </excludes>
                                 </configuration>
                             </execution>

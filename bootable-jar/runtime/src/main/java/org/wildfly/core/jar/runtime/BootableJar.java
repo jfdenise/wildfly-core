@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
@@ -70,7 +72,6 @@ import static org.wildfly.core.jar.runtime.Constants.DATA;
 import static org.wildfly.core.jar.runtime.Constants.DEPLOYMENTS;
 import static org.wildfly.core.jar.runtime.Constants.LOG;
 import static org.wildfly.core.jar.runtime.Constants.LOGGING_PROPERTIES;
-import static org.wildfly.core.jar.runtime.Constants.LOG_EMBEDDED_PROP;
 import static org.wildfly.core.jar.runtime.Constants.SERVER_LOG;
 import static org.wildfly.core.jar.runtime.Constants.SERVER_STATE;
 import static org.wildfly.core.jar.runtime.Constants.SHA1;
@@ -123,7 +124,7 @@ public class BootableJar implements ShutdownHandler {
         startServerArgs.addAll(arguments.getServerArguments());
         startServerArgs.add(CommandLineConstants.READ_ONLY_SERVER_CONFIG + "=" + STANDALONE_CONFIG);
 
-        configureLogging();
+        configureLogger();
 
         if (arguments.getDeployment() != null) {
             setupDeployment(arguments.getDeployment());
@@ -212,18 +213,15 @@ public class BootableJar implements ShutdownHandler {
         });
     }
 
-    // if logging is not configured this way, traces are not displayed.
-    private void configureLogging() throws IOException {
+    private void configureLogger() throws IOException {
         if (!isLaunch) {
             System.setProperty(LOG_MANAGER_PROP, LOG_MANAGER_CLASS);
-            configureEmbeddedLogging();
+            configureLogging();
         }
-        // Share the log context with embedded
         log = BootableJarLogger.ROOT_LOGGER;
     }
 
-    private void configureEmbeddedLogging() throws IOException {
-        System.setProperty(LOG_EMBEDDED_PROP, "false");
+    private void configureLogging() throws IOException {
         if (!arguments.isVersion()) {
             LogContext ctx = configureLogContext();
             LogContext.setLogContextSelector(() -> {
@@ -307,7 +305,7 @@ public class BootableJar implements ShutdownHandler {
     private Server buildServer(List<String> args) throws IOException {
         String[] array = new String[args.size()];
         log.advertiseOptions(args);
-        return Server.newSever(jbossHome, args.toArray(array), loader, moduleClassLoader, this);
+        return Server.newSever(jbossHome, args.toArray(array), loader, this);
     }
 
     private static void deleteDir(Path root) {
@@ -390,6 +388,7 @@ public class BootableJar implements ShutdownHandler {
      * @throws Exception
      */
     public static void run(Path jbossHome, List<String> args, ModuleLoader moduleLoader, ModuleClassLoader moduleClassLoader, Long startTime) throws Exception {
+        setTccl(moduleClassLoader);
         Arguments arguments;
         try {
             arguments = Arguments.parseArguments(args);
@@ -404,5 +403,19 @@ public class BootableJar implements ShutdownHandler {
         }
         BootableJar bootableJar = new BootableJar(jbossHome, arguments, moduleLoader, moduleClassLoader, startTime);
         bootableJar.run();
+    }
+
+    static void setTccl(final ClassLoader cl) {
+        if (System.getSecurityManager() == null) {
+            Thread.currentThread().setContextClassLoader(cl);
+        } else {
+            AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                @Override
+                public Object run() {
+                    Thread.currentThread().setContextClassLoader(cl);
+                    return null;
+                }
+            });
+        }
     }
 }
