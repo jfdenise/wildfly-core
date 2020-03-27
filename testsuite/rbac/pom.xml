@@ -451,7 +451,7 @@
                     <plugin>
                         <groupId>org.wildfly.plugins</groupId>
                         <artifactId>wildfly-jar-maven-plugin</artifactId>
-                        <version>1.0.0.Alpha5-SNAPSHOT</version>
+                        <version>${version.org.wildfly.jar.plugin}</version>
                         <executions>
                             <!-- Provision a server with the core functionality we will provide in OpenShift images -->
                             <execution>
