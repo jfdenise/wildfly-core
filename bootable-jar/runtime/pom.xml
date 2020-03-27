@@ -32,6 +32,39 @@
   <name>WildFly Bootable Jar runtime</name>
 
  <dependencies>
+     <dependency>
+         <groupId>org.wildfly.core</groupId>
+         <artifactId>wildfly-server</artifactId>
+         <exclusions>
+             <exclusion>
+                 <groupId>*</groupId>
+                 <artifactId>*</artifactId>
+             </exclusion>
+         </exclusions>
+         <scope>provided</scope>
+     </dependency>
+     <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-controller</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.msc</groupId>
+            <artifactId>jboss-msc</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
+        </dependency>
      <!-- this one will be removed when proto support to launch server process is removed -->
      <dependency>
         <groupId>org.wildfly.core</groupId>
@@ -43,11 +76,6 @@
                 <artifactId>*</artifactId>
             </exclusion>
         </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.wildfly.core</groupId>
-      <artifactId>wildfly-embedded</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.wildfly.core</groupId>

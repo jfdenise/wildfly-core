@@ -35,7 +35,7 @@ abstract class MutabilityChecker {
     abstract boolean mutable(PathAddress address);
 
     static MutabilityChecker create(ProcessType processType, boolean isMasterHc) {
-        if (processType == ProcessType.STANDALONE_SERVER || processType == ProcessType.EMBEDDED_SERVER) {
+        if (processType == ProcessType.STANDALONE_SERVER) {
             return new StandaloneServerChecker();
         } else if (processType.isHostController()) {
             return new HostControllerChecker(isMasterHc);

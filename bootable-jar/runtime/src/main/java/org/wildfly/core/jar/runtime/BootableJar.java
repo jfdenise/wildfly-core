@@ -44,13 +44,12 @@ import static org.jboss.as.controller.client.helpers.ClientConstants.READ_ATTRIB
 import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
 import static org.jboss.as.controller.client.helpers.ClientConstants.RUNTIME_NAME;
 import org.jboss.as.process.CommandLineConstants;
+import org.jboss.as.process.ExitCodes;
 import org.jboss.dmr.ModelNode;
 import org.jboss.logmanager.LogContext;
 import org.jboss.logmanager.PropertyConfigurator;
+import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleLoader;
-import org.wildfly.core.embedded.Configuration;
-import org.wildfly.core.embedded.EmbeddedProcessFactory;
-import org.wildfly.core.embedded.StandaloneServer;
 import static org.wildfly.core.jar.runtime.Constants.JBOSS_SERVER_CONFIG_DIR;
 import static org.wildfly.core.jar.runtime.Constants.JBOSS_SERVER_LOG_DIR;
 import static org.wildfly.core.jar.runtime.Constants.LOG_BOOT_FILE_PROP;
@@ -76,12 +75,13 @@ import static org.wildfly.core.jar.runtime.Constants.SERVER_LOG;
 import static org.wildfly.core.jar.runtime.Constants.SERVER_STATE;
 import static org.wildfly.core.jar.runtime.Constants.SHA1;
 import static org.wildfly.core.jar.runtime.Constants.STOPPED;
+import org.wildfly.core.jar.runtime.Server.ShutdownHandler;
 
 /**
  *
  * @author jdenise
  */
-public class BootableJar {
+public class BootableJar implements ShutdownHandler {
 
     private static final String DEP_1 = "ff";
     private static final String DEP_2 = "00";
@@ -92,7 +92,7 @@ public class BootableJar {
         public void run() {
             log.shuttingDown();
             if (!isLaunch) {
-                shutdown();
+                waitAndClean();
             } else {
                 if (process.isAlive()) {
                     process.destroy();
@@ -106,19 +106,20 @@ public class BootableJar {
 
     private final Path jbossHome;
     private final List<String> startServerArgs = new ArrayList<>();
-    private StandaloneServer server;
+    private Server server;
     private final Arguments arguments;
     private Process process;
     private final boolean isLaunch;
     private final ModuleLoader loader;
+    private final ModuleClassLoader moduleClassLoader;
 
-    private BootableJar(Path jbossHome, Arguments arguments, ModuleLoader loader, long startTime) throws Exception {
+    private BootableJar(Path jbossHome, Arguments arguments, ModuleLoader loader, ModuleClassLoader moduleClassLoader, long startTime) throws Exception {
         // XXX to be removed when ability to launch server process is removed
         this.isLaunch = Boolean.getBoolean("launch");
         this.jbossHome = jbossHome;
         this.arguments = arguments;
         this.loader = loader;
-
+        this.moduleClassLoader = moduleClassLoader;
         startServerArgs.addAll(arguments.getServerArguments());
         startServerArgs.add(CommandLineConstants.READ_ONLY_SERVER_CONFIG + "=" + STANDALONE_CONFIG);
 
@@ -129,6 +130,14 @@ public class BootableJar {
         }
 
         log.advertiseInstall(jbossHome, System.currentTimeMillis() - startTime);
+    }
+
+    @Override
+    public void shutdown(int status) {
+        if (status == ExitCodes.RESTART_PROCESS_FROM_STARTUP_SCRIPT) {
+            log.cantReloadServer();
+        }
+        System.exit(status);
     }
 
     private void setupDeployment(Path deployment) throws Exception {
@@ -295,15 +304,10 @@ public class BootableJar {
         process.waitFor();
     }
 
-    private StandaloneServer buildServer(List<String> args) throws IOException {
-        Configuration.Builder builder = Configuration.Builder.of(jbossHome);
-        builder.setModuleLoader(loader);
-        for (String a : args) {
-            builder.addCommandArgument(a);
-        }
+    private Server buildServer(List<String> args) throws IOException {
+        String[] array = new String[args.size()];
         log.advertiseOptions(args);
-        final StandaloneServer serv = EmbeddedProcessFactory.createStandaloneServer(builder.build());
-        return serv;
+        return Server.newSever(jbossHome, args.toArray(array), loader, moduleClassLoader, this);
     }
 
     private static void deleteDir(Path root) {
@@ -340,7 +344,7 @@ public class BootableJar {
         }
     }
 
-    private void shutdown() {
+    private void waitAndClean() {
         try {
             // Give max 10 seconds for the server to stop before to delete jbossHome.
             ModelNode mn = new ModelNode();
@@ -381,10 +385,11 @@ public class BootableJar {
      * @param jbossHome Server home directory.
      * @param args User provided arguments.
      * @param moduleLoader JBoss modules loader.
+     * @param moduleClassLoader Bootable jar module classloader
      * @param startTime Start time to compute time spent for server setup.
      * @throws Exception
      */
-    public static void run(Path jbossHome, List<String> args, ModuleLoader moduleLoader, Long startTime) throws Exception {
+    public static void run(Path jbossHome, List<String> args, ModuleLoader moduleLoader, ModuleClassLoader moduleClassLoader, Long startTime) throws Exception {
         Arguments arguments;
         try {
             arguments = Arguments.parseArguments(args);
@@ -397,7 +402,7 @@ public class BootableJar {
             CmdUsage.printUsage(System.out);
             return;
         }
-        BootableJar bootableJar = new BootableJar(jbossHome, arguments, moduleLoader, startTime);
+        BootableJar bootableJar = new BootableJar(jbossHome, arguments, moduleLoader, moduleClassLoader, startTime);
         bootableJar.run();
     }
 }

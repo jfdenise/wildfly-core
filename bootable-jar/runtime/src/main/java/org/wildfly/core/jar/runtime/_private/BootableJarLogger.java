@@ -24,8 +24,10 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.Logger;
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.WARN;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
+import org.jboss.modules.ModuleLoader;
 
 /**
  *
@@ -85,6 +87,25 @@ public interface BootableJarLogger extends BasicLogger {
 
     @Message(id = 13, value = "Invalid argument %s, no value provided")
     RuntimeException invalidArgument(String arg);
+
+    @Message(id = 14, value = "The server is stopping and invocations on the ModelControllerClient are not available")
+    IllegalStateException processIsStopping();
+
+    @Message(id = 15, value = "The server is reloading and invocations on the ModelControllerClient are not yet available")
+    IllegalStateException processIsReloading();
+
+    @Message(id = 16, value = "The server is stopped and invocations on the ModelControllerClient are not available")
+    IllegalStateException processIsStopped();
+
+    @Message(id = 17, value = "Cannot start server")
+    RuntimeException cannotStartServer(@Cause Throwable cause);
+
+    @Message(id = 18, value = "Cannot load module %s from: %s")
+    RuntimeException moduleLoaderError(@Cause Throwable cause, String msg, ModuleLoader moduleLoader);
+
+    @LogMessage(level = WARN)
+    @Message(id = 19, value = "Cannot reload server, exiting")
+    void cantReloadServer();
 
     @Message(id = Message.NONE, value = "Set system property jboss.bind.address to the given value")
     String argPublicBindAddress();

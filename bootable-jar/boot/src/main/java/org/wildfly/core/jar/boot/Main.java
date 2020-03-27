@@ -112,11 +112,11 @@ public class Main {
         }
         Method runMethod;
         try {
-            runMethod = bjFactoryClass.getMethod(BOOTABLE_JAR_RUN_METHOD, Path.class, List.class, ModuleLoader.class, Long.class);
+            runMethod = bjFactoryClass.getMethod(BOOTABLE_JAR_RUN_METHOD, Path.class, List.class, ModuleLoader.class, ModuleClassLoader.class, Long.class);
         } catch (final NoSuchMethodException nsme) {
             throw new Exception(nsme);
         }
-        runMethod.invoke(null, jbossHome, arguments, moduleLoader, startTime);
+        runMethod.invoke(null, jbossHome, arguments, moduleLoader, moduleCL, startTime);
     }
 
     private static void unzip(InputStream wf, File dir) throws Exception {
