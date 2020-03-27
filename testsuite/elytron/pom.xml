@@ -350,7 +350,6 @@
                                     <plugin-options>
                                         <jboss-maven-dist/>
                                         <jboss-fork-embedded>${galleon.fork.embedded}</jboss-fork-embedded>
-                                        <optional-packages>passive+</optional-packages>
                                     </plugin-options>
                                     <cli-script-files>
                                         <script>${ts.config.elytron.bootable.cli}</script>
