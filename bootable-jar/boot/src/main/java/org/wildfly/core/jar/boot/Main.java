@@ -18,15 +18,21 @@ package org.wildfly.core.jar.boot;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.jboss.modules.FileSystemClassPathModuleFinder;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleLoadException;
@@ -54,14 +60,18 @@ public final class Main {
 
     private static final String WILDFLY_RESOURCE = "/wildfly.zip";
     private static final String WILDFLY_BOOTABLE_TMP_DIR_PREFIX = "wildfly-bootable-server";
+    static Instrumentation instrumentation;
 
     public static void main(String[] args) throws Exception {
 
         List<String> filteredArgs = new ArrayList<>();
+        final List<String> agentJars = new ArrayList<>();
         Path installDir = null;
         for (String arg : args) {
             if (arg.startsWith(INSTALL_DIR)) {
                 installDir = Paths.get(getValue(arg));
+            } else if (arg.startsWith("-javaagent:")) {
+                agentJars.add(arg.substring(11));
             } else {
                 filteredArgs.add(arg);
             }
@@ -75,7 +85,7 @@ public final class Main {
             }
             unzip(wf, installDir.toFile());
         }
-        runBootableJar(installDir, filteredArgs, System.currentTimeMillis() - t);
+        runBootableJar(installDir, filteredArgs, System.currentTimeMillis() - t, agentJars);
     }
 
     private static String getValue(String arg) {
@@ -86,9 +96,10 @@ public final class Main {
         return arg.substring(sep + 1);
     }
 
-    private static void runBootableJar(Path jbossHome, List<String> arguments, Long unzipTime) throws Exception {
+    private static void runBootableJar(Path jbossHome, List<String> arguments, Long unzipTime, List<String> agentJars) throws Exception {
         final String modulePath = jbossHome.resolve(JBOSS_MODULES_DIR_NAME).toAbsolutePath().toString();
         ModuleLoader moduleLoader = setupModuleLoader(modulePath);
+        handleAgents(moduleLoader, agentJars);
         final Module bootableJarModule;
         try {
             bootableJarModule = moduleLoader.loadModule(MODULE_ID_JAR_RUNTIME);
@@ -110,6 +121,98 @@ public final class Main {
             throw new Exception(nsme);
         }
         runMethod.invoke(null, jbossHome, arguments, moduleLoader, moduleCL, unzipTime);
+    }
+
+    private static void handleAgents(ModuleLoader moduleLoader, List<String> agentJars) throws Exception {
+        if (!agentJars.isEmpty()) {
+            final Instrumentation instrumentation = Main.instrumentation;
+            if (instrumentation == null) {
+                // we have to self-attach (todo later)
+                System.err.println("Not started in agent mode (self-attach not supported yet)");
+                //usage();
+                System.exit(1);
+            }
+            final ModuleLoader agentLoader = new ModuleLoader(new FileSystemClassPathModuleFinder(moduleLoader));
+            for (String agentJarArg : agentJars) {
+                final String agentJar;
+                final String agentArgs;
+                final int i = agentJarArg.indexOf('=');
+                if (i > 0) {
+                    agentJar = agentJarArg.substring(0, i);
+                    if (agentJarArg.length() > (i + 1)) {
+                        agentArgs = agentJarArg.substring(i + 1);
+                    } else {
+                        agentArgs = "";
+                    }
+                } else {
+                    agentJar = agentJarArg;
+                    agentArgs = "";
+                }
+
+                final Module agentModule;
+                try {
+                    agentModule = agentLoader.loadModule(new File(agentJar).getAbsolutePath());
+                } catch (ModuleLoadException ex) {
+                    System.err.printf("Cannot load agent JAR %s: %s", agentJar, ex);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                final ModuleClassLoader classLoader = agentModule.getClassLoader();
+                final InputStream is = classLoader.getResourceAsStream("META-INF/MANIFEST.MF");
+                final Manifest manifest;
+                if (is == null) {
+                    System.err.printf("Agent JAR %s has no manifest", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                try {
+                    manifest = new Manifest();
+                    manifest.read(is);
+                    is.close();
+                } catch (IOException e) {
+                    try {
+                        is.close();
+                    } catch (IOException e2) {
+                        e2.addSuppressed(e);
+                        throw e2;
+                    }
+                    throw e;
+                }
+                // Note that this does not implement agent invocation as defined on
+                // https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html. This is also not
+                // done on the system class path which means some agents that rely on that may not work well here.
+                final Attributes attributes = manifest.getMainAttributes();
+                final String preMainClassName = attributes.getValue("Premain-Class");
+                if (preMainClassName != null) {
+                    final Class<?> preMainClass = Class.forName(preMainClassName, true, classLoader);
+                    Object[] premainArgs;
+                    Method premain;
+                    try {
+                        premain = preMainClass.getDeclaredMethod("premain", String.class, Instrumentation.class);
+                        premainArgs = new Object[]{agentArgs, instrumentation};
+                    } catch (NoSuchMethodException ignore) {
+                        // If the method is not found we should check for the string only method
+                        premain = preMainClass.getDeclaredMethod("premain", String.class);
+                        premainArgs = new Object[]{agentArgs};
+                    } catch (Exception e) {
+                        System.out.printf("Failed to find premain method: %s", e);
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                    try {
+                        premain.invoke(null, premainArgs);
+                    } catch (InvocationTargetException e) {
+                        System.out.printf("Execution of premain method failed: %s", e.getCause());
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                } else {
+                    System.out.printf("Agent JAR %s has no premain method", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+            }
+        }
     }
 
     private static void unzip(InputStream wf, File dir) throws Exception {
