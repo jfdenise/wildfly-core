@@ -35,6 +35,7 @@
                      but we want to use our own API jar (see javax.json.api module).
                      So suppress the API packages. -->
                 <exclude path="javax/*"/>
+                <exclude path="jakarta/*"/>
             </filter>
         </artifact>
     </resources>
