@@ -33,6 +33,7 @@
 
     <resources>
         <artifact name="${org.wildfly.core:wildfly-deployment-scanner}"/>
+        <artifact name="${org.wildfly.galleon-plugins:transformer}"/>
     </resources>
 
     <dependencies>

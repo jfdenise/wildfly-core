@@ -91,6 +91,8 @@ import org.jboss.as.server.deployment.scanner.api.DeploymentScanner;
 import org.jboss.as.server.deployment.scanner.logging.DeploymentScannerLogger;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
+import org.wildfly.galleon.plugin.transformer.JakartaTransformer;
+import org.wildfly.galleon.plugin.transformer.JakartaTransformer.LogHandler;
 
 /**
  * Service that monitors the filesystem for deployment content and if found deploys it.
@@ -1067,7 +1069,18 @@ class FileSystemDeploymentService implements DeploymentScanner, NotificationHand
     }
 
     private long addContentAddingTask(final String path, final boolean archive, final String deploymentName,
-                                      final File deploymentFile, final long timestamp, final ScanContext scanContext) {
+            final File deploymentFile, final long timestamp, final ScanContext scanContext) {
+        try {
+            JakartaTransformer.transform(deploymentFile.toPath(), deploymentFile.toPath(), ROOT_LOGGER.isDebugEnabled(), new LogHandler() {
+                @Override
+                public void print(String format, Object... args) {
+                    ROOT_LOGGER.infof(format, args);
+                }
+            });
+            deploymentFile.setLastModified(timestamp);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
         if (scanContext.registeredDeployments.containsKey(deploymentName)) {
             scanContext.scannerTasks.add(new ReplaceTask(path, archive, deploymentName, deploymentFile, timestamp));
         } else {
