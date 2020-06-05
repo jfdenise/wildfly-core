@@ -32,6 +32,7 @@
 
     <resources>
         <artifact name="${org.wildfly.core:wildfly-server}"/>
+        <artifact name="${org.wildfly.galleon-plugins:transformer}"/>
     </resources>
 
     <dependencies>
