@@ -210,14 +210,15 @@ public class DeploymentAddHandler implements OperationStepHandler {
         try {
             try {
                 // The name captures the type of file.
-                transformed = JakartaTransformer.transform(in, name, true, new LogHandler() {
+                System.out.println("TRANSFORMING " + name);
+                transformed = JakartaTransformer.transform(in, name, false, new LogHandler() {
                     @Override
                     public void print(String format, Object... args) {
                         ServerLogger.ROOT_LOGGER.infof(format, args);
                     }
                 });
 
-                hash = contentRepository.addContent(in);
+                hash = contentRepository.addContent(transformed);
             } catch (IOException e) {
                 throw createFailureException(e.toString());
             }
