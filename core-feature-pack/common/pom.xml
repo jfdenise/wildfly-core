@@ -55,7 +55,6 @@
             <groupId>org.wildfly.galleon-plugins</groupId>
             <artifactId>transformer</artifactId>
             <version>${version.org.wildfly.galleon-plugins}</version>
-            <scope>provided</scope>
         </dependency>
         
         <dependency>
