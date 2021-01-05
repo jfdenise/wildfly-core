@@ -64,6 +64,7 @@ public final class Main {
     private static final String BOOTABLE_JAR_RUN_METHOD = "run";
 
     private static final String INSTALL_DIR = "--install-dir";
+    private static final String CUSTOM_CONFIG_FILE = "--server-config-file";
     private static final String SECMGR = "-secmgr";
     private static final String DISPLAY_GALLEON_CONFIG = "--display-galleon-config";
 
@@ -92,7 +93,7 @@ public final class Main {
         Path installDir = null;
         boolean securityManager = false;
         boolean displayGalleonConfig = false;
-
+        Path customConfigFile = null;
         for (String arg : args) {
             if (arg.startsWith(INSTALL_DIR)) {
                 installDir = Paths.get(getValue(arg));
@@ -100,6 +101,8 @@ public final class Main {
                 securityManager = true;
             } else if (DISPLAY_GALLEON_CONFIG.equals(arg)) {
                 displayGalleonConfig = true;
+            } else if (arg.startsWith(CUSTOM_CONFIG_FILE)) {
+                customConfigFile = Paths.get(getValue(arg));
             } else {
                 filteredArgs.add(arg);
             }
@@ -146,6 +149,11 @@ public final class Main {
             unzip(wf, installDir);
         }
 
+        if (customConfigFile != null) {
+            System.out.println("Using " + customConfigFile + " as server configuration");
+            Files.copy(customConfigFile, installDir.resolve("standalone").resolve("configuration").resolve("standalone.xml"),
+                    StandardCopyOption.REPLACE_EXISTING);
+        }
         //Extensions are injected by the maven plugin during packaging.
         ServiceLoader<RuntimeExtension> loader = ServiceLoader.load(RuntimeExtension.class);
         for (RuntimeExtension extension : loader) {
