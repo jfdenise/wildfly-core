@@ -73,6 +73,8 @@ public final class Main {
 
     private static final String WILDFLY_BOOTABLE_TMP_DIR_PREFIX = "wildfly-bootable-server";
 
+    private static final String GALLEON_FEATURES_RESOURCE = "/galleon-features.zip";
+
     private static final Set<PosixFilePermission> EXECUTE_PERMISSIONS = new HashSet<>();
 
     static {
@@ -145,7 +147,12 @@ public final class Main {
             }
             unzip(wf, installDir);
         }
-
+        Path featuresDir = installDir.resolve("galleon-features");
+        try (InputStream features = Main.class.getResourceAsStream(GALLEON_FEATURES_RESOURCE)) {
+            if (features != null) {
+                unzip(features, featuresDir);
+            }
+        }
         //Extensions are injected by the maven plugin during packaging.
         ServiceLoader<RuntimeExtension> loader = ServiceLoader.load(RuntimeExtension.class);
         for (RuntimeExtension extension : loader) {

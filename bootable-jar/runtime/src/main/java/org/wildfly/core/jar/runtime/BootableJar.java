@@ -230,6 +230,27 @@ public final class BootableJar implements ShutdownHandler {
     }
 
     public void run() throws Exception {
+        Path script = null;
+        if (arguments.getYamlConfig() != null) {
+            script = Yaml2Cli.transform(arguments.getYamlConfig(), environment.getJBossHome());
+        }
+        if (arguments.getCliScript() != null) {
+            script = arguments.getCliScript();
+        }
+        if (script != null) {
+            Path markerDir = environment.getJBossHome().resolve("cli-boot-hook-dir");
+            Path outputFile = environment.getJBossHome().resolve("cli-boot-hook-output-file.txt");
+            Files.createDirectories(markerDir);
+            startServerArgs.add("--start-mode=admin-only");
+            startServerArgs.add("-Dorg.wildfly.internal.cli.boot.hook.script=" + script.toAbsolutePath().toString());
+            startServerArgs.add("-Dorg.wildfly.internal.cli.boot.hook.marker.dir=" + markerDir.toAbsolutePath().toString());
+            startServerArgs.add("-Dorg.wildfly.internal.cli.boot.hook.script.output.file=" + outputFile.toAbsolutePath().toString());
+            //-Dorg.wildfly.internal.cli.boot.hook.script.properties=${CLI_SCRIPT_PROPERTY_FILE} \
+            //-Dorg.wildfly.internal.cli.boot.hook.script.output.file=${CLI_SCRIPT_OUTPUT_FILE} \
+            //-Dorg.wildfly.internal.cli.boot.hook.script.error.file=${CONFIG_ERROR_FILE} \
+            //-Dorg.wildfly.internal.cli.boot.hook.script.warn.file=${CONFIG_WARNING_FILE}
+        }
+
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         server = buildServer(startServerArgs);
 
