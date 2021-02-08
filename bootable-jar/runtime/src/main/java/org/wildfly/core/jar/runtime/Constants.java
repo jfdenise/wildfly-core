@@ -41,4 +41,6 @@ interface Constants {
     static final String SHA1 = "sha1";
 
     String DEBUG_PROPERTY = "org.wildfly.core.jar.debug";
+
+    String JBOSS_BOOTABLE_DATA_DIR_ENV_VAR = "JBOSS_BOOTABLE_DATA_DIR";
 }

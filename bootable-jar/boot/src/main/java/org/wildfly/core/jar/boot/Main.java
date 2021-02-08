@@ -52,6 +52,8 @@ import org.jboss.modules.ModuleLoader;
  */
 public final class Main {
 
+    private static final String JBOSS_BOOTABLE_HOME_ENV_VAR = "JBOSS_BOOTABLE_HOME";
+
     private static final String SYSPROP_KEY_CLASS_PATH = "java.class.path";
     private static final String SYSPROP_KEY_MODULE_PATH = "module.path";
     private static final String SYSPROP_KEY_SYSTEM_MODULES = "jboss.modules.system.pkgs";
@@ -125,6 +127,12 @@ public final class Main {
             throw new Exception("An existing security manager was detected.  You must use the -secmgr switch to start with a security manager.");
         }
 
+        if (installDir == null) {
+            String path = System.getenv(JBOSS_BOOTABLE_HOME_ENV_VAR);
+            if (path != null) {
+                installDir = Paths.get(path);
+            }
+        }
         installDir = installDir == null ? Files.createTempDirectory(WILDFLY_BOOTABLE_TMP_DIR_PREFIX) : installDir;
         long t = System.currentTimeMillis();
         // If the same install directory is being used and a previous delete is happening we should attempt to wait for

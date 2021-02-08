@@ -20,6 +20,7 @@
 package org.wildfly.core.jar.runtime;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -237,10 +238,18 @@ class BootableEnvironment {
         final Path serverBaseDir = resolvePath(jbossHome, "standalone");
         setSystemProperty(propertyUpdater, "jboss.server.base.dir", serverBaseDir, propertyNames);
         setSystemProperty(propertyUpdater, "jboss.controller.temp.dir", resolvePath(serverBaseDir, "tmp"), propertyNames);
-        final Path dataDir = resolvePath(serverBaseDir, "data");
+        Path installationDataDir = resolvePath(serverBaseDir, "data");
+        Path dataDir = installationDataDir;
+        // The Operator requires the data-dir to be outside the installation dir (due to mount point in openshift).
+        // The Operator provides the data-dir by the mean of an env variable.
+        String dataDirFromEnv = System.getenv(Constants.JBOSS_BOOTABLE_DATA_DIR_ENV_VAR);
+        if (dataDirFromEnv != null) {
+            dataDir = Paths.get(dataDirFromEnv);
+        }
         setSystemProperty(propertyUpdater, "jboss.server.data.dir", dataDir, propertyNames);
         setSystemProperty(propertyUpdater, "jboss.server.config.dir", resolvePath(serverBaseDir, "configuration"), propertyNames);
-        setSystemProperty(propertyUpdater, "jboss.server.deploy.dir", resolvePath(dataDir, "content"), propertyNames);
+        // The deployment contained in the bootable JAR is located in standalone/data/content
+        setSystemProperty(propertyUpdater, "jboss.server.deploy.dir", resolvePath(installationDataDir, "content"), propertyNames);
         setSystemProperty(propertyUpdater, "jboss.server.log.dir", resolvePath(serverBaseDir, "log"), propertyNames);
         setSystemProperty(propertyUpdater, "jboss.server.temp.dir", resolvePath(serverBaseDir, "tmp"), propertyNames);
         return propertyNames;
