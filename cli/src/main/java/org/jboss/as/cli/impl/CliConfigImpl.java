@@ -94,6 +94,7 @@ class CliConfigImpl implements CliConfig {
     static CliConfig newBootConfig() throws CliInitializationException {
         CliConfigImpl config = new CliConfigImpl();
         config.validateOperationRequests = false;
+        config.echoCommand = true;
         return config;
     }
 
