@@ -212,6 +212,11 @@ class BootableEnvironment {
         for (Map.Entry<String, String> entry : local.entrySet()) {
             setSystemProperty(entry.getKey(), entry.getValue());
         }
+        // Handle server log dir.
+        if (System.getProperty("jboss.server.log.dir") == null) {
+            Path p = resolvePath(serverDir, "log");
+            propertyUpdater.setProperty("jboss.server.log.dir", p.toString());
+        }
     }
 
     /**
@@ -252,7 +257,6 @@ class BootableEnvironment {
         setSystemProperty(propertyUpdater, "jboss.server.data.dir", dataDir, propertyNames);
         setSystemProperty(propertyUpdater, "jboss.server.config.dir", resolvePath(serverBaseDir, "configuration"), propertyNames);
         setSystemProperty(propertyUpdater, "jboss.server.deploy.dir", resolvePath(dataDir, "content"), propertyNames);
-        setSystemProperty(propertyUpdater, "jboss.server.log.dir", resolvePath(serverBaseDir, "log"), propertyNames);
         setSystemProperty(propertyUpdater, "jboss.server.temp.dir", resolvePath(serverBaseDir, "tmp"), propertyNames);
         return propertyNames;
     }
