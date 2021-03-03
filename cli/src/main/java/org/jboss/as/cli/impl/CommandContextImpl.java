@@ -455,17 +455,8 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
      *
      */
     public CommandContextImpl(OutputStream output) throws CliInitializationException {
-        this(output, true);
-    }
-
-    /**
-     * Constructor called from Boot invoker, minimal configuration. Used by test.
-     * public for testing purpose.
-     *
-     */
-    public CommandContextImpl(OutputStream output, boolean enableEchoCommand) throws CliInitializationException {
         bootInvoker = true;
-        config = CliConfigImpl.newBootConfig(enableEchoCommand);
+        config = CliConfigImpl.newBootConfig();
         addressResolver = ControllerAddressResolver.newInstance(config, null);
 
         operationHandler = new OperationRequestHandler();

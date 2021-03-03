@@ -77,7 +77,7 @@ public class BasicIfElseTestCase extends CLISystemPropertyTestBase {
     @Test
     public void testIfMatchComparisonBoot() throws Exception {
 
-        final CommandContext ctx = new CommandContextImpl(cliOut, false);
+        final CommandContext ctx = new CommandContextImpl(cliOut);
         try {
             ctx.bindClient(managementClient.getControllerClient());
             ctx.handle(this.getAddPropertyReq("match-test-values", "\"AAA BBB\""));
