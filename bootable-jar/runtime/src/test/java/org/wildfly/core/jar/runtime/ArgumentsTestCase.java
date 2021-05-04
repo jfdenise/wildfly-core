@@ -123,6 +123,34 @@ public class ArgumentsTestCase {
                 throw new Exception("Should have failed");
             }
         }
+
+        {
+            boolean error = false;
+            try {
+                String[] args = {"--check-boot=foo"};
+                Arguments arguments = Arguments.parseArguments(Arrays.asList(args), createEnvironment());
+                error = true;
+            } catch (Exception ex) {
+                // OK expected
+            }
+            if (error) {
+                throw new Exception("Should have failed");
+            }
+        }
+
+        {
+            String[] args = {"--check-boot=true"};
+            Arguments arguments = Arguments.parseArguments(Arrays.asList(args), createEnvironment());
+            assertTrue(arguments.getServerArguments().isEmpty());
+            assertTrue(arguments.checkBoot());
+        }
+
+        {
+            String[] args = {"--check-boot=false"};
+            Arguments arguments = Arguments.parseArguments(Arrays.asList(args), createEnvironment());
+            assertTrue(arguments.getServerArguments().isEmpty());
+            assertFalse(arguments.checkBoot());
+        }
     }
 
     @Test

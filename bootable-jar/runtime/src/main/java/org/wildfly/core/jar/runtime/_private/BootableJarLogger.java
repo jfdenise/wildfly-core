@@ -127,6 +127,29 @@ public interface BootableJarLogger extends BasicLogger {
     @Message(id = 24, value = "The container has not properly shutdown within %ds. This may result in the install directory \"%s\" not being properly deleted.")
     void cleanupTimeout(long timeout, Path installDir);
 
+    @Message(id = 25, value = "Server %s never reached %s ")
+    RuntimeException serverAttributeNeverReached(String attribute, String value);
+
+    @Message(id = 26, value = "The server started with errors")
+    RuntimeException bootErrors();
+
+    @Message(id = 27, value = "Deployment failed")
+    RuntimeException deploymentFailed();
+
+    @LogMessage(level = INFO)
+    @Message(id = 28, value = "Server boot checks have been disabled")
+    void disabledBootChecks();
+
+    @LogMessage(level = INFO)
+    @Message(id = 29, value = "Bootable JAR started successfully")
+    void bootSuccess();
+
+    @Message(id = 30, value = "Response error while checking server %s, %s")
+    RuntimeException unexpectedDMROperationResult(String op, String msg);
+
+    @Message(id = 31, value = "Unexpected exception: %s")
+    RuntimeException unexpectedExceptionWhileCheckingBoot(@Cause Throwable cause, String msg);
+
     @Message(id = Message.NONE, value = "Set system property jboss.bind.address to the given value")
     String argPublicBindAddress();
 
@@ -165,4 +188,7 @@ public interface BootableJarLogger extends BasicLogger {
 
     @Message(id = Message.NONE, value = "Path to a CLI script to execute when starting the Bootable JAR")
     String argCliScript();
+
+    @Message(id = Message.NONE, value = "Enable or disable checks done during boot. By default, if the server fails to start or the deployment fails to initialize, the process is aborted. Set this argument to false to disable these checks.")
+    String argCheckBoot();
 }

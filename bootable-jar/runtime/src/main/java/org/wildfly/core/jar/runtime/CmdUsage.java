@@ -29,6 +29,9 @@ import org.wildfly.core.jar.runtime._private.BootableJarLogger;
 final class CmdUsage extends CommandLineArgumentUsage {
     public static void init() {
 
+        addArguments(Constants.CHECK_BOOT_ARG + "=[true|false]");
+        instructions.add(BootableJarLogger.ROOT_LOGGER.argCheckBoot());
+
         addArguments(Constants.DEPLOYMENT_ARG + "=<value>");
         instructions.add(BootableJarLogger.ROOT_LOGGER.argDeployment());
 

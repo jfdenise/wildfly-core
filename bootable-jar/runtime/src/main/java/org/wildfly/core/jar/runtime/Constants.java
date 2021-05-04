@@ -26,7 +26,7 @@ interface Constants {
     static final String INSTALL_DIR_ARG = "--install-dir";
     static final String DISPLAY_GALLEON_CONFIG_ARG = "--display-galleon-config";
     static final String CLI_SCRIPT_ARG = "--cli-script";
-
+    static final String CHECK_BOOT_ARG = "--check-boot";
     static final String DEPLOYMENTS = "deployments";
     static final String STANDALONE_CONFIG = "standalone.xml";
 
@@ -35,8 +35,17 @@ interface Constants {
     static final String LOG_BOOT_FILE_PROP = "org.jboss.boot.log.file";
     static final String LOGGING_PROPERTIES = "logging.properties";
 
+    static final String DEPLOYMENT_FAILED = "FAILED";
+    static final String FAILURE_DESCRIPTION = "failure-description";
+    static final String ALL_DEPLOYMENTS_ADDRESS = "/deployment=*";
+    static final String READ_BOOT_ERRORS_OPERATION = "read-boot-errors";
+    static final String CORE_SERVICE_MANAGEMENT_ADDRESS = "/core-service=management";
+    static final String NORMAL = "NORMAL";
+    static final String RUNNING = "running";
+    static final String RUNNING_MODE = "running-mode";
     static final String SERVER_LOG = "server.log";
     static final String SERVER_STATE = "server-state";
+    static final String STATUS = "status";
     static final String STOPPED = "stopped";
 
     static final String SHA1 = "sha1";

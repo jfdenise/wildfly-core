@@ -35,6 +35,8 @@ import java.util.Objects;
 import java.util.Properties;
 
 import org.jboss.as.process.CommandLineConstants;
+import static org.wildfly.core.jar.runtime.Constants.CHECK_BOOT_ARG;
+import static org.wildfly.core.jar.runtime.Constants.CLI_SCRIPT_ARG;
 import org.wildfly.core.jar.runtime._private.BootableJarLogger;
 
 /**
@@ -50,6 +52,7 @@ final class Arguments {
 
     private Boolean isHelp;
     private Boolean isVersion;
+    private Boolean checkBoot = true;
     private final List<String> serverArguments = new ArrayList<>();
     private final BootableEnvironment environment;
     private Path deployment;
@@ -102,11 +105,17 @@ final class Arguments {
                 serverArguments.add(a);
             } else if (CommandLineConstants.HELP.equals(a)) {
                 isHelp = true;
-            } else if (a.startsWith("--cli-script")) {
+            } else if (a.startsWith(CLI_SCRIPT_ARG)) {
                 cliScript = Paths.get(getValue(a));
                 if (!Files.exists(cliScript) || !Files.isReadable(cliScript)) {
                     throw new Exception("File doesn't exist or is not readable: " + cliScript);
                 }
+            } else if (a.startsWith(CHECK_BOOT_ARG)) {
+                String val = getValue(a);
+                if (!"true".equals(val) && !"false".equals(val)) {
+                    throw new Exception(CHECK_BOOT_ARG + " value must be true or false.");
+                }
+                checkBoot = Boolean.valueOf(val);
             } else {
                 throw BootableJarLogger.ROOT_LOGGER.unknownArgument(a);
             }
@@ -150,6 +159,10 @@ final class Arguments {
      */
     public List<String> getServerArguments() {
         return Collections.unmodifiableList(serverArguments);
+    }
+
+    public Boolean checkBoot() {
+        return checkBoot;
     }
 
     /**

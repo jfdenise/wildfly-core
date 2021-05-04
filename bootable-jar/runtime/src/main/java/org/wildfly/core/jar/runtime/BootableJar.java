@@ -46,9 +46,11 @@ import static org.jboss.as.controller.client.helpers.ClientConstants.CONTENT;
 import static org.jboss.as.controller.client.helpers.ClientConstants.DEPLOYMENT;
 import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
 import static org.jboss.as.controller.client.helpers.ClientConstants.OP;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OUTCOME;
 import static org.jboss.as.controller.client.helpers.ClientConstants.READ_ATTRIBUTE_OPERATION;
 import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
 import static org.jboss.as.controller.client.helpers.ClientConstants.RUNTIME_NAME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.SUCCESS;
 import org.jboss.as.process.CommandLineConstants;
 import org.jboss.as.process.ExitCodes;
 import org.jboss.dmr.ModelNode;
@@ -68,11 +70,20 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import static org.wildfly.core.jar.runtime.Constants.ALL_DEPLOYMENTS_ADDRESS;
+import static org.wildfly.core.jar.runtime.Constants.CORE_SERVICE_MANAGEMENT_ADDRESS;
 import static org.wildfly.core.jar.runtime.Constants.DEPLOYMENTS;
+import static org.wildfly.core.jar.runtime.Constants.DEPLOYMENT_FAILED;
+import static org.wildfly.core.jar.runtime.Constants.FAILURE_DESCRIPTION;
 import static org.wildfly.core.jar.runtime.Constants.LOGGING_PROPERTIES;
+import static org.wildfly.core.jar.runtime.Constants.NORMAL;
+import static org.wildfly.core.jar.runtime.Constants.READ_BOOT_ERRORS_OPERATION;
+import static org.wildfly.core.jar.runtime.Constants.RUNNING;
+import static org.wildfly.core.jar.runtime.Constants.RUNNING_MODE;
 import static org.wildfly.core.jar.runtime.Constants.SERVER_LOG;
 import static org.wildfly.core.jar.runtime.Constants.SERVER_STATE;
 import static org.wildfly.core.jar.runtime.Constants.SHA1;
+import static org.wildfly.core.jar.runtime.Constants.STATUS;
 import static org.wildfly.core.jar.runtime.Constants.STOPPED;
 import org.wildfly.core.jar.runtime.Server.ShutdownHandler;
 
@@ -251,6 +262,19 @@ public final class BootableJar implements ShutdownHandler {
             throw log.pidFileAlreadyExists(pidFile, environment.getJBossHome());
         }
         server.start();
+        try {
+            if (arguments.checkBoot()) {
+                // If false means the server stopped during boot (killed or fatal error).
+                if (checkDeploymentStatus()) {
+                    log.bootSuccess();
+                }
+            } else {
+                log.disabledBootChecks();
+            }
+        } catch (Exception ex) {
+            log.error(ex.getLocalizedMessage());
+            System.exit(1);
+        }
     }
 
     private Server buildServer(List<String> args) throws IOException {
@@ -414,6 +438,125 @@ public final class BootableJar implements ShutdownHandler {
                     log.cantDelete(pidFile.toString(), e);
                 }
             }
+        }
+    }
+
+    private boolean checkDeploymentStatus() {
+        // state is used in case the server as been closed
+        // and no more check should be done
+        boolean state = true;
+        try {
+            if (arguments.getCLIScript() != null) {
+                state = waitForServerNormalNode();
+            }
+            if (state) {
+                state = waitForServerRunning();
+            }
+            if (state) {
+                state = checkBootErrors();
+            }
+            if (state) {
+                state = checkDeployment();
+            }
+            return state;
+        } catch (IOException ex) {
+            throw log.unexpectedExceptionWhileCheckingBoot(ex, ex.getLocalizedMessage());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw log.unexpectedExceptionWhileCheckingBoot(ex, ex.getLocalizedMessage());
+        }
+    }
+
+    private boolean waitForServerRunning() throws IOException, InterruptedException {
+        return waitForValue(SERVER_STATE, RUNNING);
+    }
+
+    private boolean waitForServerNormalNode() throws IOException, InterruptedException {
+        return waitForValue(RUNNING_MODE, NORMAL);
+    }
+
+    private boolean waitForValue(String attribute, String expected) throws IOException, InterruptedException {
+        ModelNode mn = new ModelNode();
+        mn.get(ADDRESS);
+        mn.get(OP).set(READ_ATTRIBUTE_OPERATION);
+        mn.get(NAME).set(attribute);
+        // Not guarded by a timeout. A server can takes long time to be ready.
+        // If the server is never ready then we have a problem to be solved by external management op (Kill, ...).
+        // This watcher being active is not a problem in such erroneous context.
+        while (true) {
+            ModelControllerClient client = server.getModelControllerClient();
+            if (client != null) {
+                ModelNode ret = client.execute(mn);
+                if (ret.hasDefined(OUTCOME) && SUCCESS.equals(ret.get(OUTCOME).asString())) {
+                    String val = ret.get(RESULT).asString();
+                    if (expected.equals(val)) {
+                        return true;
+                    }
+                }
+                Thread.sleep(500);
+            } else {
+                log.nullController();
+                return false;
+            }
+        }
+    }
+
+    private boolean checkBootErrors() throws IOException {
+        ModelNode mn = new ModelNode();
+        mn.get(ADDRESS).set(CORE_SERVICE_MANAGEMENT_ADDRESS);
+        mn.get(OP).set(READ_BOOT_ERRORS_OPERATION);
+        ModelControllerClient client = server.getModelControllerClient();
+        if (client != null) {
+            ModelNode ret = client.execute(mn);
+            if (ret.hasDefined(OUTCOME) && SUCCESS.equals(ret.get(OUTCOME).asString())) {
+                List<ModelNode> lst = ret.get(RESULT).asList();
+                if (lst.isEmpty()) {
+                    // No error.
+                    return true;
+                }
+            } else {
+                throw handleUnexpectedFailure(ret, mn.toString());
+            }
+            throw log.bootErrors();
+        } else {
+            log.nullController();
+            return false;
+        }
+    }
+
+    private RuntimeException handleUnexpectedFailure(ModelNode reply, String op) {
+        String msg = "";
+        if (reply.hasDefined(FAILURE_DESCRIPTION)) {
+            msg = reply.get(FAILURE_DESCRIPTION).asString();
+        }
+        return log.unexpectedDMROperationResult(op, msg);
+    }
+
+    private boolean checkDeployment() throws IOException {
+        ModelNode mn = new ModelNode();
+        mn.get(ADDRESS).set(ALL_DEPLOYMENTS_ADDRESS);
+        mn.get(OP).set(READ_ATTRIBUTE_OPERATION);
+        mn.get(NAME).set(STATUS);
+        ModelControllerClient client = server.getModelControllerClient();
+        if (client != null) {
+            ModelNode ret = client.execute(mn);
+            if (ret.hasDefined(OUTCOME) && SUCCESS.equals(ret.get(OUTCOME).asString())) {
+                List<ModelNode> lst = ret.get(RESULT).asList();
+                if (!lst.isEmpty()) {
+                    for (ModelNode deployment : lst) {
+                        String status = deployment.get(RESULT).asString();
+                        if (DEPLOYMENT_FAILED.equals(status)) {
+                            throw log.deploymentFailed();
+                        }
+                    }
+                }
+                return true;
+            } else {
+                throw handleUnexpectedFailure(ret, mn.toString());
+            }
+        } else {
+            log.nullController();
+            return false;
         }
     }
 }
