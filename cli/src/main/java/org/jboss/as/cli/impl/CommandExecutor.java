@@ -184,7 +184,10 @@ public class CommandExecutor {
                 task = wrapped.executeOperationAsync(operation, messageHandler);
                 setLastHandlerTask(task);
                 try {
-                    return task.get();
+                    System.out.println("TASK IS GOING TO BE CALLED " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
+                    OperationResponse resp = task.get();
+                    System.out.println("TASK " + task.hashCode() + "NOT CANCELED!!!!!!!!!!!!!!!!!m BUG");
+                    return resp;
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     throw new IOException(ex);
@@ -228,7 +231,10 @@ public class CommandExecutor {
                     Future<ModelNode> task
                             = wrapped.executeAsync(operation, OperationMessageHandler.DISCARD);
                     setLastHandlerTask(task);
-                    return task.get();
+                    System.out.println("TASK IS GOING TO BE CALLED " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
+                    ModelNode mod = task.get();
+                    System.out.println("MODELNODE TASK NOT FAILING BUG " + task.hashCode());
+                    return mod;
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     throw new IOException(ex);
@@ -261,6 +267,7 @@ public class CommandExecutor {
                     Future<ModelNode> task
                             = wrapped.executeAsync(operation, handler);
                     setLastHandlerTask(task);
+                    System.out.println("TASK IS GOING TO BE CALLED");
                     return task.get();
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -742,13 +749,15 @@ public class CommandExecutor {
     private static void cancelTask(Future<?> task, CommandContext ctx, String msg) {
         if (task != null && !(task.isDone()
                 && task.isCancelled())) {
-            System.out.println("CANCELLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.out.println("CANCELLING: " + task.hashCode() + " is cancelled " + task.isCancelled());
             try {
                 if (msg != null) {
                     ctx.printLine(msg);
                 }
                 task.cancel(true);
             } catch (Exception cex) {
+                System.out.println("WHAT!!!!!!");
+                cex.printStackTrace();
                 // XXX OK, task could be already canceled or done.
             }
         }

@@ -249,7 +249,7 @@ public abstract class BaseOperationCommand extends CommandHandlerWithHelp implem
         }
         try {
             final ModelNode response = operationResponse.getResponseNode();
-            System.out.println("#################### RESPONSE1 " + response);
+            System.out.println("#################### RESPONSE1 ");
             if (!Util.isSuccess(response)) {
                 throw new CommandLineException(Util.getFailureDescription(response));
             }
