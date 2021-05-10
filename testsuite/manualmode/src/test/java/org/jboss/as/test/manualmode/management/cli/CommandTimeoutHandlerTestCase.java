@@ -471,6 +471,7 @@ public class CommandTimeoutHandlerTestCase {
                     Thread.sleep(sleep);
                     holder.add(null);
                 } catch (InterruptedException ex) {
+                    ex.printStackTrace();
                     holder.add(ex);
                     Thread.currentThread().interrupt();
                 }
