@@ -469,14 +469,17 @@ public class CommandTimeoutHandlerTestCase {
                 try {
                     long sleep = TimeoutUtil.adjust(1000);
                     Thread.sleep(sleep);
+                    System.out.println("NOT INTERRUPTED DURING SLEEP");
                     holder.add(null);
                 } catch (InterruptedException ex) {
+                    System.out.println("INTERRUPTED DURING SLEEP");
                     ex.printStackTrace();
                     holder.add(ex);
                     Thread.currentThread().interrupt();
                 }
                 try {
                     ls.handle(context);
+                    System.out.println("NO EXCEPTION IN HANDLE");
                     holder.add(null);
                 } catch (Exception ex) {
                     ex.printStackTrace();
