@@ -243,6 +243,7 @@ public abstract class BaseOperationCommand extends CommandHandlerWithHelp implem
         final OperationResponse operationResponse;
         try {
             operationResponse = client.executeOperation(builder.build(), OperationMessageHandler.DISCARD);
+            System.out.println("#################### NOT FAILED 1");
         } catch (Exception e) {
             throw new CommandLineException("Failed to perform operation", e);
         }

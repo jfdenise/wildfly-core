@@ -442,6 +442,7 @@ public class LsHandler extends BaseOperationCommand {
         Map<String, CommandArgument> options = Collections.emptyMap();
         try {
             final ModelNode response = ctx.getModelControllerClient().execute(req);
+            System.out.println("#################### NOT FAILED 0");
             if (Util.isSuccess(response)) {
                 if (response.hasDefined(Util.RESULT)) {
                     final ModelNode result = response.get(Util.RESULT);
