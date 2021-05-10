@@ -443,6 +443,7 @@ public class LsHandler extends BaseOperationCommand {
         try {
             final ModelNode response = ctx.getModelControllerClient().execute(req);
             System.out.println("#################### NOT FAILED 0");
+            System.out.println("#################### RESPONSE0 " + response);
             if (Util.isSuccess(response)) {
                 if (response.hasDefined(Util.RESULT)) {
                     final ModelNode result = response.get(Util.RESULT);
