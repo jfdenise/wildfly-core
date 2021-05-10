@@ -488,6 +488,7 @@ public class CommandTimeoutHandlerTestCase {
             });
             for (int i = 0; i < 10; i++) {
                 try {
+                    System.out.println("STARTED  " + i);
                     executor.execute(wrapper, 100, TimeUnit.MILLISECONDS);
                     throw new RuntimeException("Should have failed");
                 } catch (TimeoutException ex) {
