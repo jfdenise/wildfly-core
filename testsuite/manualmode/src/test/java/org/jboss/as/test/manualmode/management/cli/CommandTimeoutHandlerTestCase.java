@@ -478,6 +478,7 @@ public class CommandTimeoutHandlerTestCase {
                     ls.handle(context);
                     holder.add(null);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     // Expecting a timeout exception,
                     // the task has already been canceled.
                     holder.add(ex);
