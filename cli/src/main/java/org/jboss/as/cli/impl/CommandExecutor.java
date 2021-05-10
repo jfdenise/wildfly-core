@@ -184,7 +184,7 @@ public class CommandExecutor {
                 task = wrapped.executeOperationAsync(operation, messageHandler);
                 setLastHandlerTask(task);
                 try {
-                    System.out.println("TASK IS GOING TO BE CALLED " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
+                    System.out.println("TASK IS GOING TO BE CALLED " + task.getClass() + " " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
                     OperationResponse resp = task.get();
                     System.out.println("TASK " + task.hashCode() + "NOT CANCELED!!!!!!!!!!!!!!!!!m BUG");
                     return resp;
@@ -231,7 +231,7 @@ public class CommandExecutor {
                     Future<ModelNode> task
                             = wrapped.executeAsync(operation, OperationMessageHandler.DISCARD);
                     setLastHandlerTask(task);
-                    System.out.println("TASK IS GOING TO BE CALLED " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
+                    System.out.println("TASK IS GOING TO BE CALLED " + task.getClass() + " " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
                     ModelNode mod = task.get();
                     System.out.println("MODELNODE TASK NOT FAILING BUG " + task.hashCode());
                     return mod;
@@ -756,8 +756,9 @@ public class CommandExecutor {
                 }
                 task.cancel(true);
             } catch (Exception cex) {
-                System.out.println("WHAT!!!!!!");
+                System.out.println("WHAT!!!!!! cancelled: " + task.isCancelled() + " done " + task.isDone());
                 cex.printStackTrace();
+                throw new RuntimeException(cex);
                 // XXX OK, task could be already canceled or done.
             }
         }
