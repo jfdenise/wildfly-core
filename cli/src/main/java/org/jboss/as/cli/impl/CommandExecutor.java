@@ -307,6 +307,7 @@ public class CommandExecutor {
          */
         public synchronized void setLastHandlerTask(Future<?> handlerTask) {
             if (timeout) {
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!MUST CANCEL");
                 cancelTask(handlerTask, wrapped, CANCEL_MSG);
             } else {
                 this.handlerTask = handlerTask;
@@ -741,6 +742,7 @@ public class CommandExecutor {
     private static void cancelTask(Future<?> task, CommandContext ctx, String msg) {
         if (task != null && !(task.isDone()
                 && task.isCancelled())) {
+            System.out.println("CANCELLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             try {
                 if (msg != null) {
                     ctx.printLine(msg);

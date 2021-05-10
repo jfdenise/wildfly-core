@@ -482,6 +482,7 @@ public class CommandTimeoutHandlerTestCase {
                     System.out.println("NO EXCEPTION IN HANDLE");
                     holder.add(null);
                 } catch (Exception ex) {
+                    System.err.println("EXCEPTION IN HANDLE");
                     ex.printStackTrace();
                     // Expecting a timeout exception,
                     // the task has already been canceled.
