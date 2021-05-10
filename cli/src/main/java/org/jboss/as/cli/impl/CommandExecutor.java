@@ -183,6 +183,9 @@ public class CommandExecutor {
                 AsyncFuture<OperationResponse> task;
                 task = wrapped.executeOperationAsync(operation, messageHandler);
                 setLastHandlerTask(task);
+                if (timeout) {
+                    throw new IOException("Operation timeout");
+                }
                 try {
                     System.out.println("TASK IS GOING TO BE CALLED " + task.getClass() + " " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
                     OperationResponse resp = task.get();
@@ -215,6 +218,9 @@ public class CommandExecutor {
                     Future<ModelNode> task
                             = wrapped.executeAsync(operation, OperationMessageHandler.DISCARD);
                     setLastHandlerTask(task);
+                    if (timeout) {
+                        throw new IOException("Operation timeout");
+                    }
                     return task.get();
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -231,6 +237,9 @@ public class CommandExecutor {
                     Future<ModelNode> task
                             = wrapped.executeAsync(operation, OperationMessageHandler.DISCARD);
                     setLastHandlerTask(task);
+                    if (timeout) {
+                        throw new IOException("Operation timeout");
+                    }
                     System.out.println("TASK IS GOING TO BE CALLED " + task.getClass() + " " + task.hashCode() + " task cancelled " + task.isCancelled() + " task done " + task.isDone());
                     ModelNode mod = task.get();
                     System.out.println("MODELNODE TASK NOT FAILING BUG " + task.hashCode());
@@ -250,6 +259,9 @@ public class CommandExecutor {
                     Future<ModelNode> task
                             = wrapped.executeAsync(operation, handler);
                     setLastHandlerTask(task);
+                    if (timeout) {
+                        throw new IOException("Operation timeout");
+                    }
                     return task.get();
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -268,6 +280,9 @@ public class CommandExecutor {
                             = wrapped.executeAsync(operation, handler);
                     setLastHandlerTask(task);
                     System.out.println("TASK IS GOING TO BE CALLED");
+                    if (timeout) {
+                        throw new IOException("Operation timeout");
+                    }
                     return task.get();
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -288,7 +303,7 @@ public class CommandExecutor {
         private final CommandContext wrapped;
         private final ModelControllerClient client;
         private Future<?> handlerTask;
-        private boolean timeout;
+        private volatile boolean timeout;
 
         TimeoutCommandContext(CommandContext wrapped) {
             this.wrapped = wrapped;
@@ -758,7 +773,6 @@ public class CommandExecutor {
             } catch (Exception cex) {
                 System.out.println("WHAT!!!!!! cancelled: " + task.isCancelled() + " done " + task.isDone());
                 cex.printStackTrace();
-                throw new RuntimeException(cex);
                 // XXX OK, task could be already canceled or done.
             }
         }
