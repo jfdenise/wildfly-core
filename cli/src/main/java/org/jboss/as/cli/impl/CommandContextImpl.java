@@ -1785,6 +1785,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                 if (opLine != null && !opLine.equals(line)) {
                     resetArgs(opLine);
                 }
+                Throwable originalException = null;
                 try {
                     // Could be an operation.
                     if (exec.isOperation()) {
@@ -1797,7 +1798,13 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                         handleLegacyCommand(exec.getLine(), handler, false);
                         continue;
                     }
+                } catch(Throwable ex) {
+                    if (ex instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                    originalException = ex;
                 } finally {
+                    Throwable exception = originalException;
                     // We must close any output redirection, that is automaticaly done
                     // when calling exec.execute something that we are not doing here.
                     if (invContext.getConfiguration().getOutputRedirection() != null) {
@@ -1807,9 +1814,31 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
                             // Message must contain the Exception and the localized message.
                             if (ex instanceof AccessDeniedException) {
                                 String message = ex.getMessage();
-                                throw new CommandLineException((message != null ? message : line) + " (Access denied)");
+                                exception = new CommandLineException((message != null ? message : line) + " (Access denied)");
+                            } else {
+                                exception = new CommandLineException(ex.toString());
                             }
-                            throw new CommandLineException(ex.toString());
+                             if (originalException != null) {
+                                 originalException.addSuppressed(exception);
+                                 exception = originalException;
+                             }
+                        }
+                    }
+                    if (exception != null) {
+                        if (exception instanceof RuntimeException ) {
+                            throw (RuntimeException) exception;
+                        }
+                        if (exception instanceof Error ) {
+                            throw (Error) exception;
+                        }
+                        if (exception instanceof CommandLineException) {
+                            throw (CommandLineException) exception;
+                        }
+                        if (exception instanceof CommandLineParserException) {
+                            throw (CommandLineParserException) exception;
+                        }
+                        if (exception instanceof OptionValidatorException) {
+                            throw (OptionValidatorException) exception;
                         }
                     }
                 }
