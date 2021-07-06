@@ -23,6 +23,7 @@ package org.jboss.as.cli.handlers.trycatch;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 
 /**
@@ -37,8 +38,21 @@ public class CatchHandler extends CommandHandlerWithHelp {
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
+        /* First check if we have a state control flow.
+            If that is not the case, the command could be executed.
+        */
+        if (ControlFlowStateHandler.getCurrent() != null) {
+            if (ControlFlowStateHandler.getCurrent() instanceof TryControlFlowState) {
+                TryControlFlowState state = (TryControlFlowState) ControlFlowStateHandler.getCurrent();
+                return state.isInTry();
+            }
+            return false;
+        }
         final TryCatchFinallyControlFlow flow = TryCatchFinallyControlFlow.get(ctx);
-        return flow != null && flow.isInTry();
+        if (flow != null && flow.isInTry()) {
+            return true;
+        }
+        return false;
     }
 
     /* (non-Javadoc)

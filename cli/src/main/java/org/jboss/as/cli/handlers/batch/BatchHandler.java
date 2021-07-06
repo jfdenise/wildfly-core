@@ -34,6 +34,7 @@ import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -92,6 +93,17 @@ public class BatchHandler extends CommandHandlerWithHelp {
         final FilenameTabCompleter pathCompleter = FilenameTabCompleter.newCompleter(ctx);
         file = new FileSystemPathArgument(this, pathCompleter, "--file");
         file.setExclusive(true);
+    }
+
+    @Override
+    public boolean isAvailable(CommandContext ctx) {
+        if (ctx.getBatchManager().isBatchActive()) {
+            return false;
+        }
+        if (ControlFlowStateHandler.isBatch()) {
+            return false;
+        }
+        return super.isAvailable(ctx);
     }
 
     /* (non-Javadoc)
