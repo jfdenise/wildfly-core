@@ -16,6 +16,7 @@ limitations under the License.
 package org.jboss.as.cli.handlers.loop;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.cli.impl.ArgumentWithoutValue;
 
@@ -33,7 +34,16 @@ public class DoneHandler extends CommandHandlerWithHelp {
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
-        return ForControlFlow.get(ctx) != null;
+        /* First check if we have a state control flow.
+            If that is not the case, the command could be executed.
+        */
+        if (ControlFlowStateHandler.getCurrent() != null) {
+            return ControlFlowStateHandler.getCurrent() instanceof ForControlFlowState;
+        }
+        if (ForControlFlow.get(ctx) != null) {
+            return true;
+        }
+        return false;
     }
 
     /* (non-Javadoc)

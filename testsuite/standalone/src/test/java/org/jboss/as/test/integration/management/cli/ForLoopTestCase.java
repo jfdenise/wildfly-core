@@ -80,6 +80,26 @@ public class ForLoopTestCase extends AbstractCliTestBase {
     }
 
     @Test
+    public void testNestedDiscard() throws Exception {
+        addProperty("prop1", "prop1_a");
+        addProperty("prop2", "prop2_a");
+        try {
+            cli.sendLine("set var=+");
+            cli.sendLine("for propName in :read-children-names(child-type=system-property");
+            cli.sendLine("for propName2 in :read-children-names(child-type=system-property");
+            cli.sendLine("set var=$var+$propName");
+            cli.sendLine("done --discard");
+            cli.sendLine("done --discard");
+            cli.sendLine("echo $var");
+            String line = cli.readOutput();
+            assertTrue(line, line.equals("+"));
+        } finally {
+            cli.sendLine("set var=");
+            removeProperties();
+        }
+    }
+
+    @Test
     public void testVarAlreadyExists() throws Exception {
         cli.sendLine("set var=+");
         try {
@@ -90,14 +110,42 @@ public class ForLoopTestCase extends AbstractCliTestBase {
     }
 
     @Test
-    public void testInvalidNestedOp() throws Exception {
+    public void testNestedVarAlreadyExists() throws Exception {
         cli.sendLine("for var in :read-children-names(child-type=system-property", true);
         try {
             assertFalse(cli.sendLine("for var in :read-children-names(child-type=system-property", true));
-            String line = cli.readOutput();
-            assertEquals("for is not allowed while in for block", line.trim());
         } finally {
-            cli.sendLine("done");
+            cli.sendLine("done --discard");
+        }
+    }
+
+    @Test
+    public void testNestedOp() throws Exception {
+        addProperty("p1", "prop1_a");
+        addProperty("p2", "prop2_a");
+        try {
+            cli.sendLine("for var in :read-children-names(child-type=system-property", true);
+            // Shouldn't break workflow
+            assertFalse(cli.sendLine("for var in :read-children-names(child-type=system-property", true));
+            try {
+                cli.sendLine("for var2 in :read-children-names(child-type=system-property", true);
+                try {
+                    cli.sendLine("echo $var-$var2");
+                } finally {
+                    cli.sendLine("done");
+                }
+            } finally {
+                cli.sendLine("done");
+            }
+            String output = cli.readOutput();
+            assertTrue(output, output.contains("p1-p1"));
+            assertTrue(output, output.contains("p1-p2"));
+            assertTrue(output, output.contains("p2-p1"));
+            assertTrue(output, output.contains("p2-p2"));
+            // No more for, this one should fail
+            assertFalse(cli.sendLine("done", true));
+        } finally {
+            removeProperties();
         }
     }
 
@@ -107,6 +155,18 @@ public class ForLoopTestCase extends AbstractCliTestBase {
         assertFalse(cli.sendLine("for var in", true));
         assertFalse(cli.sendLine("for var", true));
         assertFalse(cli.sendLine("for", true));
+    }
+
+    @Test
+    public void testNestedInvalidOps() throws Exception {
+        assertTrue(cli.sendLine("for var in :read-resource", true));
+        try {
+            assertFalse(cli.sendLine("for var in", true));
+            assertFalse(cli.sendLine("for var", true));
+            assertFalse(cli.sendLine("for", true));
+        } finally {
+            cli.sendLine("done --discard");
+        }
     }
 
     private void removeProperties() {
@@ -150,6 +210,18 @@ public class ForLoopTestCase extends AbstractCliTestBase {
     }
 
     @Test
+    public void testNestedForNobatch() throws Exception {
+        try {
+            cli.sendLine("for propName in :read-children-names(child-type=system-property", true);
+            cli.sendLine("batch");
+            assertFalse(cli.sendLine("for propName in :read-children-names(child-type=system-property", true));
+        } finally {
+            cli.sendLine("discard-batch");
+            cli.sendLine("done --discard");
+        }
+    }
+
+    @Test
     public void testForBatch() throws Exception {
         addProperty("prop1", "prop1_a");
         addProperty("prop2", "prop2_a");
@@ -161,6 +233,30 @@ public class ForLoopTestCase extends AbstractCliTestBase {
             cli.sendLine("done");
             checkEmpty();
         } finally {
+            removeProperties();
+        }
+    }
+
+    @Test
+    public void testNestedForBatch() throws Exception {
+        addProperty("prop1", "prop1_a");
+        addProperty("prop2", "prop1_a");
+        try {
+            cli.sendLine("for propName in :read-children-names(child-type=system-property");
+            cli.sendLine("for propName2 in :read-children-names(child-type=system-property");
+            cli.sendLine("for propName3 in :read-children-names(child-type=system-property");
+            cli.sendLine("batch");
+            cli.sendLine("/system-property=prop1:write-attribute(name=value, value=$propName-$propName2-$propName3)");
+            cli.sendLine("run-batch --verbose");
+            cli.sendLine("done");
+            cli.sendLine("done");
+            cli.sendLine("done");
+            cli.sendLine("set var=`/system-property=prop1:read-attribute(name=value)`");
+            cli.sendLine("echo $var");
+            String output=cli.readOutput();
+            assertTrue(output, output.equals("prop2-prop2-prop2"));
+        } finally {
+            cli.sendLine("set var=");
             removeProperties();
         }
     }
@@ -272,6 +368,21 @@ public class ForLoopTestCase extends AbstractCliTestBase {
         assertFalse(cli.sendLine("echo $propName", true));
         String line = cli.readOutput();
         assertEquals("Unrecognized variable propName", line.trim());
+    }
+
+    @Test
+    public void testNestedVarVisibility() {
+        cli.sendLine("for propName in :read-children-names(child-type=system-property");
+        cli.sendLine("for propName2 in :read-children-names(child-type=system-property");
+        cli.sendLine("echo $propName2");
+        cli.sendLine("done");
+        cli.sendLine("done");
+        assertFalse(cli.sendLine("echo $propName", true));
+        String line = cli.readOutput();
+        assertEquals("Unrecognized variable propName", line.trim());
+        assertFalse(cli.sendLine("echo $propName2", true));
+        line = cli.readOutput();
+        assertEquals("Unrecognized variable propName2", line.trim());
     }
 
     @Test

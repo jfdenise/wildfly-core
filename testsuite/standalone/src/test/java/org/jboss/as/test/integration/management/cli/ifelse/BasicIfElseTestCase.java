@@ -25,7 +25,7 @@ import javax.inject.Inject;
 import static org.junit.Assert.assertEquals;
 
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.impl.CommandContextImpl;
 import org.jboss.as.test.integration.management.util.CLITestUtil;
 import org.junit.Test;
@@ -111,44 +111,135 @@ public class BasicIfElseTestCase extends CLISystemPropertyTestBase {
     @Test
     public void testIfInsideIfBoot() throws Exception {
         final CommandContext ctx = new CommandContextImpl(cliOut);
-        boolean failed = false;
         try {
             ctx.bindClient(managementClient.getControllerClient());
-            ctx.handle("if result.value==\"true\" of " + this.getReadPropertyReq());
-            ctx.handle("if result.value==\"true\" of " + this.getReadPropertyReq());
-        } catch (CommandFormatException ex) {
-            failed = true;
+            ctx.handle(this.getAddPropertyReq("prop1", "val1"));
+            ctx.handle(this.getAddPropertyReq("prop2", "val2"));
+            ctx.handle("if result.value==\"val1\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle("if result.value==\"val2\" of " + this.getReadPropertyReq("prop2"));
+            ctx.handle(this.getAddPropertyReq("prop1_prop2", "val1_val2"));
+            ctx.handle("end-if");
+            ctx.handle("end-if");
+            ctx.handle(this.getReadPropertyReq("prop1_prop2"));
+            String value = getValue();
+            assertEquals(value, "val1_val2", value);
+
+            ctx.handle("if result.value==\"val2\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "failed"));
+            ctx.handle("else");
+            checkfailed(ctx, "else");
+            ctx.handle("if result.value==\"val2\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "failed2"));
+            ctx.handle("else");
+            checkfailed(ctx, "else");
+            ctx.handle("if result.value==\"val1\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "success"));
+            ctx.handle("else");
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "failed3"));
+            ctx.handle("end-if");
+            ctx.handle("end-if");
+            ctx.handle("end-if");
+            cliOut.reset();
+            ctx.handle(this.getReadPropertyReq("prop1_prop2"));
+            value = getValue();
+            assertEquals(value, "success", value);
+
         } finally {
-            try {
-                if (!failed) {
-                    throw new Exception("if inside if should have failed");
-                }
-            } finally {
-                ctx.terminateSession();
-                cliOut.reset();
-            }
+            ctx.handleSafe(this.getRemovePropertyReq("prop1"));
+            ctx.handleSafe(this.getRemovePropertyReq("prop2"));
+            ctx.handleSafe(this.getRemovePropertyReq("prop1_prop2"));
+            ctx.terminateSession();
+            cliOut.reset();
         }
     }
 
     @Test
     public void testIfInsideIf() throws Exception {
         final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
-        boolean failed = false;
         try {
             ctx.connectController();
-            ctx.handle("if result.value==\"true\" of " + this.getReadPropertyReq());
-            ctx.handle("if result.value==\"true\" of " + this.getReadPropertyReq());
-        } catch (CommandFormatException ex) {
-            failed = true;
+            ctx.handle(this.getAddPropertyReq("prop1", "val1"));
+            ctx.handle(this.getAddPropertyReq("prop2", "val2"));
+            ctx.handle("if result.value==\"val1\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle("if result.value==\"val2\" of " + this.getReadPropertyReq("prop2"));
+            ctx.handle(this.getAddPropertyReq("prop1_prop2", "val1_val2"));
+            ctx.handle("end-if");
+            ctx.handle("end-if");
+            ctx.handle(this.getReadPropertyReq("prop1_prop2"));
+            String value = getValue();
+            assertEquals(value, "val1_val2", value);
+
+            ctx.handle("if result.value==\"val2\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "failed"));
+            ctx.handle("else");
+            checkfailed(ctx, "else");
+            ctx.handle("if result.value==\"val2\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "failed2"));
+            ctx.handle("else");
+            checkfailed(ctx, "else");
+            ctx.handle("if result.value==\"val1\" of " + this.getReadPropertyReq("prop1"));
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "success"));
+            ctx.handle("else");
+            ctx.handle(this.getWritePropertyReq("prop1_prop2", "failed3"));
+            ctx.handle("end-if");
+            ctx.handle("end-if");
+            ctx.handle("end-if");
+            cliOut.reset();
+            ctx.handle(this.getReadPropertyReq("prop1_prop2"));
+            value = getValue();
+            assertEquals(value, "success", value);
         } finally {
+            ctx.handleSafe(this.getRemovePropertyReq("prop1"));
+            ctx.handleSafe(this.getRemovePropertyReq("prop2"));
+            ctx.handleSafe(this.getRemovePropertyReq("prop1_prop2"));
+            ctx.terminateSession();
+            cliOut.reset();
+        }
+    }
+
+    @Test
+    public void testNestedInvalidOps() throws Exception {
+        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        try {
+            ctx.connectController();
+            ctx.handle("if result==foo of :read-resource");
             try {
-                if (!failed) {
-                    throw new Exception("if inside if should have failed");
-                }
+                checkfailed(ctx, "if");
+                checkfailed(ctx, "if result==foo");
+                checkfailed(ctx, "if result==foo of");
             } finally {
-                ctx.terminateSession();
-                cliOut.reset();
+                ctx.handle("end-if");
             }
+        } finally {
+            ctx.terminateSession();
+            cliOut.reset();
+        }
+    }
+
+    @Test
+    public void testNestedIfNobatch() throws Exception {
+         final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        try {
+            ctx.connectController();
+            ctx.handle("if result==foo of :read-resource");
+            ctx.handle("batch");
+            checkfailed(ctx, "if result==foo of :read-resource");
+        } finally {
+           ctx.handle("discard-batch");
+            ctx.handle("end-if");
+        }
+    }
+
+    private void checkfailed(CommandContext ctx, String cmd) throws Exception {
+        boolean failed = true;
+        try {
+            ctx.handle(cmd);
+            failed = false;
+        } catch (CommandLineException ex) {
+            // XXX OK EXPECTED.
+        }
+        if (!failed) {
+            throw new Exception("Should have failed");
         }
     }
 

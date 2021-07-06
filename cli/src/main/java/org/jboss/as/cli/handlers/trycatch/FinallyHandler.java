@@ -23,6 +23,7 @@ package org.jboss.as.cli.handlers.trycatch;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 
 /**
@@ -37,8 +38,18 @@ public class FinallyHandler extends CommandHandlerWithHelp {
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
+         if (ControlFlowStateHandler.getCurrent() != null) {
+            if (ControlFlowStateHandler.getCurrent() instanceof TryControlFlowState) {
+                TryControlFlowState state = (TryControlFlowState) ControlFlowStateHandler.getCurrent();
+                return !state.isInFinally();
+            }
+            return false;
+        }
         final TryCatchFinallyControlFlow flow = TryCatchFinallyControlFlow.get(ctx);
-        return flow != null && !flow.isInFinally();
+        if (flow != null && !flow.isInFinally()) {
+            return true;
+        }
+        return false;
     }
 
     /* (non-Javadoc)

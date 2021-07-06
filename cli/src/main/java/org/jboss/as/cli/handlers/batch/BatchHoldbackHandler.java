@@ -23,6 +23,7 @@ package org.jboss.as.cli.handlers.batch;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.cli.impl.ArgumentWithValue;
@@ -45,7 +46,10 @@ public class BatchHoldbackHandler extends CommandHandlerWithHelp {
         if(!super.isAvailable(ctx)) {
             return false;
         }
-        return ctx.isBatchMode();
+        if (ctx.isBatchMode()) {
+            return true;
+        }
+        return ControlFlowStateHandler.isBatch();
     }
 
     /* (non-Javadoc)

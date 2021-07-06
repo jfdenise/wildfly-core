@@ -26,6 +26,7 @@ import java.util.List;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -122,7 +123,10 @@ public class BatchEditLineHandler extends CommandHandlerWithHelp {
         if(!super.isAvailable(ctx)) {
             return false;
         }
-        return ctx.isBatchMode();
+        if (ctx.isBatchMode()) {
+            return true;
+        }
+        return ControlFlowStateHandler.isBatch();
     }
 
     /* (non-Javadoc)

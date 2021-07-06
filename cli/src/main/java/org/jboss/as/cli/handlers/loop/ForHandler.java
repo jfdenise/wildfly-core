@@ -23,6 +23,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.cli.impl.ArgumentWithValue;
@@ -41,7 +42,7 @@ public class ForHandler extends CommandHandlerWithHelp {
 
     public ForHandler() {
         super("for", true);
-
+        ControlFlowStateHandler.registerBuilder("for", new ForControlFlowStateBuilder());
         varName = new ArgumentWithValue(this, 0, "--var");
         varName.addCantAppearAfter(helpArg);
 
@@ -112,7 +113,7 @@ public class ForHandler extends CommandHandlerWithHelp {
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
-        return ForControlFlow.get(ctx) == null && !ctx.getBatchManager().isBatchActive();
+        return !ctx.getBatchManager().isBatchActive() && !ControlFlowStateHandler.isBatch();
     }
 
     /* (non-Javadoc)
@@ -120,9 +121,11 @@ public class ForHandler extends CommandHandlerWithHelp {
      */
     @Override
     protected void doHandle(CommandContext ctx) throws CommandLineException {
-        if (ForControlFlow.get(ctx) != null) {
-            throw new CommandFormatException("for is not allowed while in for block");
-        }
+        ForControlFlow flow = buildForControlFlow(ctx, true);
+        ctx.registerRedirection(flow);
+    }
+
+    ForControlFlow buildForControlFlow(CommandContext ctx, boolean active) throws CommandLineException {
         final BatchManager batchManager = ctx.getBatchManager();
         if (batchManager.isBatchActive()) {
             throw new CommandFormatException("for is not allowed while in batch mode.");
@@ -142,7 +145,7 @@ public class ForHandler extends CommandHandlerWithHelp {
             throw new CommandFormatException("Failed to locate 'in' in '" + argsStr + "'");
         }
         final String requestStr = argsStr.substring(i + 2);
-        ctx.registerRedirection(new ForControlFlow(ctx, varName, requestStr));
+        return new ForControlFlow(ctx, varName, requestStr, active);
     }
 
     /**

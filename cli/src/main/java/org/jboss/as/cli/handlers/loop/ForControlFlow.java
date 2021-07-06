@@ -26,6 +26,7 @@ import org.jboss.as.cli.CommandContext.Scope;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.parsing.command.CommandFormat;
@@ -50,43 +51,58 @@ class ForControlFlow implements CommandLineRedirection {
     private final List<ModelNode> result;
     private final List<String> forBlock = new ArrayList<>();
     private final String varName;
-
+    private final CommandContext ctx;
     ForControlFlow(CommandContext ctx, String varName, String iterable) throws CommandLineException {
+        this(ctx, varName, iterable, true);
+    }
+
+    ForControlFlow(CommandContext ctx, String varName, String iterable, boolean active) throws CommandLineException {
         checkNotNullParam("ctx", ctx);
         checkNotNullParam("varName", varName);
         checkNotNullParam("iterable", iterable);
-
+        this.ctx = ctx;
         if (ctx.getVariable(varName) != null) {
             throw new CommandFormatException("Variable " + varName + " already exists.");
         }
-
-        final ModelControllerClient client = ctx.getModelControllerClient();
-        if (client == null) {
-            throw new CommandLineException("The connection to the controller has not been established.");
-        }
-
         this.varName = varName;
         ModelNode forRequest = ctx.buildRequest(iterable);
+        if (active) {
+            final ModelControllerClient client = ctx.getModelControllerClient();
+            if (client == null) {
+                throw new CommandLineException("The connection to the controller has not been established.");
+            }
 
-        ModelNode targetValue;
-        try {
-            targetValue = ctx.execute(forRequest, "for iterable");
-        } catch (IOException e) {
-            throw new CommandLineException("iterable request failed", e);
-        }
-        if (!targetValue.hasDefined(Util.RESULT)) {
-            throw new CommandLineException("iterable request failed, no result");
-        }
-        ModelNode mn = targetValue.get(Util.RESULT);
-        try {
-            result = mn.asList();
-        } catch (Exception ex) {
-            throw new CommandLineException("for cannot be used with operations that produce a non-iterable result");
+            ModelNode targetValue;
+            try {
+                targetValue = ctx.execute(forRequest, "for iterable");
+            } catch (IOException e) {
+                throw new CommandLineException("iterable request failed", e);
+            }
+            if (!targetValue.hasDefined(Util.RESULT)) {
+                throw new CommandLineException("iterable request failed, no result");
+            }
+            ModelNode mn = targetValue.get(Util.RESULT);
+            try {
+                result = mn.asList();
+            } catch (Exception ex) {
+                throw new CommandLineException("for cannot be used with operations that produce a non-iterable result");
+            }
+        } else {
+            if (iterable.length() == 0) {
+                throw new CommandLineException("The line is null or empty.");
+            }
+            result = null;
         }
         // Define the variable with a dummy value. That is required for operations in the block
         // referencing this variable otherwise parsing would fail.
         ctx.setVariable(varName, "null");
-        ctx.set(Scope.CONTEXT, CTX_KEY, this);
+        if (active) {
+            ctx.set(Scope.CONTEXT, CTX_KEY, this);
+        }
+    }
+
+    void reset() throws CommandLineException{
+        ctx.setVariable(varName, null);
     }
 
     @Override
@@ -98,18 +114,21 @@ class ForControlFlow implements CommandLineRedirection {
     public void handle(CommandContext ctx) throws CommandLineException {
 
         final ParsedCommandLine line = ctx.getParsedCommandLine();
+        final String cmd = line.getOperationName();
+        boolean built = false;
         if (line.getFormat() == CommandFormat.INSTANCE) {
+            // The command could be a new WorkFlow one
+            built = ControlFlowStateHandler.buildWorkFlow(ctx, line);
             // let the help through
-            final String cmd = line.getOperationName();
-            if ("for".equals(cmd)) {
-                throw new CommandFormatException("for is not allowed while in for block");
-            }
             if (line.hasProperty("--help")
                     || line.hasProperty("-h")
-                    || "done".equals(cmd) || "help".equals(cmd)) {
+                    || ("done".equals(cmd) && ControlFlowStateHandler.isEmpty()) || "help".equals(cmd)) {
                 registration.handle(line);
                 return;
             }
+        }
+        if (!built) {
+            ControlFlowStateHandler.command(ctx, line);
         }
         forBlock.add(line.getOriginalLine());
     }
@@ -117,6 +136,7 @@ class ForControlFlow implements CommandLineRedirection {
     void run(CommandContext ctx, boolean discard) throws CommandLineException {
         try {
             registration.unregister();
+            ctx.remove(Scope.CONTEXT, CTX_KEY);
             if (!discard) {
                 for (ModelNode v : result) {
                     String value = v.asString();

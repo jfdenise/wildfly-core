@@ -30,9 +30,9 @@ import java.util.List;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
-import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.parsing.command.CommandFormat;
@@ -61,10 +61,34 @@ class IfElseControlFlow implements CommandLineRedirection {
     private boolean inElse;
 
     IfElseControlFlow(CommandContext ctx, Operation ifCondition, String ifRequest) throws CommandLineException {
+        this(ctx, ifCondition, ifRequest, true);
+    }
+
+    IfElseControlFlow(CommandContext ctx, Operation ifCondition, String ifRequest, boolean active) throws CommandLineException {
         checkNotNullParam("ctx", ctx);
         this.ifCondition = checkNotNullParam("ifCondition", ifCondition);
-        this.ifRequest = ctx.buildRequest(checkNotNullParam("ifRequest", ifRequest));
-        ctx.set(Scope.CONTEXT, CTX_KEY, this);
+        checkNotNullParam("ifRequest", ifRequest);
+        if (active) {
+            String req = ifRequest.trim();
+            String var = null;
+            if (req.startsWith("$")) {
+                var = ctx.getVariable(req.substring(1));
+            }
+            if (var == null) {
+                this.ifRequest = ctx.buildRequest(ifRequest);
+                this.variable = null;
+            } else {
+                variable = ArgumentValueConverter.DEFAULT.fromString(ctx, var);
+                this.ifRequest = null;
+            }
+            ctx.set(Scope.CONTEXT, CTX_KEY, this);
+        } else {
+            if (ifRequest.length() == 0) {
+                throw new CommandLineException("The line is null or empty.");
+            }
+             this.variable = null;
+             this.ifRequest = null;
+        }
     }
 
     @Override
@@ -76,6 +100,7 @@ class IfElseControlFlow implements CommandLineRedirection {
     public void handle(CommandContext ctx) throws CommandLineException {
 
         final ParsedCommandLine line = ctx.getParsedCommandLine();
+        boolean built = false;
         if(line.getFormat() == CommandFormat.INSTANCE) {
 
             // let the help through
@@ -85,17 +110,25 @@ class IfElseControlFlow implements CommandLineRedirection {
             }
 
             final String cmd = line.getOperationName();
-            if ("if".equals(cmd)) {
-                throw new CommandFormatException("if is not allowed while in if block");
-            }
-            if("else".equals(cmd) || "end-if".equals(cmd)) {
+            built = ControlFlowStateHandler.buildWorkFlow(ctx, line);
+            if((isCurrentWorkFlowCommand(cmd))) {
                 registration.handle(line);
             } else {
+                if (!built) {
+                    ControlFlowStateHandler.command(ctx, line);
+                }
                 addLine(line);
             }
         } else {
+            if (!built) {
+                ControlFlowStateHandler.command(ctx, line);
+            }
             addLine(line);
         }
+    }
+
+    private boolean isCurrentWorkFlowCommand(String cmd) {
+        return ("else".equals(cmd)  || "end-if".equals(cmd)) &&  ControlFlowStateHandler.isEmpty();
     }
 
     void run(CommandContext ctx) throws CommandLineException {
@@ -118,14 +151,14 @@ class IfElseControlFlow implements CommandLineRedirection {
             }
 
             registration.unregister();
-
+            ctx.remove(Scope.CONTEXT, CTX_KEY);
             if(Boolean.TRUE.equals(value)) {
                 executeBlock(ctx, ifBlock, "if");
             } else if(inElse) {
                 executeBlock(ctx, elseBlock, "else");
             }
         } finally {
-            if(registration.isActive()) {
+            if (registration.isActive()) {
                 registration.unregister();
             }
             ctx.remove(Scope.CONTEXT, CTX_KEY);

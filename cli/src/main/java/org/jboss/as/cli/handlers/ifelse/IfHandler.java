@@ -29,6 +29,7 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 import org.jboss.as.cli.impl.ArgumentWithValue;
@@ -48,7 +49,7 @@ public class IfHandler extends CommandHandlerWithHelp {
 
     public IfHandler() {
         super("if", true);
-
+        ControlFlowStateHandler.registerBuilder("if", new IfControlFlowStateBuilder());
             condition = new ConditionArgument(this);
             condition.addCantAppearAfter(helpArg);
 
@@ -121,7 +122,7 @@ public class IfHandler extends CommandHandlerWithHelp {
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
-        return IfElseControlFlow.get(ctx) == null && !ctx.getBatchManager().isBatchActive();
+        return !ctx.getBatchManager().isBatchActive() && !ControlFlowStateHandler.isBatch();
     }
 
     /* (non-Javadoc)
@@ -129,30 +130,34 @@ public class IfHandler extends CommandHandlerWithHelp {
      */
     @Override
     protected void doHandle(CommandContext ctx) throws CommandLineException {
+        IfElseControlFlow flow = buildControlFlow(ctx, true);
+        ctx.registerRedirection(flow);
+    }
 
+    IfElseControlFlow buildControlFlow(CommandContext ctx, boolean active) throws CommandLineException {
         String argsStr = ctx.getArgumentsString();
-        if(argsStr == null) {
+        if (argsStr == null) {
             throw new CommandFormatException("The command is missing arguments.");
         }
 
         final BatchManager batchManager = ctx.getBatchManager();
-        if(batchManager.isBatchActive()) {
+        if (batchManager.isBatchActive()) {
             throw new CommandFormatException("if is not allowed while in batch mode.");
         }
 
         final ParsedCommandLine args = ctx.getParsedCommandLine();
         final String conditionStr = this.condition.getOriginalValue(args, true);
         int i = argsStr.indexOf(conditionStr);
-        if(i < 0) {
+        if (i < 0) {
             throw new CommandFormatException("Failed to locate '" + conditionStr + "' in '" + argsStr + "'");
         }
         i = argsStr.indexOf("of", i + conditionStr.length());
-        if(i < 0) {
+        if (i < 0) {
             throw new CommandFormatException("Failed to locate 'of' in '" + argsStr + "'");
         }
 
         final String requestStr = argsStr.substring(i + 2);
-        ctx.registerRedirection(new IfElseControlFlow(ctx, condition.resolveOperation(args), requestStr));
+        return new IfElseControlFlow(ctx, condition.resolveOperation(args), requestStr, active);
     }
 
     /**

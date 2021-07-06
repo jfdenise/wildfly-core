@@ -24,6 +24,7 @@ package org.jboss.as.cli.handlers.ifelse;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.handlers.CommandHandlerWithHelp;
 
 
@@ -39,8 +40,21 @@ public class ElseHandler extends CommandHandlerWithHelp {
 
     @Override
     public boolean isAvailable(CommandContext ctx) {
+        /* First check if we have a state control flow.
+            If that is not the case, the command could be executed.
+        */
+        if (ControlFlowStateHandler.getCurrent() != null) {
+            if (ControlFlowStateHandler.getCurrent() instanceof IfControlFlowState) {
+                IfControlFlowState state = (IfControlFlowState) ControlFlowStateHandler.getCurrent();
+                return state.isInIf();
+            }
+            return false;
+        }
         final IfElseControlFlow ifElse = IfElseControlFlow.get(ctx);
-        return ifElse != null && ifElse.isInIf();
+        if (ifElse != null && ifElse.isInIf()) {
+            return true;
+        }
+        return false;
     }
 
     /* (non-Javadoc)

@@ -27,9 +27,9 @@ import java.util.List;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
-import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
+import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.parsing.command.CommandFormat;
@@ -69,6 +69,7 @@ class TryCatchFinallyControlFlow implements CommandLineRedirection {
     @Override
     public void handle(CommandContext ctx) throws CommandLineException {
         final ParsedCommandLine line = ctx.getParsedCommandLine();
+        boolean built = false;
         if(line.getFormat() == CommandFormat.INSTANCE) {
 
             // let the help through
@@ -78,18 +79,25 @@ class TryCatchFinallyControlFlow implements CommandLineRedirection {
             }
 
             final String cmd = line.getOperationName();
-            if ("try".equals(cmd)) {
-                throw new CommandFormatException("try is not allowed while in try block");
-            }
-            if("catch".equals(cmd) || "finally".equals(cmd) || "end-try".equals(cmd)) {
+            built = ControlFlowStateHandler.buildWorkFlow(ctx, line);
+            if (isCurrentWorkFlowCommand(cmd)) {
                 registration.handle(line);
             } else {
+                if (!built) {
+                    ControlFlowStateHandler.command(ctx, line);
+                }
                 addLine(line.getOriginalLine());
             }
         } else {
+            if (!built) {
+                ControlFlowStateHandler.command(ctx, line);
+            }
             addLine(line.getOriginalLine());
         }
+    }
 
+    private boolean isCurrentWorkFlowCommand(String cmd) {
+        return ("catch".equals(cmd) || "finally".equals(cmd) || "end-try".equals(cmd)) && ControlFlowStateHandler.isEmpty();
     }
 
     boolean isInTry() {
@@ -158,7 +166,7 @@ class TryCatchFinallyControlFlow implements CommandLineRedirection {
             }
 
             registration.unregister();
-
+            ctx.remove(Scope.CONTEXT, CTX_KEY);
             CommandLineException error = null;
 
             if (tryList.isEmpty()) {
@@ -196,7 +204,7 @@ class TryCatchFinallyControlFlow implements CommandLineRedirection {
                 throw error;
             }
         } finally {
-            if(registration.isActive()) {
+            if (registration.isActive()) {
                 registration.unregister();
             }
             ctx.remove(Scope.CONTEXT, CTX_KEY);
