@@ -82,6 +82,18 @@ public class ConditionArgument extends ArgumentWithValue {
             return new EqualsOperation();
         }
     };
+    private static final ParsingState SIZE = new OperationParsingState(SizeOperation.SYMBOL) {
+        @Override
+        BaseOperation createOperation() {
+            return new SizeOperation();
+        }
+    };
+    private static final ParsingState CONTAINS = new OperationParsingState(ContainsOperation.SYMBOL) {
+        @Override
+        BaseOperation createOperation() {
+            return new ContainsOperation();
+        }
+    };
     private static final ParsingState NGT = new OperationParsingState(NotGreaterThanOperation.SYMBOL) {
         @Override
         BaseOperation createOperation() {
@@ -133,6 +145,10 @@ public class ConditionArgument extends ArgumentWithValue {
                     signalState(ctx, GT, false);
                 } else if(c == '<' && !isFollowingChar(ctx, '=')) {
                     signalState(ctx, LT, false);
+                } else if(c == '#' && isFollowingChar(ctx, '=')) {
+                    signalState(ctx, SIZE, true);
+                } else if(c == '*' && isFollowingChar(ctx, '=')) {
+                    signalState(ctx, CONTAINS, true);
                 } else {
                     ctx.getCallbackHandler().character(ctx);
                 }
