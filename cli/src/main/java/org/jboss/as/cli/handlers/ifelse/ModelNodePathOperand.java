@@ -51,10 +51,25 @@ public class ModelNodePathOperand implements Operand {
     public Object resolveValue(CommandContext ctx, ModelNode response) throws CommandLineException {
         ModelNode targetValue = response;
         for(String name : path) {
+            boolean array = false;
+            int arrayIndex = 0;
+            int openIndex = name.indexOf("[");
+            if (openIndex > 0) {
+               array = true;
+               int closeIndex = name.indexOf("]");
+               if (closeIndex <= 0) {
+                   throw new CommandLineException("If condition, invalid array syntax for " + name);
+               }
+               arrayIndex = Integer.valueOf(name.substring(openIndex+1, closeIndex));
+               name = name.substring(0, openIndex);
+            }
             if(!targetValue.has(name)) {
                 return null;
             } else {
                 targetValue = targetValue.get(name);
+                if (array) {
+                   targetValue = targetValue.get(arrayIndex);
+                }
             }
         }
         return targetValue == null ? null : targetValue;
