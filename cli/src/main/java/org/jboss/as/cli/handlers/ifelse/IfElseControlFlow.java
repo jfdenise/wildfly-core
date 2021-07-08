@@ -22,11 +22,12 @@
 
 package org.jboss.as.cli.handlers.ifelse;
 
+import java.io.IOException;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.jboss.as.cli.ArgumentValueConverter;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
@@ -59,6 +60,7 @@ class IfElseControlFlow implements CommandLineRedirection {
     private List<String> ifBlock;
     private List<String> elseBlock;
     private boolean inElse;
+    private final ModelNode variable;
 
     IfElseControlFlow(CommandContext ctx, Operation ifCondition, String ifRequest) throws CommandLineException {
         this(ctx, ifCondition, ifRequest, true);
@@ -138,12 +140,16 @@ class IfElseControlFlow implements CommandLineRedirection {
             if(client == null) {
                 throw new CommandLineException("The connection to the controller has not been established.");
             }
-
-            ModelNode targetValue;
-            try {
-                targetValue = ctx.execute(ifRequest, "if condition");
-            } catch (IOException e) {
-                throw new CommandLineException("condition request failed", e);
+            ModelNode targetValue = null;
+            if (ifRequest != null) {
+                try {
+                    targetValue = ctx.execute(ifRequest, "if condition");
+                } catch (IOException e) {
+                    throw new CommandLineException("condition request failed", e);
+                }
+            } else {
+                targetValue = new ModelNode();
+                targetValue.set("this", variable);
             }
             final Object value = ifCondition.resolveValue(ctx, targetValue);
             if(value == null) {

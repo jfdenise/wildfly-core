@@ -20,6 +20,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.jboss.as.cli.ArgumentValueConverter;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
@@ -65,27 +66,42 @@ class ForControlFlow implements CommandLineRedirection {
             throw new CommandFormatException("Variable " + varName + " already exists.");
         }
         this.varName = varName;
-        ModelNode forRequest = ctx.buildRequest(iterable);
         if (active) {
-            final ModelControllerClient client = ctx.getModelControllerClient();
-            if (client == null) {
-                throw new CommandLineException("The connection to the controller has not been established.");
+            // iterable could be a variable
+            String it = iterable.trim();
+            String iterableVariable = null;
+            if (it.startsWith("$")) {
+                iterableVariable = ctx.getVariable(it.substring(1));
             }
+            if (iterableVariable == null) {
+                ModelNode forRequest = ctx.buildRequest(iterable);
+                final ModelControllerClient client = ctx.getModelControllerClient();
+                if (client == null) {
+                    throw new CommandLineException("The connection to the controller has not been established.");
+                }
 
-            ModelNode targetValue;
-            try {
-                targetValue = ctx.execute(forRequest, "for iterable");
-            } catch (IOException e) {
-                throw new CommandLineException("iterable request failed", e);
-            }
-            if (!targetValue.hasDefined(Util.RESULT)) {
-                throw new CommandLineException("iterable request failed, no result");
-            }
-            ModelNode mn = targetValue.get(Util.RESULT);
-            try {
-                result = mn.asList();
-            } catch (Exception ex) {
-                throw new CommandLineException("for cannot be used with operations that produce a non-iterable result");
+                ModelNode targetValue;
+                try {
+                    targetValue = ctx.execute(forRequest, "for iterable");
+                } catch (IOException e) {
+                    throw new CommandLineException("iterable request failed", e);
+                }
+                if (!targetValue.hasDefined(Util.RESULT)) {
+                    throw new CommandLineException("iterable request failed, no result");
+                }
+                ModelNode mn = targetValue.get(Util.RESULT);
+                try {
+                    result = mn.asList();
+                } catch (Exception ex) {
+                    throw new CommandLineException("for cannot be used with operations that produce a non-iterable result");
+                }
+            } else {
+                 ModelNode val =  ArgumentValueConverter.DEFAULT.fromString(ctx, iterableVariable);
+                 try {
+                    result = val.asList();
+                } catch (Exception ex) {
+                    throw new CommandLineException("for cannot be used with a variable that is not iterable");
+                }
             }
         } else {
             if (iterable.length() == 0) {
