@@ -80,6 +80,25 @@ public interface ArgumentValueConverter {
         }
     };
 
+    ArgumentValueConverter RESOLVE_EXPRESSIONS = new ArgumentValueConverter() {
+        @Override
+        public ModelNode fromString(CommandContext ctx, String value) throws CommandFormatException {
+            if (value == null) {
+                return new ModelNode();
+            }
+            value = CLIExpressionResolver.resolveLax(value);
+            ModelNode toSet = null;
+            try {
+                toSet = ModelNode.fromString(value);
+            } catch (Exception e) {
+                final ArgumentValueCallbackHandler handler = new ArgumentValueCallbackHandler();
+                StateParser.parse(value, handler, ArgumentValueInitialState.INSTANCE);
+                toSet = handler.getResult();
+            }
+            return toSet;
+        }
+    };
+
     /**
      * Basically, for STRING with support for expressions.
      */
