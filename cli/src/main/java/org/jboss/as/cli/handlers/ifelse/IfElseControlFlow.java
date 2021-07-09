@@ -71,7 +71,7 @@ class IfElseControlFlow implements CommandLineRedirection {
         this.ifCondition = checkNotNullParam("ifCondition", ifCondition);
         checkNotNullParam("ifRequest", ifRequest);
         if (active) {
-            VariableState v = VariableState.buildVariable(ifRequest, ctx);
+            VariableState v = VariableState.buildVariable(ifRequest, ctx, true);
             if (v == null) {
                 this.ifRequest = ctx.buildRequest(ifRequest);
                 this.variable = null;

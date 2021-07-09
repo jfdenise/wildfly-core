@@ -29,15 +29,20 @@ public class VariableState {
     private final String name;
     private final String value;
     private final String path;
+    private final boolean resolveExpressions;
 
-    VariableState(String name, String value, String path) {
+    VariableState(String name, String value, String path, boolean resolveExpressions) {
         this.name = name;
         this.value = value;
         this.path = path;
+        this.resolveExpressions = resolveExpressions;
+
     }
 
     public ModelNode getValue(CommandContext ctx) throws CommandLineException {
-        ModelNode val = ArgumentValueConverter.DEFAULT.fromString(ctx, value);
+        ModelNode val = resolveExpressions
+                ? ArgumentValueConverter.RESOLVE_EXPRESSIONS.fromString(ctx, value)
+                : ArgumentValueConverter.DEFAULT.fromString(ctx, value);
         if (path != null) {
             String[] pathArray = path.split("\\.");
             ModelNode mn = new ModelNode();
@@ -73,7 +78,7 @@ public class VariableState {
         return targetValue == null ? null : targetValue;
     }
 
-    public static VariableState buildVariable(String var, CommandContext ctx) {
+    public static VariableState buildVariable(String var, CommandContext ctx, boolean resolveExpressions) {
         if (var == null) {
             return null;
         }
@@ -81,19 +86,23 @@ public class VariableState {
         var = var.trim();
         String path = null;
         String varValue = null;
-        if (var.startsWith("$")) {
-            path = var.substring(1);
-            int dotIndex = var.indexOf(".");
-            int end = dotIndex < 0 ? var.length() : dotIndex;
-            var = var.substring(1, end);
-            int arrayIndex = var.indexOf("[");
-            if (arrayIndex > 0) {
-                var = var.substring(0, arrayIndex);
+        if (resolveExpressions && var.startsWith("${")) {
+            retVariable = new VariableState(var, var, null, true);
+        } else {
+            if (var.startsWith("$")) {
+                path = var.substring(1);
+                int dotIndex = var.indexOf(".");
+                int end = dotIndex < 0 ? var.length() : dotIndex;
+                var = var.substring(1, end);
+                int arrayIndex = var.indexOf("[");
+                if (arrayIndex > 0) {
+                    var = var.substring(0, arrayIndex);
+                }
+                varValue = ctx.getVariable(var);
             }
-            varValue = ctx.getVariable(var);
-        }
-        if (varValue != null) {
-            retVariable = new VariableState(var, varValue, path);
+            if (varValue != null) {
+                retVariable = new VariableState(var, varValue, path, false);
+            }
         }
         return retVariable;
     }

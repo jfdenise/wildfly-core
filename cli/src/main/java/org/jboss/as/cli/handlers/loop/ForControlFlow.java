@@ -68,7 +68,7 @@ class ForControlFlow implements CommandLineRedirection {
         this.varName = varName;
         if (active) {
             // iterable could be a variable
-            VariableState v = VariableState.buildVariable(iterable, ctx);
+            VariableState v = VariableState.buildVariable(iterable, ctx, false);
             if (v == null) {
                 ModelNode forRequest = ctx.buildRequest(iterable);
                 final ModelControllerClient client = ctx.getModelControllerClient();

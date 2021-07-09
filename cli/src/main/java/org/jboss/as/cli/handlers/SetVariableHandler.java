@@ -116,7 +116,7 @@ public class SetVariableHandler extends CommandHandlerWithHelp {
             } else {
                 String value = arg.substring(equals + 1);
                 if(value.length() > 2 && value.charAt(0) == '`' && value.charAt(value.length() - 1) == '`') {
-                    VariableState v = VariableState.buildVariable(value.substring(1, value.length() - 1), ctx);
+                    VariableState v = VariableState.buildVariable(value.substring(1, value.length() - 1), ctx, false);
                     if(v == null) {
                         value = Util.getResult(ctx, value.substring(1, value.length() - 1));
                     } else {
