@@ -20,7 +20,6 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jboss.as.cli.ArgumentValueConverter;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
@@ -29,6 +28,7 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
 import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.handlers.VariableState;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.parsing.command.CommandFormat;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -68,12 +68,8 @@ class ForControlFlow implements CommandLineRedirection {
         this.varName = varName;
         if (active) {
             // iterable could be a variable
-            String it = iterable.trim();
-            String iterableVariable = null;
-            if (it.startsWith("$")) {
-                iterableVariable = ctx.getVariable(it.substring(1));
-            }
-            if (iterableVariable == null) {
+            VariableState v = VariableState.buildVariable(iterable, ctx);
+            if (v == null) {
                 ModelNode forRequest = ctx.buildRequest(iterable);
                 final ModelControllerClient client = ctx.getModelControllerClient();
                 if (client == null) {
@@ -96,7 +92,7 @@ class ForControlFlow implements CommandLineRedirection {
                     throw new CommandLineException("for cannot be used with operations that produce a non-iterable result");
                 }
             } else {
-                 ModelNode val =  ArgumentValueConverter.DEFAULT.fromString(ctx, iterableVariable);
+                 ModelNode val =  v.getValue(ctx);
                  try {
                     result = val.asList();
                 } catch (Exception ex) {
