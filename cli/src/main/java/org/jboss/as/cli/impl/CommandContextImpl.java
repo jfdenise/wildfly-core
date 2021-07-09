@@ -169,6 +169,7 @@ import org.jboss.as.cli.impl.aesh.AeshCommands;
 import org.jboss.as.cli.impl.aesh.AeshCommands.CLIExecution;
 import org.jboss.as.cli.impl.aesh.CLICommandRegistry;
 import org.jboss.as.cli.impl.aesh.cmd.ConnectCommand;
+import org.jboss.as.cli.impl.aesh.cmd.FailCommand;
 import org.jboss.as.cli.impl.aesh.cmd.HelpCommand;
 import org.jboss.as.cli.impl.aesh.cmd.VersionCommand;
 import org.jboss.as.cli.impl.aesh.cmd.deployment.DeploymentCommand;
@@ -583,6 +584,7 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         // aesh commands
         cmdRegistry.addCommand(new VersionCommand());
         cmdRegistry.addCommand(new HelpCommand(cmdRegistry));
+        cmdRegistry.addCommand(new FailCommand());
         if (!bootInvoker) {
             cmdRegistry.addCommand(new ConnectCommand());
         }
