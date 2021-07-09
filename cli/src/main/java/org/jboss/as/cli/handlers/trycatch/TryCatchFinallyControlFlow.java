@@ -43,6 +43,8 @@ class TryCatchFinallyControlFlow implements CommandLineRedirection {
 
     private static final String CTX_KEY = "TRY";
 
+    private static final String EXCEPTION_VAR = "_CLI_ERROR";
+
     private static final int IN_TRY = 0;
     private static final int IN_CATCH = 1;
     private static final int IN_FINALLY = 2;
@@ -180,7 +182,16 @@ class TryCatchFinallyControlFlow implements CommandLineRedirection {
                     error = eTry;
                 } else {
                     try {
-                        executeBlock(ctx, catchList, "catch");
+                        Throwable rootEx = eTry;
+                        while(rootEx.getCause() != null) {
+                            rootEx = rootEx.getCause();
+                        }
+                        ctx.setVariable(EXCEPTION_VAR, rootEx.getMessage());
+                        try {
+                            executeBlock(ctx, catchList, "catch");
+                        } finally {
+                            ctx.setVariable(EXCEPTION_VAR, null);
+                        }
                     } catch(CommandLineException eCatch) {
                         error = eCatch;
                     }
