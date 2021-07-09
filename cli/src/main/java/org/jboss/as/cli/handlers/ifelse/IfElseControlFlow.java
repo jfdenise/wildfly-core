@@ -27,7 +27,6 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jboss.as.cli.ArgumentValueConverter;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
@@ -35,6 +34,7 @@ import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
 import org.jboss.as.cli.ControlFlowStateHandler;
 import org.jboss.as.cli.batch.BatchManager;
+import org.jboss.as.cli.handlers.VariableState;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 import org.jboss.as.cli.parsing.command.CommandFormat;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -71,16 +71,12 @@ class IfElseControlFlow implements CommandLineRedirection {
         this.ifCondition = checkNotNullParam("ifCondition", ifCondition);
         checkNotNullParam("ifRequest", ifRequest);
         if (active) {
-            String req = ifRequest.trim();
-            String var = null;
-            if (req.startsWith("$")) {
-                var = ctx.getVariable(req.substring(1));
-            }
-            if (var == null) {
+            VariableState v = VariableState.buildVariable(ifRequest, ctx);
+            if (v == null) {
                 this.ifRequest = ctx.buildRequest(ifRequest);
                 this.variable = null;
             } else {
-                variable = ArgumentValueConverter.DEFAULT.fromString(ctx, var);
+                variable = v.getValue(ctx);
                 this.ifRequest = null;
             }
             ctx.set(Scope.CONTEXT, CTX_KEY, this);
