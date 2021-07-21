@@ -50,6 +50,7 @@ public final class OperationNameState extends ExpressionBaseState {
         setDefaultHandler(WordCharacterHandler.IGNORE_LB_ESCAPE_ON);
         putHandler('(', GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
         putHandler('{', GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
+        putHandler('?', GlobalCharacterHandlers.LEAVE_STATE_HANDLER);
         OperatorState.registerLeaveHandlers(this);
     }
 }

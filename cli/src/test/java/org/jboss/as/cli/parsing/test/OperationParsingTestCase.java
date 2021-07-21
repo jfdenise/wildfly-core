@@ -95,6 +95,7 @@ public class OperationParsingTestCase {
         assertFalse(handler.endsOnNodeSeparator());
         assertFalse(handler.endsOnNodeTypeNameSeparator());
         assertFalse(handler.isRequestComplete());
+        assertFalse(handler.isIgnoreFailure());
 
         assertEquals("read-resource", handler.getOperationName());
 
@@ -463,6 +464,59 @@ public class OperationParsingTestCase {
         parse("/system-property=test:add(value= ha ha ha)", handler);
         assertTrue(handler.getPropertyNames().contains("value"));
         assertTrue(handler.getPropertyValue("value").length() == 8);
+    }
+
+    @Test
+    public void testIgnoreFailure() throws Exception {
+        {
+            DefaultCallbackHandler handler = new DefaultCallbackHandler(false);
+
+            parse("/subsystem=threads/thread-factory=foo:validate?", handler);
+
+            assertTrue(handler.hasAddress());
+            assertTrue(handler.hasOperationName());
+            assertFalse(handler.hasProperties());
+            assertFalse(handler.endsOnAddressOperationNameSeparator());
+            assertFalse(handler.endsOnPropertyListStart());
+            assertFalse(handler.endsOnPropertySeparator());
+            assertFalse(handler.endsOnPropertyValueSeparator());
+            assertFalse(handler.endsOnNodeSeparator());
+            assertFalse(handler.endsOnNodeTypeNameSeparator());
+            assertFalse(handler.isRequestComplete());
+
+            assertEquals("validate", handler.getOperationName());
+            assertTrue(handler.isIgnoreFailure());
+        }
+        {
+            DefaultCallbackHandler handler = new DefaultCallbackHandler(false);
+
+            parse("/subsystem=threads/thread-factory=foo:validate()?", handler);
+            assertEquals("validate", handler.getOperationName());
+            assertTrue(handler.isIgnoreFailure());
+        }
+        {
+            DefaultCallbackHandler handler = new DefaultCallbackHandler(false);
+
+            parse("/subsystem=threads/thread-factory=foo:validate(foo=bar, foo2=bar2)?", handler);
+            assertEquals("validate", handler.getOperationName());
+            assertTrue(handler.getPropertyNames().contains("foo"));
+            assertTrue(handler.getPropertyNames().contains("foo2"));
+            assertTrue(handler.isIgnoreFailure());
+        }
+        {
+            DefaultCallbackHandler handler = new DefaultCallbackHandler(false);
+
+            parse("/subsystem=threads/thread-factory=foo:validate(foo=bar, foo2=bar2){allow-resource-service-restart=true;}?", handler);
+            assertEquals("validate", handler.getOperationName());
+            assertTrue(handler.isIgnoreFailure());
+        }
+        {
+            DefaultCallbackHandler handler = new DefaultCallbackHandler(false);
+
+            parse("/subsystem=threads/thread-factory=foo:validate   ?", handler);
+            assertEquals("validate", handler.getOperationName());
+            assertTrue(handler.isIgnoreFailure());
+        }
     }
 
     protected void parse(String opReq, DefaultCallbackHandler handler) throws CommandFormatException {

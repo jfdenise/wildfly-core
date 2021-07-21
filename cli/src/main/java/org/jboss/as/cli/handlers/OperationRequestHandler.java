@@ -42,6 +42,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.Operation;
 import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.dmr.ModelNode;
+import org.jboss.logging.Logger;
 
 /**
  * The operation request handler.
@@ -49,6 +50,8 @@ import org.jboss.dmr.ModelNode;
  * @author Alexey Loubyansky
  */
 public class OperationRequestHandler implements CommandHandler, OperationCommand {
+
+    private static final Logger LOG = Logger.getLogger(OperationRequestHandler.class);
 
     @Override
     public boolean isBatchMode(CommandContext ctx) {
@@ -79,7 +82,7 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
         }
         Operation op = opBuilder.build();
 
-        if(ctx.getConfig().isValidateOperationRequests()) {
+        if(ctx.getConfig().isValidateOperationRequests() && !ctx.getParsedCommandLine().isIgnoreFailure()) {
             ModelNode opDescOutcome = Util.validateRequest(ctx, request);
             if (opDescOutcome != null) { // operation has params that might need to be replaced
                 Util.replaceFilePathsWithBytes(request, opDescOutcome);
@@ -91,10 +94,17 @@ public class OperationRequestHandler implements CommandHandler, OperationCommand
             if (Util.isSuccess(result)) {
                 ctx.printDMR(result);
             } else {
-                if (!ctx.getConfig().isOutputJSON()) {
-                    throw new CommandLineException(result.toString());
+                if (ctx.getParsedCommandLine().isIgnoreFailure()) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debugf("Ignoring operation failure for Operation '%s", op.getOperation());
+                        LOG.debugf("Ignored failure %s", result.toString());
+                    }
                 } else {
-                    throw new CommandLineException(result.toJSONString(false));
+                    if (!ctx.getConfig().isOutputJSON()) {
+                        throw new CommandLineException(result.toString());
+                    } else {
+                        throw new CommandLineException(result.toJSONString(false));
+                    }
                 }
             }
         } catch(NoSuchElementException e) {

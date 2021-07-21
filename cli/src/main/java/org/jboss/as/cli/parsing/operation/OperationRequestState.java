@@ -39,11 +39,11 @@ public class OperationRequestState extends DefaultParsingState {
     public static final OperationRequestState INSTANCE = new OperationRequestState();
 
     public OperationRequestState() {
-        this(NodeState.INSTANCE, AddressOperationSeparatorState.INSTANCE, PropertyListState.INSTANCE, HeaderListState.INSTANCE);
+        this(NodeListState.INSTANCE, AddressOperationSeparatorState.INSTANCE, PropertyListState.INSTANCE, HeaderListState.INSTANCE, IgnoreFailureState.INSTANCE);
     }
 
-    public OperationRequestState(final NodeState nodeState, final AddressOperationSeparatorState addrOpSep, final PropertyListState propList,
-            final HeaderListState headerList) {
+    public OperationRequestState(final NodeListState nodeListState, final AddressOperationSeparatorState addrOpSep, final PropertyListState propList,
+            final HeaderListState headerList, final IgnoreFailureState ignoreState) {
         super(ID);
         //setDefaultHandler(new EnterStateCharacterHandler(nodeState));
         setDefaultHandler(new LineBreakHandler(false){
@@ -51,7 +51,7 @@ public class OperationRequestState extends DefaultParsingState {
             public void doHandle(ParsingContext ctx) throws CommandFormatException {
                 final CharacterHandler handler = enterStateHandlers.getHandler(ctx.getCharacter());
                 if(handler == null) {
-                    ctx.enterState(nodeState);
+                    ctx.enterState(nodeListState);
                 } else {
                     handler.handle(ctx);
                 }
@@ -59,6 +59,7 @@ public class OperationRequestState extends DefaultParsingState {
         enterState(':', addrOpSep);
         enterState('(', propList);
         enterState('{', headerList);
+        enterState('?', ignoreState);
         OperatorState.registerEnterStates(this);
         setReturnHandler(new CharacterHandler(){
             @Override

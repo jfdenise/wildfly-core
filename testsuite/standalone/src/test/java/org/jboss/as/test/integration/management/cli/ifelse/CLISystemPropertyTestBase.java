@@ -59,6 +59,10 @@ public class CLISystemPropertyTestBase {
         return "/system-property=" + name + ":add(value=" + value + ")";
     }
 
+    protected String getAddPropertyReq(String name, String value, boolean ignore) {
+        return "/system-property=" + name + ":add(value=" + value + ")" + (ignore ? "?" : "");
+    }
+
     protected String getWritePropertyReq(String value) {
         return getWritePropertyReq(PROP_NAME, value);
     }

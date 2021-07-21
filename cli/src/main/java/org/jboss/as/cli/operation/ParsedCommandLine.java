@@ -120,4 +120,6 @@ public interface ParsedCommandLine {
     CommandLineFormat getFormat();
 
     boolean hasOperator();
+
+    boolean isIgnoreFailure();
 }

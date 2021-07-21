@@ -220,6 +220,8 @@ public class ParserUtil {
                     handler.propertyListStart(ctx.getLocation());
                 } else if ("ADDR_OP_SEP".equals(id)) {
                     handler.addressOperationSeparator(ctx.getLocation());
+                } else if ("IGNORE_FAILURE".equals(id)) {
+                    handler.ignoreFailure();
                 } else if ("NAME_VALUE_SEPARATOR".equals(id)) {
                     nameValueSeparator = ctx.getLocation();
                     if (buffer.length() > 0) {

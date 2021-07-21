@@ -93,6 +93,8 @@ public class DefaultCallbackHandler extends ValidatingCallbackHandler implements
     private LinkedHashMap<String,ParsedOperationRequestHeader> headers;
     private ParsedOperationRequestHeader lastHeader;
 
+    private boolean ignoreFailure;
+
     public DefaultCallbackHandler() {
         this(true);
     }
@@ -187,6 +189,7 @@ public class DefaultCallbackHandler extends ValidatingCallbackHandler implements
         lastHeaderName = null;
         lastHeader = null;
         hasOperator = false;
+        ignoreFailure = false;
     }
 
     @Override
@@ -730,5 +733,15 @@ public class DefaultCallbackHandler extends ValidatingCallbackHandler implements
             otherArgs = new ArrayList<String>();
         }
         otherArgs.add(value);
+    }
+
+    @Override
+    public boolean isIgnoreFailure() {
+        return ignoreFailure;
+    }
+
+    @Override
+    public void ignoreFailure() throws CommandFormatException {
+       ignoreFailure = true;
     }
 }

@@ -52,6 +52,8 @@ public interface CommandLineParser {
 
         void addressOperationSeparator(int index) throws CommandFormatException;
 
+        void ignoreFailure() throws CommandFormatException;
+
         void operationName(int index, String operationName) throws CommandFormatException;
 
         void propertyListStart(int index);
