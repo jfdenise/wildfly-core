@@ -147,16 +147,19 @@ public class IfHandler extends CommandHandlerWithHelp {
 
         final ParsedCommandLine args = ctx.getParsedCommandLine();
         final String conditionStr = this.condition.getOriginalValue(args, true);
-        int i = argsStr.indexOf(conditionStr);
-        if (i < 0) {
-            throw new CommandFormatException("Failed to locate '" + conditionStr + "' in '" + argsStr + "'");
+        String substituted = args.getSubstitutedLine();
+        String inputLine = args.getOriginalLine();
+        int conditionIndex = substituted.indexOf(conditionStr);
+        if (conditionIndex < 0) {
+            throw new CommandFormatException("Failed to locate '" + conditionStr + "' in '" + substituted + "'");
         }
-        i = argsStr.indexOf("of", i + conditionStr.length());
+        conditionIndex +=  conditionStr.length();
+        int originalIndex = args.getSubstitutions().getOriginalOffset(conditionIndex);
+        int i = inputLine.indexOf("of", originalIndex);
         if (i < 0) {
-            throw new CommandFormatException("Failed to locate 'of' in '" + argsStr + "'");
+            throw new CommandFormatException("Failed to locate 'of' in '" + inputLine + "'");
         }
-
-        final String requestStr = argsStr.substring(i + 2);
+        final String requestStr = inputLine.substring(i + 2);
         return new IfElseControlFlow(ctx, condition.resolveOperation(args), requestStr, active);
     }
 
