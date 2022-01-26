@@ -239,6 +239,7 @@ class EmbedServerHandler extends CommandHandlerWithHelp {
             }
             // Disables the logging subsystem from registering an embedded log context if the subsystem is present
             WildFlySecurityManager.setPropertyPrivileged("org.wildfly.logging.embedded", "false");
+            System.out.println("WILL CREATE EMBEDDED SERVER");
             final EmbeddedManagedProcess server = EmbeddedProcessFactory.createStandaloneServer(configBuilder.build());
             server.start();
             serverReference.set(new EmbeddedProcessLaunch(server, restorer, false));

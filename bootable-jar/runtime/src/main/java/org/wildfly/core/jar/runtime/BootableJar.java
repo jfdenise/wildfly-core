@@ -27,10 +27,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.AccessControlContext;
+import static java.security.AccessController.doPrivileged;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +67,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.logmanager.Configurator;
 import org.jboss.logmanager.LogContext;
 import org.jboss.logmanager.PropertyConfigurator;
+import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleLoader;
 import static org.wildfly.core.jar.runtime.Constants.LOG_BOOT_FILE_PROP;
@@ -329,10 +339,35 @@ public final class BootableJar implements ShutdownHandler {
 
         // At this point we can configure JMX
         configureJMX(moduleClassLoader, bootableJar.log);
-
+        final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, moduleClassLoader);
+        Iterator<Provider> iterator = providerServiceLoader.iterator();
+        for (;;) try {
+            if (! (iterator.hasNext())) break;
+            final Provider provider = iterator.next();
+            final Class<? extends Provider> providerClass = provider.getClass();
+            // each provider needs permission to install itself
+            System.out.println("BOOTABLE PROVIDER " + providerClass);
+            doPrivileged(new AddProviderAction(provider), getProviderContext(providerClass));
+        } catch (ServiceConfigurationError | RuntimeException e) {
+            Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
+        }
         bootableJar.run();
     }
+    static final class AddProviderAction implements PrivilegedAction<Void> {
+        private final Provider provider;
 
+        AddProviderAction(final Provider provider) {
+            this.provider = provider;
+        }
+
+        public Void run() {
+            Security.addProvider(provider);
+            return null;
+        }
+    }
+private static AccessControlContext getProviderContext(final Class<? extends Provider> providerClass) {
+        return new AccessControlContext(new ProtectionDomain[] { providerClass.getProtectionDomain() });
+    }
     private static void configureJMX(ModuleClassLoader moduleClassLoader, BootableJarLogger log) throws Exception {
         final String mbeanServerBuilderName = getServiceName(moduleClassLoader, "javax.management.MBeanServerBuilder");
         if (mbeanServerBuilderName != null) {

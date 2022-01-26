@@ -29,9 +29,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -219,7 +226,7 @@ public class EmbeddedStandaloneServerFactory {
         private ModelControllerClient modelControllerClient;
         private ExecutorService executorService;
         private ProcessStateNotifier processStateNotifier;
-
+        private Set<String> providers = new HashSet<>();
         public StandaloneServerImpl(String[] cmdargs, Properties systemProps, Map<String, String> systemEnv, ModuleLoader moduleLoader, ClassLoader embeddedModuleCL) {
             this.cmdargs = cmdargs;
             this.systemProps = systemProps;
@@ -250,6 +257,21 @@ public class EmbeddedStandaloneServerFactory {
 
         @Override
         public void start() throws EmbeddedProcessStartException {
+            System.out.println("MODULELOADER CLASSLOADER " + moduleLoader.getClass().getClassLoader());
+                final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, embeddedModuleCL);
+            Iterator<Provider> iterator = providerServiceLoader.iterator();
+            for (;;) try {
+                if (!(iterator.hasNext())) {
+                    break;
+                }
+                final Provider provider = iterator.next();
+                final Class<? extends Provider> providerClass = provider.getClass();
+                System.out.println("EMBEDDED REGISTERING PROVIDER " + providerClass + " NAME " + provider.getName());
+                providers.add(provider.getName());
+                Security.addProvider(provider);
+            } catch (ServiceConfigurationError | RuntimeException e) {
+                e.printStackTrace();
+            }
             ClassLoader tccl = SecurityActions.getTccl();
             try {
                 SecurityActions.setTccl(embeddedModuleCL);
@@ -332,6 +354,10 @@ public class EmbeddedStandaloneServerFactory {
         public void stop() {
             ClassLoader tccl = SecurityActions.getTccl();
             try {
+                for(String provider : providers) {
+                    System.out.println("REMOVING provider " + provider);
+                    Security.removeProvider(provider);
+                }
                 SecurityActions.setTccl(embeddedModuleCL);
                 exit();
             } finally {

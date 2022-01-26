@@ -122,7 +122,7 @@ public class SystemPropertyExpressionTestCase {
             ModelNode addOp = Util.createAddOperation(CREDENTIAL_STORE_ADDRESS);
             addOp.get("location").set(CS_PATH);
             addOp.get("credential-reference", "clear-text").set(CNAME);
-            addOp.get("providers").set("combined-providers");
+            //addOp.get("providers").set("combined-providers");
             managementClient.executeForResult(addOp);
         }
 
@@ -238,7 +238,7 @@ public class SystemPropertyExpressionTestCase {
     }
 
     private static String getSystemProperty(ModelControllerClient client, String property) throws IOException {
-        ModelNode response = client.execute(Util.getReadAttributeOperation(RUNTIME_ADDRESS, "system-properties"));
+        ModelNode response = client.execute(Util.getReadAttributeOperation(RUNTIME_ADDRSS, "system-properties"));
         assertSuccess(response);
         ModelNode val = response.get(RESULT, property);
         return val.isDefined() ? val.asString() : null;

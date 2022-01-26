@@ -39,7 +39,7 @@
 
     <dependencies>
         <module name="java.desktop"/>
-        <module name="org.wildfly.security.elytron-private"/>
+        <module name="org.wildfly.security.elytron-private" services="import"/>
         <module name="org.wildfly.common"/>
         <module name="org.jboss.as.server"/>
         <module name="org.jboss.as.controller"/>

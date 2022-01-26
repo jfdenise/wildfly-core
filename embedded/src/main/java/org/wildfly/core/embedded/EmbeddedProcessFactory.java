@@ -148,7 +148,7 @@ public class EmbeddedProcessFactory {
         context.add(new StandaloneSystemPropertyContext(configuration.getJBossHome()));
         context.add(new LoggerContext(configuration.getModuleLoader()));
         final ModuleLoader moduleLoader = configuration.getModuleLoader();
-
+        System.out.println("CONFIG CLASSLOADER " + configuration.getClass().getClassLoader());
         setupVfsModule(moduleLoader);
 
         // Load the Embedded Server Module
