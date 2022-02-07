@@ -652,7 +652,8 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-cli</artifactId>
-            <classifier>client</classifier>
+            <classifier>shaded-model</classifier>
+            <type>xml</type>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>

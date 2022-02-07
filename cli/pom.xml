@@ -52,6 +52,24 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.wildfly.galleon-plugins</groupId>
+                <artifactId>wildfly-galleon-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>org.jboss.as.cli.CommandLineMain</mainClass>
+                    <manifestEntries>
+                        <Multi-Release>true</Multi-Release>
+                    </manifestEntries>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>generate-shaded-descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <executions>
@@ -75,7 +93,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <!-- Unpack the jboss-modules.jar schemas for validating generated module.xml files in tests -->
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -111,7 +129,7 @@
             <groupId>org.aesh</groupId>
             <artifactId>readline</artifactId>
         </dependency>
-
+        
         <dependency>
             <groupId>org.aesh</groupId>
             <artifactId>aesh</artifactId>
