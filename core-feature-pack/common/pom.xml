@@ -715,6 +715,13 @@
 
         <dependency>
             <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-elytron-tool-wrapper</artifactId>
+            <type>xml</type>
+            <classifier>shaded-model</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-io</artifactId>
         </dependency>
 

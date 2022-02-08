@@ -34,6 +34,24 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.wildfly.galleon-plugins</groupId>
+                <artifactId>wildfly-galleon-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>org.wildfly.core.elytron.tool.wrapper.ElytronToolScriptWrapper</mainClass>
+                    <manifestEntries>
+                        <Multi-Release>true</Multi-Release>
+                    </manifestEntries>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>generate-shaded-descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <configuration>
@@ -55,7 +73,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
         </plugins>
     </build>
 

@@ -1550,6 +1550,13 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.core</groupId>
+                <artifactId>wildfly-elytron-tool-wrapper</artifactId>
+                <version>${project.version}</version>
+                <type>xml</type>
+                <classifier>shaded-model</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.core</groupId>
                 <artifactId>wildfly-embedded</artifactId>
                 <version>${project.version}</version>
             </dependency>
