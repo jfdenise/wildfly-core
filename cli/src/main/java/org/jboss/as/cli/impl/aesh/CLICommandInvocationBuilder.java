@@ -5,6 +5,7 @@
 package org.jboss.as.cli.impl.aesh;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.aesh.command.CommandRuntime;
 import org.aesh.command.container.CommandContainer;
 import org.aesh.command.shell.Shell;
@@ -113,6 +114,11 @@ public class CLICommandInvocationBuilder implements
             if (console != null) {
                 console.clearScreen();
             }
+        }
+
+        @Override
+        public Key read(long timeout, TimeUnit unit) throws InterruptedException {
+            return read(null);
         }
     }
 

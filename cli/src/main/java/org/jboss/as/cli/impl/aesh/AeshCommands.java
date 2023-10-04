@@ -29,6 +29,7 @@ import org.aesh.command.Execution;
 import org.aesh.command.container.CommandContainer;
 import org.aesh.command.operator.OperatorType;
 import org.aesh.command.parser.CommandLineParserException;
+import org.aesh.command.parser.UnknownCommandInGroupException;
 import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
 import org.jboss.as.cli.CliInitializationException;
@@ -262,7 +263,12 @@ public class AeshCommands {
                     } catch (CommandException | CommandValidatorException ex) {
                         throw new CommandLineException(ex.getLocalizedMessage());
                     } catch (OptionValidatorException | CommandLineParserException ex) {
-                        throw new CommandFormatException(ex.getLocalizedMessage());
+                        String msg = ex.getLocalizedMessage();
+                        if (ex instanceof UnknownCommandInGroupException) {
+                            UnknownCommandInGroupException uex = (UnknownCommandInGroupException) ex;
+                            msg = uex.getCommand() + " is not part of the " + uex.getGroup() + " commands. See 'help " + uex.getGroup() + "'";
+                        }
+                        throw new CommandFormatException(msg);
                     } catch (InterruptedException ex) {
                         Thread.interrupted();
                         throw new CommandLineException(ex);
