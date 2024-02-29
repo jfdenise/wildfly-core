@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright The WildFly Authors
-  ~ SPDX-License-Identifier: Apache-2.0
-  -->
+~ Copyright The WildFly Authors
+~ SPDX-License-Identifier: Apache-2.0
+-->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -20,7 +20,7 @@
     <name>WildFly: Command line interface</name>
 
     <properties>
-         <version.dev.langchain4j>0.27.1</version.dev.langchain4j>
+        <version.dev.langchain4j>0.27.1</version.dev.langchain4j>
     </properties>
     <build>
         <plugins>
@@ -225,7 +225,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-compress</artifactId>
+            <artifactId>commons-compress</artifactId>
             <version>1.23.0</version>
         </dependency>
         <dependency>
@@ -246,9 +246,13 @@
                     <groupId>org.apache.commons</groupId>
                     <artifactId>commons-compress</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
             <version>${version.dev.langchain4j}</version>
@@ -278,15 +282,25 @@
                     <artifactId>opennlp-tools</artifactId>
                 </exclusion>
                 <exclusion>
-                   <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
+                    <groupId>org.jsoup</groupId>
+                    <artifactId>jsoup</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-core</artifactId>
             <version>${version.dev.langchain4j}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.microsoft.onnxruntime</groupId>
@@ -304,7 +318,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-ollama</artifactId>
             <version>${version.dev.langchain4j}</version>
@@ -328,7 +342,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-redis</artifactId>
             <version>${version.dev.langchain4j}</version>
@@ -381,13 +395,17 @@
                     <groupId>com.squareup.okhttp3</groupId>
                     <artifactId>okhttp-sse</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>com.squareup.retrofit2</groupId>
             <artifactId>converter-gson</artifactId>
             <version>2.9.0</version> 
-             <exclusions>
+            <exclusions>
                 <exclusion>
                     <groupId>com.google.code.gson</groupId>
                     <artifactId>gson</artifactId>
@@ -852,12 +870,18 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <version>2.0.12</version>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.12</version>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -886,7 +910,7 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
             <!-- This is a compile-time dependency of this project, but is not needed at compile or runtime by other
-                  projects that depend on this project.-->
+            projects that depend on this project.-->
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -894,7 +918,7 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <!-- This is a compile-time dependency of this project, but is not needed at compile or runtime by other
-                  projects that depend on this project.-->
+            projects that depend on this project.-->
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -945,9 +969,9 @@
 
         <!-- remoting-jmx -->
         <dependency>
-           <groupId>org.jboss.remotingjmx</groupId>
-           <artifactId>remoting-jmx</artifactId>
-           <exclusions>
+            <groupId>org.jboss.remotingjmx</groupId>
+            <artifactId>remoting-jmx</artifactId>
+            <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
                     <artifactId>*</artifactId>
@@ -955,9 +979,9 @@
             </exclusions>
         </dependency>
         <dependency>
-           <groupId>org.jboss.marshalling</groupId>
-           <artifactId>jboss-marshalling</artifactId>
-           <exclusions>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling</artifactId>
+            <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
                     <artifactId>*</artifactId>
@@ -965,9 +989,9 @@
             </exclusions>
         </dependency>
         <dependency>
-           <groupId>org.jboss.marshalling</groupId>
-           <artifactId>jboss-marshalling-river</artifactId>
-           <exclusions>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling-river</artifactId>
+            <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
                     <artifactId>*</artifactId>
@@ -975,9 +999,9 @@
             </exclusions>
         </dependency>
         <dependency>
-           <groupId>org.jboss.xnio</groupId>
-           <artifactId>xnio-nio</artifactId>
-           <exclusions>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-nio</artifactId>
+            <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
                     <artifactId>*</artifactId>
@@ -987,9 +1011,9 @@
         <!-- end remoting-jmx -->
 
         <dependency>
-           <groupId>org.jboss</groupId>
-           <artifactId>jboss-vfs</artifactId>
-           <exclusions>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-vfs</artifactId>
+            <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
                     <artifactId>*</artifactId>
@@ -1010,7 +1034,7 @@
         </dependency>
 
         <!-- Dependency needed by the CLI fat jar (client classifier) to support JBoss Log Manager JSON Formatter 
-             that still depends on EE8 javax.json API -->
+        that still depends on EE8 javax.json API -->
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>jakarta.json</artifactId>

@@ -19,13 +19,19 @@ import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.router.DefaultQueryRouter;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import java.io.File;
+
 import static org.wildfly.common.Assert.checkNotNullParam;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
+
 import static org.jboss.as.cli.handlers.chatbot.ChatBotHandler.loadEmbeddingStore;
+
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.memory.chat.TokenWindowChatMemory;
+import dev.langchain4j.model.openai.OpenAiTokenizer;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 
 /**
@@ -37,6 +43,13 @@ public class ChatBotControlFlow implements CommandLineRedirection {
 
     private static final String CTX_KEY = "CHATBOT";
     private static final String CHAIN_KEY = "CHAIN";
+
+    private static final String PROMPT_TEMPLATE = "Answer the user question delimited by  ---.\n"
+            + "---\n"
+            + "{{userMessage}}\n"
+            + "---"
+            + "\n Here is a few data to help you:\n"
+            + "{{contents}}";
 
     private ConversationalRetrievalChain chain;
 
@@ -68,7 +81,6 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .logResponses(Boolean.TRUE)
                     .maxTokens(1000)
                     .build();
-            String question = "What are the CLI commands to enable logging?";
             String promptTemplate2 = "You are a chatbot that will provide assistance with questions about WildFly CLI.\n"
                     + "You will be given a question you need to answer and a context to provide you with information.\n"
                     + "You must answer the question based as much as possible on this context.\n"
@@ -81,9 +93,15 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     + "---"
                     + "\n Here is a few data to help you:\n"
                     + "{{contents}}";
-
+            SystemMessage systemMessage = new SystemMessage("You are a chatbot that will provide assistance with questions about WildFly CLI.\n"
+                    + "You will be given a question you need to answer and a context to provide you with information.\n"
+                    + "You must answer the question with WildFly CLI commands.\n");
             chain = ConversationalRetrievalChain.builder()
                     .chatLanguageModel(model)
+                    .chatMemory(TokenWindowChatMemory.builder()
+                            .chatMemoryStore(new SystemInMemoryChatMemoryStore(systemMessage))
+                            .maxTokens(800, new OpenAiTokenizer(OpenAiChatModelName.GPT_3_5_TURBO.toString()))
+                            .build())
                     .retrievalAugmentor(DefaultRetrievalAugmentor.builder()
                             .contentInjector(DefaultContentInjector.builder()
                                     .promptTemplate(PromptTemplate.from(promptTemplate2))
