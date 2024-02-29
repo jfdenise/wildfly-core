@@ -1,4 +1,6 @@
 Run the demo
+* Update the file: https://github.com/jfdenise/wildfly-core/blob/cli-ai/cli/src/main/java/org/jboss/as/cli/handlers/chatbot/ChatBotControlFlow.java#L61
+with your OPEN AI API KEY.
 * Build wildfly-core
 * cd cli
 * Start the CLI fat jar (no JBoss Modules yet): java -jar target/wildfly-cli-24.0.0.Beta3-SNAPSHOT-client.jar
