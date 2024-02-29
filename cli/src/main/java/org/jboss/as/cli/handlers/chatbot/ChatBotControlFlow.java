@@ -61,7 +61,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .build();
             ChatLanguageModel model = OpenAiChatModel
                     .builder()
-                    .apiKey("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")
+                    .apiKey("demo")
                     .maxRetries(5)
                     .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
                     .logRequests(Boolean.TRUE)
@@ -73,7 +73,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     + "You will be given a question you need to answer and a context to provide you with information.\n"
                     + "You must answer the question based as much as possible on this context.\n"
                     + "If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.\n"
-                    + "If you don't know the answer to a question, please don't share false information. Only reply with CLI commands. Answer the user question delimited by  ---."
+                    + "If you don't know the answer to a question, please don't share false information. Only reply with CLI commands. Your replies must start by /. Answer the user question delimited by  ---."
                     + "\n"
                     + "---\n"
                     + "{{userMessage}}\n"
