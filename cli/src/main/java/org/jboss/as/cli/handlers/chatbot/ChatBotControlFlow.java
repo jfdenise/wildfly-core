@@ -58,7 +58,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                 .build();
         ChatLanguageModel model = OpenAiChatModel
                 .builder()
-                .apiKey("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")
+                .apiKey("demo")
                 .maxRetries(5)
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
                 .logRequests(Boolean.TRUE)
