@@ -132,6 +132,9 @@ import org.jboss.as.cli.handlers.batch.BatchListHandler;
 import org.jboss.as.cli.handlers.batch.BatchMoveLineHandler;
 import org.jboss.as.cli.handlers.batch.BatchRemoveLineHandler;
 import org.jboss.as.cli.handlers.batch.BatchRunHandler;
+import org.jboss.as.cli.handlers.chatbot.ChatBotControlFlow;
+import org.jboss.as.cli.handlers.chatbot.ChatBotHandler;
+import org.jboss.as.cli.handlers.chatbot.ChatBotLeaveHandler;
 import org.jboss.as.cli.handlers.ifelse.ElseHandler;
 import org.jboss.as.cli.handlers.ifelse.EndIfHandler;
 import org.jboss.as.cli.handlers.ifelse.IfHandler;
@@ -630,6 +633,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         // for
         cmdRegistry.registerHandler(new ForHandler(), "for");
         cmdRegistry.registerHandler(new DoneHandler(), "done");
+
+        // chat
+        cmdRegistry.registerHandler(new ChatBotHandler(), "chat");
+        cmdRegistry.registerHandler(new ChatBotLeaveHandler(), "bye");
 
         // data-source
         final DefaultCompleter driverNameCompleter = new DefaultCompleter(JDBCDriverNameProvider.INSTANCE);
@@ -1634,10 +1641,18 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
         }
 
         if (isWorkflowMode()) {
-            if (isColorOutput()) {
-                buffer.append(Util.formatWorkflowPrompt(" ..."));
+            if (isChatBot()) {
+                if (isColorOutput()) {
+                    buffer.append(Util.formatWorkflowPrompt(" CHAT"));
+                } else {
+                    buffer.append(" CHAT");
+                }
             } else {
-                buffer.append(" ...");
+                if (isColorOutput()) {
+                    buffer.append(Util.formatWorkflowPrompt(" ..."));
+                } else {
+                    buffer.append(" ...");
+                }
             }
         }
 
@@ -1672,6 +1687,10 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
     @Override
     public boolean isWorkflowMode() {
         return redirection != null;
+    }
+
+    public boolean isChatBot() {
+        return redirection != null && redirection.getTarget() instanceof ChatBotControlFlow;
     }
 
     @Override
@@ -2485,6 +2504,9 @@ public class CommandContextImpl implements CommandContext, ModelControllerClient
             this.target = checkNotNullParam("redirection", redirection);
         }
 
+        public CommandLineRedirection getTarget() {
+            return target;
+        }
         @Override
         public void unregister() throws CommandLineException {
             ensureActive();

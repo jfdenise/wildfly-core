@@ -1,0 +1,12 @@
+Run the demo
+* Build wildfly-core
+* cd cli
+* Start the CLI fat jar (no JBoss Modules yet): java -jar target/wildfly-cli-24.0.0.Beta3-SNAPSHOT-client.jar
+* To go to ChatBot mode type: chat
+* Once in chat mode, type the Question. For example: How to configure Logging with CLI?
+* To leave the ChatBot mode type: bye
+
+TODO:
+* JBoss Modules once java API fully identified
+* Packaging of json file
+* Work on prompt, ...
