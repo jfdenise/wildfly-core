@@ -69,11 +69,12 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .maxTokens(1000)
                     .build();
             String question = "What are the CLI commands to enable logging?";
-            String promptTemplate2 = "You are a chatbot that will provide assistance with questions about WildFly.\n"
+            String promptTemplate2 = "You are a chatbot that will provide assistance with questions about WildFly CLI.\n"
                     + "You will be given a question you need to answer and a context to provide you with information.\n"
                     + "You must answer the question based as much as possible on this context.\n"
+                    + "You must answer the question with WildFly CLI commands.\n"
                     + "If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.\n"
-                    + "If you don't know the answer to a question, please don't share false information. Only reply with CLI commands. Answer the user question delimited by  ---."
+                    + "If you don't know the answer to a question, please don't share false information. Answer the user question delimited by  ---."
                     + "\n"
                     + "---\n"
                     + "{{userMessage}}\n"
