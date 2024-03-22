@@ -4,15 +4,10 @@
  */
 package org.jboss.as.cli.handlers.chatbot;
 
-import dev.langchain4j.data.document.Document;
-import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import java.nio.file.Path;
-import java.util.List;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandLineException;
@@ -48,17 +43,6 @@ public class ChatBotHandler extends CommandHandlerWithHelp {
         }
 
         ctx.registerRedirection(new ChatBotControlFlow(ctx));
-    }
-
-    public static EmbeddingStore<TextSegment> createEmbeddingStore(List<Document> documents, EmbeddingModel embeddingModel) {
-        EmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
-        EmbeddingStoreIngestor ingestor = EmbeddingStoreIngestor.builder()
-                .documentSplitter(DocumentSplitters.recursive(1500, 500))
-                .embeddingModel(embeddingModel)
-                .embeddingStore(embeddingStore)
-                .build();
-        ingestor.ingest(documents);
-        return embeddingStore;
     }
 
     public static EmbeddingStore<TextSegment> loadEmbeddingStore(Path filePath) {

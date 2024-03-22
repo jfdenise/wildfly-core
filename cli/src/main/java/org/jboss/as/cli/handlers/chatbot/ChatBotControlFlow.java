@@ -4,6 +4,8 @@
  */
 package org.jboss.as.cli.handlers.chatbot;
 
+import static java.util.Arrays.asList;
+
 import dev.langchain4j.chain.ConversationalRetrievalChain;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -19,13 +21,16 @@ import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.router.DefaultQueryRouter;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import java.io.File;
+
 import static org.wildfly.common.Assert.checkNotNullParam;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContext.Scope;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.CommandLineRedirection;
+
 import static org.jboss.as.cli.handlers.chatbot.ChatBotHandler.loadEmbeddingStore;
+
 import org.jboss.as.cli.operation.ParsedCommandLine;
 
 /**
@@ -57,7 +62,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .embeddingStore(store)
                     .embeddingModel(embeddingModel)
                     .maxResults(2) // on each interaction we will retrieve the 2 most relevant segments
-                    .minScore(0.5) // we want to retrieve segments at least somewhat similar to user query
+                    .minScore(0.8) // we want to retrieve segments at least somewhat similar to user query
                     .build();
             ChatLanguageModel model = OpenAiChatModel
                     .builder()
@@ -68,7 +73,6 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .logResponses(Boolean.TRUE)
                     .maxTokens(1000)
                     .build();
-            String question = "What are the CLI commands to enable logging?";
             String promptTemplate2 = "You are a chatbot that will provide assistance with questions about WildFly CLI.\n"
                     + "You will be given a question you need to answer and a context to provide you with information.\n"
                     + "You must answer the question based as much as possible on this context.\n"
@@ -87,6 +91,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .retrievalAugmentor(DefaultRetrievalAugmentor.builder()
                             .contentInjector(DefaultContentInjector.builder()
                                     .promptTemplate(PromptTemplate.from(promptTemplate2))
+                                    .metadataKeysToInclude(asList("file_name", "url", "title"))
                                     .build())
                             .queryRouter(new DefaultQueryRouter(contentRetriever))
                             .build())
