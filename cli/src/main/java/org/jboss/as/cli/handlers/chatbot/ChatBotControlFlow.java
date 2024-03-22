@@ -31,6 +31,7 @@ import org.jboss.as.cli.CommandLineRedirection;
 
 import static org.jboss.as.cli.handlers.chatbot.ChatBotHandler.loadEmbeddingStore;
 
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 
 /**
@@ -61,7 +62,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
             ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
                     .embeddingStore(store)
                     .embeddingModel(embeddingModel)
-                    .maxResults(2) // on each interaction we will retrieve the 2 most relevant segments
+                    .maxResults(6) // on each interaction we will retrieve the 2 most relevant segments
                     .minScore(0.8) // we want to retrieve segments at least somewhat similar to user query
                     .build();
             ChatLanguageModel model = OpenAiChatModel
@@ -88,6 +89,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
 
             chain = ConversationalRetrievalChain.builder()
                     .chatLanguageModel(model)
+                    .chatMemory(MessageWindowChatMemory.builder().maxMessages(1).build())
                     .retrievalAugmentor(DefaultRetrievalAugmentor.builder()
                             .contentInjector(DefaultContentInjector.builder()
                                     .promptTemplate(PromptTemplate.from(promptTemplate2))
