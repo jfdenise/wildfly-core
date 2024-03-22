@@ -1,0 +1,13 @@
+SYNOPSIS
+
+   chat
+
+DESCRIPTION
+
+    Open a chatbot interface to ask your questions about WildFly.
+    It will use Generative AI to answer your question.
+    To quit the interface type `bye`.
+
+ARGUMENTS
+
+    --help    - prints this description.
