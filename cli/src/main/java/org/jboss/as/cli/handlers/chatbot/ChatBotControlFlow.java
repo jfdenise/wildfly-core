@@ -176,8 +176,8 @@ public class ChatBotControlFlow implements CommandLineRedirection {
         String[] lst = s.split("\n");
         boolean enter = false;
         for (String l : lst) {
+            l = l.trim();
             if (enter) {
-                l = l.trim();
                 if (l.startsWith("```")) {
                     enter = false;
                 } else {
