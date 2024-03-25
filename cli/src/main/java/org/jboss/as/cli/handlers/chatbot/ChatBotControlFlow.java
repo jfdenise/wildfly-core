@@ -32,6 +32,11 @@ import org.jboss.as.cli.CommandLineRedirection;
 import static org.jboss.as.cli.handlers.chatbot.ChatBotHandler.loadEmbeddingStore;
 
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import org.jboss.as.cli.operation.ParsedCommandLine;
 
 /**
@@ -41,6 +46,11 @@ import org.jboss.as.cli.operation.ParsedCommandLine;
  */
 public class ChatBotControlFlow implements CommandLineRedirection {
 
+    private class Commands {
+
+        String question;
+        List<String> commands = new ArrayList<>();
+    }
     private static final String CTX_KEY = "CHATBOT";
     private static final String CHAIN_KEY = "CHAIN";
 
@@ -51,6 +61,9 @@ public class ChatBotControlFlow implements CommandLineRedirection {
     }
 
     private CommandLineRedirection.Registration registration;
+
+    private List<Commands> storedCommands = new ArrayList<>();
+    Commands currentCommand;
 
     ChatBotControlFlow(CommandContext ctx) throws CommandLineException {
         checkNotNullParam("ctx", ctx);
@@ -100,7 +113,10 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .build();
             ctx.set(Scope.CONTEXT, CTX_KEY, chain);
         }
-        ctx.printLine("Hello, I am the WildFly chatbot, ready to help you setup your WildFly server. Type your questions. Type 'bye' to leave.");
+        ctx.printLine("Hello, I am the WildFly chatbot, ready to help you setup your WildFly server. You can type your questions...\n" +
+                "You can type 'store' to store the CLI commands contained in my answers.\n"+
+                "You can type 'generate' to generate a CLI scrpt containing all the stored commands.\n"+
+                "Type 'bye' to leave.\n");
         ctx.set(Scope.CONTEXT, CTX_KEY, this);
     }
 
@@ -114,11 +130,70 @@ public class ChatBotControlFlow implements CommandLineRedirection {
         final ParsedCommandLine line = ctx.getParsedCommandLine();
         final String cmd = line.getOperationName();
 
-        if ("bye".equals(cmd)) {
+        if ("bye".equals(cmd) || "exit".equals(cmd)) {
             registration.handle(line);
             return;
         }
-        ctx.print(chain.execute(line.getOriginalLine()));
+        if ("clear".equals(cmd)) {
+            ctx.clearScreen();
+            return;
+        }
+        if ("store".equals(cmd)) {
+            storedCommands.add(currentCommand);
+            ctx.printLine("Storing the following commands:");
+            for (String s : currentCommand.commands) {
+                ctx.printLine(s);
+            }
+            return;
+        }
+        if ("dump".equals(cmd)) {
+            for (Commands cc : storedCommands) {
+                ctx.printLine("#" + cc.question);
+                for (String ccc : cc.commands) {
+                    ctx.printLine(ccc);
+                }
+            }
+            return;
+        }
+        if ("generate".equals(cmd)) {
+            StringBuilder builder = new StringBuilder();
+            for (Commands cc : storedCommands) {
+                builder.append("#" + cc.question + "\n");
+                for (String ccc : cc.commands) {
+                    builder.append(ccc + "\n");
+                }
+            }
+            try {
+                Files.write(Paths.get("wildfly-chatbot-script.cli"), builder.toString().getBytes());
+            } catch (IOException ioex) {
+                throw new CommandLineException(ioex);
+            }
+            System.out.println("WildFly CLI script file wildfly-chatbot-script.cli generated.");
+            return;
+        }
+        currentCommand = null;
+        String s = chain.execute(line.getOriginalLine());
+        String[] lst = s.split("\n");
+        boolean enter = false;
+        for (String l : lst) {
+            if (enter) {
+                l = l.trim();
+                if (l.startsWith("```")) {
+                    enter = false;
+                } else {
+                    currentCommand.commands.add(l);
+                }
+            } else {
+                if (l.startsWith("```")) {
+                    enter = true;
+                    if (currentCommand == null) {
+                        currentCommand = new Commands();
+                        currentCommand.question = line.getOriginalLine();
+                    }
+                }
+            }
+        }
+        ctx.print(s);
     }
 
     void run(CommandContext ctx) throws CommandLineException {
