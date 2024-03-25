@@ -31,7 +31,8 @@ import org.jboss.as.cli.CommandLineRedirection;
 
 import static org.jboss.as.cli.handlers.chatbot.ChatBotHandler.loadEmbeddingStore;
 
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.memory.chat.TokenWindowChatMemory;
+import dev.langchain4j.model.openai.OpenAiTokenizer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -85,7 +86,6 @@ public class ChatBotControlFlow implements CommandLineRedirection {
                     .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
                     .logRequests(Boolean.TRUE)
                     .logResponses(Boolean.TRUE)
-                    .maxTokens(1000)
                     .build();
             String promptTemplate2 = "You are a chatbot that will provide assistance with questions about WildFly CLI.\n"
                     + "You will be given a question you need to answer and a context to provide you with information.\n"
@@ -102,7 +102,7 @@ public class ChatBotControlFlow implements CommandLineRedirection {
 
             chain = ConversationalRetrievalChain.builder()
                     .chatLanguageModel(model)
-                    .chatMemory(MessageWindowChatMemory.builder().maxMessages(1).build())
+                    .chatMemory(TokenWindowChatMemory.builder().maxTokens(1000, new OpenAiTokenizer(OpenAiChatModelName.GPT_3_5_TURBO)).build())
                     .retrievalAugmentor(DefaultRetrievalAugmentor.builder()
                             .contentInjector(DefaultContentInjector.builder()
                                     .promptTemplate(PromptTemplate.from(promptTemplate2))
@@ -114,9 +114,9 @@ public class ChatBotControlFlow implements CommandLineRedirection {
             ctx.set(Scope.CONTEXT, CTX_KEY, chain);
         }
         ctx.printLine("Hello, I am the WildFly chatbot, ready to help you setup your WildFly server. You can type your questions...\n" +
-                "You can type 'store' to store the CLI commands contained in my answers.\n"+
-                "You can type 'generate' to generate a CLI scrpt containing all the stored commands.\n"+
-                "Type 'bye' to leave.\n");
+                "* You can type 'store' to store the CLI commands contained in my answers.\n"+
+                "* You can type 'generate' to generate a CLI script containing all the stored commands.\n"+
+                "* Type 'bye' to leave.\n");
         ctx.set(Scope.CONTEXT, CTX_KEY, this);
     }
 
