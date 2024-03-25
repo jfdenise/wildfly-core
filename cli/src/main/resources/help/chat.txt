@@ -7,6 +7,8 @@ DESCRIPTION
     Open a chatbot interface to ask your questions about WildFly.
     It will use Generative AI to answer your question.
     To quit the interface type `bye`.
+    To store the CLI commands contained in an answer, type 'store'.\n"+
+    To generate a CLI script containing all the stored commands, type 'generate'
 
 ARGUMENTS
 
