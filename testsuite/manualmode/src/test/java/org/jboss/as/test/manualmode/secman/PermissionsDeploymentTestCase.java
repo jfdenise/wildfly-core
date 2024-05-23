@@ -118,15 +118,16 @@ public class PermissionsDeploymentTestCase extends AbstractDeploymentScannerBase
      */
     @Test
     public void testWithoutConfiguredMaxBootThreads() throws Exception {
-        container.start();
-        try {
-            addDeploymentScanner(modelControllerClient,1000, false, true);
-            this.testInvalidPermissionsXmlDeployment("test-permissions-xml-without-max-boot-threads.jar");
-        } finally {
-            removeDeploymentScanner(modelControllerClient);
-            container.stop();
+        for (int i = 0; i < 100; i++) {
+            container.start();
+            try {
+                addDeploymentScanner(modelControllerClient, 1000, false, true);
+                this.testInvalidPermissionsXmlDeployment("test-permissions-xml-without-max-boot-threads.jar");
+            } finally {
+                removeDeploymentScanner(modelControllerClient);
+                container.stop();
+            }
         }
-
     }
 
     private void testInvalidPermissionsXmlDeployment(final String deploymentName) throws Exception {
@@ -134,7 +135,7 @@ public class PermissionsDeploymentTestCase extends AbstractDeploymentScannerBase
         // add an empty (a.k.a invalid content) in permissions.xml
         jar.addAsManifestResource(new StringAsset(""), "permissions.xml");
         // "deploy" it by placing it in the deployment directory
-        jar.as(ZipExporter.class).exportTo(new File(getDeployDir(), deploymentName));
+        jar.as(ZipExporter.class).exportTo(new File(getDeployDir(), deploymentName), true);
         final PathAddress deploymentPathAddr = PathAddress.pathAddress(ModelDescriptionConstants.DEPLOYMENT, deploymentName);
         // wait for the deployment to be picked up and completed (either with success or failure)
         waitForDeploymentToFinish(deploymentPathAddr);

@@ -1,0 +1,34 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Test permissions
+
+on:
+  push:
+    branches:
+      - '**'
+jobs:  
+  build:
+    name: build-${{ matrix.os }}-jdk${{ matrix.java }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [wndows-latest]
+        java: ['17']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ${{ matrix.java }}
+        run: mvn -U -B -ntp clean install -DskipTests
+        shell: bash
+      - name: Test ${{ matrix.java }}
+        run: |
+          cd testsuite/manualmode
+          mvn clean install -Dts.bootable -Dtest=org.jboss.as.test.manualmode.secman.PermissionsDeploymentTestCase
+        shell: bash
+      - name: Upload Test Reports on Failure
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: surefire-reports-${{ matrix.os }}-${{ matrix.java }}
+          path: '**/surefire-reports/*.txt'
