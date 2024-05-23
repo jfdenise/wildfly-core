@@ -118,7 +118,7 @@ public class PermissionsDeploymentTestCase extends AbstractDeploymentScannerBase
      */
     @Test
     public void testWithoutConfiguredMaxBootThreads() throws Exception {
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             container.start();
             try {
                 addDeploymentScanner(modelControllerClient, 1000, false, true);
