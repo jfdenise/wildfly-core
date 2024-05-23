@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [wndows-latest]
+        os: [windows-latest]
         java: ['17']
     steps:
       - uses: actions/checkout@v4
