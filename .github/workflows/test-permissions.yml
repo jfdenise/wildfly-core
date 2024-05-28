@@ -32,9 +32,33 @@ jobs:
           cd testsuite/manualmode
           mvn clean install -Dts.bootable -Dtest=org.jboss.as.test.manualmode.secman.PermissionsDeploymentTestCase -Dtest.num.sleep=6
         shell: bash
+      - name: Find reports
+        if: failure()
+        run: |
+          {
+            echo 'SUREFIRE_REPORTS<<EOF'
+            find . -path '**/surefire-reports/*.xml'
+            echo EOF
+          } >> "$GITHUB_ENV"
+        shell: bash
+      - name: Find server logs
+        if: failure()
+        run: |
+          {
+            echo 'SERVER_LOGS<<EOF'
+            find . -path '**/server.log'
+            echo EOF
+          } >> "$GITHUB_ENV"
+        shell: bash
       - name: Upload Test Reports on Failure
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: surefire-reports-${{ matrix.os }}-${{ matrix.java }}
-          path: '**/surefire-reports/*.txt'
+          path: ${{ env.SUREFIRE_REPORTS }}
+      - name: Upload Server Logs on Failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: server-logs-${{ matrix.os }}-${{ matrix.java }}
+          path: ${{ env.SERVER_LOGS }}
