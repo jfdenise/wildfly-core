@@ -448,6 +448,7 @@ public final class BootableJar implements ShutdownHandler {
                 if (!executor.awaitTermination(environment.getTimeout(), TimeUnit.SECONDS)) {
                     // For some reason we've timed out. The deletion should likely be executing, but let's force it to
                     // be safe.
+                    System.out.println("TIMEOUT, cleaning up again!!!!");
                     cleaner.cleanup();
                 }
             } catch (IOException | InterruptedException e) {
