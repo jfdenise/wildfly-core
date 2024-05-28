@@ -30,7 +30,7 @@ jobs:
       - name: Test ${{ matrix.java }}
         run: |
           cd testsuite/manualmode
-          mvn clean install -Dts.bootable -Dtest=org.jboss.as.test.manualmode.secman.PermissionsDeploymentTestCase
+          mvn clean install -Dts.bootable -Dtest=org.jboss.as.test.manualmode.secman.PermissionsDeploymentTestCase -Dtest.num.sleep=5
         shell: bash
       - name: Upload Test Reports on Failure
         uses: actions/upload-artifact@v3

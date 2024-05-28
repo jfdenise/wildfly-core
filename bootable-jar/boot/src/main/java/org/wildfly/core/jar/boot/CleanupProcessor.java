@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,6 +53,9 @@ public class CleanupProcessor {
     }
 
     private static void cleanup(final Path installDir, final Path cleanupMarker, final boolean log) throws IOException {
+        Integer numSleep = Integer.valueOf(System.getProperty("test.num.sleep", "5"));
+        List<Integer> holder = new ArrayList<>();
+        holder.add(numSleep);
         Files.walkFileTree(installDir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
@@ -58,6 +63,18 @@ public class CleanupProcessor {
                     // Don't delete the cleanup marker until we're ready to delete the directory
                     if (!file.equals(cleanupMarker)) {
                         Files.delete(file);
+                        int num = holder.get(0);
+                        if (num != 0) {
+                            System.out.println("Sleeping for failure");
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException ex) {
+                                System.out.println("Got exception while waiting " + ex);
+                                ex.printStackTrace();
+                            }
+                            num -=1;
+                            holder.set(0, num);
+                        }
                     }
                 } catch (IOException e) {
                     if (log) {
