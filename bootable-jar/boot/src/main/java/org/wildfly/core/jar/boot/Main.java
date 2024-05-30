@@ -296,6 +296,7 @@ public final class Main {
                                         "The marker file %s has not been deleted within %ds. Please check for a previous job running " +
                                         "and delete the marker file if it was left behind because of an error.",
                                 installDir, cleanupMarker, t);
+                        System.out.println("ERROR IN BOOTABLE JAR STARTUP, CLEANUP MARKER STILL EXUIST!!!!!!!");
                         throw new IllegalStateException(msg);
                     }
                     break;
