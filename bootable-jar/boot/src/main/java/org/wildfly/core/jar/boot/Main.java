@@ -118,7 +118,7 @@ public final class Main {
         // If the same install directory is being used and a previous delete is happening we should attempt to wait for
         // the directory to be deleted before we extract our container.
         waitForDelete(installDir);
-
+        System.out.println("BOOTABLE JAR, NO MORE MARKER, CAN CONTINUE!!!!!");
         // If the directory already exists and there is a PID file the container is already running and we should not
         // attempt to overwrite it.
         final Path pidFile = installDir.resolve(getPidFileName());
