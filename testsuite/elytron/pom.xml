@@ -217,8 +217,8 @@
                 </executions>
             </plugin>
                 <plugin>
-                    <groupId>org.wildfly.plugins</groupId>
-                    <artifactId>wildfly-maven-plugin</artifactId>
+                    <groupId>org.jboss.eap.plugins</groupId>
+                    <artifactId>eap-maven-plugin</artifactId>
                     <executions>
                         <execution>
                             <id>server-provisioning</id>
@@ -272,8 +272,8 @@
              <build>
                  <plugins>
                      <plugin>
-                         <groupId>org.wildfly.plugins</groupId>
-                         <artifactId>wildfly-maven-plugin</artifactId>
+                         <groupId>org.jboss.eap.plugins</groupId>
+                         <artifactId>eap-maven-plugin</artifactId>
                          <configuration>
                              <!-- We turn off the ${ts.enable.elytron.cli}
                                   script as Galleon already enabled it-->
@@ -387,6 +387,12 @@
                                  </goals>
                                  <phase>none</phase>
                              </execution>
+                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.jboss.eap.plugins</groupId>
+                        <artifactId>eap-maven-plugin</artifactId>
+                        <executions>
                             <!-- Disable the default provisioning -->
                             <execution>
                                 <id>server-provisioning</id>
