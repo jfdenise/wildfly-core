@@ -6,7 +6,6 @@
 package org.jboss.as.platform.mbean;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -41,12 +40,8 @@ class OperatingSystemMXBeanAttributeHandler extends AbstractPlatformMBeanAttribu
                 if (OperatingSystemResourceDefinition.OPERATING_SYSTEM_EXTENDED_METRICS.contains(name)) {
                     storeExtendedResult(name, context.getResult());
                 } else {
-                    if (OperatingSystemResourceDefinition.OPERATING_SYSTEM_UNIX_METRICS.contains(name)) {
-                        storeUnixResult(name, context.getResult());
-                    } else {
-                        // Shouldn't happen; the global handler should reject
-                        throw unknownAttribute(operation);
-                    }
+                    // Shouldn't happen; the global handler should reject
+                    throw unknownAttribute(operation);
                 }
             }
         } catch (SecurityException e) {
@@ -62,48 +57,54 @@ class OperatingSystemMXBeanAttributeHandler extends AbstractPlatformMBeanAttribu
 
     }
 
-    static void storeExtendedResult(String name, ModelNode store) {
-        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-        if (os instanceof com.sun.management.OperatingSystemMXBean) {
-            com.sun.management.OperatingSystemMXBean extOs = (com.sun.management.OperatingSystemMXBean) os;
-            if (PlatformMBeanConstants.COMMITTED_VIRTUAL_MEMORY_SIZE.equals(name)) {
-                store.set(extOs.getCommittedVirtualMemorySize());
-            } else if (PlatformMBeanConstants.FREE_PHYSICAL_MEMORY_SIZE.equals(name)) {
-                // WARNING ALREADY DEPRECATED in JDK17
-                store.set(extOs.getFreePhysicalMemorySize());
-            } else if (PlatformMBeanConstants.FREE_SWAP_SPACE_SIZE.equals(name)) {
-                store.set(extOs.getFreeSwapSpaceSize());
-            } else if (PlatformMBeanConstants.PROCESS_CPU_LOAD.equals(name)) {
-                store.set(extOs.getProcessCpuLoad());
-            } else if (PlatformMBeanConstants.PROCESS_CPU_TIME.equals(name)) {
-                store.set(extOs.getProcessCpuTime());
-            } else if (PlatformMBeanConstants.SYSTEM_CPU_LOAD.equals(name)) {
-                // WARNING ALREADY DEPRECATED in JDK17
-                store.set(extOs.getSystemCpuLoad());
-            } else if (PlatformMBeanConstants.TOTAL_PHYSICAL_MEMORY_SIZE.equals(name)) {
-                // WARNING ALREADY DEPRECATED in JDK17
-                store.set(extOs.getTotalPhysicalMemorySize());
-            } else if (PlatformMBeanConstants.TOTAL_SWAP_SPACE_SIZE.equals(name)) {
-                store.set(extOs.getTotalSwapSpaceSize());
-            }  else if (OperatingSystemResourceDefinition.OPERATING_SYSTEM_EXTENDED_METRICS.contains(name)) {
-                // Bug
-                throw PlatformMBeanLogger.ROOT_LOGGER.badReadAttributeImpl(name);
+    static void storeExtendedResult(String name, ModelNode store) throws OperationFailedException {
+        ExtendedOperatingSystemMBean ext = new ExtendedOperatingSystemMBean();
+        if (PlatformMBeanConstants.COMMITTED_VIRTUAL_MEMORY_SIZE.equals(name)) {
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.COMMITTED_VIRTUAL_MEMORY_SIZE_ATTRIBUTE)) {
+                store.set(ext.getCommittedVirtualMemorySize());
             }
-        }
-    }
-
-    static void storeUnixResult(String name, ModelNode store) {
-        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-        if (os instanceof com.sun.management.UnixOperatingSystemMXBean) {
-            com.sun.management.UnixOperatingSystemMXBean extOs = (com.sun.management.UnixOperatingSystemMXBean) os;
-            if (PlatformMBeanConstants.MAX_FILE_DESCRIPTOR_COUNT.equals(name)) {
-                store.set(extOs.getMaxFileDescriptorCount());
-            } else if (PlatformMBeanConstants.OPEN_FILE_DESCRIPTOR_COUNT.equals(name)) {
-                store.set(extOs.getOpenFileDescriptorCount());
-            } else if (OperatingSystemResourceDefinition.OPERATING_SYSTEM_UNIX_METRICS.contains(name)) {
-                // Bug
-                throw PlatformMBeanLogger.ROOT_LOGGER.badReadAttributeImpl(name);
+        } else if (PlatformMBeanConstants.FREE_PHYSICAL_MEMORY_SIZE.equals(name)) {
+            // WARNING ALREADY DEPRECATED in JDK17
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.FREE_PHYSICAL_MEMORY_SIZE_ATTRIBUTE)) {
+                store.set(ext.getFreePhysicalMemorySize());
             }
+        } else if (PlatformMBeanConstants.FREE_SWAP_SPACE_SIZE.equals(name)) {
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.FREE_SWAP_SPACE_SIZE_ATTRIBUTE)) {
+                store.set(ext.getFreeSwapSpaceSize());
+            }
+        } else if (PlatformMBeanConstants.PROCESS_CPU_LOAD.equals(name)) {
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.PROCESS_CPU_LOAD_ATTRIBUTE)) {
+                store.set(ext.getProcessCpuLoad());
+            }
+        } else if (PlatformMBeanConstants.PROCESS_CPU_TIME.equals(name)) {
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.PROCESS_CPU_TIME_ATTRIBUTE)) {
+                store.set(ext.getProcessCpuTime());
+            }
+        } else if (PlatformMBeanConstants.SYSTEM_CPU_LOAD.equals(name)) {
+            // WARNING ALREADY DEPRECATED in JDK17
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.SYSTEM_CPU_LOAD_ATTRIBUTE)) {
+                store.set(ext.getSystemCpuLoad());
+            }
+        } else if (PlatformMBeanConstants.TOTAL_PHYSICAL_MEMORY_SIZE.equals(name)) {
+            // WARNING ALREADY DEPRECATED in JDK17
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.TOTAL_PHYSICAL_MEMORY_SIZE)) {
+                store.set(ext.getTotalPhysicalMemorySize());
+            }
+        } else if (PlatformMBeanConstants.TOTAL_SWAP_SPACE_SIZE.equals(name)) {
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.TOTAL_SWAP_SPACE_SIZE)) {
+                store.set(ext.getTotalSwapSpaceSize());
+            }
+        } else if (PlatformMBeanConstants.MAX_FILE_DESCRIPTOR_COUNT.equals(name)) {
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.MAX_FILE_DESCRIPTOR_COUNT_ATTRIBUTE)) {
+                store.set(ext.getMaxFileDescriptorCount());
+            }
+        } else if (PlatformMBeanConstants.OPEN_FILE_DESCRIPTOR_COUNT.equals(name)) {
+            if (ext.isAttributeDefined(ExtendedOperatingSystemMBean.OPEN_FILE_DESCRIPTOR_COUNT)) {
+                store.set(ext.getOpenFileDescriptorCount());
+            }
+        } else if (OperatingSystemResourceDefinition.OPERATING_SYSTEM_EXTENDED_METRICS.contains(name)) {
+            // Bug
+            throw PlatformMBeanLogger.ROOT_LOGGER.badReadAttributeImpl(name);
         }
     }
 

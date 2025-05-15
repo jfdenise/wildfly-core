@@ -5,8 +5,6 @@
 
 package org.jboss.as.platform.mbean;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.List;
 
 import org.jboss.as.controller.OperationContext;
@@ -22,7 +20,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
- * Executes the {@link com.sun.management.ThreadMXBean#getThreadCpuTime(long[])} method.
+ * Executes the {@link com.sun.management.ThreadMXBean#getThreadAllocatedBytes(long[])} method.
  *
  */
 public class ThreadMXBeanThreadsAllocatedBytesHandler implements OperationStepHandler {
@@ -47,12 +45,11 @@ public class ThreadMXBeanThreadsAllocatedBytesHandler implements OperationStepHa
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
 
         idsValidator.validate(operation);
-        ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
-        if (mbean instanceof com.sun.management.ThreadMXBean) {
-            com.sun.management.ThreadMXBean extThread = (com.sun.management.ThreadMXBean) mbean;
+        ExtendedThreadMBean mbean = new ExtendedThreadMBean();
+        if (mbean.isOperationDefined(ExtendedThreadMBean.GET_THREAD_ALLOCATED_BYTES, new String[]{long[].class.getName()})) {
             try {
                 long[] ids = getIds(operation);
-                long[] times = extThread.getThreadAllocatedBytes(ids);
+                long[] times = mbean.getThreadAllocatedBytes(ids);
                 context.getResult().setEmptyList();
                 for (Long time : times) {
                     context.getResult().add(time);

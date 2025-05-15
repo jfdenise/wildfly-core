@@ -6,7 +6,6 @@
 package org.jboss.as.platform.mbean;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -59,19 +58,16 @@ class ThreadMXBeanAttributeHandler extends AbstractPlatformMBeanAttributeHandler
 
     }
 
-    static void storeExtendedResult(String name, ModelNode store) {
-        ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
-        if (mbean instanceof com.sun.management.ThreadMXBean) {
-            com.sun.management.ThreadMXBean extThread = (com.sun.management.ThreadMXBean) mbean;
-            // Requires JDK 11.0.10
-            // if (PlatformMBeanConstants.CURRENT_THREAD_ALLOCATED_BYTES.equals(name)) {
-            //    store.set(extThread.getCurrentThreadAllocatedBytes());
-            // } else
-            if (PlatformMBeanConstants.THREAD_ALLOCATED_MEMORY_ENABLED.equals(name)) {
-                store.set(extThread.isThreadAllocatedMemoryEnabled());
-            } else if (PlatformMBeanConstants.THREAD_ALLOCATED_MEMORY_SUPPORTED.equals(name)) {
-                store.set(extThread.isThreadAllocatedMemorySupported());
-            }
+    static void storeExtendedResult(String name, ModelNode store) throws OperationFailedException {
+        ExtendedThreadMBean mbean = new ExtendedThreadMBean();
+        // Requires JDK 11.0.10
+        // if (PlatformMBeanConstants.CURRENT_THREAD_ALLOCATED_BYTES.equals(name)) {
+        //    store.set(extThread.getCurrentThreadAllocatedBytes());
+        // } else
+        if (PlatformMBeanConstants.THREAD_ALLOCATED_MEMORY_ENABLED.equals(name)) {
+            store.set(mbean.isThreadAllocatedMemoryEnabled());
+        } else if (PlatformMBeanConstants.THREAD_ALLOCATED_MEMORY_SUPPORTED.equals(name)) {
+            store.set(mbean.isThreadAllocatedMemorySupported());
         }
     }
 
@@ -152,20 +148,17 @@ class ThreadMXBeanAttributeHandler extends AbstractPlatformMBeanAttributeHandler
     }
 
     private void executeExtendedWriteAttribute(OperationContext context, ModelNode operation, String name) throws OperationFailedException {
-        ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
-        if (mbean instanceof com.sun.management.ThreadMXBean) {
-            com.sun.management.ThreadMXBean extThread = (com.sun.management.ThreadMXBean) mbean;
-            if (PlatformMBeanConstants.THREAD_ALLOCATED_MEMORY_ENABLED.equals(name)) {
-                enabledValidator.validate(operation);
-                context.getServiceRegistry(true); //to trigger auth
-                extThread.setThreadAllocatedMemoryEnabled(operation.require(ModelDescriptionConstants.VALUE).asBoolean());
-            } else if (ThreadResourceDefinition.THREADING_EXTENDED_READ_WRITE_ATTRIBUTES.contains(name)) {
-                // Bug
-                throw PlatformMBeanLogger.ROOT_LOGGER.badWriteAttributeImpl(name);
-            } else {
-                // Shouldn't happen; the global handler should reject
-                throw unknownAttribute(operation);
-            }
+        ExtendedThreadMBean mbean = new ExtendedThreadMBean();
+        if (PlatformMBeanConstants.THREAD_ALLOCATED_MEMORY_ENABLED.equals(name)) {
+            enabledValidator.validate(operation);
+            context.getServiceRegistry(true); //to trigger auth
+            mbean.setThreadAllocatedMemoryEnabled(operation.require(ModelDescriptionConstants.VALUE).asBoolean());
+        } else if (ThreadResourceDefinition.THREADING_EXTENDED_READ_WRITE_ATTRIBUTES.contains(name)) {
+            // Bug
+            throw PlatformMBeanLogger.ROOT_LOGGER.badWriteAttributeImpl(name);
+        } else {
+            // Shouldn't happen; the global handler should reject
+            throw unknownAttribute(operation);
         }
     }
 }

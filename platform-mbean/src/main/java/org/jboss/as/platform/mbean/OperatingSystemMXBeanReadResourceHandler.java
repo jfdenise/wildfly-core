@@ -60,17 +60,6 @@ public class OperatingSystemMXBeanReadResourceHandler implements OperationStepHa
             }
         }
 
-        for (String attribute : OperatingSystemResourceDefinition.OPERATING_SYSTEM_UNIX_METRICS) {
-            final ModelNode store = result.get(attribute);
-            try {
-                OperatingSystemMXBeanAttributeHandler.storeUnixResult(attribute, store);
-            } catch (SecurityException ignored) {
-                // just leave it undefined
-            } catch (UnsupportedOperationException ignored) {
-                // just leave it undefined
-            }
-        }
-
         final ModelNode store = result.get(PlatformMBeanConstants.OBJECT_NAME.getName());
         OperatingSystemMXBeanAttributeHandler.storeResult(PlatformMBeanConstants.OBJECT_NAME.getName(), store);
     }

@@ -140,10 +140,8 @@ class OperatingSystemResourceDefinition extends SimpleResourceDefinition {
             PROCESS_CPU_TIME.getName(),
             SYSTEM_CPU_LOAD.getName(),
             TOTAL_PHYSICAL_MEMORY_SIZE.getName(),
-            TOTAL_SWAP_SPACE_SIZE.getName()
-    );
-
-    public static final List<String> OPERATING_SYSTEM_UNIX_METRICS = Arrays.asList(
+            TOTAL_SWAP_SPACE_SIZE.getName(),
+            // Unix specific
             MAX_FILE_DESCRIPTOR_COUNT.getName(),
             OPEN_FILE_DESCRIPTOR_COUNT.getName()
     );

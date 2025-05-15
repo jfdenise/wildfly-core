@@ -20,7 +20,6 @@
 
     <dependencies>
         <module name="java.management"/>
-        <module name="jdk.management"/>
         <module name="org.jboss.as.controller"/>
         <module name="org.jboss.as.controller-client"/>
         <module name="org.wildfly.security.elytron-private"/>

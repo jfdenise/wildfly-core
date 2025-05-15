@@ -5,7 +5,6 @@
 
 package org.jboss.as.platform.mbean;
 
-import com.sun.management.GcInfo;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
@@ -19,6 +18,7 @@ import javax.management.ReflectionException;
 
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.descriptions.StandardResourceDescriptionResolver;
+import org.jboss.as.platform.mbean.ExtendedGarbageCollectorMBean.GcInfo;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -133,7 +133,7 @@ public class PlatformMBeanUtil {
     }
 
     /**
-     * Utility for converting {@linkcom.sun.management.GcInfo} to a detyped form.
+     * Utility for converting {@link org.jboss.as.platform.mbean.ExtendedGarbageCollectorMBean.GcInfo} to a detyped form.
      *
      * @param gcInfo the gc information data object
      * @return the detyped representation

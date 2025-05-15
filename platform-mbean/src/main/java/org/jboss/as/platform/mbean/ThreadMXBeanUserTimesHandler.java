@@ -5,8 +5,6 @@
 
 package org.jboss.as.platform.mbean;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.List;
 
 import org.jboss.as.controller.OperationContext;
@@ -22,7 +20,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
- * Executes the {@link com.sun.management.ThreadMXBean#getThreadCpuTime(long[])} method.
+ * Executes the {@link com.sun.management.ThreadMXBean#getThreadUserTime(long[])} method.
  *
  */
 public class ThreadMXBeanUserTimesHandler implements OperationStepHandler {
@@ -47,12 +45,11 @@ public class ThreadMXBeanUserTimesHandler implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
 
         idsValidator.validate(operation);
-        ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
-        if (mbean instanceof com.sun.management.ThreadMXBean) {
-            com.sun.management.ThreadMXBean extThread = (com.sun.management.ThreadMXBean) mbean;
+        ExtendedThreadMBean mbean = new ExtendedThreadMBean();
+        if (mbean.isOperationDefined(ExtendedThreadMBean.GET_THREAD_USER_TIME, new String[]{long[].class.getName()})) {
             try {
                 long[] ids = getIds(operation);
-                long[] times = extThread.getThreadUserTime(ids);
+                long[] times = mbean.getThreadUserTime(ids);
                 context.getResult().setEmptyList();
                 for (Long time : times) {
                     context.getResult().add(time);
