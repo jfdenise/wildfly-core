@@ -77,7 +77,6 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
 
     @Override
     public synchronized void start(final StartContext context) throws StartException {
-
         // If this is a reload, track start time independently of the overall process elapsed time
         ElapsedTime startupTime = everStopped ? elapsedTime.checkpoint() : elapsedTime;
 

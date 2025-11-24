@@ -75,7 +75,6 @@ final class BootstrapImpl implements Bootstrap {
                 ServerLogger.FD_LIMIT_LOGGER.fdTooLow(fdCount);
             }
         } catch (Throwable ignored) {}
-
         assert configuration != null : "configuration is null";
 
         // AS7-6381 set this property so we can get it out of the launch scripts
