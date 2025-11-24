@@ -24,6 +24,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * Service that loads and re-links a module once all the modules dependencies are available.
@@ -73,24 +74,28 @@ public class ModuleLoadService implements Service<Module> {
     public synchronized void start(StartContext context) throws StartException {
         try {
             final ServiceModuleLoader moduleLoader = serviceModuleLoader.getValue();
-            final Module module = moduleLoader.loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
-            moduleLoader.relinkModule(module);
-            for (ModuleDependency dependency : allDependencies) {
-                if (dependency.isUserSpecified()) {
-                    final String id = dependency.getDependencyModule();
-                    try {
-                        String val = moduleLoader.loadModule(id).getProperty("jboss.api");
-                        if (val != null) {
-                            if (val.equals("private")) {
-                                ServerLogger.PRIVATE_DEP_LOGGER.privateApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
-                            } else if (val.equals("unsupported")) {
-                                ServerLogger.UNSUPPORTED_DEP_LOGGER.unsupportedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
-                            } else if (val.equals("deprecated")) {
-                                ServerLogger.DEPRECATED_DEP_LOGGER.deprecatedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
+            Module module = (Module) WildFlyGraalSetup.getDeploymentModule();
+            if (module == null) {
+                module = moduleLoader.loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
+                moduleLoader.relinkModule(module);
+                WildFlyGraalSetup.setupDeploymentModule(module);
+                for (ModuleDependency dependency : allDependencies) {
+                    if (dependency.isUserSpecified()) {
+                        final String id = dependency.getDependencyModule();
+                        try {
+                            String val = moduleLoader.loadModule(id).getProperty("jboss.api");
+                            if (val != null) {
+                                if (val.equals("private")) {
+                                    ServerLogger.PRIVATE_DEP_LOGGER.privateApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
+                                } else if (val.equals("unsupported")) {
+                                    ServerLogger.UNSUPPORTED_DEP_LOGGER.unsupportedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
+                                } else if (val.equals("deprecated")) {
+                                    ServerLogger.DEPRECATED_DEP_LOGGER.deprecatedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
+                                }
                             }
+                        } catch (ModuleNotFoundException ignore) {
+                            //can happen with optional dependencies
                         }
-                    } catch (ModuleNotFoundException ignore) {
-                        //can happen with optional dependencies
                     }
                 }
             }

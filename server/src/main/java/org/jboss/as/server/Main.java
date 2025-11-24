@@ -31,6 +31,7 @@ import org.jboss.stdio.LoggingOutputStream;
 import org.jboss.stdio.NullInputStream;
 import org.jboss.stdio.SimpleStdioContextSelector;
 import org.jboss.stdio.StdioContext;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -53,14 +54,35 @@ public final class Main {
     private Main() {
     }
 
+    public static void preMain() throws Exception {
+        System.out.println("PRE MAIN");
+        // Start the server in suspend mode
+        String[] args = {"--start-mode=suspend"};
+        BootstrapImpl bootstrap = (BootstrapImpl)doMain(args);
+        Thread.sleep(7000);
+        try {
+            bootstrap.shutdownContainer();
+        } catch(Throwable ex) {
+            System.out.println("ERROR SHUTING DOWN " + ex);
+        }
+        Thread.sleep(5000);
+        System.out.println("LEAVING");
+    }
+
     /**
      * The main method.
      *
      * @param args the command-line arguments
      */
     public static void main(String[] args) {
+        doMain(args);
+    }
+
+    public static Bootstrap doMain(String[] args) {
+        Bootstrap bootstrap =null;
         try {
-            if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager")) {
+            if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager") &&
+                    !WildFlyGraalSetup.isBuildTime()) {
                 // Make sure our original stdio is properly captured.
                 try {
                     Class.forName(org.jboss.logmanager.handlers.ConsoleHandler.class.getName(), true, org.jboss.logmanager.handlers.ConsoleHandler.class.getClassLoader());
@@ -87,7 +109,7 @@ public final class Main {
                     SystemExiter.safeAbort();
                 }
             } else {
-                final Bootstrap bootstrap = Bootstrap.Factory.newInstance();
+                bootstrap = Bootstrap.Factory.newInstance();
                 final Bootstrap.Configuration configuration = new Bootstrap.Configuration(serverEnvironmentWrapper.getServerEnvironment());
                 configuration.setModuleLoader(Module.getBootModuleLoader());
                 bootstrap.bootstrap(configuration, Collections.emptyList()).get();
@@ -95,6 +117,7 @@ public final class Main {
         } catch (Throwable t) {
             abort(t);
         }
+        return bootstrap;
     }
 
     private static void abort(Throwable t) {

@@ -101,6 +101,11 @@
             <artifactId>jakarta-authorization</artifactId>
         </dependency>
 
+        <dependency>
+          <groupId>org.wildfly.graal</groupId>
+          <artifactId>wildfly-graal-runtime</artifactId>
+        </dependency>
+
         <!--Test dependencies -->
 
         <dependency>

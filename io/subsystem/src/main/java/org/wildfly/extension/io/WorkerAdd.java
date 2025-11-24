@@ -34,6 +34,7 @@ import org.jboss.dmr.Property;
 import org.jboss.msc.service.ServiceController;
 import org.wildfly.common.cpu.ProcessorInfo;
 import org.wildfly.extension.io.logging.IOLogger;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.io.OptionAttributeDefinition;
 import org.xnio.Option;
 import org.xnio.OptionMap;
@@ -48,12 +49,16 @@ class WorkerAdd extends AbstractAddStepHandler {
 
     private static int getMaxDescriptorCount() {
         try {
-            ObjectName oName = new ObjectName("java.lang:type=OperatingSystem");
-            MBeanServerConnection conn = ManagementFactory.getPlatformMBeanServer();
-            Object maxResult = conn.getAttribute(oName, "MaxFileDescriptorCount");
-            if (maxResult != null) {
-                IOLogger.ROOT_LOGGER.tracef("System has MaxFileDescriptorCount set to %d", maxResult);
-                return ((Long)maxResult).intValue();
+            if(!WildFlyGraalSetup.isJMXRegistrationSupported()) {
+                IOLogger.ROOT_LOGGER.info("We cannot get MaxFileDescriptorCount from system (NO ACCESS TO PLATFORM MBEAN), not applying any limits");
+            } else {
+                ObjectName oName = new ObjectName("java.lang:type=OperatingSystem");
+                MBeanServerConnection conn = ManagementFactory.getPlatformMBeanServer();
+                Object maxResult = conn.getAttribute(oName, "MaxFileDescriptorCount");
+                if (maxResult != null) {
+                    IOLogger.ROOT_LOGGER.tracef("System has MaxFileDescriptorCount set to %d", maxResult);
+                    return ((Long) maxResult).intValue();
+                }
             }
         } catch (Exception e) {
             //noting we can do, some OSs don't support this attribute

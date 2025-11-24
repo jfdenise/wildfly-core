@@ -49,6 +49,7 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.value.InjectedValue;
 import org.wildfly.extension.elytron.TrivialService.ValueSupplier;
 import org.wildfly.extension.elytron._private.ElytronSubsystemMessages;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.SimplePermissionMapper;
 import org.wildfly.security.permission.InvalidPermissionClassException;
@@ -402,24 +403,29 @@ class PermissionMapperDefinitions {
     }
 
     private static java.security.Permission createPermission(Permission permission) throws StartException {
-        Module currentModule = Module.getCallerModule();
-        if (permission.getModule() != null && currentModule != null) {
+        java.security.Permission perm = WildFlyGraalSetup.getPermission(permission.getModule(), permission.getClassName());
+        if (perm == null) {
+            Module currentModule = Module.getCallerModule();
+            if (permission.getModule() != null && currentModule != null) {
+                try {
+                    currentModule = currentModule.getModule(permission.getModule());
+                } catch (ModuleLoadException e) {
+                    // If we cannot load it, it can never be checked.
+                    throw ElytronSubsystemMessages.ROOT_LOGGER.invalidPermissionModule(permission.getModule(), e);
+                }
+            }
+
+            ClassLoader classLoader = currentModule != null ? currentModule.getClassLoader() : PermissionMapperDefinitions.class.getClassLoader();
             try {
-                currentModule = currentModule.getModule(permission.getModule());
-            } catch (ModuleLoadException e) {
-                // If we cannot load it, it can never be checked.
-                throw ElytronSubsystemMessages.ROOT_LOGGER.invalidPermissionModule(permission.getModule(), e);
+                perm = PermissionUtil.createPermission(classLoader, permission.getClassName(), permission.getTargetName(), permission.getAction());
+                WildFlyGraalSetup.addPermission(perm, permission.getModule(), permission.getClassName());
+            } catch (InvalidPermissionClassException e) {
+                throw ElytronSubsystemMessages.ROOT_LOGGER.invalidPermissionClass(permission.getClassName());
+            } catch (Throwable e) {
+                throw ElytronSubsystemMessages.ROOT_LOGGER.exceptionWhileCreatingPermission(permission.getClassName(), e);
             }
         }
-
-        ClassLoader classLoader = currentModule != null ? currentModule.getClassLoader() : PermissionMapperDefinitions.class.getClassLoader();
-        try {
-            return PermissionUtil.createPermission(classLoader, permission.getClassName(), permission.getTargetName(), permission.getAction());
-        } catch (InvalidPermissionClassException e) {
-            throw ElytronSubsystemMessages.ROOT_LOGGER.invalidPermissionClass(permission.getClassName());
-        } catch (Throwable e) {
-            throw ElytronSubsystemMessages.ROOT_LOGGER.exceptionWhileCreatingPermission(permission.getClassName(), e);
-        }
+        return perm;
     }
 
 

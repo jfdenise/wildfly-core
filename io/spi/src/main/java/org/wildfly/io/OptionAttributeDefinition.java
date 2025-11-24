@@ -15,6 +15,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.xnio.Option;
 import org.xnio.OptionMap;
 
@@ -111,14 +112,16 @@ public class OptionAttributeDefinition extends SimpleAttributeDefinition {
 
         private static Class<?> determineOptionType(Option<?> option) {
             try {
-                final Field typeField;
-                if (option.getClass().getSimpleName().equals("SequenceOption")) {
-                    typeField = option.getClass().getDeclaredField("elementType");
-                } else {
-                    typeField = option.getClass().getDeclaredField("type");
+                Field typeField = WildFlyGraalSetup.getIoOptionField(option.getClass().getName());
+                if (typeField == null) {
+                    if (option.getClass().getSimpleName().equals("SequenceOption")) {
+                        typeField = option.getClass().getDeclaredField("elementType");
+                    } else {
+                        typeField = option.getClass().getDeclaredField("type");
+                    }
+                    typeField.setAccessible(true);
+                    WildFlyGraalSetup.cacheIoOptionField(option.getClass().getName(), typeField);
                 }
-
-                typeField.setAccessible(true);
                 Class<?> optionType = (Class<?>) typeField.get(option);
                 return optionType;
             } catch (Exception e) {

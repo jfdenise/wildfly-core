@@ -118,7 +118,6 @@ public final class CredentialReference {
     private static final ObjectTypeAttributeDefinition credentialReferenceADWithCapabilityReference;
 
     private static final String CREDENTIAL_STORE_API_CAPABILITY = "org.wildfly.security.credential-store-api";
-    private static final SecureRandom RANDOM = new SecureRandom();
     private static final String CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
 
     static {
@@ -736,6 +735,7 @@ public final class CredentialReference {
 
     private static String generateAlias() {
         StringBuilder builder = new StringBuilder();
+        SecureRandom RANDOM = new SecureRandom();
         for (int i = 0; i < 10; i++) {
             int index = (int) (RANDOM.nextDouble() * CHARS.length());
             builder.append(CHARS.substring(index, index + 1));

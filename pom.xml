@@ -216,7 +216,7 @@
         <version.io.netty>4.1.128.Final</version.io.netty>
         <version.io.smallrye.jandex>3.5.1</version.io.smallrye.jandex>
         <version.io.smallrye.smallrye-common>2.14.0</version.io.smallrye.smallrye-common>
-        <version.io.undertow>2.3.20.Final</version.io.undertow>
+        <version.io.undertow>2.3.21.Final-SNAPSHOT</version.io.undertow>
         <version.jakarta.json.jakarta-json-api>2.1.3</version.jakarta.json.jakarta-json-api>
         <version.jakarta.interceptor.jakarta-interceptors-api>2.1.0</version.jakarta.interceptor.jakarta-interceptors-api>
         <version.jakarta.inject.jakarta.inject-api>2.0.1</version.jakarta.inject.jakarta.inject-api>
@@ -248,7 +248,7 @@
         <version.org.jboss.classfilewriter>1.3.1.Final</version.org.jboss.classfilewriter>
         <version.org.jboss.invocation>2.0.1.Final</version.org.jboss.invocation>
         <version.org.jboss.jboss-dmr>1.7.0.Final</version.org.jboss.jboss-dmr>
-        <version.org.jboss.jboss-vfs>3.3.2.Final</version.org.jboss.jboss-vfs>
+        <version.org.jboss.jboss-vfs>3.5.0-SNAPSHOT</version.org.jboss.jboss-vfs>
         <version.org.jboss.logging.commons-logging-jboss-logging>1.0.0.Final</version.org.jboss.logging.commons-logging-jboss-logging>
         <version.org.jboss.logging.jboss-logging>3.6.1.Final</version.org.jboss.logging.jboss-logging>
         <version.org.jboss.logging.jboss-logging-tools>3.0.4.Final</version.org.jboss.logging.jboss-logging-tools>
@@ -256,9 +256,9 @@
         <version.org.jboss.logmanager.jboss-logmanager>2.1.19.Final</version.org.jboss.logmanager.jboss-logmanager>
         <version.org.jboss.logmanager.log4j2-jboss-logmanager>2.0.1.Final</version.org.jboss.logmanager.log4j2-jboss-logmanager>
         <version.org.jboss.marshalling.jboss-marshalling>2.2.3.Final</version.org.jboss.marshalling.jboss-marshalling>
-        <version.org.jboss.modules.jboss-modules>2.1.6.Final</version.org.jboss.modules.jboss-modules>
-        <version.org.jboss.msc.jboss-msc>1.5.6.Final</version.org.jboss.msc.jboss-msc>
-        <version.org.jboss.remoting>5.0.31.Final</version.org.jboss.remoting>
+        <version.org.jboss.modules.jboss-modules>2.1.7.Final-SNAPSHOT</version.org.jboss.modules.jboss-modules>
+        <version.org.jboss.msc.jboss-msc>1.5.7.Final-SNAPSHOT</version.org.jboss.msc.jboss-msc>
+        <version.org.jboss.remoting>5.0.32.Final-SNAPSHOT</version.org.jboss.remoting>
         <version.org.jboss.remotingjmx.remoting-jmx>3.1.0.Final</version.org.jboss.remotingjmx.remoting-jmx>
         <version.org.jboss.shrinkwrap.shrinkwrap>1.2.6</version.org.jboss.shrinkwrap.shrinkwrap>
         <version.org.jboss.slf4j.slf4j-jboss-logmanager>2.0.2.Final</version.org.jboss.slf4j.slf4j-jboss-logmanager>
@@ -266,7 +266,7 @@
         <version.org.jboss.staxmapper>1.5.0.Final</version.org.jboss.staxmapper>
         <version.org.jboss.stdio>1.1.0.Final</version.org.jboss.stdio>
         <version.org.jboss.threads>3.9.2</version.org.jboss.threads>
-        <version.org.jboss.xnio>3.8.16.Final</version.org.jboss.xnio>
+        <version.org.jboss.xnio>3.8.18.Final-SNAPSHOT</version.org.jboss.xnio>
         <version.org.jboss.xnio.xnio-api>${version.org.jboss.xnio}</version.org.jboss.xnio.xnio-api>
         <version.org.jboss.xnio.xnio-nio>${version.org.jboss.xnio}</version.org.jboss.xnio.xnio-nio>
         <version.org.mock-server.mockserver-netty>5.8.1</version.org.mock-server.mockserver-netty>
@@ -278,6 +278,7 @@
         <version.org.wildfly.client.config>1.0.1.Final</version.org.wildfly.client.config>
         <version.org.wildfly.common>2.0.1</version.org.wildfly.common>
         <version.org.wildfly.discovery>1.3.0.Final</version.org.wildfly.discovery>
+        <version.org.wildfly.graal>1.0-SNAPSHOT</version.org.wildfly.graal>
         <version.org.wildfly.installation-manager.installation-manager-api>1.1.1.Final</version.org.wildfly.installation-manager.installation-manager-api>
         <version.org.wildfly.launcher>1.0.2.Final</version.org.wildfly.launcher>
         <version.org.wildfly.legacy.test>10.0.1.Final</version.org.wildfly.legacy.test>
@@ -287,7 +288,7 @@
         <version.org.wildfly.openssl.wildfly-openssl-linux-s390x>2.2.2.SP01</version.org.wildfly.openssl.wildfly-openssl-linux-s390x>
         <version.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${version.org.wildfly.openssl.natives}</version.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
         <version.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${version.org.wildfly.openssl.natives}</version.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
-        <version.org.wildfly.security.elytron>2.7.0.Final</version.org.wildfly.security.elytron>
+        <version.org.wildfly.security.elytron>2.8.0.CR1-SNAPSHOT</version.org.wildfly.security.elytron>
         <version.org.wildfly.security.elytron-web>4.1.2.Final</version.org.wildfly.security.elytron-web>
         <version.org.wildfly.security.jakarta.elytron-ee>3.2.0.Final</version.org.wildfly.security.jakarta.elytron-ee>
         <version.org.wildfly.unstable.api.annotation>1.0.2.Final</version.org.wildfly.unstable.api.annotation>
@@ -751,6 +752,11 @@
 
     <dependencyManagement>
         <dependencies>
+          <dependency>
+            <groupId>org.wildfly.graal</groupId>
+            <artifactId>wildfly-graal-runtime</artifactId>
+            <version>${version.org.wildfly.graal}</version>
+          </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>
                 <artifactId>commons-cli</artifactId>
