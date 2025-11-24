@@ -51,6 +51,7 @@ import org.jboss.msc.service.ServiceTarget;
 import org.junit.Test;
 import org.wildfly.extension.io.WorkerService;
 import org.wildfly.io.IOServiceDescriptor;
+import org.wildfly.io.XnioWorkerSupplier;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 
@@ -228,7 +229,7 @@ public class RemotingLegacySubsystemTestCase extends AbstractRemotingSubsystemBa
                 AbsolutePathService.addService(ServerEnvironment.CONTROLLER_TEMP_DIR, new File("target/temp" + System.currentTimeMillis()).getAbsolutePath(), target);
                 if (!legacyParser) {
                     ServiceBuilder<?> builder = target.addService(ServiceName.parse(IOServiceDescriptor.WORKER.getName()).append("default"));
-                    Consumer<XnioWorker> workerConsumer = builder.provides(ServiceName.parse(IOServiceDescriptor.WORKER.getName()).append("default"), ServiceName.parse(IOServiceDescriptor.DEFAULT_WORKER.getName()));
+                    Consumer<XnioWorkerSupplier> workerConsumer = builder.provides(ServiceName.parse(IOServiceDescriptor.WORKER.getName()).append("default"), ServiceName.parse(IOServiceDescriptor.DEFAULT_WORKER.getName()));
                     builder.setInstance(new WorkerService(workerConsumer, () -> Executors.newFixedThreadPool(1), Xnio.getInstance().createWorkerBuilder().setWorkerIoThreads(2)));
                     builder.install();
                 }

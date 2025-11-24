@@ -7,7 +7,7 @@ package org.wildfly.extension.io;
 
 import org.jboss.msc.service.ServiceName;
 import org.wildfly.io.IOServiceDescriptor;
-import org.xnio.XnioWorker;
+import org.wildfly.io.XnioWorkerSupplier;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
@@ -18,7 +18,7 @@ public final class IOServices {
 
     public static final ServiceName IO = ServiceName.JBOSS.append("io");
 
-    public static final ServiceName WORKER = WorkerResourceDefinition.CAPABILITY.getCapabilityServiceName(XnioWorker.class);
+    public static final ServiceName WORKER = WorkerResourceDefinition.CAPABILITY.getCapabilityServiceName(XnioWorkerSupplier.class);
 
     public static final ServiceName BUFFER_POOL = BufferPoolResourceDefinition.IO_POOL_RUNTIME_CAPABILITY.getCapabilityServiceName(org.xnio.Pool.class);
 

@@ -111,5 +111,13 @@ public class ContentCleanerService implements Service {
         this.deploymentContentCleaner = null;
         contentCleaner.stopScan();
     }
+    @Override
+    public void passivate() {
+        deploymentContentCleaner.stopScan();
+    }
 
+    @Override
+    public void activate() throws StartException {
+        deploymentContentCleaner.startScan();
+    }
 }

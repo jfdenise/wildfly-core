@@ -20,6 +20,7 @@ import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.remoting3.Endpoint;
 import org.wildfly.io.IOServiceDescriptor;
+import org.wildfly.io.XnioWorkerSupplier;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
@@ -56,8 +57,9 @@ class RemotingSubsystemAdd extends AbstractAddStepHandler {
             OptionMap map = EndpointConfigFactory.populate(context, model);
             String nodeName = WildFlySecurityManager.getPropertyPrivileged(RemotingExtension.NODE_NAME_PROPERTY, null);
 
-            Supplier<XnioWorker> workerSupplier = builder.requires(IOServiceDescriptor.WORKER, workerName);
-            builder.setInstance(new EndpointService(endpointConsumer, workerSupplier, nodeName, EndpointService.EndpointType.SUBSYSTEM, map)).install();
+            Supplier<XnioWorkerSupplier> workerSupplier = builder.requires(IOServiceDescriptor.WORKER, workerName);
+            Supplier<XnioWorker> actualSupplier = ()->{return workerSupplier.get().get();};
+            builder.setInstance(new EndpointService(endpointConsumer, actualSupplier, nodeName, EndpointService.EndpointType.SUBSYSTEM, map)).install();
         }
     }
 }

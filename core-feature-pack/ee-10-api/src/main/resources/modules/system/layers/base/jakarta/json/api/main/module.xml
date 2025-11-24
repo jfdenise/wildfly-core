@@ -21,7 +21,9 @@
             It must also be exported so that modules that depend on the API, e.g. deployments, will be able to see the
             implementation.
         -->
-        <module name="org.eclipse.parsson" export="true"/>
+        <!-- The services must be exported to discover the jakarta.json.spi.JsonProvider, otherwise fallback that implies classloading
+             that is not OK with Graal VM at runtime -->
+        <module name="org.eclipse.parsson" export="true" services="export"/>
         <module name="java.logging"/>
     </dependencies>
 </module>

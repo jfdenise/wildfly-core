@@ -51,6 +51,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.ListenerRegistry;
 import io.undertow.server.handlers.ChannelUpgradeHandler;
 import io.undertow.server.handlers.resource.ResourceManager;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
@@ -278,7 +279,8 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
         this.connectionHighWater = connectionHighWater;
         this.connectionLowWater = connectionLowWater;
     }
-
+    private StartContext context;
+    private ChannelUpgradeHandler upgradeHandler;
     /**
      * Starts the service.
      *
@@ -286,7 +288,23 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
      * @throws StartException If any errors occur
      */
     @Override
-    public synchronized void start(final StartContext context) throws StartException {
+    public synchronized void start(StartContext context) throws StartException {
+        if (WildFlyGraalSetup.isBuildTime()) {
+            this.context = context;
+            ServerLogger.ROOT_LOGGER.info("WildFly Graal, do not start UndertowHttpManagementService but still install upgrade service");
+            upgradeHandler = new ChannelUpgradeHandler();
+            final ServiceBuilder<?> builder = context.getChildTarget().addService(HTTP_UPGRADE_SERVICE_NAME);
+            final Consumer<Object> upgradeHandlerConsumer = builder.provides(HTTP_UPGRADE_SERVICE_NAME, HTTPS_UPGRADE_SERVICE_NAME);
+            // TODO: An "alias" shouldn't actually be needed since we already do a
+            // builder.provides(...) with this same ServiceName. However, without this explicit aliasing
+            // the call to (service)registry.getService(...) returns null if it's queried by the "provided"
+            // ServiceName. It works fine if it's instead queried by the "alias".
+            // See WFCORE-4560 for more details.
+            builder.addAliases(HTTPS_UPGRADE_SERVICE_NAME);
+            builder.setInstance(org.jboss.msc.Service.newInstance(upgradeHandlerConsumer, upgradeHandler));
+            builder.install();
+            return;
+        }
         final ModelController modelController = modelControllerSupplier.get();
         final ConsoleAvailability consoleAvailability = consoleAvailabilitySupplier.get();
         socketBindingManager = socketBindingManagerSupplier != null ? socketBindingManagerSupplier.get() : null;
@@ -338,18 +356,19 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
             https.setContextInformation("socket-binding", secureBinding);
             listeners.add(https);
         }
-
-        final ChannelUpgradeHandler upgradeHandler = new ChannelUpgradeHandler();
-        final ServiceBuilder<?> builder = context.getChildTarget().addService(HTTP_UPGRADE_SERVICE_NAME);
-        final Consumer<Object> upgradeHandlerConsumer = builder.provides(HTTP_UPGRADE_SERVICE_NAME, HTTPS_UPGRADE_SERVICE_NAME);
-        // TODO: An "alias" shouldn't actually be needed since we already do a
-        // builder.provides(...) with this same ServiceName. However, without this explicit aliasing
-        // the call to (service)registry.getService(...) returns null if it's queried by the "provided"
-        // ServiceName. It works fine if it's instead queried by the "alias".
-        // See WFCORE-4560 for more details.
-        builder.addAliases(HTTPS_UPGRADE_SERVICE_NAME);
-        builder.setInstance(org.jboss.msc.Service.newInstance(upgradeHandlerConsumer, upgradeHandler));
-        builder.install();
+        if (!WildFlyGraalSetup.isRuntime()) {
+            upgradeHandler = new ChannelUpgradeHandler();
+            final ServiceBuilder<?> builder = context.getChildTarget().addService(HTTP_UPGRADE_SERVICE_NAME);
+            final Consumer<Object> upgradeHandlerConsumer = builder.provides(HTTP_UPGRADE_SERVICE_NAME, HTTPS_UPGRADE_SERVICE_NAME);
+            // TODO: An "alias" shouldn't actually be needed since we already do a
+            // builder.provides(...) with this same ServiceName. However, without this explicit aliasing
+            // the call to (service)registry.getService(...) returns null if it's queried by the "provided"
+            // ServiceName. It works fine if it's instead queried by the "alias".
+            // See WFCORE-4560 for more details.
+            builder.addAliases(HTTPS_UPGRADE_SERVICE_NAME);
+            builder.setInstance(org.jboss.msc.Service.newInstance(upgradeHandlerConsumer, upgradeHandler));
+            builder.install();
+        }
         for (ListenerRegistry.Listener listener : listeners) {
             listener.addHttpUpgradeMetadata(new ListenerRegistry.HttpUpgradeMetadata(JBOSS_REMOTING, MANAGEMENT_ENDPOINT));
         }
@@ -478,6 +497,11 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
                 }
             }
         }
+    }
+
+    @Override
+    public void activate() throws StartException {
+        start(context);
     }
 
     @Override

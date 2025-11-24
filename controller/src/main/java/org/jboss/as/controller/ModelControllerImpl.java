@@ -82,6 +82,7 @@ import org.jboss.as.version.Stability;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceRegistry;
 import org.jboss.msc.service.ServiceTarget;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
@@ -121,7 +122,7 @@ class ModelControllerImpl implements ModelController {
     private final Supplier<SecurityIdentity> securityIdentitySupplier;
 
     private final ConcurrentMap<Integer, OperationContextImpl> activeOperations = new ConcurrentHashMap<>();
-    private final Random random = new Random();
+    private Random random;
     private final ManagedAuditLogger auditLogger;
     private final BootErrorCollector bootErrorCollector;
 
@@ -194,7 +195,18 @@ class ModelControllerImpl implements ModelController {
         if (processType.isServer()) {
             this.modelControllerResourceAddress = MODEL_CONTROLLER_ADDRESS;
         }
+        if (!WildFlyGraalSetup.isBuildTime()) {
+            random = new Random();
+        }
         auditLogger.startBoot();
+    }
+
+    private Random getRandom() {
+        Random ret = random;
+        if (ret == null) {
+            ret = new Random();
+        }
+        return ret;
     }
 
     private ModelControllerClientFactoryImpl getClientFactory() {
@@ -410,7 +422,7 @@ class ModelControllerImpl implements ModelController {
         for (;;) {
             responseStreams = null;
             // Create a random operation-id
-            final Integer operationID = random.nextInt();
+            final Integer operationID = getRandom().nextInt();
             final OperationContextImpl context = new OperationContextImpl(operationID, operation.get(OP).asString(),
                     operation.get(OP_ADDR), this, processType, this.stability, runningModeControl.getRunningMode(),
                     headers, handler, attachments, managementModel.get(), originalResultTxControl, processState, auditLogger,
@@ -486,7 +498,7 @@ class ModelControllerImpl implements ModelController {
                  final boolean rollbackOnRuntimeFailure, MutableRootResourceRegistrationProvider parallelBootRootResourceRegistrationProvider,
                  final boolean skipModelValidation, final boolean partialModel, final ConfigurationExtension configExtension) {
 
-        final Integer operationID = random.nextInt();
+        final Integer operationID = getRandom().nextInt();
 
         OperationHeaders headers = OperationHeaders.forBoot(rollbackOnRuntimeFailure);
 

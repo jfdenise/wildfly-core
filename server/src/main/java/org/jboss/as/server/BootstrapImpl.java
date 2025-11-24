@@ -17,6 +17,7 @@ import javax.management.ObjectName;
 import org.jboss.as.controller.ControlledProcessState;
 import org.jboss.as.controller.ControlledProcessStateService;
 import org.jboss.as.controller.ProcessStateNotifier;
+import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
 import org.jboss.as.server.jmx.RunningStateJmx;
 import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.as.server.suspend.ServerSuspendController;
@@ -26,7 +27,6 @@ import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.msc.service.LifecycleEvent;
 import org.jboss.msc.service.LifecycleListener;
-import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceActivator;
 import org.jboss.msc.service.ServiceContainer;
 import org.jboss.msc.service.ServiceController;
@@ -34,6 +34,7 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.threads.AsyncFuture;
 import org.jboss.threads.AsyncFutureTask;
 import org.jboss.threads.JBossExecutors;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -49,6 +50,7 @@ final class BootstrapImpl implements Bootstrap {
     private static final int MAX_THREADS = ServerEnvironment.getBootstrapMaxThreads();
     private final ShutdownHook shutdownHook;
     private final ServiceContainer container;
+    private ApplicationServerService applicationServerService;
 
     public BootstrapImpl() {
         this.shutdownHook = new ShutdownHook();
@@ -69,10 +71,14 @@ final class BootstrapImpl implements Bootstrap {
 
     private AsyncFuture<ServiceContainer> internalBootstrap(final Configuration configuration, final List<ServiceActivator> extraServices) {
         try {
-            final Object value = ManagementFactory.getPlatformMBeanServer().getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "MaxFileDescriptorCount");
-            final long fdCount = Long.parseLong(value.toString());
-            if (fdCount < 4096L) {
-                ServerLogger.FD_LIMIT_LOGGER.fdTooLow(fdCount);
+            if(!WildFlyGraalSetup.isJMXRegistrationSupported()) {
+                ServerLogger.ROOT_LOGGER.info("Not checking for fdCount at build time.");
+            } else {
+                final Object value = ManagementFactory.getPlatformMBeanServer().getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "MaxFileDescriptorCount");
+                final long fdCount = Long.parseLong(value.toString());
+                if (fdCount < 4096L) {
+                    ServerLogger.FD_LIMIT_LOGGER.fdTooLow(fdCount);
+                }
             }
         } catch (Throwable ignored) {}
 
@@ -101,13 +107,17 @@ final class BootstrapImpl implements Bootstrap {
         ProcessStateNotifier processStateNotifier = ControlledProcessStateService.addService(tracker, processState);
         ServerSuspendController suspendController = new SuspendController();
         this.shutdownHook.setSuspendController(suspendController);
-        //Instantiating the suspendcontroller here to be able to get a reference to it in RunningStateJmx
-        //Note that the SuspendController service will be started in the ServerService during the boot of the server.
-        RunningStateJmx.registerMBean(
-                processStateNotifier, suspendController,
-                configuration.getRunningModeControl(),
-                configuration.getServerEnvironment().getLaunchType() != ServerEnvironment.LaunchType.APPCLIENT);
-        final Service<?> applicationServerService = new ApplicationServerService(extraServices, configuration, processState,
+        if (!WildFlyGraalSetup.isBuildTime()) {
+            //Instantiating the suspendcontroller here to be able to get a reference to it in RunningStateJmx
+            //Note that the SuspendController service will be started in the ServerService during the boot of the server.
+            RunningStateJmx.registerMBean(
+                    processStateNotifier, suspendController,
+                    configuration.getRunningModeControl(),
+                    configuration.getServerEnvironment().getLaunchType() != ServerEnvironment.LaunchType.APPCLIENT);
+        } else {
+            ServerLogger.ROOT_LOGGER.info("MBean not registered at build time.");
+        }
+        applicationServerService = new ApplicationServerService(extraServices, configuration, processState,
                 suspendController, configuration.getServerEnvironment().getElapsedTime());
         tracker.addService(Services.JBOSS_AS, applicationServerService)
             .install();
@@ -175,6 +185,10 @@ final class BootstrapImpl implements Bootstrap {
     @Override
     public void failed() {
         shutdownHook.shutdown(true);
+    }
+
+    void passivateServices() {
+        container.passivateServices();
     }
 
     static class FutureServiceContainer extends AsyncFutureTask<ServiceContainer> {
@@ -246,6 +260,10 @@ final class BootstrapImpl implements Bootstrap {
         }
 
         private void shutdown(boolean failed) {
+            if(WildFlyGraalSetup.isBuildTime()) {
+                ServerLogger.ROOT_LOGGER.info("Do not shutdown the server at build time.");
+                return;
+            }
             final ServiceContainer sc;
             final ControlledProcessState ps;
             synchronized (this) {
@@ -253,6 +271,7 @@ final class BootstrapImpl implements Bootstrap {
                 sc = container;
                 ps = processState;
             }
+
             try {
                 if (ps != null) {
                     if (!failed && ps.getState() == ControlledProcessState.State.RUNNING) {
@@ -319,5 +338,9 @@ final class BootstrapImpl implements Bootstrap {
             }
             return 0L;
         }
+    }
+    public void finishBoot(long startTime) throws ConfigurationPersistenceException {
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+        applicationServerService.finishBoot(startTime);
     }
 }

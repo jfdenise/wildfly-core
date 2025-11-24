@@ -84,6 +84,11 @@ public class LoopbackAddressInterfaceCriteria extends AbstractInterfaceCriteria 
         return null;
     }
 
+    @Override
+    public void passivate() {
+        resolved = null;
+    }
+
     public String toString() {
         StringBuilder sb = new StringBuilder("LoopbackAddressInterfaceCriteria(");
         sb.append("address=");

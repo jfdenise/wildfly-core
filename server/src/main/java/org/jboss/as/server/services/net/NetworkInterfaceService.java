@@ -31,6 +31,7 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -58,8 +59,8 @@ public class NetworkInterfaceService implements Service<NetworkInterfaceBinding>
 
     private final String name;
     private final boolean anyLocal;
-    private final OverallInterfaceCriteria criteria;
-
+    private OverallInterfaceCriteria criteria;
+    private final Set<InterfaceCriteria> parsedCriteria;
     public static Service<NetworkInterfaceBinding> create(String name, ParsedInterfaceCriteria criteria) {
         return new NetworkInterfaceService(name, criteria.isAnyLocal(), criteria.getCriteria());
     }
@@ -68,6 +69,7 @@ public class NetworkInterfaceService implements Service<NetworkInterfaceBinding>
         this.name = name;
         this.anyLocal = anyLocal;
         this.criteria = new OverallInterfaceCriteria(name, criteria);
+        parsedCriteria = criteria;
     }
 
     public synchronized void start(StartContext arg0) throws StartException {
@@ -82,7 +84,25 @@ public class NetworkInterfaceService implements Service<NetworkInterfaceBinding>
         }
         log.debugf("NetworkInterfaceService matched interface binding: %s\n", interfaceBinding);
     }
+    public void passivate() {
+        this.criteria = null;
+        this.interfaceBinding = null;
+        for(InterfaceCriteria c  : parsedCriteria) {
+            c.passivate();
+        }
+    }
 
+    @Override
+    public void activate() throws StartException {
+        if(this.criteria != null) {
+            return;
+        }
+        for(InterfaceCriteria c  : parsedCriteria) {
+            c.activate();
+        }
+        this.criteria = new OverallInterfaceCriteria(name, parsedCriteria);
+        start(null);
+    }
     public static NetworkInterfaceBinding createBinding(ParsedInterfaceCriteria criteria) throws SocketException,
             UnknownHostException {
         return createBinding(criteria.isAnyLocal(), new OverallInterfaceCriteria(null, criteria.getCriteria()));
@@ -101,9 +121,19 @@ public class NetworkInterfaceService implements Service<NetworkInterfaceBinding>
     }
 
     public synchronized NetworkInterfaceBinding getValue() throws IllegalStateException {
-        final NetworkInterfaceBinding binding = this.interfaceBinding;
+        NetworkInterfaceBinding binding = this.interfaceBinding;
         if (binding == null) {
-            throw new IllegalStateException();
+            if(WildFlyGraalSetup.isRuntime()) {
+                try {
+                    activate();
+                } catch (StartException ex) {
+                    throw new IllegalStateException();
+                }
+                binding = this.interfaceBinding;
+            }
+            if (binding == null) {
+                throw new IllegalStateException();
+            }
         }
         return binding;
     }

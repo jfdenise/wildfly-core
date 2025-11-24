@@ -40,15 +40,6 @@ import org.jboss.msc.service.ServiceController.Mode;
 public class BindingAddHandler extends SocketBindingAddHandler {
 
     public static final BindingAddHandler INSTANCE = new BindingAddHandler();
-    private static final InetAddress ANY_IPV6;
-
-    static {
-        try {
-            ANY_IPV6 = InetAddress.getByAddress(new byte[16]);
-        } catch (UnknownHostException e) {
-            throw new IllegalStateException("Not possible");
-        }
-    }
 
     private BindingAddHandler() {
     }
@@ -111,8 +102,12 @@ public class BindingAddHandler extends SocketBindingAddHandler {
                 sourceAddress = parsedResult.address;
                 mask = parsedResult.mask;
             } else {
-                // Client mappings are always communicated in IPv6
-                sourceAddress = ANY_IPV6;
+                try {
+                    // Client mappings are always communicated in IPv6
+                    sourceAddress = InetAddress.getByAddress(new byte[16]);
+                } catch (UnknownHostException ex) {
+                    throw new OperationFailedException(ex);
+                }
                 mask = 0;
             }
 

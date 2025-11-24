@@ -51,5 +51,9 @@
             <groupId>io.undertow</groupId>
             <artifactId>undertow-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>org.wildfly.graal</groupId>
+          <artifactId>wildfly-graal-runtime</artifactId>
+        </dependency>
     </dependencies>
 </project>

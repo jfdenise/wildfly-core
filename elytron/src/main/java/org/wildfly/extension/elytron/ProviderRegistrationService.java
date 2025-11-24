@@ -90,6 +90,15 @@ class ProviderRegistrationService implements Service<Void> {
         });
     }
 
+    /**
+     * During the start, the security provider services classes and constructors have been cached.
+     * The Security providers are empty at startup (java.secuerity.Security class initialized at runtime, so build time init is lost).
+     * We need to add the security providers ar runtime.
+     */
+    @Override
+    public void activate() throws StartException {
+        start(null);
+    }
     Injector<Provider[]> getInitialProivders() {
         return initialProviders;
     }

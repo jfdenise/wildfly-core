@@ -24,6 +24,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * Service that loads and re-links a module once all the modules dependencies are available.
@@ -75,6 +76,7 @@ public class ModuleLoadService implements Service<Module> {
             final ServiceModuleLoader moduleLoader = serviceModuleLoader.getValue();
             final Module module = moduleLoader.loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
             moduleLoader.relinkModule(module);
+            WildFlyGraalSetup.setupDeploymentModule(module);
             for (ModuleDependency dependency : allDependencies) {
                 if (dependency.isUserSpecified()) {
                     final String id = dependency.getDependencyModule();

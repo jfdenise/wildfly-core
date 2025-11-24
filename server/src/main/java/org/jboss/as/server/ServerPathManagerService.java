@@ -36,7 +36,10 @@ public class ServerPathManagerService extends PathManagerService {
         // Add system paths - registering the actual capabilities
         service.addHardcodedAbsolutePath(serviceTarget, "user.dir", System.getProperty("user.dir"));
         service.addHardcodedAbsolutePath(serviceTarget, "user.home", System.getProperty("user.home"));
-        service.addHardcodedAbsolutePath(serviceTarget, "java.home", System.getProperty("java.home"));
+        // Can be null in a Graal VM context
+        if (System.getProperty("java.home") != null) {
+            service.addHardcodedAbsolutePath(serviceTarget, "java.home", System.getProperty("java.home"));
+        }
 
         // In the domain mode add a few more paths - registering the actual capabilities
         if(serverEnvironment.getLaunchType() == ServerEnvironment.LaunchType.DOMAIN) {

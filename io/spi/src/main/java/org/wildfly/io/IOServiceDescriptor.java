@@ -7,7 +7,6 @@ package org.wildfly.io;
 
 import org.wildfly.service.descriptor.NullaryServiceDescriptor;
 import org.wildfly.service.descriptor.UnaryServiceDescriptor;
-import org.xnio.XnioWorker;
 
 /**
  * Describes capabilities exposed by IO subsystem.
@@ -17,9 +16,9 @@ public interface IOServiceDescriptor {
     NullaryServiceDescriptor<Integer> MAX_THREADS = NullaryServiceDescriptor.of("org.wildfly.io.max-threads", Integer.class);
 
     /** Describes the default worker */
-    NullaryServiceDescriptor<XnioWorker> DEFAULT_WORKER = NullaryServiceDescriptor.of("org.wildfly.io.default-worker", XnioWorker.class);
+    NullaryServiceDescriptor<XnioWorkerSupplier> DEFAULT_WORKER = NullaryServiceDescriptor.of("org.wildfly.io.default-worker", XnioWorkerSupplier.class);
     /** Describes a named worker */
-    UnaryServiceDescriptor<XnioWorker> NAMED_WORKER = UnaryServiceDescriptor.of("org.wildfly.io.worker", XnioWorker.class);
+    UnaryServiceDescriptor<XnioWorkerSupplier> NAMED_WORKER = UnaryServiceDescriptor.of("org.wildfly.io.worker", XnioWorkerSupplier.class);
     /** Resolves to a named or default worker **/
-    UnaryServiceDescriptor<XnioWorker> WORKER = UnaryServiceDescriptor.of(NAMED_WORKER.getName(), DEFAULT_WORKER);
+    UnaryServiceDescriptor<XnioWorkerSupplier> WORKER = UnaryServiceDescriptor.of(NAMED_WORKER.getName(), DEFAULT_WORKER);
 }

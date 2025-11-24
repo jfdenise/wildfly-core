@@ -30,6 +30,8 @@ import org.jboss.vfs.TempFileProvider;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.VirtualFile;
+import org.jboss.vfs.spi.JavaZipFileSystemGraal;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * Provides VFS mounts of deployment content.
@@ -76,7 +78,7 @@ public interface DeploymentMountProvider {
             private final Supplier<ExecutorService> executorSupplier;
             private volatile TempFileProvider tempFileProvider;
             private volatile ScheduledExecutorService scheduledExecutorService;
-
+            private JBossThreadFactory threadFactory;
             private ServerDeploymentRepositoryImpl(final Consumer<DeploymentMountProvider> deploymentMountProviderConsumer, final Supplier<ExecutorService> executorSupplier) {
                 this.deploymentMountProviderConsumer = deploymentMountProviderConsumer;
                 this.executorSupplier = executorSupplier;
@@ -101,7 +103,7 @@ public interface DeploymentMountProvider {
             @Override
             public void start(StartContext context) throws StartException {
                 try {
-                    final JBossThreadFactory threadFactory = doPrivileged(new PrivilegedAction<JBossThreadFactory>() {
+                    threadFactory = doPrivileged(new PrivilegedAction<JBossThreadFactory>() {
                         public JBossThreadFactory run() {
                             return new JBossThreadFactory(ThreadGroupHolder.THREAD_GROUP, true, null, "%G - %t", null, null);
                         }
@@ -117,6 +119,10 @@ public interface DeploymentMountProvider {
 
             @Override
             public void stop(final StopContext context) {
+                if(WildFlyGraalSetup.isRuntime()) {
+                    ServerLogger.ROOT_LOGGER.info("VFS Mounted files are not stopped");
+                    return;
+                }
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
@@ -148,7 +154,25 @@ public interface DeploymentMountProvider {
                     context.asynchronous();
                 }
             }
+            @Override
+            public void passivate() {
+                scheduledExecutorService.shutdownNow();
+                try {
+                    scheduledExecutorService = null;
+                    JavaZipFileSystemGraal.passivateFiles(tempFileProvider);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
 
+            @Override
+            public void activate() throws StartException {
+                try {
+                    JavaZipFileSystemGraal.activateFiles(tempFileProvider);
+                } catch (IOException ex) {
+                    throw new StartException(ex);
+                }
+            }
         }
 
         // Wrapper class to delay thread group creation until when it's needed.

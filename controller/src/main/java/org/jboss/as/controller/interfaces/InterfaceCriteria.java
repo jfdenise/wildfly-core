@@ -42,4 +42,18 @@ public interface InterfaceCriteria extends Serializable, Comparable<InterfaceCri
      * @throws SocketException
      */
     Map<NetworkInterface, Set<InetAddress>> getAcceptableAddresses(final Map<NetworkInterface, Set<InetAddress>> candidates) throws SocketException;
+
+    /**
+     * In a Graal VM context, used to clean up content not compatible with image Heap.
+     */
+    default void passivate() {
+
+    }
+
+    /**
+     * In a Graal VM context, used to create content at runtime not compatible with image Heap.
+     */
+    default void activate() {
+
+    }
 }

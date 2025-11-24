@@ -26,6 +26,7 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * {@link ModuleLoader} that loads module definitions from msc services. Module specs are looked up in msc services that
@@ -110,10 +111,11 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
 
     public static final String MODULE_PREFIX = "deployment.";
 
-    private final ModuleLoader mainModuleLoader;
+    private ModuleLoader mainModuleLoader;
 
     private volatile ServiceContainer serviceContainer;
-
+    private ModuleSpecLoadListener listener;
+    private ServiceController<ModuleDefinition> controller;
     public ServiceModuleLoader(ModuleLoader mainModuleLoader) {
         this.mainModuleLoader = mainModuleLoader;
     }
@@ -130,13 +132,13 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
     @SuppressWarnings("unchecked")
     @Override
     protected ModuleSpec findModule(String identifier) throws ModuleLoadException {
-        ServiceController<ModuleDefinition> controller = (ServiceController<ModuleDefinition>) serviceContainer.getService(moduleSpecServiceName(identifier));
+        controller = (ServiceController<ModuleDefinition>) serviceContainer.getService(moduleSpecServiceName(identifier));
         if (controller == null) {
             ServerLogger.MODULE_SERVICE_LOGGER.debugf("Could not load module '%s' as corresponding module spec service '%s' was not found", identifier, identifier);
             return null;
         }
         UninterruptibleCountDownLatch latch = new UninterruptibleCountDownLatch(1);
-        ModuleSpecLoadListener listener = new ModuleSpecLoadListener(latch);
+        listener = new ModuleSpecLoadListener(latch);
         try {
             synchronized (controller) {
                 final State state = controller.getState();
@@ -165,9 +167,21 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
     }
 
     @Override
+    public void passivate() {
+        if (controller != null) {
+            controller.removeListener(listener);
+        }
+        controller = null;
+        listener = null;
+        serviceContainer = null;
+        mainModuleLoader = null;
+    }
+    @Override
     public void stop(StopContext context) {
-        if (serviceContainer == null) {
-            throw ServerLogger.ROOT_LOGGER.serviceModuleLoaderAlreadyStopped();
+        if (!WildFlyGraalSetup.isRuntime()) {
+            if (serviceContainer == null) {
+                throw ServerLogger.ROOT_LOGGER.serviceModuleLoaderAlreadyStopped();
+            }
         }
         serviceContainer = null;
     }

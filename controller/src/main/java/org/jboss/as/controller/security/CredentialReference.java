@@ -44,6 +44,7 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceRegistry;
 import org.wildfly.common.function.ExceptionFunction;
 import org.wildfly.common.function.ExceptionSupplier;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -118,10 +119,17 @@ public final class CredentialReference {
     private static final ObjectTypeAttributeDefinition credentialReferenceADWithCapabilityReference;
 
     private static final String CREDENTIAL_STORE_API_CAPABILITY = "org.wildfly.security.credential-store-api";
-    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final SecureRandom RANDOM;
     private static final String CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
 
     static {
+
+        if (WildFlyGraalSetup.isBuildTime()) {
+            RANDOM = null;
+        } else {
+            RANDOM = new SecureRandom();
+        }
+
         // both clear-text and store allowed
         credentialStoreAttribute = new SimpleAttributeDefinitionBuilder(STORE, ModelType.STRING, true)
                 .setXmlName(STORE)
@@ -736,8 +744,9 @@ public final class CredentialReference {
 
     private static String generateAlias() {
         StringBuilder builder = new StringBuilder();
+        SecureRandom random = RANDOM == null ? new SecureRandom() : RANDOM;
         for (int i = 0; i < 10; i++) {
-            int index = (int) (RANDOM.nextDouble() * CHARS.length());
+            int index = (int) (random.nextDouble() * CHARS.length());
             builder.append(CHARS.substring(index, index + 1));
         }
         return builder.toString();

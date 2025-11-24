@@ -41,6 +41,7 @@ import org.xnio.StreamConnection;
 
 import io.undertow.server.ListenerRegistry;
 import io.undertow.server.handlers.ChannelUpgradeHandler;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * Service that registers a HTTP upgrade handler to enable remoting to be used via http upgrade.
@@ -120,9 +121,18 @@ public class RemotingHttpUpgradeService implements Service {
         sb.install();
     }
 
-
+    private StartContext context;
+    @Override
+    public void activate() throws StartException {
+        start(context);
+    }
     @Override
     public synchronized void start(final StartContext context) throws StartException {
+        if (WildFlyGraalSetup.isBuildTime()) {
+            this.context = context;
+            RemotingLogger.ROOT_LOGGER.info("[WildFly Graal], the RemotingHttpUpgradeService start is delayed to runtime");
+            return;
+        }
         final Endpoint endpoint = endpointSupplier.get();
         OptionMap.Builder builder = OptionMap.builder();
 
