@@ -45,7 +45,11 @@ public final class Main {
     // Capture System.out and System.err before they are redirected by STDIO
     private static final PrintStream STDOUT = System.out;
     private static final PrintStream STDERR = System.err;
-
+    //private static final ServerLogger LOG;
+//    static {
+//        System.out.println("INIT AT BUILD TIME THE SERVER");
+//        LOG = ServerLogger.ROOT_LOGGER;
+//    }
     private static void usage(ProductConfig productConfig) {
         CommandLineArgumentUsageImpl.printUsage(productConfig, STDOUT);
     }
@@ -58,7 +62,16 @@ public final class Main {
      *
      * @param args the command-line arguments
      */
+    public static void preMain() {
+        //System.out.println("PRE-MAIN CALLED");
+        System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
+        System.out.println("LOGGER CLASS " + java.util.logging.LogManager.getLogManager().getClass().getName());
+        //LOG.jbossDeploymentStructureNamespaceIgnored("XXXXXXXx");
+
+    }
     public static void main(String[] args) {
+        //System.out.println("MAIN CALLED " + Main.class.getClassLoader());
+        //System.out.println("LOGGER CLASS " + java.util.logging.LogManager.getLogManager().getClass().getName());
         try {
             if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager")) {
                 // Make sure our original stdio is properly captured.
@@ -68,6 +81,7 @@ public final class Main {
                 }
                 // Install JBoss Stdio to avoid any nasty crosstalk, after command line arguments are processed.
                 StdioContext.install();
+          //      System.out.println("STDIO CLASSLOADER " + StdioContext.class.getClassLoader());
                 final StdioContext context = StdioContext.create(
                         new NullInputStream(),
                         new LoggingOutputStream(org.jboss.logmanager.Logger.getLogger("stdout"), org.jboss.logmanager.Level.INFO),
@@ -75,8 +89,10 @@ public final class Main {
                 );
                 StdioContext.setStdioContextSelector(new SimpleStdioContextSelector(context));
             }
-
-            Module.registerURLStreamHandlerFactoryModule(Module.getBootModuleLoader().loadModule("org.jboss.vfs"));
+System.out.println("LOGGING IBNITIALIZED " +ServerLogger.ROOT_LOGGER.getClass().getClassLoader());
+ServerLogger.ROOT_LOGGER.jbossDeploymentStructureNamespaceIgnored("XXXXXXXx");
+System.out.println("END TEST LOGGING");
+Module.registerURLStreamHandlerFactoryModule(Module.getBootModuleLoader().loadModule("org.jboss.vfs"));
             ServerEnvironmentWrapper serverEnvironmentWrapper = determineEnvironment(args, WildFlySecurityManager.getSystemPropertiesPrivileged(),
                     WildFlySecurityManager.getSystemEnvironmentPrivileged(), ServerEnvironment.LaunchType.STANDALONE,
                     ElapsedTime.startingFromJvmStart());
@@ -87,14 +103,16 @@ public final class Main {
                     SystemExiter.safeAbort();
                 }
             } else {
-                final Bootstrap bootstrap = Bootstrap.Factory.newInstance();
+                final Bootstrap bootstrap = new BootstrapImpl();
                 final Bootstrap.Configuration configuration = new Bootstrap.Configuration(serverEnvironmentWrapper.getServerEnvironment());
                 configuration.setModuleLoader(Module.getBootModuleLoader());
                 bootstrap.bootstrap(configuration, Collections.emptyList()).get();
             }
         } catch (Throwable t) {
+            System.out.println("ABORT " + t);
             abort(t);
         }
+        System.out.println("SERVER STATED BUT NO BOOTSTRAP");
     }
 
     private static void abort(Throwable t) {

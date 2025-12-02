@@ -111,10 +111,15 @@ public class OptionAttributeDefinition extends SimpleAttributeDefinition {
 
         private static Class<?> determineOptionType(Option<?> option) {
             try {
+                System.out.println("OPTION " + option.getClass() + option.getClass().getClassLoader());
+
                 final Field typeField;
                 if (option.getClass().getSimpleName().equals("SequenceOption")) {
                     typeField = option.getClass().getDeclaredField("elementType");
                 } else {
+                    for(Field f : option.getClass().getDeclaredFields()) {
+                        System.out.println("FILED " + f.getName());
+                    }
                     typeField = option.getClass().getDeclaredField("type");
                 }
 

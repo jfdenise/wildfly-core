@@ -17,6 +17,7 @@ public class ConfigurationExtensionFactory {
     private static final ConfigurationExtension extension;
 
     static {
+        System.out.println("CONTROLLER, ConfigurationExtensionFactory" + ConfigurationExtensionFactory.class.getClassLoader());
         ServiceLoader<ConfigurationExtension> loader = ServiceLoader.load(ConfigurationExtension.class, ConfigurationExtensionFactory.class.getClassLoader());
         Iterator<ConfigurationExtension> iter = loader.iterator();
         if (iter.hasNext()) {

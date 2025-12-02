@@ -64,7 +64,6 @@ import org.jboss.as.domain.management.access.AccessAuthorizationResourceDefiniti
 import org.jboss.as.platform.mbean.PlatformMBeanConstants;
 import org.jboss.as.platform.mbean.RootPlatformMBeanResource;
 import org.jboss.as.remoting.HttpListenerRegistryService;
-import org.jboss.as.remoting.management.ManagementRemotingServices;
 import org.jboss.as.repository.ContentRepository;
 import org.jboss.as.server.controller.resources.ServerRootResourceDefinition;
 import org.jboss.as.server.controller.resources.VersionModelInitializer;
@@ -230,9 +229,10 @@ public final class ServerService extends AbstractControllerService {
 //        serverExecutorService.getThreadFactoryInjector().inject(threadFactory);
         final boolean forDomain = ProcessType.DOMAIN_SERVER == getProcessType(configuration.getServerEnvironment());
         final ServerExecutorService serverExecutorService = new ServerExecutorService(threadFactory, forDomain);
-        serviceTarget.addService(MANAGEMENT_EXECUTOR, serverExecutorService)
-                .addAliases(Services.JBOSS_SERVER_EXECUTOR, ManagementRemotingServices.SHUTDOWN_EXECUTOR_NAME) // Use this executor for mgmt shutdown for now
-                .install();
+        System.out.println("REMOTING EVICE NOT STARTED");
+        //serviceTarget.addService(MANAGEMENT_EXECUTOR, serverExecutorService)
+        //        .addAliases(Services.JBOSS_SERVER_EXECUTOR, ManagementRemotingServices.SHUTDOWN_EXECUTOR_NAME) // Use this executor for mgmt shutdown for now
+        //        .install();
         final ServerScheduledExecutorService serverScheduledExecutorService = new ServerScheduledExecutorService(threadFactory);
         serviceTarget.addService(JBOSS_SERVER_SCHEDULED_EXECUTOR, serverScheduledExecutorService)
                 .addAliases(JBOSS_SERVER_SCHEDULED_EXECUTOR)
@@ -288,6 +288,7 @@ public final class ServerService extends AbstractControllerService {
                         super.getBootErrorCollector(),
                         configuration.getCapabilityRegistry(),
                         this.suspendController));
+        System.out.println("SERVER SERVICE HAS RUN " + ServerService.class.getClassLoader());
         super.start(context);
     }
 
