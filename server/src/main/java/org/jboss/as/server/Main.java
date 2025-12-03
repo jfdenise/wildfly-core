@@ -98,9 +98,7 @@ public final class Main {
                 configuration.setModuleLoader(Module.getBootModuleLoader());
                 bootstrap.bootstrap(configuration, Collections.emptyList()).get();
             }
-ServerLogger.AS_ROOT_LOGGER.deploymentDeployed("Foo", "Bar");
-                                    System.out.println("SERVER STARTED WITH BOOT " + Main.class.getClassLoader());
-
+        System.out.println("SERVER STARTED WITH BOOT " + Main.class.getClassLoader());
         } catch (Throwable t) {
             abort(t);
         }
