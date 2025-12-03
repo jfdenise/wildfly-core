@@ -58,6 +58,12 @@ public final class Main {
      *
      * @param args the command-line arguments
      */
+    public static void preMain() {
+        System.out.println("PRE MAIN");
+        System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
+        System.out.println(java.util.logging.LogManager.getLogManager().getClass().getName());
+        ServiceLoaderInitializer.init();
+    }
     public static void main(String[] args) {
         try {
             if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager")) {
@@ -75,11 +81,11 @@ public final class Main {
                 );
                 StdioContext.setStdioContextSelector(new SimpleStdioContextSelector(context));
             }
-
             Module.registerURLStreamHandlerFactoryModule(Module.getBootModuleLoader().loadModule("org.jboss.vfs"));
             ServerEnvironmentWrapper serverEnvironmentWrapper = determineEnvironment(args, WildFlySecurityManager.getSystemPropertiesPrivileged(),
                     WildFlySecurityManager.getSystemEnvironmentPrivileged(), ServerEnvironment.LaunchType.STANDALONE,
                     ElapsedTime.startingFromJvmStart());
+
             if (serverEnvironmentWrapper.getServerEnvironment() == null) {
                 if (serverEnvironmentWrapper.getServerEnvironmentStatus() == ServerEnvironmentWrapper.ServerEnvironmentStatus.ERROR) {
                     abort(null);
@@ -92,6 +98,9 @@ public final class Main {
                 configuration.setModuleLoader(Module.getBootModuleLoader());
                 bootstrap.bootstrap(configuration, Collections.emptyList()).get();
             }
+ServerLogger.AS_ROOT_LOGGER.deploymentDeployed("Foo", "Bar");
+                                    System.out.println("SERVER STARTED WITH BOOT " + Main.class.getClassLoader());
+
         } catch (Throwable t) {
             abort(t);
         }

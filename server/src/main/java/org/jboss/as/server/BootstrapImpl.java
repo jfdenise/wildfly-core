@@ -264,7 +264,7 @@ final class BootstrapImpl implements Bootstrap {
                     if (!failed) {
                         // TODO this is probably better before the 'suspend' logging but the
                         // shutdown mgmt op has this order of logging
-                        SystemExiter.logBeforeExit(ServerLogger.ROOT_LOGGER::shutdownHookInvoked);
+                        //SystemExiter.logBeforeExit(ServerLogger.ROOT_LOGGER::shutdownHookInvoked);
                     }
                     final CountDownLatch terminateLatch = new CountDownLatch(1);
                     sc.addTerminateListener(new ServiceContainer.TerminateListener() {
