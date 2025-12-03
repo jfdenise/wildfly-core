@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import org.jboss.as.controller.ExtensionLoader;
 
 import org.jboss.as.controller.RunningMode;
 import org.jboss.as.controller.operations.common.ProcessEnvironment;
@@ -49,7 +50,6 @@ public final class Main {
     private static void usage(ProductConfig productConfig) {
         CommandLineArgumentUsageImpl.printUsage(productConfig, STDOUT);
     }
-
     private Main() {
     }
 
@@ -58,12 +58,14 @@ public final class Main {
      *
      * @param args the command-line arguments
      */
-    public static void preMain() {
+    public static void preMain() throws Exception {
         System.out.println("PRE MAIN");
         System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
         System.out.println(java.util.logging.LogManager.getLogManager().getClass().getName());
         ServiceLoaderInitializer.init();
+        ExtensionLoader.init();
     }
+
     public static void main(String[] args) {
         try {
             if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager")) {

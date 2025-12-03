@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.as.controller.Extension;
+import org.jboss.as.controller.ExtensionLoader;
 import org.jboss.as.controller.extension.ExtensionRegistry;
 import org.jboss.as.controller.logging.ControllerLogger;
 import org.jboss.modules.Module;
@@ -91,21 +92,35 @@ public class DeferredExtensionContext {
     private void loadModule(final String moduleName, final XMLMapper xmlMapper) throws XMLStreamException {
         // Register element handlers for this extension
         try {
-            final Module module = moduleLoader.loadModule(moduleName);
             boolean initialized = false;
-            for (final Extension extension : module.loadService(Extension.class)) {
-                ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
-                try {
-                    extensionRegistry.initializeParsers(extension, moduleName, xmlMapper);
-                } finally {
-                    WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
+            if (Boolean.getBoolean("org.wildfly.graal")) {
+                for (final Extension extension : ExtensionLoader.getExtensions(moduleName)) {
+                    ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
+                    try {
+                        extensionRegistry.initializeParsers(extension, moduleName, xmlMapper);
+                    } finally {
+                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
+                    }
+                    if (!initialized) {
+                        initialized = true;
+                    }
                 }
-                if (!initialized) {
-                    initialized = true;
+            } else {
+                final Module module = moduleLoader.loadModule(moduleName);
+                for (final Extension extension : module.loadService(Extension.class)) {
+                    ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
+                    try {
+                        extensionRegistry.initializeParsers(extension, moduleName, xmlMapper);
+                    } finally {
+                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
+                    }
+                    if (!initialized) {
+                        initialized = true;
+                    }
                 }
             }
             if (!initialized) {
-                throw ControllerLogger.ROOT_LOGGER.notFound("META-INF/services/", Extension.class.getName(), module.getName());
+                throw ControllerLogger.ROOT_LOGGER.notFound("META-INF/services/", Extension.class.getName(), moduleName);
             }
         } catch (final ModuleLoadException e) {
             throw ControllerLogger.ROOT_LOGGER.failedToLoadModule(e);

@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.jboss.as.controller.Extension;
+import org.jboss.as.controller.ExtensionLoader;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
@@ -130,7 +131,12 @@ public class ExtensionAddHandler implements OperationStepHandler {
                 // Silent for now.
                 //ecx.printStackTrace();
             }
-            Iterator<Extension> extensions = Module.loadServiceFromCallerModuleLoader(module, Extension.class).iterator();
+            Iterator<Extension> extensions = null;
+            if(Boolean.getBoolean("org.wildfly.graal")) {
+                extensions = ExtensionLoader.getExtensions(module).iterator();
+            } else {
+                extensions = Module.loadServiceFromCallerModuleLoader(module, Extension.class).iterator();
+            }
             if (!extensions.hasNext()) {
                 throw ControllerLogger.ROOT_LOGGER.notFound("META-INF/services/", Extension.class.getName(), module);
             }
