@@ -115,7 +115,8 @@ public class OptionAttributeDefinition extends SimpleAttributeDefinition {
                 if (option.getClass().getSimpleName().equals("SequenceOption")) {
                     typeField = option.getClass().getDeclaredField("elementType");
                 } else {
-                    System.out.println("OPTION " + option.getClass() + " classloader " + option.getClass().getClassLoader());
+                    // This is initialized at build time.
+                    //System.out.println("OPTION " + option.getClass() + " classloader " + option.getClass().getClassLoader());
                     typeField = option.getClass().getDeclaredField("type");
                 }
 

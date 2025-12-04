@@ -4,11 +4,9 @@
  */
 package org.jboss.as.controller.extension;
 
-import java.lang.reflect.Field;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
 
 import java.util.Iterator;
-import java.util.Map;
 
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionLoader;
@@ -115,23 +113,7 @@ public class ExtensionAddHandler implements OperationStepHandler {
                                     ExtensionRegistryType extensionRegistryType) {
         try {
             boolean unknownModule = false;
-            Class clazz = null;
-            Field f2 = null;
-            try {
-                clazz = Class.forName("launcher.Launcher");
-                synchronized (clazz) {
-                    f2 = clazz.getField("callerModules");
-                    Field f = clazz.getField("modules");
-                    Map<String, Module> map = (Map<String, Module>) f.get(null);
-                    Map<String, Module> mapCallers = (Map<String, Module>) f2.get(null);
-                    mapCallers.put(module, map.get("org.jboss.as.controller"));
-                    System.out.println("PUT caller org.jboss.as.controller for module " + module);
-                }
-            } catch (Exception ecx) {
-                // Silent for now.
-                //ecx.printStackTrace();
-            }
-            Iterator<Extension> extensions = null;
+            Iterator<Extension> extensions;
             if(Boolean.getBoolean("org.wildfly.graal")) {
                 extensions = ExtensionLoader.getExtensions(module).iterator();
             } else {
