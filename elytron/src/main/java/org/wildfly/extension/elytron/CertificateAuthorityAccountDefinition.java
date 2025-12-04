@@ -116,8 +116,12 @@ class CertificateAuthorityAccountDefinition extends SimpleResourceDefinition {
     }
 
     private static AcmeClientSpi loadAcmeClient() {
-        for (AcmeClientSpi acmeClient : ServiceLoader.load(AcmeClientSpi.class, ElytronSubsystemMessages.class.getClassLoader())) {
-            return acmeClient;
+        if (Boolean.getBoolean("org.wildfly.graal")) {
+            return ServiceLoaderInitializer.getAcmeClientSpi();
+        } else {
+            for (AcmeClientSpi acmeClient : ServiceLoader.load(AcmeClientSpi.class, ElytronSubsystemMessages.class.getClassLoader())) {
+                return acmeClient;
+            }
         }
         throw ROOT_LOGGER.unableToInstatiateAcmeClientSpiImplementation();
     }

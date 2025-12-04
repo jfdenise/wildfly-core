@@ -251,20 +251,32 @@ class ProviderDefinitions {
                             } else {
                                 loadedProviders = new ArrayList<>();
                                 try {
-                                    Iterable<Provider> providers = Module.findServices(Provider.class, new Predicate<Class<?>>() {
-                                        @Override
-                                        public boolean test(final Class<?> providerClass) {
-                                            // We don't want to pick up JDK services resolved via JPMS definitions.
-                                            return providerClass.getClassLoader() instanceof ModuleClassLoader;
+                                    if (Boolean.getBoolean("org.wildfly.graal")) {
+                                        Iterable<Provider> providers = ServiceLoaderInitializer.getProviders(module);
+                                        Iterator<Provider> iterator = providers.iterator();
+                                        while (iterator.hasNext()) {
+                                            final Provider p = iterator.next();
+                                            if (configSupplier != null) {
+                                                deferred.add(p::load);
+                                            }
+                                            loadedProviders.add(p);
                                         }
-                                    }, classLoader);
-                                    Iterator<Provider> iterator = providers.iterator();
-                                    while (iterator.hasNext()) {
-                                        final Provider p = iterator.next();
-                                        if (configSupplier != null) {
-                                            deferred.add(p::load);
+                                    } else {
+                                        Iterable<Provider> providers = Module.findServices(Provider.class, new Predicate<Class<?>>() {
+                                            @Override
+                                            public boolean test(final Class<?> providerClass) {
+                                                // We don't want to pick up JDK services resolved via JPMS definitions.
+                                                return providerClass.getClassLoader() instanceof ModuleClassLoader;
+                                            }
+                                        }, classLoader);
+                                        Iterator<Provider> iterator = providers.iterator();
+                                        while (iterator.hasNext()) {
+                                            final Provider p = iterator.next();
+                                            if (configSupplier != null) {
+                                                deferred.add(p::load);
+                                            }
+                                            loadedProviders.add(p);
                                         }
-                                        loadedProviders.add(p);
                                     }
                                 } catch (Exception e) {
                                     ROOT_LOGGER.tracef(e, "Failed to initialize a security provider");
