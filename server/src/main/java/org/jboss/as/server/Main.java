@@ -13,13 +13,16 @@ import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionLoader;
 
 import org.jboss.as.controller.RunningMode;
+import org.jboss.as.controller.graal.PreMainInitializer;
 import org.jboss.as.controller.operations.common.ProcessEnvironment;
 import org.jboss.as.controller.persistence.ConfigurationExtensionFactory;
 import org.jboss.as.controller.persistence.ConfigurationFile;
@@ -28,6 +31,7 @@ import org.jboss.as.process.ExitCodes;
 import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.as.version.ProductConfig;
 import org.jboss.modules.Module;
+import org.jboss.modules.ModuleClassLoader;
 import org.jboss.stdio.LoggingOutputStream;
 import org.jboss.stdio.NullInputStream;
 import org.jboss.stdio.SimpleStdioContextSelector;
@@ -63,7 +67,29 @@ public final class Main {
         System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
         System.out.println(java.util.logging.LogManager.getLogManager().getClass().getName());
         ServiceLoaderInitializer.init();
+        System.out.println("CONTEXT CLASSLOADER " + Thread.currentThread().getContextClassLoader());
+            System.out.println("ServiceLoaderInitializer.class.getClassLoader() " + ServiceLoaderInitializer.class.getClassLoader());
         ExtensionLoader.init();
+        Map<String, List<Extension>> map = ExtensionLoader.getAllExtensions();
+        ClassLoader current = Thread.currentThread().getContextClassLoader();
+        try {
+        for(String module : map.keySet()) {
+            Module m = Module.getBootModuleLoader().loadModule(module);
+            System.out.println("MODULE extension " + m.getName());
+            ModuleClassLoader ld = m.getClassLoader();
+            for (final PreMainInitializer initializer : m.loadService(PreMainInitializer.class)) {
+                System.out.println("We have an initiaalizer " + initializer.getClass());
+                Thread.currentThread().setContextClassLoader(ld);
+                initializer.init();
+            }
+        }
+        } finally {
+            Thread.currentThread().setContextClassLoader(current);
+        }
+        //ModuleClassLoader ld = Module.getBootModuleLoader().loadModule("org.wildfly.extension.undertow").getClassLoader();
+        //ClassLoader current = Thread.currentThread().getContextClassLoader();
+         //Thread.currentThread().setContextClassLoader(ld);
+        //Class.forName("org.wildfly.extension.undertow.ServiceLoaderInitializer",true, ld);
     }
 
     public static void main(String[] args) {

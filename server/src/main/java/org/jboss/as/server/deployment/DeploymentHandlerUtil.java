@@ -109,7 +109,8 @@ public class DeploymentHandlerUtil {
 
     public static void deploy(final OperationContext context, final ModelNode operation, final String deploymentUnitName, final String managementName, final ContentItem... contents) throws OperationFailedException {
         assert contents != null : "contents is null";
-
+        System.err.println("DEPLOY START");
+        new Exception().printStackTrace();
         if (context.isNormalServer()) {
             //Checking for duplicate runtime name
             PathAddress deploymentsAddress = context.getCurrentAddress().getParent();
@@ -180,7 +181,7 @@ public class DeploymentHandlerUtil {
     public static void doDeploy(final OperationContext context, final String deploymentUnitName, final String managementName,
                                 final Resource deploymentResource, final ImmutableManagementResourceRegistration registration,
                                 final ManagementResourceRegistration mutableRegistration, final ContentItem... contents) {
-
+        new Exception().printStackTrace();
         final ServiceName deploymentUnitServiceName = Services.deploymentUnitName(deploymentUnitName);
 
         final ServiceTarget serviceTarget = context.getServiceTarget();
@@ -211,6 +212,7 @@ public class DeploymentHandlerUtil {
         final Supplier<DeploymentMountProvider> serverDeploymentRepositorySupplier = sb.requires(DeploymentMountProvider.SERVICE_NAME);
         final Supplier<PathManager> pathManagerSupplier = sb.requires(context.getCapabilityServiceName(PathManager.SERVICE_DESCRIPTOR));
         final Supplier<VirtualFile> contentsSupplier = sb.requires(contentsServiceName);
+        System.out.println("WILL DEPLOY " + deploymentUnitServiceName.getCanonicalName());
         final RootDeploymentUnitService service = new RootDeploymentUnitService(deploymentUnitConsumer,
                 serverDeploymentRepositorySupplier, pathManagerSupplier, contentsSupplier,
                 deploymentUnitName, managementName, null, context.getStability(),

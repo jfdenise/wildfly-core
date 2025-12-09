@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.jboss.as.controller.graal.PreMainInitializer;
 import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleLoader;
 import org.w3c.dom.Document;
@@ -52,6 +53,9 @@ public class ExtensionLoader {
     }
     public static List<Extension> getExtensions(String moduleName) {
         return EXTENSIONS.get(moduleName);
+    }
+    public static Map<String, List<Extension>> getAllExtensions() {
+        return EXTENSIONS;
     }
     private static List<String> retrieveExtensions() throws Exception {
         List<String> modules = new ArrayList<>();

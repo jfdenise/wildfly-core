@@ -64,6 +64,7 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
             switch (event) {
                 case UP:
                     log.tracef("serviceStarted: %s", controller);
+                    System.out.println("SERVICE STARTED " + controller.getService().getClass());
                     done(controller, null);
                     break;
                 case FAILED:
@@ -120,6 +121,7 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
 
     @Override
     protected Module preloadModule(final String name) throws ModuleLoadException {
+        System.out.println("PRE LOAD MODULE");
         if (name.startsWith(MODULE_PREFIX)) {
             return super.preloadModule(name);
         } else {
@@ -130,6 +132,7 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
     @SuppressWarnings("unchecked")
     @Override
     protected ModuleSpec findModule(String identifier) throws ModuleLoadException {
+        System.out.println("FIND MODULE "+ identifier);
         ServiceController<ModuleDefinition> controller = (ServiceController<ModuleDefinition>) serviceContainer.getService(moduleSpecServiceName(identifier));
         if (controller == null) {
             ServerLogger.MODULE_SERVICE_LOGGER.debugf("Could not load module '%s' as corresponding module spec service '%s' was not found", identifier, identifier);

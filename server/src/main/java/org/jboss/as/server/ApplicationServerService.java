@@ -143,6 +143,7 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
                     ContentRepository.Factory.addService(serviceTarget, serverEnvironment.getServerContentDir(), serverEnvironment.getServerTempDir());
                 }
             }
+
         } else {
             RemoteFileRepositoryService.addService(serviceTarget, serverEnvironment.getServerContentDir(), serverEnvironment.getServerTempDir());
         }
