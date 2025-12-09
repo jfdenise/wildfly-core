@@ -6,6 +6,8 @@
 package org.jboss.as.server;
 
 import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -17,6 +19,8 @@ import javax.management.ObjectName;
 import org.jboss.as.controller.ControlledProcessState;
 import org.jboss.as.controller.ControlledProcessStateService;
 import org.jboss.as.controller.ProcessStateNotifier;
+import org.jboss.as.controller.graal.GraalRecorder;
+import static org.jboss.as.server.ServerEnvironment.HOME_DIR;
 import org.jboss.as.server.jmx.RunningStateJmx;
 import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.as.server.suspend.ServerSuspendController;
@@ -207,6 +211,16 @@ final class BootstrapImpl implements Bootstrap {
         }
     }
 
+    private static void storeRecording() {
+        if (!Boolean.getBoolean("org.wildfly.graal")) {
+            try {
+                Path home = Paths.get(System.getProperty(HOME_DIR));
+                GraalRecorder.store(home);
+            } catch (Exception ex) {
+                System.out.println("Failed to record graal " + ex);
+            }
+        }
+    }
     private static class ShutdownHook extends Thread {
         private boolean down;
         private ControlledProcessState processState;
@@ -241,6 +255,7 @@ final class BootstrapImpl implements Bootstrap {
 
         @Override
         public void run() {
+            storeRecording();
             shutdown(false);
         }
 
@@ -299,6 +314,7 @@ final class BootstrapImpl implements Bootstrap {
                 }
                 try {
                     suspend.get();
+                    storeRecording();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
