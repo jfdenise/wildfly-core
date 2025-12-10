@@ -93,7 +93,11 @@ public class DeferredExtensionContext {
         // Register element handlers for this extension
         try {
             boolean initialized = false;
+            final Module module = moduleLoader.loadModule(moduleName);
             if (Boolean.getBoolean("org.wildfly.graal")) {
+                // Rely on cache of services.
+                //for (final Object obj : module.getServicesFromCache(Extension.class)) {
+                //   Extension extension = (Extension) obj;
                 for (final Extension extension : ExtensionLoader.getExtensions(moduleName)) {
                     ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
                     try {
@@ -106,7 +110,6 @@ public class DeferredExtensionContext {
                     }
                 }
             } else {
-                final Module module = moduleLoader.loadModule(moduleName);
                 for (final Extension extension : module.loadService(Extension.class)) {
                     ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
                     try {
