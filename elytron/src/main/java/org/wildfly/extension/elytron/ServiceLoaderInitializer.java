@@ -7,13 +7,10 @@ package org.wildfly.extension.elytron;
 import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.function.Predicate;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.jboss.as.controller.ModuleIdentifierUtil;
@@ -24,9 +21,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.wildfly.common.xml.DocumentBuilderFactoryUtil;
-import org.wildfly.extension.elytron._private.ElytronSubsystemMessages;
 import org.wildfly.security.permission.PermissionUtil;
-import org.wildfly.security.x500.cert.acme.AcmeClientSpi;
 
 /**
  *
@@ -34,8 +29,8 @@ import org.wildfly.security.x500.cert.acme.AcmeClientSpi;
  */
 public class ServiceLoaderInitializer {
 
-    private static AcmeClientSpi ACMECLIENT;
-    private static Map<String, List<Provider>> PROVIDERS = new HashMap<>();
+    //private static AcmeClientSpi ACMECLIENT;
+    //private static Map<String, List<Provider>> PROVIDERS = new HashMap<>();
     private static Map<String, List<java.security.Permission>> PERMISSIONS = new HashMap<>();
     static class Permission {
         private final String className;
@@ -68,28 +63,28 @@ public class ServiceLoaderInitializer {
     }
     static {
         System.out.println("INITIALIZE ELYTRON PROVIDERS");
-        ACMECLIENT = ServiceLoader.load(AcmeClientSpi.class, ElytronSubsystemMessages.class.getClassLoader()).iterator().next();
+        //ACMECLIENT = ServiceLoader.load(AcmeClientSpi.class, ElytronSubsystemMessages.class.getClassLoader()).iterator().next();
         try {
-            List<String> modules = retrieveProviderModules();
-            System.out.println("FOUND MODULES " + modules);
+//            List<String> modules = retrieveProviderModules();
+//            System.out.println("FOUND MODULES " + modules);
             ModuleClassLoader loader = (ModuleClassLoader) ServiceLoaderInitializer.class.getClassLoader();
             Module mod = loader.getModule();
-            for (String moduleName : modules) {
-                Module module = mod.getModule(ModuleIdentifierUtil.parseCanonicalModuleIdentifier(moduleName));
-                Iterable<Provider> providers = org.jboss.modules.Module.findServices(Provider.class, new Predicate<Class<?>>() {
-                    @Override
-                    public boolean test(final Class<?> providerClass) {
-                        // We don't want to pick up JDK services resolved via JPMS definitions.
-                        return providerClass.getClassLoader() instanceof ModuleClassLoader;
-                    }
-                }, module.getClassLoader());
-                List<Provider> lst = new ArrayList<>();
-                PROVIDERS.put(moduleName, lst);
-                for (Provider p : providers) {
-                    System.out.println("Add provider " + p + " for Module " + moduleName);
-                    lst.add(p);
-                }
-            }
+//            for (String moduleName : modules) {
+//                Module module = mod.getModule(ModuleIdentifierUtil.parseCanonicalModuleIdentifier(moduleName));
+//                Iterable<Provider> providers = org.jboss.modules.Module.findServices(Provider.class, new Predicate<Class<?>>() {
+//                    @Override
+//                    public boolean test(final Class<?> providerClass) {
+//                        // We don't want to pick up JDK services resolved via JPMS definitions.
+//                        return providerClass.getClassLoader() instanceof ModuleClassLoader;
+//                    }
+//                }, module.getClassLoader());
+//                List<Provider> lst = new ArrayList<>();
+//                PROVIDERS.put(moduleName, lst);
+//                for (Provider p : providers) {
+//                    System.out.println("Add provider " + p + " for Module " + moduleName);
+//                    lst.add(p);
+//                }
+//            }
             Map<String, List<Permission>> permissions = retrievePermissions();
             for (String module : permissions.keySet()) {
                 List<java.security.Permission> lst = new ArrayList<>();
@@ -111,9 +106,9 @@ public class ServiceLoaderInitializer {
         }
     }
 
-    static List<Provider> getProviders(String moduleName) {
-        return PROVIDERS.get(moduleName);
-    }
+//    static List<Provider> getProviders(String moduleName) {
+//        return PROVIDERS.get(moduleName);
+//    }
 
     static java.security.Permission getPermission(String moduleName, String className) throws Exception {
         moduleName = moduleName == null ? "" : moduleName;
@@ -127,9 +122,9 @@ public class ServiceLoaderInitializer {
         throw new Exception("Permission " + className + " not found");
     }
 
-    static AcmeClientSpi getAcmeClientSpi() {
-        return ACMECLIENT;
-    }
+//    static AcmeClientSpi getAcmeClientSpi() {
+//        return ACMECLIENT;
+//    }
 
     private static List<String> retrieveProviderModules() throws Exception {
         List<String> modules = new ArrayList<>();

@@ -13,7 +13,6 @@ import org.jboss.as.server.Services;
 import org.jboss.as.server.deployment.module.ModuleDependency;
 import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleNotFoundException;
 import org.jboss.msc.service.Service;
@@ -73,18 +72,15 @@ public class ModuleLoadService implements Service<Module> {
     @Override
     public synchronized void start(StartContext context) throws StartException {
         try {
-            new Exception().printStackTrace();
             final ServiceModuleLoader moduleLoader = serviceModuleLoader.getValue();
-            System.out.println("LOAD MODULE " + moduleDefinitionInjectedValue.getValue().getModuleName() + "MODULE LOADER " + moduleLoader);
             Module module;
-            if (Boolean.getBoolean("org.wildfly.graal")) {
-                System.out.println("LOADING STATIC MODULE");
-                ModuleClassLoader moduleCL = (ModuleClassLoader) ModuleLoadService.class.getClassLoader();
-                module = Module.getBootModuleLoader().loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
-            } else {
+            //if (Boolean.getBoolean("org.wildfly.graal")) {
+              //  System.out.println("LOADING STATIC MODULE");
+               // module = Module.getBootModuleLoader().loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
+            //} else {
                 module = moduleLoader.loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
                 moduleLoader.relinkModule(module);
-            }
+            //}
             for (ModuleDependency dependency : allDependencies) {
                 if (dependency.isUserSpecified()) {
                     final String id = dependency.getDependencyModule();
