@@ -74,13 +74,13 @@ public class ModuleLoadService implements Service<Module> {
         try {
             final ServiceModuleLoader moduleLoader = serviceModuleLoader.getValue();
             Module module;
-            //if (Boolean.getBoolean("org.wildfly.graal")) {
-              //  System.out.println("LOADING STATIC MODULE");
-               // module = Module.getBootModuleLoader().loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
-            //} else {
+            if (Boolean.getBoolean("org.wildfly.graal")) {
+                System.out.println("LOADING STATIC MODULE");
+                module = Module.getBootModuleLoader().loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
+            } else {
                 module = moduleLoader.loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
                 moduleLoader.relinkModule(module);
-            //}
+            }
             for (ModuleDependency dependency : allDependencies) {
                 if (dependency.isUserSpecified()) {
                     final String id = dependency.getDependencyModule();

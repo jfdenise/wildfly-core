@@ -517,15 +517,15 @@ public final class ServerService extends AbstractControllerService {
     @Override
     protected ModelControllerServiceInitializationParams getModelControllerServiceInitializationParams() {
         Object val = null;
-        if (Boolean.getBoolean("org.wildfly.graal")) {
-            System.out.println("GRAAL ENABLED, GETTING STATIC LOADERS");
-            return new ModelControllerServiceInitializationParams(ServiceLoaderInitializer.getLoaders()) {
-                @Override
-                public String getHostName() {
-                    return null;
-                }
-            };
-        } else {
+//        if (Boolean.getBoolean("org.wildfly.graal")) {
+//            System.out.println("GRAAL ENABLED, GETTING STATIC LOADERS");
+//            return new ModelControllerServiceInitializationParams(ServiceLoaderInitializer.getLoaders()) {
+//                @Override
+//                public String getHostName() {
+//                    return null;
+//                }
+//            };
+//        } else {
             final ServiceLoader<ModelControllerServiceInitialization> sl = ServiceLoader.load(ModelControllerServiceInitialization.class);
             return new ModelControllerServiceInitializationParams(sl) {
                 @Override
@@ -533,7 +533,7 @@ public final class ServerService extends AbstractControllerService {
                     return null;
                 }
             };
-        }
+        //}
     }
 
     /** Temporary replacement for QueuelessThreadPoolService */
