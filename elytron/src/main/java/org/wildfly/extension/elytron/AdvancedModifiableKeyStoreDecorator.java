@@ -140,13 +140,9 @@ class AdvancedModifiableKeyStoreDecorator extends ModifiableKeyStoreDecorator {
     }
 
     private static AcmeClientSpi loadAcmeClient() {
-        //if (Boolean.getBoolean("org.wildfly.graal")) {
-            //return ServiceLoaderInitializer.getAcmeClientSpi();
-        //} else {
-            for (AcmeClientSpi acmeClient : ServiceLoader.load(AcmeClientSpi.class, ElytronSubsystemMessages.class.getClassLoader())) {
-                return acmeClient;
-            }
-        //}
+        for (AcmeClientSpi acmeClient : ServiceLoader.load(AcmeClientSpi.class, ElytronSubsystemMessages.class.getClassLoader())) {
+            return acmeClient;
+        }
         throw ROOT_LOGGER.unableToInstatiateAcmeClientSpiImplementation();
     }
 

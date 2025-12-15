@@ -404,7 +404,7 @@ class PermissionMapperDefinitions {
     private static java.security.Permission createPermission(Permission permission) throws StartException {
         if (Boolean.getBoolean("org.wildfly.graal")) {
             try {
-                return ServiceLoaderInitializer.getPermission(permission.getModule(), permission.getClassName());
+                return PermissionsPreLoader.INSTANCE.getPermission(permission.getModule(), permission.getClassName());
             } catch (InvalidPermissionClassException e) {
                 throw ElytronSubsystemMessages.ROOT_LOGGER.invalidPermissionClass(permission.getClassName());
             } catch (Throwable e) {

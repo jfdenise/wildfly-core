@@ -93,34 +93,17 @@ public class DeferredExtensionContext {
         try {
             boolean initialized = false;
             final Module module = moduleLoader.loadModule(moduleName);
-//            if (Boolean.getBoolean("org.wildfly.graal")) {
-//                // Rely on cache of services.
-//                //for (final Object obj : module.getServicesFromCache(Extension.class)) {
-//                //   Extension extension = (Extension) obj;
-//                for (final Extension extension : ExtensionLoader.getExtensions(moduleName)) {
-//                    ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
-//                    try {
-//                        extensionRegistry.initializeParsers(extension, moduleName, xmlMapper);
-//                    } finally {
-//                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
-//                    }
-//                    if (!initialized) {
-//                        initialized = true;
-//                    }
-//                }
-//            } else {
-                for (final Extension extension : module.loadService(Extension.class)) {
-                    ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
-                    try {
-                        extensionRegistry.initializeParsers(extension, moduleName, xmlMapper);
-                    } finally {
-                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
-                    }
-                    if (!initialized) {
-                        initialized = true;
-                    }
+            for (final Extension extension : module.loadService(Extension.class)) {
+                ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
+                try {
+                    extensionRegistry.initializeParsers(extension, moduleName, xmlMapper);
+                } finally {
+                    WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
                 }
-            //}
+                if (!initialized) {
+                    initialized = true;
+                }
+            }
             if (!initialized) {
                 throw ControllerLogger.ROOT_LOGGER.notFound("META-INF/services/", Extension.class.getName(), moduleName);
             }

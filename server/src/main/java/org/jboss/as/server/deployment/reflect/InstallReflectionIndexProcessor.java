@@ -28,7 +28,11 @@ public final class InstallReflectionIndexProcessor implements DeploymentUnitProc
         }
 
         if(deploymentUnit.getParent() == null) {
-            final DeploymentReflectionIndex index = DeploymentReflectionIndex.create();
+           // if(Boolean.getBoolean("org.wildfly.graal")) {
+                //index =
+           // } else {
+                final DeploymentReflectionIndex index = DeploymentReflectionIndex.create();
+            //}
             deploymentUnit.putAttachment(Attachments.REFLECTION_INDEX, index);
             deploymentUnit.putAttachment(Attachments.PROXY_REFLECTION_INDEX, new ProxyMetadataSource(index));
         } else {

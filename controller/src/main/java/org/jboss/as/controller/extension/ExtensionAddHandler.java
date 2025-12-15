@@ -112,18 +112,7 @@ public class ExtensionAddHandler implements OperationStepHandler {
                                     ExtensionRegistryType extensionRegistryType) {
         try {
             boolean unknownModule = false;
-            Iterator<Extension> extensions;
-            //if(Boolean.getBoolean("org.wildfly.graal")) {
-                // Rely on cache of services.
-//                List<Extension> lst = new ArrayList<>();
-//                for(Object obj : Module.getBootModuleLoader().loadModule(module).getServicesFromCache(Extension.class)) {
-//                    lst.add((Extension) obj);
-//                }
-//                extensions = lst.iterator();
-               // extensions = ExtensionLoader.getExtensions(module).iterator();
-            //} else {
-                extensions = Module.loadServiceFromCallerModuleLoader(module, Extension.class).iterator();
-            //}
+            Iterator<Extension> extensions = Module.loadServiceFromCallerModuleLoader(module, Extension.class).iterator();
             if (!extensions.hasNext()) {
                 throw ControllerLogger.ROOT_LOGGER.notFound("META-INF/services/", Extension.class.getName(), module);
             }

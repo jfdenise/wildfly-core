@@ -27,11 +27,9 @@ import org.wildfly.security.permission.PermissionUtil;
  *
  * @author jdenise
  */
-public class ServiceLoaderInitializer {
-
-    //private static AcmeClientSpi ACMECLIENT;
-    //private static Map<String, List<Provider>> PROVIDERS = new HashMap<>();
-    private static Map<String, List<java.security.Permission>> PERMISSIONS = new HashMap<>();
+public class PermissionsPreLoader {
+    public static PermissionsPreLoader INSTANCE = new PermissionsPreLoader();
+    private static final Map<String, List<java.security.Permission>> PERMISSIONS = new HashMap<>();
     static class Permission {
         private final String className;
         private final String module;
@@ -61,30 +59,11 @@ public class ServiceLoaderInitializer {
             return action;
         }
     }
-    static {
-        System.out.println("INITIALIZE ELYTRON PROVIDERS");
-        //ACMECLIENT = ServiceLoader.load(AcmeClientSpi.class, ElytronSubsystemMessages.class.getClassLoader()).iterator().next();
+static {
+    System.out.println("INIT PERMISSIONS IN STATIC");
         try {
-//            List<String> modules = retrieveProviderModules();
-//            System.out.println("FOUND MODULES " + modules);
-            ModuleClassLoader loader = (ModuleClassLoader) ServiceLoaderInitializer.class.getClassLoader();
+            ModuleClassLoader loader = (ModuleClassLoader) PermissionsPreLoader.class.getClassLoader();
             Module mod = loader.getModule();
-//            for (String moduleName : modules) {
-//                Module module = mod.getModule(ModuleIdentifierUtil.parseCanonicalModuleIdentifier(moduleName));
-//                Iterable<Provider> providers = org.jboss.modules.Module.findServices(Provider.class, new Predicate<Class<?>>() {
-//                    @Override
-//                    public boolean test(final Class<?> providerClass) {
-//                        // We don't want to pick up JDK services resolved via JPMS definitions.
-//                        return providerClass.getClassLoader() instanceof ModuleClassLoader;
-//                    }
-//                }, module.getClassLoader());
-//                List<Provider> lst = new ArrayList<>();
-//                PROVIDERS.put(moduleName, lst);
-//                for (Provider p : providers) {
-//                    System.out.println("Add provider " + p + " for Module " + moduleName);
-//                    lst.add(p);
-//                }
-//            }
             Map<String, List<Permission>> permissions = retrievePermissions();
             for (String module : permissions.keySet()) {
                 List<java.security.Permission> lst = new ArrayList<>();
@@ -98,81 +77,25 @@ public class ServiceLoaderInitializer {
                 for (Permission permission : permissions.get(module)) {
                     java.security.Permission p = PermissionUtil.createPermission(classLoader, permission.getClassName(), permission.getTargetName(), permission.getAction());
                     lst.add(p);
-                    System.out.println("ADDING PERMISSION " + permission.getClassName() + " from module [" + module + "]");
+                    System.out.println("ELYTRON, ADDING PERMISSION " + permission.getClassName() + " from module [" + module + "]");
                 }
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
-
-//    static List<Provider> getProviders(String moduleName) {
-//        return PROVIDERS.get(moduleName);
-//    }
-
-    static java.security.Permission getPermission(String moduleName, String className) throws Exception {
+    java.security.Permission getPermission(String moduleName, String className) throws Exception {
         moduleName = moduleName == null ? "" : moduleName;
-        System.out.println("GEt permission [" + moduleName + "] " + className);
         List<java.security.Permission> lst = PERMISSIONS.get(moduleName);
+        System.out.println("GET THE PERMISSIONS from " + PERMISSIONS);
         for (java.security.Permission p : lst) {
+            System.out.println("GET PERMISSION " + p.getClass().getName());
             if (p.getClass().getName().equals(className)) {
+                System.out.println(" OK GET PERMISSION " + p.getClass().getName());
                 return p;
             }
         }
         throw new Exception("Permission " + className + " not found");
-    }
-
-//    static AcmeClientSpi getAcmeClientSpi() {
-//        return ACMECLIENT;
-//    }
-
-    private static List<String> retrieveProviderModules() throws Exception {
-        List<String> modules = new ArrayList<>();
-        Path configFile = Paths.get(System.getProperty("jboss.server.base.dir")).resolve("configuration/standalone.xml");
-        try (FileInputStream fileInputStream = new FileInputStream(configFile.toFile())) {
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactoryUtil.create();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document document = documentBuilder.parse(fileInputStream);
-            Element root = document.getDocumentElement();
-
-            NodeList lst = root.getChildNodes();
-            for (int i = 0; i < lst.getLength(); i++) {
-                Node n = lst.item(i);
-                if (n instanceof Element) {
-                    if ("profile".equals(n.getNodeName())) {
-                        NodeList subsystems = n.getChildNodes();
-                        for (int j = 0; j < subsystems.getLength(); j++) {
-                            Node subsystem = subsystems.item(j);
-                            if (subsystem instanceof Element) {
-                                Element el = (Element) subsystem;
-                                String attr = el.getAttribute("xmlns");
-                                if (attr.startsWith("urn:wildfly:elytron")) {
-                                    NodeList elems = el.getChildNodes();
-                                    for (int k = 0; k < elems.getLength(); k++) {
-                                        Node en = elems.item(k);
-                                        if (en instanceof Element) {
-                                            if ("providers".equals(en.getNodeName())) {
-                                                NodeList providers = en.getChildNodes();
-                                                for (int l = 0; l < providers.getLength(); l++) {
-                                                    Node prov = providers.item(l);
-                                                    if (prov instanceof Element) {
-                                                        if ("provider-loader".equals(prov.getNodeName())) {
-                                                            Element providerLoader = (Element) prov;
-                                                            modules.add(providerLoader.getAttribute("module"));
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return modules;
     }
 
     private static Map<String, List<Permission>> retrievePermissions() throws Exception {
@@ -201,13 +124,11 @@ public class ServiceLoaderInitializer {
                                         Node en = elems.item(k);
                                         if (en instanceof Element) {
                                             if ("permission-sets".equals(en.getNodeName())) {
-                                                System.out.println("SETS FOUND");
                                                 NodeList permissionSets = en.getChildNodes();
                                                 for (int l = 0; l < permissionSets.getLength(); l++) {
                                                     Node setNode = permissionSets.item(l);
                                                     if (setNode instanceof Element) {
                                                         if ("permission-set".equals(setNode.getNodeName())) {
-                                                            System.out.println("SET FOUND");
                                                             NodeList permissions = setNode.getChildNodes();
                                                             for (int m = 0; m < permissions.getLength(); m++) {
                                                                 Node permission = permissions.item(m);
@@ -215,7 +136,6 @@ public class ServiceLoaderInitializer {
                                                                     if ("permission".equals(permission.getNodeName())) {
                                                                         Element permissionEl = (Element) permission;
                                                                         String clazz = permissionEl.getAttribute("class-name");
-                                                                        System.out.println("PERMISSION FOUND " + clazz);
                                                                         String module = permissionEl.hasAttribute("module") ? permissionEl.getAttribute("module") : null;
                                                                         String action = permissionEl.hasAttribute("action") ? permissionEl.getAttribute("action") : null;
                                                                         String targetName = permissionEl.hasAttribute("target-name") ? permissionEl.getAttribute("target-name") : null;

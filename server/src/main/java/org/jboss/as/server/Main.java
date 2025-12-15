@@ -62,31 +62,6 @@ public final class Main {
         System.out.println("PRE MAIN");
         System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
         System.out.println(java.util.logging.LogManager.getLogManager().getClass().getName());
-        //ServiceLoaderInitializer.init();
-        System.out.println("CONTEXT CLASSLOADER " + Thread.currentThread().getContextClassLoader());
-        System.out.println("ServiceLoaderInitializer.class.getClassLoader() " + ServiceLoaderInitializer.class.getClassLoader());
-//        ExtensionLoader.init();
-//        // Handle recording
-//        Path home = Paths.get(System.getProperty(HOME_DIR));
-//        GraalRecorder.load(home);
-//        Map<String, List<Extension>> map = ExtensionLoader.getAllExtensions();
-//        ClassLoader current = Thread.currentThread().getContextClassLoader();
-//        try {
-//            for (String module : map.keySet()) {
-//                Module m = Module.getBootModuleLoader().loadModule(module);
-//                System.out.println("MODULE extension " + m.getName());
-//                ModuleClassLoader ld = m.getClassLoader();
-//                for (final PreMainInitializer initializer : m.loadService(PreMainInitializer.class)) {
-//                    System.out.println("We have an initiaalizer " + initializer.getClass());
-//                    Thread.currentThread().setContextClassLoader(ld);
-//                    Map<String, List<GraalRecorder.UnresolvedRecord>> records = GraalRecorder.getUnresolvedRecords(initializer.getRecordingKey());
-//                    initializer.init(records);
-//                }
-//            }
-//        } finally {
-//            Thread.currentThread().setContextClassLoader(current);
-//        }
-
     }
 
     public static void main(String[] args) {
