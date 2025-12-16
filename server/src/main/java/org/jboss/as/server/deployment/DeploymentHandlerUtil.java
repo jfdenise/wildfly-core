@@ -109,7 +109,6 @@ public class DeploymentHandlerUtil {
 
     public static void deploy(final OperationContext context, final ModelNode operation, final String deploymentUnitName, final String managementName, final ContentItem... contents) throws OperationFailedException {
         assert contents != null : "contents is null";
-        System.err.println("DEPLOY START");
         if (context.isNormalServer()) {
             //Checking for duplicate runtime name
             PathAddress deploymentsAddress = context.getCurrentAddress().getParent();
