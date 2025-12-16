@@ -5,6 +5,7 @@
 
 package org.wildfly.extension.io;
 
+import java.lang.management.ManagementFactory;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PROFILE;
 import static org.wildfly.extension.io.WorkerResourceDefinition.WORKER_IO_THREADS;
@@ -12,14 +13,13 @@ import static org.wildfly.extension.io.WorkerResourceDefinition.WORKER_TASK_CORE
 import static org.wildfly.extension.io.WorkerResourceDefinition.WORKER_TASK_MAX_THREADS;
 import static org.wildfly.extension.io.WorkerResourceDefinition.STACK_SIZE;
 
-import java.lang.management.ManagementFactory;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+
 
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.CapabilityServiceBuilder;
@@ -48,12 +48,16 @@ class WorkerAdd extends AbstractAddStepHandler {
 
     private static int getMaxDescriptorCount() {
         try {
-            ObjectName oName = new ObjectName("java.lang:type=OperatingSystem");
-            MBeanServerConnection conn = ManagementFactory.getPlatformMBeanServer();
-            Object maxResult = conn.getAttribute(oName, "MaxFileDescriptorCount");
-            if (maxResult != null) {
-                IOLogger.ROOT_LOGGER.tracef("System has MaxFileDescriptorCount set to %d", maxResult);
-                return ((Long)maxResult).intValue();
+            if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
+                IOLogger.ROOT_LOGGER.info("We cannot get MaxFileDescriptorCount from system (NO ACCESS TO PLATFORM MBEAN), not applying any limits");
+            } else {
+                ObjectName oName = new ObjectName("java.lang:type=OperatingSystem");
+                MBeanServerConnection conn = ManagementFactory.getPlatformMBeanServer();
+                Object maxResult = conn.getAttribute(oName, "MaxFileDescriptorCount");
+                if (maxResult != null) {
+                    IOLogger.ROOT_LOGGER.tracef("System has MaxFileDescriptorCount set to %d", maxResult);
+                    return ((Long) maxResult).intValue();
+                }
             }
         } catch (Exception e) {
             //noting we can do, some OSs don't support this attribute

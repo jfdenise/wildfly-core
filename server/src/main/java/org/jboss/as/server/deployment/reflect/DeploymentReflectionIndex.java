@@ -45,7 +45,6 @@ public final class DeploymentReflectionIndex {
      */
     @SuppressWarnings({"unchecked"})
     public synchronized ClassReflectionIndex getClassIndex(Class clazz) {
-        System.out.println("GET CLASS INDEX");
         try {
             ClassReflectionIndex index = classes.get(clazz);
             if (index == null) {

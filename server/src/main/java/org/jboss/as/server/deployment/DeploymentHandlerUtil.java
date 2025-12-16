@@ -210,7 +210,6 @@ public class DeploymentHandlerUtil {
         final Supplier<DeploymentMountProvider> serverDeploymentRepositorySupplier = sb.requires(DeploymentMountProvider.SERVICE_NAME);
         final Supplier<PathManager> pathManagerSupplier = sb.requires(context.getCapabilityServiceName(PathManager.SERVICE_DESCRIPTOR));
         final Supplier<VirtualFile> contentsSupplier = sb.requires(contentsServiceName);
-        System.out.println("WILL DEPLOY " + deploymentUnitServiceName.getCanonicalName());
         final RootDeploymentUnitService service = new RootDeploymentUnitService(deploymentUnitConsumer,
                 serverDeploymentRepositorySupplier, pathManagerSupplier, contentsSupplier,
                 deploymentUnitName, managementName, null, context.getStability(),

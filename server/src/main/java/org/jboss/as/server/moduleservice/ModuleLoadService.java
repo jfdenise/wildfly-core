@@ -41,7 +41,7 @@ public class ModuleLoadService implements Service<Module> {
     private final Collection<ModuleDependency> localDependencies;
 
     private volatile Module module;
-
+    private static Module FROM_BUILD;
     private ModuleLoadService(final Collection<ModuleDependency> systemDependencies, final Collection<ModuleDependency> localDependencies, final Collection<ModuleDependency> userDependencies) {
         this.systemDependencies = systemDependencies;
         this.localDependencies = localDependencies;
@@ -75,11 +75,19 @@ public class ModuleLoadService implements Service<Module> {
             final ServiceModuleLoader moduleLoader = serviceModuleLoader.getValue();
             Module module;
             if (Boolean.getBoolean("org.wildfly.graal")) {
-                System.out.println("LOADING STATIC MODULE");
-                module = Module.getBootModuleLoader().loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
+                ServerLogger.AS_ROOT_LOGGER.info("Re-using deployment module from build phase.");
+                module = FROM_BUILD;
+                try {
+                    module.restorePermissions();
+                } catch (Exception ex) {
+                    throw new StartException(ex);
+                }
             } else {
                 module = moduleLoader.loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
                 moduleLoader.relinkModule(module);
+                if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
+                    FROM_BUILD = module;
+                }
             }
             for (ModuleDependency dependency : allDependencies) {
                 if (dependency.isUserSpecified()) {
@@ -108,7 +116,13 @@ public class ModuleLoadService implements Service<Module> {
 
     @Override
     public synchronized void stop(StopContext context) {
-        // we don't actually unload the module, that is taken care of by the service module loader
+        try {
+            // we don't actually unload the module, that is taken care of by the service module loader
+            // Clean the permissions so they can be reconstructed at startup.
+            module.cleanupPermissions();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
         module = null;
     }
 

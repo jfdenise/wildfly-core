@@ -86,7 +86,6 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
         final ResourceRoot mainRoot = deploymentUnit.getAttachment(Attachments.DEPLOYMENT_ROOT);
         if (mainRoot == null)
             return;
-        System.out.println("THE MODULE TOOT " + mainRoot.getRoot().getPathName());
         // Add internal resource roots
         final ModuleSpecification moduleSpec = deploymentUnit.getAttachment(Attachments.MODULE_SPECIFICATION);
         final List<ResourceRoot> resourceRoots = new ArrayList<ResourceRoot>();
@@ -116,7 +115,6 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
         }
 
         // create the module service and set it to attach to the deployment in the next phase
-        System.out.println("CREATE MODULE SERVICE " + deploymentUnit);
         final ServiceName moduleServiceName = createModuleService(phaseContext, deploymentUnit, resourceRoots, parentResourceRoots, moduleSpec, moduleIdentifier);
         phaseContext.addDeploymentDependency(moduleServiceName, Attachments.MODULE);
 
@@ -200,7 +198,6 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
                                             final List<ResourceRoot> resourceRoots, final List<ResourceRoot> parentResourceRoots,
                                             final ModuleSpecification moduleSpecification, final String moduleIdentifier) throws DeploymentUnitProcessingException {
         logger.debugf("Creating module: %s", moduleIdentifier);
-        System.out.println("CREATING THE MODULE " + moduleIdentifier);
         final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
         for (final DependencySpec dep : moduleSpecification.getModuleSystemDependencies()) {
             specBuilder.addDependency(dep);
@@ -221,7 +218,6 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
 
         for (final ResourceRoot resourceRoot : resourceRoots) {
             logger.debugf("Adding resource %s to module %s", resourceRoot.getRoot(), moduleIdentifier);
-            System.out.println("RESOURCE ROOT " + resourceRoot.getRoot().getName());
             addResourceRoot(specBuilder, resourceRoot, permFactories);
         }
 

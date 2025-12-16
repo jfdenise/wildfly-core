@@ -29,9 +29,6 @@ public class ModuleDefinition {
         this.moduleIdentifier = moduleIdentifier;
         this.dependencies = dependencies;
         this.moduleSpec = moduleSpec;
-        for(ModuleDependency moduleDependency : dependencies) {
-            System.out.println("DEP " + moduleDependency.getDependencyModule());
-        }
     }
 
     public String getModuleName() {

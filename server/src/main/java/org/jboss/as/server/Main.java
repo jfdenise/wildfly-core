@@ -62,9 +62,20 @@ public final class Main {
         System.out.println("PRE MAIN");
         System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
         System.out.println(java.util.logging.LogManager.getLogManager().getClass().getName());
+        // Start the server in suspend mode
+        String[] args = {"--start-mode=suspend"};
+        BootstrapImpl bootstrap = (BootstrapImpl)doMain(args);
+        Thread.sleep(3000);
+        bootstrap.shutdownContainer();
+        Thread.sleep(2000);
     }
 
     public static void main(String[] args) {
+        doMain(args);
+    }
+
+    public static Bootstrap doMain(String[] args) {
+        Bootstrap bootstrap =null;
         try {
             if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager")) {
                 // Make sure our original stdio is properly captured.
@@ -93,15 +104,15 @@ public final class Main {
                     SystemExiter.safeAbort();
                 }
             } else {
-                final Bootstrap bootstrap = Bootstrap.Factory.newInstance();
+                bootstrap = Bootstrap.Factory.newInstance();
                 final Bootstrap.Configuration configuration = new Bootstrap.Configuration(serverEnvironmentWrapper.getServerEnvironment());
                 configuration.setModuleLoader(Module.getBootModuleLoader());
                 bootstrap.bootstrap(configuration, Collections.emptyList()).get();
             }
-            System.out.println("SERVER STARTED WITH BOOT " + Main.class.getClassLoader());
         } catch (Throwable t) {
             abort(t);
         }
+        return bootstrap;
     }
 
     private static void abort(Throwable t) {

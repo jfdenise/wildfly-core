@@ -19,7 +19,7 @@ import org.jboss.modules.Module;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class InstallReflectionIndexProcessor implements DeploymentUnitProcessor {
-
+    private static DeploymentReflectionIndex FROM_BUILD;
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
         Module module = deploymentUnit.getAttachment(Attachments.MODULE);
@@ -28,11 +28,15 @@ public final class InstallReflectionIndexProcessor implements DeploymentUnitProc
         }
 
         if(deploymentUnit.getParent() == null) {
-           // if(Boolean.getBoolean("org.wildfly.graal")) {
-                //index =
-           // } else {
-                final DeploymentReflectionIndex index = DeploymentReflectionIndex.create();
-            //}
+            DeploymentReflectionIndex index;
+           if(Boolean.getBoolean("org.wildfly.graal")) {
+               index = FROM_BUILD;
+           } else {
+                index = DeploymentReflectionIndex.create();
+                if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
+                    FROM_BUILD = index;
+                }
+           }
             deploymentUnit.putAttachment(Attachments.REFLECTION_INDEX, index);
             deploymentUnit.putAttachment(Attachments.PROXY_REFLECTION_INDEX, new ProxyMetadataSource(index));
         } else {
