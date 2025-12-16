@@ -370,9 +370,10 @@ public final class ServerService extends AbstractControllerService {
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.INSTALL, Phase.INSTALL_SERVICE_ACTIVATOR, new ServiceActivatorProcessor());
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.INSTALL, Phase.INSTALL_DEPLOYMENT_COMPLETE_SERVICE, new DeploymentCompleteServiceProcessor());
             if(!Boolean.getBoolean("org.wildfly.graal.build.time")) {
-                ServerLogger.ROOT_LOGGER.warn("At build time do not install cleaners to keep Relection index. XXX TO REVIST");
                 DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.CLEANUP, Phase.CLEANUP_REFLECTION_INDEX, new CleanupReflectionIndexProcessor());
                 DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.CLEANUP, Phase.CLEANUP_ANNOTATION_INDEX, new CleanupAnnotationIndexProcessor());
+            } else {
+                ServerLogger.ROOT_LOGGER.warn("At build time do not install cleaners to keep Relection index. XXX TO REVIST");
             }
             //jboss.xml parsers
             DeploymentStructureDescriptorParser.registerJBossXMLParsers();

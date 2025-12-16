@@ -60,7 +60,7 @@ public class PermissionsPreLoader {
         }
     }
 static {
-    System.out.println("INIT PERMISSIONS IN STATIC");
+    //System.out.println("INIT PERMISSIONS IN STATIC");
         try {
             ModuleClassLoader loader = (ModuleClassLoader) PermissionsPreLoader.class.getClassLoader();
             Module mod = loader.getModule();
@@ -77,7 +77,7 @@ static {
                 for (Permission permission : permissions.get(module)) {
                     java.security.Permission p = PermissionUtil.createPermission(classLoader, permission.getClassName(), permission.getTargetName(), permission.getAction());
                     lst.add(p);
-                    System.out.println("ELYTRON, ADDING PERMISSION " + permission.getClassName() + " from module [" + module + "]");
+                    //System.out.println("ELYTRON, ADDING PERMISSION " + permission.getClassName() + " from module [" + module + "]");
                 }
             }
         } catch (Exception ex) {
@@ -87,11 +87,11 @@ static {
     java.security.Permission getPermission(String moduleName, String className) throws Exception {
         moduleName = moduleName == null ? "" : moduleName;
         List<java.security.Permission> lst = PERMISSIONS.get(moduleName);
-        System.out.println("GET THE PERMISSIONS from " + PERMISSIONS);
+        //System.out.println("GET THE PERMISSIONS from " + PERMISSIONS);
         for (java.security.Permission p : lst) {
-            System.out.println("GET PERMISSION " + p.getClass().getName());
+            //System.out.println("GET PERMISSION " + p.getClass().getName());
             if (p.getClass().getName().equals(className)) {
-                System.out.println(" OK GET PERMISSION " + p.getClass().getName());
+                //System.out.println(" OK GET PERMISSION " + p.getClass().getName());
                 return p;
             }
         }

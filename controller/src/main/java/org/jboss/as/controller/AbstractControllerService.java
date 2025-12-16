@@ -632,7 +632,6 @@ public abstract class AbstractControllerService implements Service<ModelControll
      * @param context the boot context
      */
     protected final ModelNode registerModelControllerServiceInitializationBootStep(BootContext context) {
-        System.out.println("@@@@@@@@@@@@ THIS " + this.getClass());
         ModelControllerServiceInitializationParams initParams = getModelControllerServiceInitializationParams();
         if (initParams != null) {
             //Register the hidden op. The operation handler removes the operation once it is done
