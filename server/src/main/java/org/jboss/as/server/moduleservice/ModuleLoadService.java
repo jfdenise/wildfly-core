@@ -87,6 +87,16 @@ public class ModuleLoadService implements Service<Module> {
                 moduleLoader.relinkModule(module);
                 if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
                     FROM_BUILD = module;
+                    try {
+                        System.out.println("Adding services to deployment module, used at runtime.");
+                        String services = System.getProperty("org.wildfly.graal.deployment.services");
+                        String[] sarray = services.split(",");
+                        for (String serviceClass : sarray) {
+                            FROM_BUILD.addServiceToCache(serviceClass);
+                        }
+                    } catch (Exception ex) {
+                        throw new StartException(ex);
+                    }
                 }
             }
             for (ModuleDependency dependency : allDependencies) {
