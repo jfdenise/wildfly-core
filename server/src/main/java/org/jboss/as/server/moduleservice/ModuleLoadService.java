@@ -12,6 +12,7 @@ import java.util.List;
 import org.jboss.as.server.Services;
 import org.jboss.as.server.deployment.module.ModuleDependency;
 import org.jboss.as.server.logging.ServerLogger;
+import org.jboss.modules.ClassCache;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleNotFoundException;
@@ -88,11 +89,15 @@ public class ModuleLoadService implements Service<Module> {
                 if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
                     FROM_BUILD = module;
                     try {
+                        //Install cache
+                        String cacheClass = System.getProperty("org.wildfly.graal.cache.class");
+                        ClassCache cache = (ClassCache)Class.forName(cacheClass).newInstance();
+                        FROM_BUILD.setClassCache(cache);
                         System.out.println("Adding services to deployment module, used at runtime.");
                         String services = System.getProperty("org.wildfly.graal.deployment.services");
                         String[] sarray = services.split(",");
                         for (String serviceClass : sarray) {
-                            FROM_BUILD.addServiceToCache(serviceClass);
+                            FROM_BUILD.getCache().addServiceToCache(serviceClass);
                         }
                     } catch (Exception ex) {
                         throw new StartException(ex);
