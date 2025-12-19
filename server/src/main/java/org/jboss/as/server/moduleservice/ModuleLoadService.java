@@ -99,6 +99,11 @@ public class ModuleLoadService implements Service<Module> {
                         for (String serviceClass : sarray) {
                             FROM_BUILD.getCache().addServiceToCache(serviceClass);
                         }
+                        String classes = System.getProperty("org.wildfly.graal.deployment.classes");
+                        String[] carray = classes.split(",");
+                        for (String clazz : carray) {
+                            FROM_BUILD.getCache().addClassToCache(clazz);
+                        }
                     } catch (Exception ex) {
                         throw new StartException(ex);
                     }
