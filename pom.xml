@@ -258,7 +258,7 @@
         <version.org.jboss.marshalling.jboss-marshalling>2.2.3.Final</version.org.jboss.marshalling.jboss-marshalling>
         <version.org.jboss.modules.jboss-modules>2.3.0.Final-SNAPSHOT</version.org.jboss.modules.jboss-modules>
         <version.org.jboss.msc.jboss-msc>1.5.7.Final-SNAPSHOT</version.org.jboss.msc.jboss-msc>
-        <version.org.jboss.remoting>5.0.31.Final</version.org.jboss.remoting>
+        <version.org.jboss.remoting>5.0.32.Final-SNAPSHOT</version.org.jboss.remoting>
         <version.org.jboss.remotingjmx.remoting-jmx>3.1.0.Final</version.org.jboss.remotingjmx.remoting-jmx>
         <version.org.jboss.shrinkwrap.shrinkwrap>1.2.6</version.org.jboss.shrinkwrap.shrinkwrap>
         <version.org.jboss.slf4j.slf4j-jboss-logmanager>2.0.2.Final</version.org.jboss.slf4j.slf4j-jboss-logmanager>
@@ -287,7 +287,7 @@
         <version.org.wildfly.openssl.wildfly-openssl-linux-s390x>2.2.2.SP01</version.org.wildfly.openssl.wildfly-openssl-linux-s390x>
         <version.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${version.org.wildfly.openssl.natives}</version.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
         <version.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${version.org.wildfly.openssl.natives}</version.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
-        <version.org.wildfly.security.elytron>2.7.0.Final</version.org.wildfly.security.elytron>
+        <version.org.wildfly.security.elytron>2.8.0.CR1-SNAPSHOT</version.org.wildfly.security.elytron>
         <version.org.wildfly.security.elytron-web>4.1.2.Final</version.org.wildfly.security.elytron-web>
         <version.org.wildfly.security.jakarta.elytron-ee>3.2.0.Final</version.org.wildfly.security.jakarta.elytron-ee>
         <version.org.wildfly.unstable.api.annotation>1.0.2.Final</version.org.wildfly.unstable.api.annotation>

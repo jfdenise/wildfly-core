@@ -88,21 +88,28 @@ public class ModuleLoadService implements Service<Module> {
                 moduleLoader.relinkModule(module);
                 if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
                     FROM_BUILD = module;
+                    //for(DependencySpec d : module.getDependencies()) {
+                    //    System.out.println("Module " + module.hashCode() + " dependency " + d.getClass() + " tostring " + d);
+                    //}
                     try {
                         //Install cache
                         String cacheClass = System.getProperty("org.wildfly.graal.cache.class");
-                        ClassCache cache = (ClassCache)Class.forName(cacheClass).newInstance();
+                        ClassCache cache = (ClassCache) Class.forName(cacheClass).newInstance();
                         FROM_BUILD.setClassCache(cache);
                         System.out.println("Adding services to deployment module, used at runtime.");
                         String services = System.getProperty("org.wildfly.graal.deployment.services");
-                        String[] sarray = services.split(",");
-                        for (String serviceClass : sarray) {
-                            FROM_BUILD.getCache().addServiceToCache(serviceClass);
+                        if (services != null) {
+                            String[] sarray = services.split(",");
+                            for (String serviceClass : sarray) {
+                                FROM_BUILD.getCache().addServiceToCache(serviceClass);
+                            }
                         }
                         String classes = System.getProperty("org.wildfly.graal.deployment.classes");
-                        String[] carray = classes.split(",");
-                        for (String clazz : carray) {
-                            FROM_BUILD.getCache().addClassToCache(clazz);
+                        if (classes != null) {
+                            String[] carray = classes.split(",");
+                            for (String clazz : carray) {
+                                FROM_BUILD.getCache().addClassToCache(clazz);
+                            }
                         }
                     } catch (Exception ex) {
                         throw new StartException(ex);

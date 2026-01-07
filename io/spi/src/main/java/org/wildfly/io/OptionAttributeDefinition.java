@@ -8,6 +8,8 @@ package org.wildfly.io;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.jboss.as.controller.AbstractAttributeDefinitionBuilder;
 import org.jboss.as.controller.ExpressionResolver;
@@ -22,6 +24,11 @@ import org.xnio.OptionMap;
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2012 Red Hat Inc.
  */
 public class OptionAttributeDefinition extends SimpleAttributeDefinition {
+    private static final Map<String, Field> FIELDS;
+    static {
+        System.out.println("INIT OptionAttributeDefinition");
+        FIELDS = new HashMap<>();
+    }
     private final Option option;
     private final Class<?> optionType;
 
@@ -113,14 +120,30 @@ public class OptionAttributeDefinition extends SimpleAttributeDefinition {
             try {
                 final Field typeField;
                 if (option.getClass().getSimpleName().equals("SequenceOption")) {
-                    typeField = option.getClass().getDeclaredField("elementType");
+                    if(Boolean.getBoolean("org.wildfly.graal")) {
+                        typeField = FIELDS.get(option.getClass().getName());
+                    } else {
+                        typeField = option.getClass().getDeclaredField("elementType");
+                        typeField.setAccessible(true);
+                        if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
+                            FIELDS.put(option.getClass().getName(), typeField);
+                        }
+                    }
                 } else {
                     // This is initialized at build time.
-                    //System.out.println("OPTION " + option.getClass() + " classloader " + option.getClass().getClassLoader());
-                    typeField = option.getClass().getDeclaredField("type");
+                    if(Boolean.getBoolean("org.wildfly.graal")) {
+                        System.out.println("OPTION " + option.getClass() + " classloader " + option.getClass().getClassLoader());
+                        System.out.println("FIELDS IN CACHE " + FIELDS);
+                        typeField = FIELDS.get(option.getClass().getName());
+                    } else {
+                        typeField = option.getClass().getDeclaredField("type");
+                        typeField.setAccessible(true);
+                        if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
+                            System.out.println("PUT OPTION " + option.getClass().getName() + " typeField " + typeField);
+                            FIELDS.put(option.getClass().getName(), typeField);
+                        }
+                    }
                 }
-
-                typeField.setAccessible(true);
                 Class<?> optionType = (Class<?>) typeField.get(option);
                 return optionType;
             } catch (Exception e) {
