@@ -132,14 +132,11 @@ public class OptionAttributeDefinition extends SimpleAttributeDefinition {
                 } else {
                     // This is initialized at build time.
                     if(Boolean.getBoolean("org.wildfly.graal")) {
-                        System.out.println("OPTION " + option.getClass() + " classloader " + option.getClass().getClassLoader());
-                        System.out.println("FIELDS IN CACHE " + FIELDS);
                         typeField = FIELDS.get(option.getClass().getName());
                     } else {
                         typeField = option.getClass().getDeclaredField("type");
                         typeField.setAccessible(true);
                         if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
-                            System.out.println("PUT OPTION " + option.getClass().getName() + " typeField " + typeField);
                             FIELDS.put(option.getClass().getName(), typeField);
                         }
                     }
