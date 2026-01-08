@@ -8,11 +8,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.jboss.as.server.Services;
 import org.jboss.as.server.deployment.module.ModuleDependency;
 import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.modules.ClassCache;
+import org.jboss.modules.DependencySpec;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleNotFoundException;
@@ -88,22 +90,25 @@ public class ModuleLoadService implements Service<Module> {
                 moduleLoader.relinkModule(module);
                 if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
                     FROM_BUILD = module;
-                    //for(DependencySpec d : module.getDependencies()) {
-                    //    System.out.println("Module " + module.hashCode() + " dependency " + d.getClass() + " tostring " + d);
-                    //}
+                    for(DependencySpec d : module.getDependencies()) {
+                        System.out.println(d);
+                    }
                     try {
                         //Install cache
                         String cacheClass = System.getProperty("org.wildfly.graal.cache.class");
                         ClassCache cache = (ClassCache) Class.forName(cacheClass).newInstance();
                         FROM_BUILD.setClassCache(cache);
-                        System.out.println("Adding services to deployment module, used at runtime.");
-                        String services = System.getProperty("org.wildfly.graal.deployment.services");
-                        if (services != null) {
-                            String[] sarray = services.split(",");
-                            for (String serviceClass : sarray) {
-                                FROM_BUILD.getCache().addServiceToCache(serviceClass);
+                        System.out.println("Discovering services for deployment module.");
+                        for (String serviceClass : FROM_BUILD.getServices()) {
+                            if (!serviceClass.startsWith("java.lang.")) {
+                                System.out.println(serviceClass);
+                                Set<String> impl = FROM_BUILD.getCache().addServiceToCache(serviceClass);
+                                for(String s : impl) {
+                                    System.out.println("   " + s);
+                                }
                             }
                         }
+                        System.out.println("Services discovery done");
                         String classes = System.getProperty("org.wildfly.graal.deployment.classes");
                         if (classes != null) {
                             String[] carray = classes.split(",");
