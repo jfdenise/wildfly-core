@@ -60,8 +60,6 @@ public final class Main {
      */
     public static void preMain() throws Exception {
         System.out.println("PRE MAIN");
-        System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
-        System.out.println(java.util.logging.LogManager.getLogManager().getClass().getName());
         // Start the server in suspend mode
         String[] args = {"--start-mode=suspend"};
         BootstrapImpl bootstrap = (BootstrapImpl)doMain(args);
@@ -77,7 +75,7 @@ public final class Main {
     public static Bootstrap doMain(String[] args) {
         Bootstrap bootstrap =null;
         try {
-            if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager")) {
+            if (java.util.logging.LogManager.getLogManager().getClass().getName().equals("org.jboss.logmanager.LogManager") && !Boolean.getBoolean("org.wildfly.graal.build.time")) {
                 // Make sure our original stdio is properly captured.
                 try {
                     Class.forName(org.jboss.logmanager.handlers.ConsoleHandler.class.getName(), true, org.jboss.logmanager.handlers.ConsoleHandler.class.getClassLoader());

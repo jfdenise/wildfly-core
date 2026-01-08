@@ -14,7 +14,6 @@ import org.jboss.as.server.Services;
 import org.jboss.as.server.deployment.module.ModuleDependency;
 import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.modules.ClassCache;
-import org.jboss.modules.DependencySpec;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleNotFoundException;
@@ -90,9 +89,9 @@ public class ModuleLoadService implements Service<Module> {
                 moduleLoader.relinkModule(module);
                 if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
                     FROM_BUILD = module;
-                    for(DependencySpec d : module.getDependencies()) {
-                        System.out.println(d);
-                    }
+//                    for(DependencySpec d : module.getDependencies()) {
+//                        System.out.println(d);
+//                    }
                     try {
                         //Install cache
                         String cacheClass = System.getProperty("org.wildfly.graal.cache.class");
@@ -101,11 +100,11 @@ public class ModuleLoadService implements Service<Module> {
                         System.out.println("Discovering services for deployment module.");
                         for (String serviceClass : FROM_BUILD.getServices()) {
                             if (!serviceClass.startsWith("java.lang.")) {
-                                System.out.println(serviceClass);
+                                //System.out.println(serviceClass);
                                 Set<String> impl = FROM_BUILD.getCache().addServiceToCache(serviceClass);
-                                for(String s : impl) {
-                                    System.out.println("   " + s);
-                                }
+//                                for(String s : impl) {
+//                                    System.out.println("   " + s);
+//                                }
                             }
                         }
                         System.out.println("Services discovery done");
