@@ -64,8 +64,13 @@ public final class Main {
         String[] args = {"--start-mode=suspend"};
         BootstrapImpl bootstrap = (BootstrapImpl)doMain(args);
         Thread.sleep(3000);
-        bootstrap.shutdownContainer();
-        Thread.sleep(2000);
+        try {
+            bootstrap.shutdownContainer();
+        } catch(Throwable ex) {
+            System.out.println("ERROR SHUTING DOWN " + ex);
+        }
+        Thread.sleep(5000);
+        System.out.println("LEAVING");
     }
 
     public static void main(String[] args) {
