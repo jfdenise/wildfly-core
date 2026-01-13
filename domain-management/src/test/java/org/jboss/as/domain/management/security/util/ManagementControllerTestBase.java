@@ -67,6 +67,16 @@ public class ManagementControllerTestBase extends AbstractControllerTestBase {
                 super.addHardcodedAbsolutePath(getContainer(), "log.dir", logDir.getAbsolutePath());
                 super.addHardcodedAbsolutePath(getContainer(), "jboss.controller.temp.dir", tmpDir.getAbsolutePath());
             }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         };
         GlobalOperationHandlers.registerGlobalOperations(registration, processType);
         registration.registerOperationHandler(CompositeOperationHandler.DEFINITION, CompositeOperationHandler.INSTANCE);

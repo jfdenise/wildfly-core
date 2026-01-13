@@ -222,6 +222,16 @@ public class OperationTimeoutUnitTestCase {
 
             GlobalOperationHandlers.registerGlobalOperations(rootRegistration, processType);
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     public static class BlockingServiceHandler implements OperationStepHandler {
@@ -318,6 +328,16 @@ public class OperationTimeoutUnitTestCase {
             if (stop) {
                 block();
             }
+        }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
         }
     }
 }

@@ -58,8 +58,8 @@ public class NetworkInterfaceService implements Service<NetworkInterfaceBinding>
 
     private final String name;
     private final boolean anyLocal;
-    private final OverallInterfaceCriteria criteria;
-
+    private OverallInterfaceCriteria criteria;
+    final Set<InterfaceCriteria> criteriaSet;
     public static Service<NetworkInterfaceBinding> create(String name, ParsedInterfaceCriteria criteria) {
         return new NetworkInterfaceService(name, criteria.isAnyLocal(), criteria.getCriteria());
     }
@@ -67,6 +67,7 @@ public class NetworkInterfaceService implements Service<NetworkInterfaceBinding>
     public NetworkInterfaceService(final String name,  final boolean anyLocal, final Set<InterfaceCriteria> criteria) {
         this.name = name;
         this.anyLocal = anyLocal;
+        criteriaSet = criteria;
         this.criteria = new OverallInterfaceCriteria(name, criteria);
     }
 
@@ -156,5 +157,21 @@ public class NetworkInterfaceService implements Service<NetworkInterfaceBinding>
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void passivate() {
+        criteria = null;
+        interfaceBinding = null;
+    }
+
+    @Override
+    public void resume() {
+        this.criteria = new OverallInterfaceCriteria(name, criteriaSet);
+        try {
+            this.interfaceBinding = createBinding(anyLocal, criteria);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

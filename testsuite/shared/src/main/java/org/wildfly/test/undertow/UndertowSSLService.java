@@ -54,4 +54,14 @@ public class UndertowSSLService implements Service<UndertowSSLService> {
     public UndertowSSLService getValue() throws IllegalStateException, IllegalArgumentException {
         return this;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

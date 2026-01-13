@@ -143,4 +143,14 @@ public class JMXNotificationsService implements ServiceActivator, Service<Void> 
         mbeanServerValue.removeNotificationListener(name, listener);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

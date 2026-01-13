@@ -778,6 +778,16 @@ public class PathsTestCase extends AbstractControllerTestBase {
             {
                 super.addHardcodedAbsolutePath(getContainer(), "hardcoded", "/hard/coded");
             }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         };
         GlobalOperationHandlers.registerGlobalOperations(registration, processType);
 

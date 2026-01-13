@@ -716,6 +716,16 @@ public class JmxAuditLogHandlerTestCase extends AbstractControllerTestBase {
             {
                 super.addHardcodedAbsolutePath(getContainer(), "log.dir", logDir.getAbsolutePath());
             }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         };
         GlobalOperationHandlers.registerGlobalOperations(registration, processType);
         registration.registerOperationHandler(CompositeOperationHandler.DEFINITION, CompositeOperationHandler.INSTANCE);

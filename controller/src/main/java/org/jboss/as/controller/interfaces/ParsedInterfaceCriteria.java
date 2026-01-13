@@ -148,7 +148,7 @@ public final class ParsedInterfaceCriteria {
             case LOOPBACK_ADDRESS: {
                 ModelNode value = parsePossibleExpression(property.getValue());
                 checkStringType(value, element.getLocalName(), true);
-                return new LoopbackAddressInterfaceCriteria(parseInetAddress(value, expressionResolver));
+                return new LoopbackAddressInterfaceCriteria(expressionResolver.resolveExpressions(value).asString());
             }
             case NIC: {
                 ModelNode value = parsePossibleExpression(property.getValue());
@@ -221,7 +221,7 @@ public final class ParsedInterfaceCriteria {
             return new WildcardInetAddressInterfaceCriteria(address);
         } else if (address.isLoopbackAddress()) {
             // support any loopback address via the -b argument, without xml files changes - WFLY-248
-            return new LoopbackAddressInterfaceCriteria(address);
+            return new LoopbackAddressInterfaceCriteria(expressionResolver.resolveExpressions(model).asString());
         } else {
             return new InetAddressMatchInterfaceCriteria(address);
         }

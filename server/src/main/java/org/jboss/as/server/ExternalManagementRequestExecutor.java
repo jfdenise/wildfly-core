@@ -144,4 +144,14 @@ public class ExternalManagementRequestExecutor implements Service<ExecutorServic
     public synchronized ExecutorService getValue() throws IllegalStateException, IllegalArgumentException {
         return executorService;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

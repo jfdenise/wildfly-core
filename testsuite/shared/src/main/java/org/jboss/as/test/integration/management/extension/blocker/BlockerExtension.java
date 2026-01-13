@@ -325,5 +325,15 @@ public class BlockerExtension implements Extension {
         public BlockingService getValue() throws IllegalStateException, IllegalArgumentException {
             return this;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 }

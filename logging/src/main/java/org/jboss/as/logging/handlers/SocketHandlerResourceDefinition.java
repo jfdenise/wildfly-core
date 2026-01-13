@@ -247,6 +247,16 @@ public class SocketHandlerResourceDefinition extends SimpleResourceDefinition {
                         public void stop(final StopContext context) {
                             // Nothing to do on stop
                         }
+
+                        @Override
+                        public void passivate() {
+                            //TODO
+                        }
+
+                        @Override
+                        public void resume() {
+                            //TODO
+                        }
                     }).install();
                 }
             };

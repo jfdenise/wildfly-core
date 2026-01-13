@@ -45,4 +45,14 @@ public class HostControllerEnvironmentService implements Service<HostControllerE
     public HostControllerEnvironment getValue() throws IllegalStateException, IllegalArgumentException {
         return environment;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

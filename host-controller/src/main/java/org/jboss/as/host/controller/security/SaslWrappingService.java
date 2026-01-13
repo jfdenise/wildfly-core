@@ -85,4 +85,14 @@ public class SaslWrappingService implements Service {
 
         return wrapperName;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

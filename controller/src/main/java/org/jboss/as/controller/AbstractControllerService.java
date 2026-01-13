@@ -809,8 +809,28 @@ public abstract class AbstractControllerService implements Service<ModelControll
         public Object getValue() {
             return value;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
+    @Override
+    public void passivate() {
+        controller.passivate();
+    }
+
+    @Override
+    public void resume() {
+        controller.resume();
+        //TODO
+    }
     private static class AdditionalBootCliScriptInvocation {
         private final AbstractControllerService controllerService;
         private final File additionalBootCliScript;

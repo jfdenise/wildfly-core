@@ -382,6 +382,16 @@ class KeyStoreService implements ModifiableKeyStoreService {
         return ByteIterator.ofBytes(digest).hexEncode().drainToString(HEX_DELIMITER, 2);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     static class LoadKey {
         private final AtomicLoadKeyStore.LoadKey loadKey;
         private final long modifiedTime;

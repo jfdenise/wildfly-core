@@ -125,6 +125,16 @@ public class ServerBootOperationsService implements Service<Void> {
         return executorInjector;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private static class FutureBootUpdates extends AsyncFutureTask<ModelNode> implements ActiveOperation.CompletedCallback<ModelNode> {
 
         private FutureBootUpdates() {

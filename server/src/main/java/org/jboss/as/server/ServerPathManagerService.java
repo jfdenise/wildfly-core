@@ -63,4 +63,12 @@ public class ServerPathManagerService extends PathManagerService {
         service.addHardcodedAbsolutePath(serviceTarget, name, path.getAbsolutePath());
     }
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
 }

@@ -72,4 +72,14 @@ class AggregateComponentService<T> implements Service<T> {
         return aggregation;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

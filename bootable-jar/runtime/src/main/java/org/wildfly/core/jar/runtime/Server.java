@@ -290,6 +290,16 @@ final class Server {
             @Override
             public void stop(StopContext context) {
             }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         });
         sb.install();
     }

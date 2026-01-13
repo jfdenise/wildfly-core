@@ -191,8 +191,10 @@ class HttpServerDefinitions {
                             buildDynamicCapabilityName(PROVIDERS_CAPABILITY, providers), Provider[].class),
                             Provider[].class, providersInjector);
                     providerSupplier = providersInjector::getValue;
+                    System.out.println("PROVIDER SUPPLIER");
                 } else {
                     providerSupplier = Security::getProviders;
+                    System.out.println("PROVIDER FROM Security.getProviders");
                 }
 
                 Predicate<Provider.Service> serviceFilter = (Provider.Service s) -> HttpServerAuthenticationMechanismFactory.class.getSimpleName().equals(s.getType());

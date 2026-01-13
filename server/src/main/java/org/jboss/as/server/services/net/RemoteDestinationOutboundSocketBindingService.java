@@ -43,4 +43,12 @@ public class RemoteDestinationOutboundSocketBindingService extends OutboundSocke
         return new OutboundSocketBinding(outboundSocketName, socketBindingManagerSupplier.get(), destinationHost, destinationPort,
                 sourceInterfaceSupplier != null ? sourceInterfaceSupplier.get() : null, sourcePort, fixedSourcePort);
     }
+
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
 }

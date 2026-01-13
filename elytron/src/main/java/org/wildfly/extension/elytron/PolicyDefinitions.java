@@ -230,6 +230,16 @@ class PolicyDefinitions {
                     private PrivilegedAction<Policy> getPolicyAction() {
                         return PolicyUtil::getPolicy;
                     }
+
+                    @Override
+                    public void passivate() {
+                        //TODO
+                    }
+
+                    @Override
+                    public void resume() {
+                        //TODO
+                    }
                 };
             }
         };

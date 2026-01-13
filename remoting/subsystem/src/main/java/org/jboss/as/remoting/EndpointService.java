@@ -75,6 +75,16 @@ public class EndpointService implements Service {
         }
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     public enum EndpointType {
         MANAGEMENT,
         SUBSYSTEM

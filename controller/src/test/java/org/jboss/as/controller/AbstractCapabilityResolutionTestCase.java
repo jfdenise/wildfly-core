@@ -232,6 +232,16 @@ abstract class AbstractCapabilityResolutionTestCase {
             registerCapability(capabilityRegistry, SBG_D);
             registerCapability(capabilityRegistry, SBG_F, false);
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
     private static void registerCapability(RuntimeCapabilityRegistry registry, PathElement element){
          registerCapability(registry, element, true);

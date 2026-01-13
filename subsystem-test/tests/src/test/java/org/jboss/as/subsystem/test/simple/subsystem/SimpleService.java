@@ -31,4 +31,14 @@ public class SimpleService implements Service<SimpleService> {
     public void stop(StopContext context) {
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

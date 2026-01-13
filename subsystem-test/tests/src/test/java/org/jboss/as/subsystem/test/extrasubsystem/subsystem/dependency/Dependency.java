@@ -31,4 +31,14 @@ public class Dependency implements Service<Dependency> {
     public void stop(StopContext context) {
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

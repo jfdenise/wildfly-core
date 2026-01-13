@@ -244,4 +244,14 @@ public class DeploymentScannerService implements Service<DeploymentScanner> {
         return scanner;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

@@ -182,5 +182,15 @@ public class CustomContextExtension implements Extension {
         InjectedValue<ExtensibleHttpManagement> getHttpManagementInjector() {
             return httpManagementInjector;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 }

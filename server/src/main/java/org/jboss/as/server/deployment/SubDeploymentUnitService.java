@@ -53,4 +53,14 @@ final class SubDeploymentUnitService extends AbstractDeploymentUnitService {
         return deploymentUnit;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

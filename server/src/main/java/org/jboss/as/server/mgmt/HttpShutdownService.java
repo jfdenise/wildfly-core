@@ -88,4 +88,14 @@ public class HttpShutdownService implements Service {
             context.complete();
         }
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

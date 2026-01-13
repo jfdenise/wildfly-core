@@ -72,5 +72,15 @@ abstract class AbstractRemotingSubsystemBaseTest extends AbstractSubsystemSchema
             }
             return (T) dependencies.get(name).get();
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 }

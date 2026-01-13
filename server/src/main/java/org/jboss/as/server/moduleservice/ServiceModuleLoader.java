@@ -41,6 +41,14 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
     // Provide logging
     private static final ServerLogger log = ServerLogger.MODULE_SERVICE_LOGGER;
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
     /**
      * Listener class that atomically retrieves the moduleSpec, and automatically removes the Module when the module spec
      * service is removed

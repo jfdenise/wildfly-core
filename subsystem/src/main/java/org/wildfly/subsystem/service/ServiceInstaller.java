@@ -98,6 +98,16 @@ public interface ServiceInstaller extends ResourceServiceInstaller, DeploymentSe
             public void stop(StopContext context) {
                 // Services installed into child target are auto-removed after this service stops.
             }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         }).startWhen(StartWhen.INSTALLED);
     }
 
@@ -134,6 +144,16 @@ public interface ServiceInstaller extends ResourceServiceInstaller, DeploymentSe
             @Override
             public void stop(StopContext context) {
                 stopTask.run();
+            }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
             }
         }).startWhen(StartWhen.AVAILABLE);
     }

@@ -199,6 +199,16 @@ class ProcessControllerConnectionService implements Service<ProcessControllerCon
         return client;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     // Wrapper class to delay thread group creation until when it's needed.
     private static class ThreadGroupHolder {
         private static final ThreadGroup THREAD_GROUP = new ThreadGroup("ProcessControllerConnection-thread");

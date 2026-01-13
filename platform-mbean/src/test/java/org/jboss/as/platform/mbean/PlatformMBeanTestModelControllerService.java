@@ -80,4 +80,14 @@ public class PlatformMBeanTestModelControllerService extends AbstractControllerS
     protected ModelControllerClientFactory getModelControllerClientFactory() {
         return super.getModelControllerClientFactory();
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

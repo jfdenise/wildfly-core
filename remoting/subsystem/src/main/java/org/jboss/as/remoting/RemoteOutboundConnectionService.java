@@ -133,4 +133,14 @@ final class RemoteOutboundConnectionService implements Service, OutboundConnecti
     public URI getDestinationUri() {
         return destination;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

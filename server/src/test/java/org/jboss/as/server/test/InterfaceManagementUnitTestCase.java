@@ -124,6 +124,16 @@ public class InterfaceManagementUnitTestCase {
             public Void getValue() throws IllegalStateException, IllegalArgumentException {
                 return null;
             }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         };
         final ServiceBuilder sb = target.addService(ServiceName.JBOSS.append("interface", "management", "test", "case", "dependent"), dependentService);
         sb.requires(NetworkInterfaceService.JBOSS_NETWORK_INTERFACE.append("test"));
@@ -327,6 +337,16 @@ public class InterfaceManagementUnitTestCase {
             super.bootThreadDone();
             latch.countDown();
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     static final class ServerDelegatingResourceDefinition extends DelegatingResourceDefinition {
@@ -514,6 +534,15 @@ public class InterfaceManagementUnitTestCase {
     }
 
     private static PathManagerService MOCK_PATH_MANAGER = new PathManagerService() {
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
 
     };
 

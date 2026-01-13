@@ -143,6 +143,16 @@ public class InterleavedSubsystemTestCase {
 
         }
 
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
+
     }
 
     private static class FakeExtensionAddHandler extends ExtensionAddHandler {

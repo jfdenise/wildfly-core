@@ -39,4 +39,12 @@ public class ContentRepositoryService implements Service<ContentRepository> {
         return repository;
     }
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
 }

@@ -130,4 +130,12 @@ public class MBeanServerService implements Service<PluggableMBeanServer> {
     public synchronized PluggableMBeanServer getValue() throws IllegalStateException {
         return mBeanServer;
     }
+
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
 }

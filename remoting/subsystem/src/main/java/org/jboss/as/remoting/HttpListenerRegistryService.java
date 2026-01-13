@@ -69,4 +69,12 @@ public class HttpListenerRegistryService implements Service<ListenerRegistry> {
         return listenerRegistry;
     }
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
 }

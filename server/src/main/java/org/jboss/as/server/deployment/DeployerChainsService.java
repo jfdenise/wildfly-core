@@ -41,4 +41,12 @@ public class DeployerChainsService implements Service<DeployerChains> {
     public DeployerChains getValue() throws IllegalStateException, IllegalArgumentException {
         return deployerChains;
     }
+
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
 }

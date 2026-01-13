@@ -72,6 +72,15 @@ public abstract class AbstractKernelServicesImpl extends ModelTestKernelServices
         ControllerInitializer controllerInitializer = additionalInit.createControllerInitializer();
 
         PathManagerService pathManager = new PathManagerService() {
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         };
 
         controllerInitializer.setPathManger(pathManager);

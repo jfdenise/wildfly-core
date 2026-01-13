@@ -28,7 +28,6 @@ public class ManagementWorkerService implements Service<XnioWorker> {
     private final OptionMap options;
     private XnioWorker worker;
     private volatile StopContext stopContext;
-
     private ManagementWorkerService(OptionMap options) {
         this.options = options;
     }
@@ -80,5 +79,21 @@ public class ManagementWorkerService implements Service<XnioWorker> {
                 .setInitialMode(ServiceController.Mode.ON_DEMAND) //have it on demand as it might not be needed in certain scenarios
                 .install();
 
+    }
+
+    @Override
+    public void passivate() {
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@ PASSIVATE WORKER THREADS");
+        worker.shutdown();
+        worker = null;
+    }
+
+    @Override
+    public void resume() {
+        try {
+            worker = Xnio.getInstance().createWorker(null,  options, this::stopDone);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

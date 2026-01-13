@@ -54,4 +54,14 @@ public class VirtualSecurityDomainCreationService implements Service<Void> {
         return SecurityDomain.builder();
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

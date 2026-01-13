@@ -649,6 +649,16 @@ public abstract class AbstractProxyControllerTest {
             rootRegistration.registerProxyController(serverAElement, createProxyController(proxy.get(), PathAddress.pathAddress(serverAElement)));
         }
 
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
+
     }
 
     public class ProxyModelControllerService extends TestModelControllerService {
@@ -748,6 +758,16 @@ public abstract class AbstractProxyControllerTest {
                         }
                     }
             );
+        }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
         }
     }
 

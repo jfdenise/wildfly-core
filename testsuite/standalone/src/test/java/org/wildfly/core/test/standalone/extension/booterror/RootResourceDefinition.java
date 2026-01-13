@@ -129,6 +129,16 @@ public class RootResourceDefinition extends SimpleResourceDefinition {
         public void stop(StopContext context) {
             // no-op
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
 }

@@ -61,4 +61,12 @@ public class AbsolutePathService extends AbstractPathService {
         return absolutePath;
     }
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
 }

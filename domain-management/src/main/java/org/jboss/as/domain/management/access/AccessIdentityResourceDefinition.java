@@ -143,6 +143,16 @@ public class AccessIdentityResourceDefinition extends SimpleResourceDefinition {
         public void stop(final StopContext context) {
             securityIdentitySupplier.setConfiguredSecurityDomainSupplier(null);
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     static class WriteAttributeHandler extends ReloadRequiredWriteAttributeHandler {

@@ -69,4 +69,14 @@ public class ServerVerificationService implements Service {
             .install();
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

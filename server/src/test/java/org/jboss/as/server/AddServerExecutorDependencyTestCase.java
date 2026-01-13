@@ -152,5 +152,15 @@ public class AddServerExecutorDependencyTestCase {
         public ExecutorService getValue() throws IllegalStateException, IllegalArgumentException {
             return value;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 }

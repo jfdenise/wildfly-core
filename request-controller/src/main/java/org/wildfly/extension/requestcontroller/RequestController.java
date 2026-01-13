@@ -408,6 +408,16 @@ public class RequestController implements Service<RequestController>, Suspendabl
         return forcedTask;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private static final class ControlPointIdentifier {
         private final String deployment, name;
 

@@ -48,4 +48,14 @@ class ManagementChannelOpenListenerService extends AbstractChannelOpenListenerSe
         executorServiceSupplier.get().execute(runnable);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

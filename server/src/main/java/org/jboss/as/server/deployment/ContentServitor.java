@@ -47,4 +47,14 @@ class ContentServitor implements Service<VirtualFile> {
     public VirtualFile getValue() throws IllegalStateException, IllegalArgumentException {
         return contentRepositoryInjectedValue.getValue().getContent(hash);
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

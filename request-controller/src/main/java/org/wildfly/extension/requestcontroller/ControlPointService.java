@@ -59,4 +59,14 @@ public class ControlPointService implements Service<ControlPoint>{
     public ControlPoint getValue() throws IllegalStateException, IllegalArgumentException {
         return value;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

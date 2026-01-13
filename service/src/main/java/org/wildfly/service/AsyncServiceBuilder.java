@@ -125,5 +125,15 @@ public class AsyncServiceBuilder<T> extends DelegatingServiceBuilder<T> {
                 this.service.stop(context);
             }
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 }

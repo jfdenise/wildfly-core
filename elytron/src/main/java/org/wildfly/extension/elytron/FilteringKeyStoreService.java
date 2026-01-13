@@ -83,4 +83,14 @@ class FilteringKeyStoreService implements ModifiableKeyStoreService {
         }
         return modifiableFilteringKeyStore;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

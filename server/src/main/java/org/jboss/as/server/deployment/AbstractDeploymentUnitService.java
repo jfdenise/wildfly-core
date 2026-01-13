@@ -106,6 +106,16 @@ public abstract class AbstractDeploymentUnitService implements Service<Deploymen
                 public void stop(StopContext context) {
                     uninstaller.run();
                 }
+
+                @Override
+                public void passivate() {
+                    //TODO
+                }
+
+                @Override
+                public void resume() {
+                    //TODO
+                }
             }).install();
         } else {
             installer.accept(context);

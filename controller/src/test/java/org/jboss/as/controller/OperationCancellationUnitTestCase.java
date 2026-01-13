@@ -163,6 +163,16 @@ public class OperationCancellationUnitTestCase {
             rootRegistration.registerSubModel(new SimpleResourceDefinition(PathElement.pathElement("child"), NonResolvingResourceDescriptionResolver.INSTANCE));
             this.managementControllerResource = modelControllerResource;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     @Test
@@ -501,6 +511,16 @@ public class OperationCancellationUnitTestCase {
                         @Override
                         public void stop(StopContext context) {
                             releaseBlockingThreads();
+                        }
+
+                        @Override
+                        public void passivate() {
+                            //TODO
+                        }
+
+                        @Override
+                        public void resume() {
+                            //TODO
                         }
 
                     };

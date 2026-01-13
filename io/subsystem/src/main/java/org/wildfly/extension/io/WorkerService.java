@@ -122,4 +122,14 @@ public final class WorkerService implements Service<XnioWorker> {
     public XnioWorker getValue() throws IllegalStateException, IllegalArgumentException {
         return worker;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

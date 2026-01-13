@@ -64,4 +64,14 @@ final class InjectedNetworkBindingStreamServerService extends AbstractStreamServ
         socketBindingManager.getUnnamedRegistry().unregisterBinding(managedBinding);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

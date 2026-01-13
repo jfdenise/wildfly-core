@@ -156,4 +156,14 @@ public class InstallationManagerService implements Service<InstallationManager> 
         return Collections.singletonList(bundleRoots);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

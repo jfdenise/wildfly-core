@@ -70,6 +70,16 @@ public final class RemotingConnectorBindingInfoService implements Service {
         legacyServiceConsumer.accept(null);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     /** @deprecated Use {@link ProtocolSocketBinding} */
     @Deprecated
     public static final class RemotingConnectorInfo {

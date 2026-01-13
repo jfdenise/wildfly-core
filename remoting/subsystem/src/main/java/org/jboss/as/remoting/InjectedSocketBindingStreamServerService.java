@@ -88,4 +88,14 @@ final class InjectedSocketBindingStreamServerService extends AbstractStreamServe
         return this.socketBindingSupplier.get();
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

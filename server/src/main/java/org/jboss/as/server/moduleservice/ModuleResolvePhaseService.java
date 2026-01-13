@@ -125,4 +125,12 @@ public class ModuleResolvePhaseService implements Service<ModuleResolvePhaseServ
         }
         return SERVICE_NAME.append(identifier).append("" + phase);
     }
+
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
 }

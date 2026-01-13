@@ -42,4 +42,14 @@ public class HttpManagementRequestsService implements Service<ManagementHttpRequ
     public synchronized ManagementHttpRequestProcessor getValue() throws IllegalStateException, IllegalArgumentException {
         return processor;
     }
+
+    @Override
+    public void passivate() {
+       processor.shutdownNow();
+    }
+
+    @Override
+    public void resume() {
+       processor = new ManagementHttpRequestProcessor();
+    }
 }

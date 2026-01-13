@@ -501,5 +501,13 @@ public interface Installer<ST extends ServiceTarget> {
                 this.captor.accept(null);
             }
         }
+
+        @Override
+        public void passivate() {
+        }
+
+        @Override
+        public void resume() {
+        }
     }
 }

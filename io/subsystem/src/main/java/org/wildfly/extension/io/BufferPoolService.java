@@ -52,4 +52,14 @@ public class BufferPoolService implements Service<Pool<ByteBuffer>> {
     public Pool<ByteBuffer> getValue() throws IllegalStateException, IllegalArgumentException {
         return bufferPool;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

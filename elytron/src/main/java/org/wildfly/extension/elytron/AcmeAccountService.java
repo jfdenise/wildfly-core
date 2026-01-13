@@ -136,4 +136,14 @@ class AcmeAccountService implements Service<AcmeAccount> {
         }
         ((KeyStoreService) keyStoreService).save();
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

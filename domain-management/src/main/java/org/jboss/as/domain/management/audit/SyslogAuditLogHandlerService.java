@@ -114,4 +114,14 @@ public class SyslogAuditLogHandlerService implements Service, SyslogCredentialRe
         serviceBuilder.install();
         return service;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

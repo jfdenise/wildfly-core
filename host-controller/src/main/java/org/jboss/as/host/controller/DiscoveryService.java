@@ -138,4 +138,14 @@ class DiscoveryService implements Service<Void> {
     public synchronized Void getValue() throws IllegalStateException, IllegalArgumentException {
        return null;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

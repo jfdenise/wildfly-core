@@ -121,6 +121,16 @@ class SecurityPropertyService implements Service<Void> {
         }
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private static class SetState {
         private final String previousValue;
         private final String newValue;

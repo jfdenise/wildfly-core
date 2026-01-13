@@ -77,4 +77,14 @@ public final class ThreadFactoryService implements Service<ThreadFactory> {
         }
         return value;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

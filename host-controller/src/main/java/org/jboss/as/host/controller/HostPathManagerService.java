@@ -58,4 +58,14 @@ public class HostPathManagerService extends PathManagerService {
         super(capabilityRegistry);
         this.localCapRegRef = capabilityRegistry;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

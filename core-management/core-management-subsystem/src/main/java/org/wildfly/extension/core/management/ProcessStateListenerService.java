@@ -345,4 +345,14 @@ public class ProcessStateListenerService implements Service {
             context.asynchronous();
         }
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

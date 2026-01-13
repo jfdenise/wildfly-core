@@ -260,4 +260,14 @@ final class DeploymentUnitPhaseService<T> implements Service<T> {
         }
         return !shouldNotRun.contains(deployer.getSubsystemName());
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

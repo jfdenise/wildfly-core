@@ -222,6 +222,16 @@ public class MetricsUndefinedValueUnitTestCase {
             rootResource.registerChild(resourceDefinition.getPathElement(), Resource.Factory.create());
         }
 
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
+
     }
 
 

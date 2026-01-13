@@ -311,6 +311,16 @@ public class ErrorExtension implements Extension {
         public ErroringService getValue() throws IllegalStateException, IllegalArgumentException {
             return this;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     private static class ErrorRemovingBlockingSubsystemStepHandler extends ReloadRequiredRemoveStepHandler {

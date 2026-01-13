@@ -112,4 +112,14 @@ public class ContentCleanerService implements Service {
         contentCleaner.stopScan();
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

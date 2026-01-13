@@ -671,6 +671,16 @@ public class RemoteDomainConnectionService implements MasterDomainControllerClie
         }
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private class GetFileRequest extends AbstractManagementRequest<File, Void> {
         private final byte rootId;
         private final String filePath;

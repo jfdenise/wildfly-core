@@ -216,6 +216,16 @@ public class MetricsRegistrationTestCase {
             Resource rootResource = managementModel.getRootResource();
             rootResource.registerChild(resourceDefinition.getPathElement(), Resource.Factory.create());
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
 

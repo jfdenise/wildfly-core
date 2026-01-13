@@ -117,4 +117,14 @@ public class TestUndertowService implements Service<TestUndertowService> {
     public InjectedValue<SocketBindingManager> getSocketBindingManagerInjectedValue() {
         return socketBindingManagerInjectedValue;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

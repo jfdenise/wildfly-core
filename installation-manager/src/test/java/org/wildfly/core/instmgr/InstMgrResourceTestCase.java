@@ -141,6 +141,16 @@ public class InstMgrResourceTestCase extends AbstractControllerTestBase {
                 super.addHardcodedAbsolutePath(getContainer(), "jboss.home.dir", JBOSS_HOME.toString());
                 super.addHardcodedAbsolutePath(getContainer(), "jboss.controller.temp.dir", JBOSS_CONTROLLER_TEMP_DIR.toString());
             }
+
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         };
 
         GlobalOperationHandlers.registerGlobalOperations(registration, processType);

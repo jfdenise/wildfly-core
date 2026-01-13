@@ -992,6 +992,16 @@ public class DomainModelControllerService extends AbstractControllerService impl
         DiscoveryService.install(serviceTarget, discoveryOptions, interfaces, hostControllerInfo.isMasterDomainController());
     }
 
+    @Override
+    public void passivate() {
+        super.passivate();
+    }
+
+    @Override
+    public void resume() {
+        super.resume();
+    }
+
     private enum DomainConnectResult {
         CONNECTED,
         FAILED,
@@ -1790,6 +1800,16 @@ public class DomainModelControllerService extends AbstractControllerService impl
                 }
 
             }
+        }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
         }
     }
 

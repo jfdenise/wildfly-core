@@ -62,6 +62,21 @@ class TrivialService<T> implements Service<T>, org.jboss.msc.Service {
         return value;
     }
 
+    @Override
+    public void passivate() {
+        System.out.println("################################ ELYTRON PASSIVATE " + value);
+        value=null;
+    }
+
+    @Override
+    public void resume() {
+        try {
+            value = checkNotNullParam("valueSupplier", valueSupplier).get();
+        } catch (StartException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     /**
      * A supplier for the value returned by this service, the {@link #get()} methods allows for a {@link StartException} to be
      * thrown so can be used with failed mandatory service injection.

@@ -60,4 +60,14 @@ class PathContentServitor implements Service<VirtualFile> {
             callbackHandle.remove();
         }
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

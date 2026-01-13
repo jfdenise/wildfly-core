@@ -49,7 +49,7 @@ final class BootstrapImpl implements Bootstrap {
     private static final int MAX_THREADS = ServerEnvironment.getBootstrapMaxThreads();
     private final ShutdownHook shutdownHook;
     private final ServiceContainer container;
-
+    private Service<?> applicationServerService;
     public BootstrapImpl() {
         this.shutdownHook = new ShutdownHook();
         this.container = shutdownHook.register();
@@ -57,6 +57,13 @@ final class BootstrapImpl implements Bootstrap {
     // Used at the end of Graal build time
     void shutdownContainer() {
         container.shutdown();
+    }
+    void passivateContainer() {
+        container.passivate();
+    }
+    void resumeContainer() {
+        container.resume();
+        applicationServerService.resume();
     }
     @Override
     public AsyncFuture<ServiceContainer> bootstrap(final Configuration configuration, final List<ServiceActivator> extraServices) {
@@ -117,7 +124,7 @@ final class BootstrapImpl implements Bootstrap {
         } else {
             ServerLogger.ROOT_LOGGER.info("MBean not registered at build time.");
         }
-        final Service<?> applicationServerService = new ApplicationServerService(extraServices, configuration, processState,
+        applicationServerService = new ApplicationServerService(extraServices, configuration, processState,
                 suspendController, configuration.getServerEnvironment().getElapsedTime());
         tracker.addService(Services.JBOSS_AS, applicationServerService)
             .install();
@@ -252,7 +259,8 @@ final class BootstrapImpl implements Bootstrap {
 
         @Override
         public void run() {
-            shutdown(false);
+            System.out.println("SHUTDOWN THE SERVER DISABLED");
+            //shutdown(false);
         }
 
         private void shutdown(boolean failed) {

@@ -147,6 +147,14 @@ public class ExternalModuleSpecService implements Service<ModuleDefinition> {
         specBuilder.addDependency(dependencySpec);
     }
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
     /**
      * Custom path comparator that will allow comparisons based on path names at same level of directory.
      *

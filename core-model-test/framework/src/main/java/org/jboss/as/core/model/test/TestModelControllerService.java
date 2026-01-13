@@ -393,6 +393,16 @@ class TestModelControllerService extends ModelTestModelControllerService {
         file.delete();
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private interface Initializer {
         void setRootResourceDefinitionDelegate();
         void initCoreModel(Resource rootResource, ManagementResourceRegistration rootRegistration, Resource modelControllerResource);

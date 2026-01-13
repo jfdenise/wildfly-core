@@ -166,4 +166,14 @@ class EnhancedQueueExecutorService implements Service<ManagedQueueExecutorServic
     TimeUnit getKeepAliveUnit() {
         return keepAlive == null ? TimeSpec.DEFAULT_KEEPALIVE.getUnit() : keepAlive.getUnit();
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

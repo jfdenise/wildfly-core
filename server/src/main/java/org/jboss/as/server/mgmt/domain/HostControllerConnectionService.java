@@ -197,6 +197,16 @@ public class HostControllerConnectionService implements Service<HostControllerCl
         }
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     public static class SSLContextSupplier implements Supplier<SSLContext>, Serializable {
 
         private final String sslProtocol;

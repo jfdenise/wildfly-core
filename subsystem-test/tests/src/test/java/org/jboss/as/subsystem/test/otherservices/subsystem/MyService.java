@@ -34,4 +34,14 @@ public class MyService implements Service<MyService>{
     public void stop(StopContext arg0) {
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

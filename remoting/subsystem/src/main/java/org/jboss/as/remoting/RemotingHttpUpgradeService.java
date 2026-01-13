@@ -198,4 +198,14 @@ public class RemotingHttpUpgradeService implements Service {
         return permissionVerifier;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

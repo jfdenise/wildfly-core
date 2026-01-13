@@ -121,7 +121,7 @@ class ModelControllerImpl implements ModelController {
     private final Supplier<SecurityIdentity> securityIdentitySupplier;
 
     private final ConcurrentMap<Integer, OperationContextImpl> activeOperations = new ConcurrentHashMap<>();
-    private final Random random = new Random();
+    private Random random = new Random();
     private final ManagedAuditLogger auditLogger;
     private final BootErrorCollector bootErrorCollector;
 
@@ -138,7 +138,13 @@ class ModelControllerImpl implements ModelController {
     private volatile ModelControllerClientFactoryImpl clientFactory;
 
     private PathAddress modelControllerResourceAddress;
-
+    public void passivate() {
+        System.out.println("PASSIVATE CONTROLLER");
+        random = null;
+    }
+    public void resume() {
+        random = new Random();
+    }
     ModelControllerImpl(final ServiceRegistry serviceRegistry, final ServiceTarget serviceTarget,
                         final ManagementResourceRegistration rootRegistration,
                         final ContainerStateMonitor stateMonitor, final ConfigurationPersister persister,

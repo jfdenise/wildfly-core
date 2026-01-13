@@ -126,4 +126,14 @@ class LdapKeyStoreService implements ModifiableKeyStoreService {
     public KeyStore getModifiableValue() {
         return modifiableKeyStore;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

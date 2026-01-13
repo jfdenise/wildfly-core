@@ -65,5 +65,16 @@ public class FileAuditLogHandlerUnitTestCase {
         }
     }
 
-    private static class PathManagerServiceStub extends PathManagerService {}
+    private static class PathManagerServiceStub extends PathManagerService {
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
+    }
 }

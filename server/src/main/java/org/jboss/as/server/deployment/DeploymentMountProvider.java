@@ -149,6 +149,33 @@ public interface DeploymentMountProvider {
                 }
             }
 
+            @Override
+            public void passivate() {
+                System.out.println("PASSIVATE ");
+                //deploymentMountProviderConsumer.accept(null);
+                VFSUtils.safeClose(tempFileProvider);
+                if (scheduledExecutorService != null) {
+                    scheduledExecutorService.shutdown();
+                    scheduledExecutorService = null;
+                }
+            }
+
+            @Override
+            public void resume() {
+                try {
+                    final JBossThreadFactory threadFactory = doPrivileged(new PrivilegedAction<JBossThreadFactory>() {
+                        public JBossThreadFactory run() {
+                            return new JBossThreadFactory(ThreadGroupHolder.THREAD_GROUP, true, null, "%G - %t", null, null);
+                        }
+                    });
+                    scheduledExecutorService =  Executors.newScheduledThreadPool(2, threadFactory);
+                    tempFileProvider = TempFileProvider.create("temp", scheduledExecutorService, true);
+                    deploymentMountProviderConsumer.accept(this);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
         }
 
         // Wrapper class to delay thread group creation until when it's needed.

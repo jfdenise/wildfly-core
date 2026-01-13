@@ -275,6 +275,14 @@ public final class ExtensionIndexService implements Service<ExtensionIndex>, Ext
         }
     }
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
     static class ExtensionJar {
 
         private final String implVersion;

@@ -69,4 +69,14 @@ public final class ManagementChannelRegistryService implements Service {
         registrations.add(registration);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

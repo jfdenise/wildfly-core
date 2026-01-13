@@ -49,6 +49,7 @@ import org.xnio.XnioWorker;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.ListenerRegistry;
+import io.undertow.server.ListenerRegistry.Listener;
 import io.undertow.server.handlers.ChannelUpgradeHandler;
 import io.undertow.server.handlers.resource.ResourceManager;
 
@@ -105,7 +106,7 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
     private boolean useUnmanagedBindings = false;
     private ManagedBinding basicManagedBinding;
     private ManagedBinding secureManagedBinding;
-
+    private StartContext context;
     private ExtensibleHttpManagement httpManagement = new ExtensibleHttpManagement() {
 
         @Override
@@ -278,7 +279,8 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
         this.connectionHighWater = connectionHighWater;
         this.connectionLowWater = connectionLowWater;
     }
-
+    List<ListenerRegistry.Listener> listeners;
+    ChannelUpgradeHandler upgradeHandler;
     /**
      * Starts the service.
      *
@@ -287,6 +289,68 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
      */
     @Override
     public synchronized void start(final StartContext context) throws StartException {
+        if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
+            System.out.println("DO NOT START THE MGT SERVER!");
+            this.context = context;
+            InetSocketAddress bindAddress = null;
+        InetSocketAddress secureBindAddress = null;
+
+        final SocketBinding basicBinding = socketBindingSupplier != null ? socketBindingSupplier.get() : null;
+        final SocketBinding secureBinding = secureSocketBindingSupplier != null ? secureSocketBindingSupplier.get() : null;
+        final NetworkInterfaceBinding interfaceBinding = interfaceBindingSupplier != null ? interfaceBindingSupplier.get() : null;
+        final NetworkInterfaceBinding secureInterfaceBinding = secureInterfaceBindingSupplier != null ? secureInterfaceBindingSupplier.get() : null;
+        if (interfaceBinding != null) {
+            useUnmanagedBindings = true;
+            assert this.port != null;
+            final int port = this.port;
+            if (port > 0) {
+                bindAddress = new InetSocketAddress(interfaceBinding.getAddress(), port);
+            }
+            assert this.securePort != null;
+            final int securePort = this.securePort;
+            if (securePort > 0) {
+                InetAddress secureAddress = secureInterfaceBinding == null ? interfaceBinding.getAddress() : secureInterfaceBinding.getAddress();
+                secureBindAddress = new InetSocketAddress(secureAddress, securePort);
+            }
+        } else {
+            if (basicBinding != null) {
+                bindAddress = basicBinding.getSocketAddress();
+            }
+            if (secureBinding != null) {
+                secureBindAddress = secureBinding.getSocketAddress();
+            }
+        }
+        listeners = new ArrayList<>();
+        //TODO: rethink this whole ListenerRegistry business
+        if(bindAddress != null) {
+            ListenerRegistry.Listener http = new ListenerRegistry.Listener("http", HTTP_MANAGEMENT, SERVER_NAME, bindAddress);
+            listeners.add(http);
+        }
+        if(secureBindAddress != null) {
+            ListenerRegistry.Listener https = new ListenerRegistry.Listener("https", HTTPS_MANAGEMENT, SERVER_NAME, secureBindAddress);
+            listeners.add(https);
+        }
+        upgradeHandler = new ChannelUpgradeHandler();
+        final ServiceBuilder<?> builder = context.getChildTarget().addService(HTTP_UPGRADE_SERVICE_NAME);
+        final Consumer<Object> upgradeHandlerConsumer = builder.provides(HTTP_UPGRADE_SERVICE_NAME, HTTPS_UPGRADE_SERVICE_NAME);
+        // TODO: An "alias" shouldn't actually be needed since we already do a
+        // builder.provides(...) with this same ServiceName. However, without this explicit aliasing
+        // the call to (service)registry.getService(...) returns null if it's queried by the "provided"
+        // ServiceName. It works fine if it's instead queried by the "alias".
+        // See WFCORE-4560 for more details.
+        builder.addAliases(HTTPS_UPGRADE_SERVICE_NAME);
+        builder.setInstance(org.jboss.msc.Service.newInstance(upgradeHandlerConsumer, upgradeHandler));
+        builder.install();
+        for (ListenerRegistry.Listener listener : listeners) {
+            listener.addHttpUpgradeMetadata(new ListenerRegistry.HttpUpgradeMetadata(JBOSS_REMOTING, MANAGEMENT_ENDPOINT));
+        }
+        if (listenerRegistrySupplier.get() != null) {
+            for(ListenerRegistry.Listener listener : listeners) {
+                listenerRegistrySupplier.get().addListener(listener);
+            }
+        }
+            return;
+        }
         final ModelController modelController = modelControllerSupplier.get();
         final ConsoleAvailability consoleAvailability = consoleAvailabilitySupplier.get();
         socketBindingManager = socketBindingManagerSupplier != null ? socketBindingManagerSupplier.get() : null;
@@ -326,39 +390,45 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
                 secureBindAddress = secureBinding.getSocketAddress();
             }
         }
-        List<ListenerRegistry.Listener> listeners = new ArrayList<>();
+
         //TODO: rethink this whole ListenerRegistry business
         if(bindAddress != null) {
-            ListenerRegistry.Listener http = new ListenerRegistry.Listener("http", HTTP_MANAGEMENT, SERVER_NAME, bindAddress);
-            http.setContextInformation("socket-binding", basicBinding);
-            listeners.add(http);
-        }
-        if(secureBindAddress != null) {
-            ListenerRegistry.Listener https = new ListenerRegistry.Listener("https", HTTPS_MANAGEMENT, SERVER_NAME, secureBindAddress);
-            https.setContextInformation("socket-binding", secureBinding);
-            listeners.add(https);
-        }
-
-        final ChannelUpgradeHandler upgradeHandler = new ChannelUpgradeHandler();
-        final ServiceBuilder<?> builder = context.getChildTarget().addService(HTTP_UPGRADE_SERVICE_NAME);
-        final Consumer<Object> upgradeHandlerConsumer = builder.provides(HTTP_UPGRADE_SERVICE_NAME, HTTPS_UPGRADE_SERVICE_NAME);
-        // TODO: An "alias" shouldn't actually be needed since we already do a
-        // builder.provides(...) with this same ServiceName. However, without this explicit aliasing
-        // the call to (service)registry.getService(...) returns null if it's queried by the "provided"
-        // ServiceName. It works fine if it's instead queried by the "alias".
-        // See WFCORE-4560 for more details.
-        builder.addAliases(HTTPS_UPGRADE_SERVICE_NAME);
-        builder.setInstance(org.jboss.msc.Service.newInstance(upgradeHandlerConsumer, upgradeHandler));
-        builder.install();
-        for (ListenerRegistry.Listener listener : listeners) {
-            listener.addHttpUpgradeMetadata(new ListenerRegistry.HttpUpgradeMetadata(JBOSS_REMOTING, MANAGEMENT_ENDPOINT));
-        }
-
-        if (listenerRegistrySupplier.get() != null) {
-            for(ListenerRegistry.Listener listener : listeners) {
-                listenerRegistrySupplier.get().addListener(listener);
+            for(Listener l : listeners) {
+                if("http".equals(l.getName())) {
+                    l.setBindAddress(bindAddress);
+                    l.setContextInformation("socket-binding", basicBinding);
+                }
             }
         }
+        if(secureBindAddress != null) {
+            for(Listener l : listeners) {
+                if("https".equals(l.getName())) {
+                    l.setBindAddress(secureBindAddress);
+                    l.setContextInformation("socket-binding", secureBinding);
+                }
+            }
+        }
+
+//        final ChannelUpgradeHandler upgradeHandler = new ChannelUpgradeHandler();
+//        final ServiceBuilder<?> builder = context.getChildTarget().addService(HTTP_UPGRADE_SERVICE_NAME);
+//        final Consumer<Object> upgradeHandlerConsumer = builder.provides(HTTP_UPGRADE_SERVICE_NAME, HTTPS_UPGRADE_SERVICE_NAME);
+//        // TODO: An "alias" shouldn't actually be needed since we already do a
+//        // builder.provides(...) with this same ServiceName. However, without this explicit aliasing
+//        // the call to (service)registry.getService(...) returns null if it's queried by the "provided"
+//        // ServiceName. It works fine if it's instead queried by the "alias".
+//        // See WFCORE-4560 for more details.
+//        builder.addAliases(HTTPS_UPGRADE_SERVICE_NAME);
+//        builder.setInstance(org.jboss.msc.Service.newInstance(upgradeHandlerConsumer, upgradeHandler));
+//        builder.install();
+//        for (ListenerRegistry.Listener listener : listeners) {
+//            listener.addHttpUpgradeMetadata(new ListenerRegistry.HttpUpgradeMetadata(JBOSS_REMOTING, MANAGEMENT_ENDPOINT));
+//        }
+//
+//        if (listenerRegistrySupplier.get() != null) {
+//            for(ListenerRegistry.Listener listener : listeners) {
+//                listenerRegistrySupplier.get().addListener(listener);
+//            }
+//        }
 
         try {
             ManagementHttpServer.Builder serverManagementBuilder = ManagementHttpServer.builder()
@@ -398,8 +468,7 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
             serverManagement = serverManagementBuilder.build();
 
             serverManagement.start();
-
-            // Register the now-created sockets with the SBM
+            System.out.println("MANAGEMRNT SERVER STARTED");
             if (socketBindingManager != null) {
                 if (useUnmanagedBindings) {
                     SocketBindingManager.UnnamedBindingRegistry registry = socketBindingManager.getUnnamedRegistry();
@@ -440,7 +509,7 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
                 throw ServerLogger.ROOT_LOGGER.failedToStartHttpManagementService(e);
             }
         }
-        httpManagementConsumer.accept(httpManagement);
+       httpManagementConsumer.accept(httpManagement);
     }
 
     /**
@@ -483,5 +552,22 @@ public class UndertowHttpManagementService implements Service<HttpManagement> {
     @Override
     public HttpManagement getValue() throws IllegalStateException, IllegalArgumentException {
         return httpManagement;
+    }
+
+    @Override
+    public void passivate() {
+        for(Listener l : listeners) {
+            l.setBindAddress(null);
+        }
+    }
+
+    @Override
+    public void resume() {
+        try {
+            System.out.println("START THE SERVER!!!!");
+            start(context);
+        } catch (StartException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

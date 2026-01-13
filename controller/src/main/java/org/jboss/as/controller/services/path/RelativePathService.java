@@ -115,4 +115,14 @@ public class RelativePathService extends AbstractPathService {
         return File.separatorChar == '\\';
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

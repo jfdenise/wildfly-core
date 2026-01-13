@@ -63,4 +63,14 @@ final class SocketBindingManagerService extends SocketBindingManagerImpl impleme
         return networkInterfaceBindingSupplier.get();
     }
 
+    @Override
+    public void passivate() {
+        //socketBindingManagerConsumer.accept(null);
+    }
+
+    @Override
+    public void resume() {
+        socketBindingManagerConsumer.accept(this);
+    }
+
 }

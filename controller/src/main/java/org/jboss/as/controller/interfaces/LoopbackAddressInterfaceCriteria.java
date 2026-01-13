@@ -55,10 +55,7 @@ public class LoopbackAddressInterfaceCriteria extends AbstractInterfaceCriteria 
     }
 
     public synchronized InetAddress getAddress() throws UnknownHostException {
-        if (resolved == null) {
-            resolved = InetAddress.getByName(address);
-        }
-        return this.resolved;
+        return InetAddress.getByName(address);
     }
 
     /**

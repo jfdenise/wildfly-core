@@ -88,4 +88,14 @@ public class ServiceActivatorDeployment implements ServiceActivator, Service<Voi
     public Void getValue() throws IllegalStateException, IllegalArgumentException {
         return null;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

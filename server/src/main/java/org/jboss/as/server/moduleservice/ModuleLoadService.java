@@ -43,7 +43,7 @@ public class ModuleLoadService implements Service<Module> {
     private final Collection<ModuleDependency> localDependencies;
 
     private volatile Module module;
-    private static Module FROM_BUILD;
+    public static Module FROM_BUILD;
     private ModuleLoadService(final Collection<ModuleDependency> systemDependencies, final Collection<ModuleDependency> localDependencies, final Collection<ModuleDependency> userDependencies) {
         this.systemDependencies = systemDependencies;
         this.localDependencies = localDependencies;
@@ -238,5 +238,25 @@ public class ModuleLoadService implements Service<Module> {
 
     public List<ModuleDependency> getLocalDependencies() {
         return new ArrayList<>(localDependencies);
+    }
+
+    @Override
+    public void passivate() {
+        try {
+            // we don't actually unload the module, that is taken care of by the service module loader
+            // Clean the permissions so they can be reconstructed at startup.
+            module.cleanupPermissions();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void resume() {
+        try {
+            module.restorePermissions();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

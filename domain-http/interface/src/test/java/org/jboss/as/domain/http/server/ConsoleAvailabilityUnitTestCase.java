@@ -154,5 +154,15 @@ public class ConsoleAvailabilityUnitTestCase {
             rootRegistration.registerCapability(PROCESS_STATE_NOTIFIER_CAPABILITY);
             rootRegistration.registerCapability(CONSOLE_AVAILABILITY_CAPABILITY);
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 }

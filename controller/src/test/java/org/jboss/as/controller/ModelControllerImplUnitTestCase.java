@@ -875,6 +875,16 @@ public class ModelControllerImplUnitTestCase {
             rootRegistration.registerSubModel(deploymentResource);
         }
 
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
+
     }
 
     public static class SetupHandler implements OperationStepHandler {
@@ -1139,6 +1149,16 @@ public class ModelControllerImplUnitTestCase {
 
                         @Override
                         public void stop(StopContext context) {
+                        }
+
+                        @Override
+                        public void passivate() {
+                            //TODO
+                        }
+
+                        @Override
+                        public void resume() {
+                            //TODO
                         }
 
                     };

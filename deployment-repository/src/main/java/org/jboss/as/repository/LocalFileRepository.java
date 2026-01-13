@@ -71,4 +71,12 @@ public class LocalFileRepository extends LocalDeploymentFileRepository implement
     public HostFileRepository getValue() throws IllegalStateException, IllegalArgumentException {
         return this;
     }
+
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
 }

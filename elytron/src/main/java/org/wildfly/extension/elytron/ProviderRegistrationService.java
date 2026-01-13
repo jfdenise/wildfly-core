@@ -11,7 +11,6 @@ import java.security.Security;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.jboss.msc.inject.Injector;
@@ -80,14 +79,15 @@ class ProviderRegistrationService implements Service<Void> {
 
     @Override
     public void stop(StopContext context) {
-        Iterator<String> namesIterator = registeredProviderNames.iterator();
-        SecurityActions.doPrivileged((PrivilegedAction<Void>) () -> {
-            while (namesIterator.hasNext()) {
-                Security.removeProvider(namesIterator.next());
-                namesIterator.remove();
-            }
-            return null;
-        });
+        System.out.println("STOP ELYTRON DO NOT UNREGOISTER PROVIDERS");
+//        Iterator<String> namesIterator = registeredProviderNames.iterator();
+//        SecurityActions.doPrivileged((PrivilegedAction<Void>) () -> {
+//            while (namesIterator.hasNext()) {
+//                Security.removeProvider(namesIterator.next());
+//                namesIterator.remove();
+//            }
+//            return null;
+//        });
     }
 
     Injector<Provider[]> getInitialProivders() {
@@ -101,6 +101,22 @@ class ProviderRegistrationService implements Service<Void> {
     @Override
     public Void getValue() throws IllegalStateException, IllegalArgumentException {
         return null;
+    }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        try {
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! REINSTALL PROVIDERS");
+            //TODO
+            start(null);
+        } catch (StartException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
 }

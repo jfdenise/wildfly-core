@@ -99,4 +99,14 @@ class ElytronScheduledExecutorService implements Service {
     static void uninstallScheduledExecutorService(OperationContext context) {
         context.removeService(SERVICE_NAME);
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

@@ -171,5 +171,15 @@ class BufferPoolResourceDefinition extends PersistentResourceDefinition {
         public ByteBufferPool getValue() throws IllegalStateException, IllegalArgumentException {
             return byteBufferPool;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 }

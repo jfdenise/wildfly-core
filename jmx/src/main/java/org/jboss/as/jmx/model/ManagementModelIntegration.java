@@ -90,5 +90,13 @@ public class ManagementModelIntegration implements ModelControllerServiceInitial
         ResourceAndRegistration getResourceAndRegistration() {
             return resourceAndRegistration;
         }
+
+        @Override
+        public void passivate() {
+        }
+
+        @Override
+        public void resume() {
+        }
     }
 }

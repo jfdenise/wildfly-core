@@ -166,6 +166,16 @@ public abstract class AbstractControllerTestBase {
                 e.printStackTrace();
             }
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     static class EmptyConfigurationPersister extends AbstractConfigurationPersister {

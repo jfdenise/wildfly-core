@@ -158,6 +158,16 @@ class ServerInventoryService implements Service<ServerInventory> {
         return client;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private class FutureServerInventory extends AsyncFutureTask<ServerInventory>{
 
         protected FutureServerInventory() {

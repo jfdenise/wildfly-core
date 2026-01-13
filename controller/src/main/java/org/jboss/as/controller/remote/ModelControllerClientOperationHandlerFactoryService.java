@@ -42,4 +42,14 @@ public class ModelControllerClientOperationHandlerFactoryService extends Abstrac
         channel.receiveMessage(handler.getReceiver());
         return handler;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

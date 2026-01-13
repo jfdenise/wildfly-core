@@ -80,4 +80,14 @@ public class RemotingConnectorService implements Service<RemotingConnectorServer
                 .addDependency(remotingCapability, Endpoint.class, service.endpoint)
                 .install();
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

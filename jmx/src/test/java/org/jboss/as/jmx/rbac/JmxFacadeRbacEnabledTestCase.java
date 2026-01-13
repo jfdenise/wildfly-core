@@ -787,6 +787,15 @@ public class JmxFacadeRbacEnabledTestCase extends AbstractControllerTestBase {
         this.rootResource = managementModel.getRootResource();
         this.rootRegistration = managementModel.getRootResourceRegistration();
         PathManagerService pathManagerService = new PathManagerService() {
+            @Override
+            public void passivate() {
+                //TODO
+            }
+
+            @Override
+            public void resume() {
+                //TODO
+            }
         };
         GlobalOperationHandlers.registerGlobalOperations(rootRegistration, processType);
         rootRegistration.registerOperationHandler(CompositeOperationHandler.DEFINITION, CompositeOperationHandler.INSTANCE);

@@ -33,4 +33,14 @@ public class SocketBindingUserService implements Service<SocketBindingUserServic
     @Override
     public void stop(StopContext arg0) {
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

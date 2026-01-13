@@ -175,6 +175,16 @@ class TestModelControllerService extends ModelTestModelControllerService impleme
         return new ServerEnvironment(null, props, new HashMap<>(), "standalone.xml", null, LaunchType.STANDALONE, runningModeControl.getRunningMode(), productConfig, false);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private static class MockContentRepository implements ContentRepository {
 
         @Override

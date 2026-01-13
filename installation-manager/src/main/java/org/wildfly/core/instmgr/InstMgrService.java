@@ -229,4 +229,14 @@ class InstMgrService implements Service {
             }
         }
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

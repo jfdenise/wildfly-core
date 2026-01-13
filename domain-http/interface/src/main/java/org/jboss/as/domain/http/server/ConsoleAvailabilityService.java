@@ -106,6 +106,16 @@ public final class ConsoleAvailabilityService implements Service, ConsoleAvailab
         }
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     @FunctionalInterface
     public interface LogAdminConsole {
         void logAdminConsole();

@@ -50,4 +50,14 @@ public class VirtualDomainMetaDataService implements Service<VirtualDomainMetaDa
         return virtualDomainMetaData;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

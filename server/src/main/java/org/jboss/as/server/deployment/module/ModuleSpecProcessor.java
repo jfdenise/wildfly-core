@@ -395,6 +395,16 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
         public Object getValue() {
             return moduleDefinition;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
 }

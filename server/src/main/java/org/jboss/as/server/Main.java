@@ -58,23 +58,34 @@ public final class Main {
      *
      * @param args the command-line arguments
      */
+    private static BootstrapImpl bootstrap;
     public static void preMain() throws Exception {
         System.out.println("PRE MAIN");
         // Start the server in suspend mode
         String[] args = {"--start-mode=suspend"};
-        BootstrapImpl bootstrap = (BootstrapImpl)doMain(args);
-        Thread.sleep(3000);
-        try {
-            bootstrap.shutdownContainer();
-        } catch(Throwable ex) {
-            System.out.println("ERROR SHUTING DOWN " + ex);
-        }
+        bootstrap = (BootstrapImpl)doMain(args);
         Thread.sleep(5000);
-        System.out.println("LEAVING");
+//        try {
+//            bootstrap.shutdownContainer();
+//        } catch(Throwable ex) {
+//            System.out.println("ERROR SHUTING DOWN " + ex);
+//        }
+        //Thread.sleep(5000);
+        bootstrap.passivateContainer();
+        //ModuleLoadService.FROM_BUILD.cleanupPermissions();
+        System.out.println("LEAVING 2");
     }
 
-    public static void main(String[] args) {
-        doMain(args);
+    public static void main(String[] args) throws Exception {
+//        if(ModuleLoadService.FROM_BUILD != null) {
+//            ModuleLoadService.FROM_BUILD.restorePermissions();
+//        }
+System.out.println("MAIN IN SERVER " + bootstrap);
+        if(bootstrap != null) {
+            bootstrap.resumeContainer();
+        }
+        Thread.sleep(1000000);
+        //doMain(args);
     }
 
     public static Bootstrap doMain(String[] args) {

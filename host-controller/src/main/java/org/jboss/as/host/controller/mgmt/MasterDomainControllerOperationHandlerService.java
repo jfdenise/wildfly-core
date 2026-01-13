@@ -101,6 +101,16 @@ public class MasterDomainControllerOperationHandlerService extends AbstractModel
         return handler;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     private class DomainTransactionalProtocolOperationHandler extends TransactionalProtocolOperationHandler {
         private final TransactionalOperationExecutor executor;
 

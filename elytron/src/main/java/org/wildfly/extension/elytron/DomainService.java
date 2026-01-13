@@ -224,6 +224,16 @@ class DomainService implements Service<SecurityDomain> {
         return securityDomain;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     class RealmDependency {
 
         private InjectedValue<SecurityRealm> securityRealmInjector = new InjectedValue<>();

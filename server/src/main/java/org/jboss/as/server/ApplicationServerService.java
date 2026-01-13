@@ -156,7 +156,7 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
 
         //Add server path manager service
         ServerPathManagerService.addService(serviceTarget, new ServerPathManagerService(configuration.getCapabilityRegistry()), serverEnvironment);
-        ServerService.addService(serviceTarget, configuration, processState, bootstrapListener, runningModeControl, configuration.getAuditLogger(),
+        ServerService ss = ServerService.addService(serviceTarget, configuration, processState, bootstrapListener, runningModeControl, configuration.getAuditLogger(),
                 configuration.getAuthorizer(), configuration.getSecurityIdentitySupplier(), suspendController);
         final ServiceActivatorContext serviceActivatorContext = new ServiceActivatorContext() {
             @Override
@@ -221,5 +221,17 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
       }
       return result.toString();
    }
+
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+        System.out.println("RESUME APPLICATION SERVICE SERVER");
+        ServerLogger.ROOT_LOGGER.resumingServer();
+        suspendController.resume(ServerSuspendController.Context.STARTUP).toCompletableFuture().join();
+        System.out.println("RESUME DONE");
+    }
 
 }

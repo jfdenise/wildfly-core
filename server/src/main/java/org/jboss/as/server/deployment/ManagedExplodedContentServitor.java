@@ -190,4 +190,14 @@ class ManagedExplodedContentServitor implements Service {
             // TODO log
         }
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

@@ -47,4 +47,14 @@ class HttpAuthenticationFactoryService implements Service<HttpAuthenticationFact
         return httpAuthenticationFactory;
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

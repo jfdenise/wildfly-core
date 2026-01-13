@@ -91,4 +91,12 @@ public class ExternalModuleService implements Service<ExternalModuleService>, Ex
         serviceBuilder.setInstance(new ExternalModuleService(provides))
                 .install();
     }
+
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
 }

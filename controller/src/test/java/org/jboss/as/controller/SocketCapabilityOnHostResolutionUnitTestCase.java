@@ -182,6 +182,16 @@ public class SocketCapabilityOnHostResolutionUnitTestCase {
             ManagementResourceRegistration sbg = hostRegistration.registerSubModel(createResourceDefinition(SOCKET_BINDING_GROUP));
             sbg.registerSubModel(createResourceDefinition(SOCKET_BINDING));
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     private static ResourceDefinition createResourceDefinition(String key) {

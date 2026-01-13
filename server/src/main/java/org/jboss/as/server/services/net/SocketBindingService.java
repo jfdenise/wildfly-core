@@ -79,4 +79,19 @@ public class SocketBindingService implements Service<SocketBinding> {
         return binding;
     }
 
+    @Override
+    public void passivate() {
+        socketBindingConsumer.accept(null);
+        binding = null;
+    }
+
+    @Override
+    public void resume() {
+        binding = new SocketBinding(name, port, isFixedPort,
+           multicastAddress, multicastPort,
+           interfaceBindingSupplier != null ? interfaceBindingSupplier.get() : null,
+           socketBindingsSupplier.get(), clientMappings);
+        socketBindingConsumer.accept(binding);
+    }
+
 }

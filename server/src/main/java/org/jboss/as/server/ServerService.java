@@ -211,7 +211,7 @@ public final class ServerService extends AbstractControllerService {
      *  @param serviceTarget the service target
      * @param configuration the bootstrap configuration
      */
-    public static void addService(final ServiceTarget serviceTarget, final Bootstrap.Configuration configuration,
+    public static ServerService addService(final ServiceTarget serviceTarget, final Bootstrap.Configuration configuration,
                                   final ControlledProcessState processState, final BootstrapListener bootstrapListener,
                                   final RunningModeControl runningModeControl, final ManagedAuditLogger auditLogger,
                                   final DelegatingConfigurableAuthorizer authorizer, final ManagementSecurityIdentitySupplier securityIdentitySupplier,
@@ -262,6 +262,7 @@ public final class ServerService extends AbstractControllerService {
         serviceBuilder.install();
 
         ExternalManagementRequestExecutor.install(serviceTarget, ThreadGroupHolder.THREAD_GROUP, EXECUTOR_CAPABILITY.getCapabilityServiceName());
+        return service;
     }
 
     public synchronized void start(final StartContext context) throws StartException {
@@ -529,6 +530,16 @@ public final class ServerService extends AbstractControllerService {
         };
     }
 
+    @Override
+    public void passivate() {
+        super.passivate();
+    }
+
+    @Override
+    public void resume() {
+        super.resume();
+    }
+
     /** Temporary replacement for QueuelessThreadPoolService */
     private static class ServerExecutorService implements Service<ExecutorService> {
 
@@ -550,6 +561,7 @@ public final class ServerService extends AbstractControllerService {
 
         @Override
         public synchronized void start(StartContext context) throws StartException {
+            System.out.println("START EXECUTOR SERVICE");
             if (EnhancedQueueExecutor.DISABLE_HINT) {
                 executorService = new ThreadPoolExecutor(getCorePoolSize(forDomain), Integer.MAX_VALUE, 20L, TimeUnit.SECONDS,
                         new SynchronousQueue<Runnable>(), threadFactory);
@@ -566,7 +578,7 @@ public final class ServerService extends AbstractControllerService {
 
         @Override
         public synchronized void stop(final StopContext context) {
-
+            System.out.println("STOP EXECUTOR SERVICE");
             if (executorService != null) {
                 context.asynchronous();
                 Thread executorShutdown = new Thread(new Runnable() {
@@ -639,6 +651,30 @@ public final class ServerService extends AbstractControllerService {
             }
             return DEFAULT_MAX_POOL_SIZE;
         }
+
+        @Override
+        public void passivate() {
+            if(executorService != null) {
+            List<Runnable> tasks = executorService.shutdownNow();
+            executorService = null;
+            }
+        }
+
+        @Override
+        public void resume() {
+            if (EnhancedQueueExecutor.DISABLE_HINT) {
+                executorService = new ThreadPoolExecutor(getCorePoolSize(forDomain), Integer.MAX_VALUE, 20L, TimeUnit.SECONDS,
+                        new SynchronousQueue<Runnable>(), threadFactory);
+            } else {
+                executorService = new EnhancedQueueExecutor.Builder()
+                        .setCorePoolSize(getCorePoolSize(forDomain))
+                        .setMaximumPoolSize(getMaxPoolSize())
+                        .setKeepAliveTime(20L, TimeUnit.SECONDS)
+                        .setThreadFactory(threadFactory)
+                        .setMBeanName(ENHANCED_EXECUTOR_MBEAN_NAME)
+                        .build();
+            }
+        }
     }
 
     static final class ServerDelegatingResourceDefinition extends DelegatingResourceDefinition{
@@ -688,6 +724,18 @@ public final class ServerService extends AbstractControllerService {
         @Override
         public synchronized ScheduledExecutorService getValue() throws IllegalStateException {
             return scheduledExecutorService;
+        }
+
+        @Override
+        public void passivate() {
+            scheduledExecutorService.shutdown();
+            scheduledExecutorService = null;
+        }
+
+        @Override
+        public void resume() {
+            scheduledExecutorService = new ScheduledThreadPoolExecutor(4 , threadFactory);
+            scheduledExecutorService.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         }
     }
 

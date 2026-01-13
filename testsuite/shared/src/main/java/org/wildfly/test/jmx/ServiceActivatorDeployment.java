@@ -138,4 +138,14 @@ public class ServiceActivatorDeployment implements ServiceActivator, Service<Voi
         mbeanServerValue.getValue().removeNotificationListener(name, listener);
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
 }

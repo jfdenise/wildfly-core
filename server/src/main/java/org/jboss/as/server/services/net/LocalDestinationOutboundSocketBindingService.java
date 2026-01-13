@@ -61,4 +61,12 @@ public class LocalDestinationOutboundSocketBindingService extends OutboundSocket
         return socketAddress.getPort();
     }
 
+    @Override
+    public void passivate() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
 }

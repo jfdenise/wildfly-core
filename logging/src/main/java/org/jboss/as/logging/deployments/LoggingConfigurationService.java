@@ -51,4 +51,14 @@ public class LoggingConfigurationService implements Service<LogContextConfigurat
     public String getConfiguration() {
         return configuration;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

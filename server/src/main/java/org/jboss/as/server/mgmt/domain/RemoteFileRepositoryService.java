@@ -192,4 +192,14 @@ public class RemoteFileRepositoryService implements CompositeContentRepository, 
     public List<ContentRepositoryElement> listContent(byte[] deploymentHash, String path, ContentFilter filter) throws ExplodedContentException {
         return contentRepository.listContent(deploymentHash, path, filter);
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

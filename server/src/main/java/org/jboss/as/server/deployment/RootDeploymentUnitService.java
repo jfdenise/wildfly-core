@@ -97,4 +97,14 @@ final class RootDeploymentUnitService extends AbstractDeploymentUnitService {
 
         return deploymentUnit;
     }
+
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
 }

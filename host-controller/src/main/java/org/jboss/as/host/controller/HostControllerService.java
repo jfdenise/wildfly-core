@@ -252,6 +252,16 @@ public class HostControllerService implements Service<AsyncFuture<ServiceContain
         return result.toString();
     }
 
+    @Override
+    public void passivate() {
+        //TODO
+    }
+
+    @Override
+    public void resume() {
+        //TODO
+    }
+
     static final class HostControllerExecutorService implements Service<ExecutorService> {
         final ThreadFactory threadFactory;
         private ExecutorService executorService;
@@ -311,6 +321,16 @@ public class HostControllerService implements Service<AsyncFuture<ServiceContain
         public synchronized ExecutorService getValue() throws IllegalStateException {
             return executorService;
         }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
+        }
     }
 
     static final class HostControllerScheduledExecutorService implements Service<ScheduledExecutorService> {
@@ -353,6 +373,16 @@ public class HostControllerService implements Service<AsyncFuture<ServiceContain
         @Override
         public synchronized ScheduledExecutorService getValue() throws IllegalStateException {
             return scheduledExecutorService;
+        }
+
+        @Override
+        public void passivate() {
+            //TODO
+        }
+
+        @Override
+        public void resume() {
+            //TODO
         }
     }
 }
