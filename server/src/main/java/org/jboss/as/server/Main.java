@@ -63,7 +63,7 @@ public final class Main {
         // Start the server in suspend mode
         String[] args = {"--start-mode=suspend"};
         BootstrapImpl bootstrap = (BootstrapImpl)doMain(args);
-        Thread.sleep(3000);
+        Thread.sleep(7000);
         try {
             bootstrap.shutdownContainer();
         } catch(Throwable ex) {
