@@ -519,7 +519,6 @@ public final class ServerService extends AbstractControllerService {
 
     @Override
     protected ModelControllerServiceInitializationParams getModelControllerServiceInitializationParams() {
-        Object val = null;
         final ServiceLoader<ModelControllerServiceInitialization> sl = ServiceLoader.load(ModelControllerServiceInitialization.class);
         return new ModelControllerServiceInitializationParams(sl) {
             @Override

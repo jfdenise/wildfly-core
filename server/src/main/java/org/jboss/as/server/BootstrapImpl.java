@@ -11,8 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import javax.management.ObjectName;
 
+import javax.management.ObjectName;
 
 import org.jboss.as.controller.ControlledProcessState;
 import org.jboss.as.controller.ControlledProcessStateService;
@@ -82,6 +82,7 @@ final class BootstrapImpl implements Bootstrap {
                 }
             }
         } catch (Throwable ignored) {}
+
         assert configuration != null : "configuration is null";
 
         // AS7-6381 set this property so we can get it out of the launch scripts
@@ -275,7 +276,7 @@ final class BootstrapImpl implements Bootstrap {
                     if (!failed) {
                         // TODO this is probably better before the 'suspend' logging but the
                         // shutdown mgmt op has this order of logging
-                        //SystemExiter.logBeforeExit(ServerLogger.ROOT_LOGGER::shutdownHookInvoked);
+                        SystemExiter.logBeforeExit(ServerLogger.ROOT_LOGGER::shutdownHookInvoked);
                     }
                     final CountDownLatch terminateLatch = new CountDownLatch(1);
                     sc.addTerminateListener(new ServiceContainer.TerminateListener() {

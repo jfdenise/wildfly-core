@@ -38,7 +38,6 @@ import org.wildfly.security.auth.client.AuthenticationContext;
  */
 public class ElytronExtension implements Extension {
 
-    //public static PermissionsPreLoader PERMISSIONS_INSTANCE = PermissionsPreLoader.INSTANCE;
     /**
      * The current name space used for the {@code subsystem} element
      */

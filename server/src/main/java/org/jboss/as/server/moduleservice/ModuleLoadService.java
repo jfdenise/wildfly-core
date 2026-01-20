@@ -147,12 +147,14 @@ public class ModuleLoadService implements Service<Module> {
 
     @Override
     public synchronized void stop(StopContext context) {
-        try {
-            // we don't actually unload the module, that is taken care of by the service module loader
-            // Clean the permissions so they can be reconstructed at startup.
-            module.cleanupPermissions();
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+        if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
+            try {
+                // we don't actually unload the module, that is taken care of by the service module loader
+                // Clean the permissions so they can be reconstructed at startup.
+                module.cleanupPermissions();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
         module = null;
     }

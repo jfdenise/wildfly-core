@@ -146,8 +146,6 @@ public class ExtensionAddHandler implements OperationStepHandler {
             // The module is there but can't be loaded. Treat this as an internal problem.
             // Throw a runtime exception so it always gets logged at ERROR in the server log with stack trace details.
             throw ControllerLogger.ROOT_LOGGER.extensionModuleLoadingFailure(e, module);
-        } catch(Exception ex) {
-            throw new RuntimeException(ex);
         }
     }
 

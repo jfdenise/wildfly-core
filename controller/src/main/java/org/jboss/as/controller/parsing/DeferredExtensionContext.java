@@ -91,8 +91,8 @@ public class DeferredExtensionContext {
     private void loadModule(final String moduleName, final XMLMapper xmlMapper) throws XMLStreamException {
         // Register element handlers for this extension
         try {
-            boolean initialized = false;
             final Module module = moduleLoader.loadModule(moduleName);
+            boolean initialized = false;
             for (final Extension extension : module.loadService(Extension.class)) {
                 ClassLoader oldTccl = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(extension.getClass());
                 try {
@@ -105,7 +105,7 @@ public class DeferredExtensionContext {
                 }
             }
             if (!initialized) {
-                throw ControllerLogger.ROOT_LOGGER.notFound("META-INF/services/", Extension.class.getName(), moduleName);
+                throw ControllerLogger.ROOT_LOGGER.notFound("META-INF/services/", Extension.class.getName(), module.getName());
             }
         } catch (final ModuleLoadException e) {
             throw ControllerLogger.ROOT_LOGGER.failedToLoadModule(e);

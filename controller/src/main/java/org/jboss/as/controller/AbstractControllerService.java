@@ -694,13 +694,11 @@ public abstract class AbstractControllerService implements Service<ModelControll
                     assert context instanceof OperationContextImpl;
                     ManagementModel managementModel = ((OperationContextImpl)context).getManagementModel();
 
-                    final Object sl = initParams.serviceLoader;
+                    final ServiceLoader<ModelControllerServiceInitialization> sl = initParams.serviceLoader;
 
                     final String hostName = initParams.getHostName();
                     assert !processType.isHostController() || hostName != null;
-                    if(sl instanceof List) {
-                        List<ModelControllerServiceInitialization> lst = (List<ModelControllerServiceInitialization>) sl;
-                        for (ModelControllerServiceInitialization init : lst) {
+                    for (ModelControllerServiceInitialization init : sl) {
                         if (processType.isHostController()) {
                             init.initializeHost(context.getServiceTarget(), managementModel, hostName, processType);
                             init.initializeDomain(context.getServiceTarget(), managementModel);
@@ -708,18 +706,6 @@ public abstract class AbstractControllerService implements Service<ModelControll
                             init.initializeStandalone(context.getServiceTarget(), managementModel, processType);
 
                         }
-                        }
-                    } else {
-                    ServiceLoader<ModelControllerServiceInitialization> typed = (ServiceLoader<ModelControllerServiceInitialization>) sl;
-                    for (ModelControllerServiceInitialization init : typed) {
-                        if (processType.isHostController()) {
-                            init.initializeHost(context.getServiceTarget(), managementModel, hostName, processType);
-                            init.initializeDomain(context.getServiceTarget(), managementModel);
-                        } else {
-                            init.initializeStandalone(context.getServiceTarget(), managementModel, processType);
-
-                        }
-                    }
                     }
                     managementModel.getRootResourceRegistration().unregisterOperationHandler(INIT_CONTROLLER_OP.getName());
                 }
@@ -739,9 +725,9 @@ public abstract class AbstractControllerService implements Service<ModelControll
          * created via the {@link AbstractControllerService#getModelControllerServiceInitializationParams()}
          *
          */
-        private final Object serviceLoader;
+        private final ServiceLoader<ModelControllerServiceInitialization> serviceLoader;
 
-        public ModelControllerServiceInitializationParams(Object serviceLoader) {
+        public ModelControllerServiceInitializationParams(ServiceLoader<ModelControllerServiceInitialization> serviceLoader) {
             this.serviceLoader = serviceLoader;
         }
 

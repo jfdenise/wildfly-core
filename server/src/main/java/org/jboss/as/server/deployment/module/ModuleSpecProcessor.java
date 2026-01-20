@@ -86,6 +86,7 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
         final ResourceRoot mainRoot = deploymentUnit.getAttachment(Attachments.DEPLOYMENT_ROOT);
         if (mainRoot == null)
             return;
+
         // Add internal resource roots
         final ModuleSpecification moduleSpec = deploymentUnit.getAttachment(Attachments.MODULE_SPECIFICATION);
         final List<ResourceRoot> resourceRoots = new ArrayList<ResourceRoot>();
@@ -342,7 +343,7 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
                         .setExportFilter(exportFilter)
                         .build();
                 specBuilder.addDependency(depSpec);
-                logger.debugf("Adding dependency %s to module %s", dependency, specBuilder.getName());
+                logger.debugf("Adding dependency %s to module %s", dependency, specBuilder.getIdentifier());
             }
         }
     }

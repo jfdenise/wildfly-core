@@ -109,6 +109,7 @@ public class DeploymentHandlerUtil {
 
     public static void deploy(final OperationContext context, final ModelNode operation, final String deploymentUnitName, final String managementName, final ContentItem... contents) throws OperationFailedException {
         assert contents != null : "contents is null";
+
         if (context.isNormalServer()) {
             //Checking for duplicate runtime name
             PathAddress deploymentsAddress = context.getCurrentAddress().getParent();
@@ -179,6 +180,7 @@ public class DeploymentHandlerUtil {
     public static void doDeploy(final OperationContext context, final String deploymentUnitName, final String managementName,
                                 final Resource deploymentResource, final ImmutableManagementResourceRegistration registration,
                                 final ManagementResourceRegistration mutableRegistration, final ContentItem... contents) {
+
         final ServiceName deploymentUnitServiceName = Services.deploymentUnitName(deploymentUnitName);
 
         final ServiceTarget serviceTarget = context.getServiceTarget();

@@ -5,7 +5,6 @@
 
 package org.wildfly.extension.io;
 
-import java.lang.management.ManagementFactory;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PROFILE;
 import static org.wildfly.extension.io.WorkerResourceDefinition.WORKER_IO_THREADS;
@@ -13,13 +12,14 @@ import static org.wildfly.extension.io.WorkerResourceDefinition.WORKER_TASK_CORE
 import static org.wildfly.extension.io.WorkerResourceDefinition.WORKER_TASK_MAX_THREADS;
 import static org.wildfly.extension.io.WorkerResourceDefinition.STACK_SIZE;
 
+import java.lang.management.ManagementFactory;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
-
 
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.CapabilityServiceBuilder;
