@@ -112,5 +112,6 @@
         -->
         <module name="org.wildfly.client.config" export="true"/>
         <module name="org.wildfly.security.elytron-dynamic-ssl" export="true" optional="true"/>
+        <module name="org.wildfly.graal.runtime"/>
     </dependencies>
 </module>

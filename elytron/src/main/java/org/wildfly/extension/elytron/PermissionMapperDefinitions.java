@@ -15,11 +15,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.BinaryOperator;
 
@@ -51,6 +49,7 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.value.InjectedValue;
 import org.wildfly.extension.elytron.TrivialService.ValueSupplier;
 import org.wildfly.extension.elytron._private.ElytronSubsystemMessages;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.SimplePermissionMapper;
 import org.wildfly.security.permission.InvalidPermissionClassException;
@@ -63,29 +62,6 @@ import org.wildfly.security.permission.PermissionVerifier;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 class PermissionMapperDefinitions {
-    private static final Map<String, List<java.security.Permission>> PERMISSIONS_CACHE = new HashMap<>();
-    static void addPermission(java.security.Permission perm, String moduleName, String className) {
-        moduleName = moduleName == null ? "" : moduleName;
-        List<java.security.Permission> lst = PERMISSIONS_CACHE.get(moduleName);
-        if(lst == null) {
-            lst = new ArrayList<>();
-            PERMISSIONS_CACHE.put(moduleName, lst);
-        }
-        lst.add(perm);
-    }
-    static java.security.Permission getPermission(String moduleName, String className) throws Exception {
-        moduleName = moduleName == null ? "" : moduleName;
-        List<java.security.Permission> lst = PERMISSIONS_CACHE.get(moduleName);
-        //System.out.println("GET THE PERMISSIONS from " + PERMISSIONS);
-        for (java.security.Permission p : lst) {
-            //System.out.println("GET PERMISSION " + p.getClass().getName());
-            if (p.getClass().getName().equals(className)) {
-                //System.out.println(" OK GET PERMISSION " + p.getClass().getName());
-                return p;
-            }
-        }
-        throw new Exception("Permission " + className + " not found");
-    }
     static final SimpleAttributeDefinition LEFT = new SimpleAttributeDefinitionBuilder(ElytronDescriptionConstants.LEFT, ModelType.STRING, false)
             .setMinSize(1)
             .setRestartAllServices()
@@ -426,15 +402,8 @@ class PermissionMapperDefinitions {
     }
 
     private static java.security.Permission createPermission(Permission permission) throws StartException {
-        if (Boolean.getBoolean("org.wildfly.graal")) {
-            try {
-                return getPermission(permission.getModule(), permission.getClassName());
-            } catch (InvalidPermissionClassException e) {
-                throw ElytronSubsystemMessages.ROOT_LOGGER.invalidPermissionClass(permission.getClassName());
-            } catch (Throwable e) {
-                throw ElytronSubsystemMessages.ROOT_LOGGER.exceptionWhileCreatingPermission(permission.getClassName(), e);
-            }
-        } else {
+        java.security.Permission perm = WildFlyGraalSetup.getPermission(permission.getModule(), permission.getClassName());
+        if (perm == null) {
             Module currentModule = Module.getCallerModule();
             if (permission.getModule() != null && currentModule != null) {
                 try {
@@ -447,18 +416,15 @@ class PermissionMapperDefinitions {
 
             ClassLoader classLoader = currentModule != null ? currentModule.getClassLoader() : PermissionMapperDefinitions.class.getClassLoader();
             try {
-                java.security.Permission perm =
-                        PermissionUtil.createPermission(classLoader, permission.getClassName(), permission.getTargetName(), permission.getAction());
-                if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
-                    addPermission(perm, permission.getModule(), permission.getClassName());
-                }
-                return perm;
+                perm = PermissionUtil.createPermission(classLoader, permission.getClassName(), permission.getTargetName(), permission.getAction());
+                WildFlyGraalSetup.addPermission(perm, permission.getModule(), permission.getClassName());
             } catch (InvalidPermissionClassException e) {
                 throw ElytronSubsystemMessages.ROOT_LOGGER.invalidPermissionClass(permission.getClassName());
             } catch (Throwable e) {
                 throw ElytronSubsystemMessages.ROOT_LOGGER.exceptionWhileCreatingPermission(permission.getClassName(), e);
             }
         }
+        return perm;
     }
 
 

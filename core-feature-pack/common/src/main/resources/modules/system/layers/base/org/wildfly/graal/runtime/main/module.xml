@@ -5,18 +5,12 @@
   ~ SPDX-License-Identifier: Apache-2.0
   -->
 
-<module xmlns="urn:jboss:module:1.9" name="org.wildfly.io.spi">
+<module xmlns="urn:jboss:module:1.9" name="org.wildfly.graal.runtime">
     <properties>
         <property name="jboss.api" value="private"/>
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly.core:wildfly-io-spi}"/>
+        <artifact name="${org.wildfly.graal:wildfly-graal-runtime}"/>
     </resources>
-
-    <dependencies>
-        <module name="org.jboss.as.controller"/>
-        <module name="org.jboss.xnio"/>
-        <module name="org.wildfly.service"/>
-    </dependencies>
 </module>

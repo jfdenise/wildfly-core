@@ -8,8 +8,6 @@ package org.wildfly.io;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.jboss.as.controller.AbstractAttributeDefinitionBuilder;
 import org.jboss.as.controller.ExpressionResolver;
@@ -17,6 +15,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.xnio.Option;
 import org.xnio.OptionMap;
 
@@ -24,11 +23,6 @@ import org.xnio.OptionMap;
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2012 Red Hat Inc.
  */
 public class OptionAttributeDefinition extends SimpleAttributeDefinition {
-    private static final Map<String, Field> FIELDS;
-    static {
-        System.out.println("INIT OptionAttributeDefinition");
-        FIELDS = new HashMap<>();
-    }
     private final Option option;
     private final Class<?> optionType;
 
@@ -118,28 +112,15 @@ public class OptionAttributeDefinition extends SimpleAttributeDefinition {
 
         private static Class<?> determineOptionType(Option<?> option) {
             try {
-                final Field typeField;
-                if (option.getClass().getSimpleName().equals("SequenceOption")) {
-                    if(Boolean.getBoolean("org.wildfly.graal")) {
-                        typeField = FIELDS.get(option.getClass().getName());
-                    } else {
+                Field typeField = WildFlyGraalSetup.getIoOptionField(option.getClass().getName());
+                if (typeField == null) {
+                    if (option.getClass().getSimpleName().equals("SequenceOption")) {
                         typeField = option.getClass().getDeclaredField("elementType");
-                        typeField.setAccessible(true);
-                        if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
-                            FIELDS.put(option.getClass().getName(), typeField);
-                        }
-                    }
-                } else {
-                    // This is initialized at build time.
-                    if(Boolean.getBoolean("org.wildfly.graal")) {
-                        typeField = FIELDS.get(option.getClass().getName());
                     } else {
                         typeField = option.getClass().getDeclaredField("type");
-                        typeField.setAccessible(true);
-                        if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
-                            FIELDS.put(option.getClass().getName(), typeField);
-                        }
                     }
+                    typeField.setAccessible(true);
+                    WildFlyGraalSetup.cacheIoOptionField(option.getClass().getName(), typeField);
                 }
                 Class<?> optionType = (Class<?>) typeField.get(option);
                 return optionType;

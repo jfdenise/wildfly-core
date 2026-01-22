@@ -176,6 +176,10 @@
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>org.wildfly.graal</groupId>
+          <artifactId>wildfly-graal-runtime</artifactId>
+        </dependency>
         <!-- Test Dependencies -->
         <dependency>
             <groupId>junit</groupId>

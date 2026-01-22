@@ -34,6 +34,7 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.threads.AsyncFuture;
 import org.jboss.threads.AsyncFutureTask;
 import org.jboss.threads.JBossExecutors;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -72,7 +73,7 @@ final class BootstrapImpl implements Bootstrap {
 
     private AsyncFuture<ServiceContainer> internalBootstrap(final Configuration configuration, final List<ServiceActivator> extraServices) {
         try {
-            if(Boolean.getBoolean("org.wildfly.graal.build.time")) {
+            if(!WildFlyGraalSetup.isJMXRegistrationSupported()) {
                 ServerLogger.ROOT_LOGGER.info("Not checking for fdCount at build time.");
             } else {
                 final Object value = ManagementFactory.getPlatformMBeanServer().getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "MaxFileDescriptorCount");

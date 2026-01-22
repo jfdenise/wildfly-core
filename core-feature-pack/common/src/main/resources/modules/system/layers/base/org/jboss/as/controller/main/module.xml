@@ -40,5 +40,6 @@
         <module name="org.wildfly.security.elytron-private"/>
         <module name="org.wildfly.service"/>
         <module name="org.yaml.snakeyaml"/>
+        <module name="org.wildfly.graal.runtime" export="true"/>
     </dependencies>
 </module>

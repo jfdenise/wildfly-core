@@ -8,12 +8,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.jboss.as.server.Services;
 import org.jboss.as.server.deployment.module.ModuleDependency;
 import org.jboss.as.server.logging.ServerLogger;
-import org.jboss.modules.ClassCache;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleNotFoundException;
@@ -26,6 +24,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * Service that loads and re-links a module once all the modules dependencies are available.
@@ -75,67 +74,28 @@ public class ModuleLoadService implements Service<Module> {
     public synchronized void start(StartContext context) throws StartException {
         try {
             final ServiceModuleLoader moduleLoader = serviceModuleLoader.getValue();
-            Module module;
-            if (Boolean.getBoolean("org.wildfly.graal")) {
-                ServerLogger.AS_ROOT_LOGGER.info("Re-using deployment module from build phase.");
-                module = FROM_BUILD;
-                try {
-                    module.restorePermissions();
-                } catch (Exception ex) {
-                    throw new StartException(ex);
-                }
-            } else {
+            Module module = (Module) WildFlyGraalSetup.getDeploymentModule();
+            if (module == null) {
                 module = moduleLoader.loadModule(moduleDefinitionInjectedValue.getValue().getModuleName());
                 moduleLoader.relinkModule(module);
-                if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
-                    FROM_BUILD = module;
-//                    for(DependencySpec d : module.getDependencies()) {
-//                        System.out.println(d);
-//                    }
-                    try {
-                        //Install cache
-                        String cacheClass = System.getProperty("org.wildfly.graal.cache.class");
-                        ClassCache cache = (ClassCache) Class.forName(cacheClass).newInstance();
-                        FROM_BUILD.setClassCache(cache);
-                        System.out.println("Discovering services for deployment module.");
-                        for (String serviceClass : FROM_BUILD.getServices()) {
-                            if (!serviceClass.startsWith("java.lang.")) {
-                                //System.out.println(serviceClass);
-                                Set<String> impl = FROM_BUILD.getCache().addServiceToCache(serviceClass);
-//                                for(String s : impl) {
-//                                    System.out.println("   " + s);
-//                                }
+                WildFlyGraalSetup.setupDeploymentModule(module);
+                for (ModuleDependency dependency : allDependencies) {
+                    if (dependency.isUserSpecified()) {
+                        final String id = dependency.getDependencyModule();
+                        try {
+                            String val = moduleLoader.loadModule(id).getProperty("jboss.api");
+                            if (val != null) {
+                                if (val.equals("private")) {
+                                    ServerLogger.PRIVATE_DEP_LOGGER.privateApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
+                                } else if (val.equals("unsupported")) {
+                                    ServerLogger.UNSUPPORTED_DEP_LOGGER.unsupportedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
+                                } else if (val.equals("deprecated")) {
+                                    ServerLogger.DEPRECATED_DEP_LOGGER.deprecatedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
+                                }
                             }
+                        } catch (ModuleNotFoundException ignore) {
+                            //can happen with optional dependencies
                         }
-                        System.out.println("Services discovery done");
-                        String classes = System.getProperty("org.wildfly.graal.deployment.classes");
-                        if (classes != null) {
-                            String[] carray = classes.split(",");
-                            for (String clazz : carray) {
-                                FROM_BUILD.getCache().addClassToCache(clazz);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        throw new StartException(ex);
-                    }
-                }
-            }
-            for (ModuleDependency dependency : allDependencies) {
-                if (dependency.isUserSpecified()) {
-                    final String id = dependency.getDependencyModule();
-                    try {
-                        String val = moduleLoader.loadModule(id).getProperty("jboss.api");
-                        if (val != null) {
-                            if (val.equals("private")) {
-                                ServerLogger.PRIVATE_DEP_LOGGER.privateApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
-                            } else if (val.equals("unsupported")) {
-                                ServerLogger.UNSUPPORTED_DEP_LOGGER.unsupportedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
-                            } else if (val.equals("deprecated")) {
-                                ServerLogger.DEPRECATED_DEP_LOGGER.deprecatedApiUsed(moduleDefinitionInjectedValue.getValue().getModuleName(), id);
-                            }
-                        }
-                    } catch (ModuleNotFoundException ignore) {
-                        //can happen with optional dependencies
                     }
                 }
             }
@@ -147,15 +107,7 @@ public class ModuleLoadService implements Service<Module> {
 
     @Override
     public synchronized void stop(StopContext context) {
-        if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
-            try {
-                // we don't actually unload the module, that is taken care of by the service module loader
-                // Clean the permissions so they can be reconstructed at startup.
-                module.cleanupPermissions();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
+        // we don't actually unload the module, that is taken care of by the service module loader
         module = null;
     }
 

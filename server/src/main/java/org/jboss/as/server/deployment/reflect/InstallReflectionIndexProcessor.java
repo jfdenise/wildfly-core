@@ -12,6 +12,7 @@ import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.modules.Module;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * The processor to install the reflection index.
@@ -28,15 +29,11 @@ public final class InstallReflectionIndexProcessor implements DeploymentUnitProc
         }
 
         if(deploymentUnit.getParent() == null) {
-            DeploymentReflectionIndex index;
-           if(Boolean.getBoolean("org.wildfly.graal")) {
-               index = FROM_BUILD;
-           } else {
+            DeploymentReflectionIndex index = (DeploymentReflectionIndex) WildFlyGraalSetup.getDeploymentReflectionIndex();
+            if (index == null) {
                 index = DeploymentReflectionIndex.create();
-                if (Boolean.getBoolean("org.wildfly.graal.build.time")) {
-                    FROM_BUILD = index;
-                }
-           }
+                WildFlyGraalSetup.setDeploymentReflectionIndex(index);
+            }
             deploymentUnit.putAttachment(Attachments.REFLECTION_INDEX, index);
             deploymentUnit.putAttachment(Attachments.PROXY_REFLECTION_INDEX, new ProxyMetadataSource(index));
         } else {
