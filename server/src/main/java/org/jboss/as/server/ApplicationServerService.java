@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import org.jboss.as.controller.ControlledProcessState;
 import org.jboss.as.controller.RunningModeControl;
+import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
 import org.jboss.as.domain.http.server.ConsoleAvailabilityService;
 import org.jboss.as.repository.ContentRepository;
 import org.jboss.as.server.controller.git.GitContentRepository;
@@ -61,7 +62,7 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
     private final ElapsedTime elapsedTime;
     private volatile FutureServiceContainer futureContainer;
     private volatile boolean everStopped;
-
+    private ServerService serverService;
     ApplicationServerService(final List<ServiceActivator> extraServices, final Bootstrap.Configuration configuration,
                              final ControlledProcessState processState, final ServerSuspendController suspendController,
                              final ElapsedTime elapsedTime) {
@@ -156,7 +157,7 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
 
         //Add server path manager service
         ServerPathManagerService.addService(serviceTarget, new ServerPathManagerService(configuration.getCapabilityRegistry()), serverEnvironment);
-        ServerService.addService(serviceTarget, configuration, processState, bootstrapListener, runningModeControl, configuration.getAuditLogger(),
+        serverService = ServerService.addService(serviceTarget, configuration, processState, bootstrapListener, runningModeControl, configuration.getAuditLogger(),
                 configuration.getAuthorizer(), configuration.getSecurityIdentitySupplier(), suspendController);
         final ServiceActivatorContext serviceActivatorContext = new ServiceActivatorContext() {
             @Override
@@ -221,5 +222,21 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
       }
       return result.toString();
    }
+
+    public void finishBoot() throws ConfigurationPersistenceException {
+        long start = System.currentTimeMillis();
+        final ServerEnvironment serverEnvironment = configuration.getServerEnvironment();
+        final ProductConfig config = serverEnvironment.getProductConfig();
+        final String prettyVersion = config.getPrettyVersionString();
+        final String banner = serverEnvironment.getStability() == org.jboss.as.version.Stability.EXPERIMENTAL ? config.getBanner() : "";
+        ServerLogger.AS_ROOT_LOGGER.serverStarting(prettyVersion, banner);
+        try {
+            futureContainer.get().runtimeServices();
+            serverService.finishBoot(false);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+        ServerLogger.AS_ROOT_LOGGER.startedClean("Server started in " + (System.currentTimeMillis() - start) + "ms");
+    }
 
 }

@@ -26,7 +26,10 @@ public class LoopbackAddressInterfaceCriteria extends AbstractInterfaceCriteria 
     private final String address;
     private InetAddress resolved;
     private boolean unknownHostLogged;
-
+    @Override
+    public void passivate() {
+        resolved = null;
+    }
     /**
      * Creates a new LoopbackAddressInterfaceCriteria
      *

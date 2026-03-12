@@ -44,6 +44,7 @@ import org.jboss.msc.service.ServiceRegistry;
 import org.wildfly.extension.io.logging.IOLogger;
 import org.wildfly.io.IOServiceDescriptor;
 import org.wildfly.io.OptionAttributeDefinition;
+import org.wildfly.io.XnioWorkerSupplier;
 import org.xnio.Option;
 import org.xnio.Options;
 import org.xnio.XnioWorker;
@@ -280,12 +281,12 @@ class WorkerResourceDefinition extends PersistentResourceDefinition {
     }
 
     static XnioWorker getXnioWorker(ServiceRegistry serviceRegistry, String name) {
-        ServiceName serviceName = CAPABILITY.getCapabilityServiceName(name, XnioWorker.class);
-        ServiceController<XnioWorker> controller = (ServiceController<XnioWorker>) serviceRegistry.getService(serviceName);
+        ServiceName serviceName = CAPABILITY.getCapabilityServiceName(name, XnioWorkerSupplier.class);
+        ServiceController<XnioWorkerSupplier> controller = (ServiceController<XnioWorkerSupplier>) serviceRegistry.getService(serviceName);
         if (controller == null || controller.getState() != ServiceController.State.UP) {
             return null;
         }
-        return controller.getValue();
+        return controller.getValue().get();
     }
 
     private static XnioWorkerMXBean getMetrics(ServiceRegistry serviceRegistry, String name) {

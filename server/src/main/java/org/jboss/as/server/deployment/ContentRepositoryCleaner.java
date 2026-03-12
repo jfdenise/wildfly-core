@@ -53,6 +53,7 @@ class ContentRepositoryCleaner {
 
         @Override
         public void run() {
+            System.out.println("RUNNING THE ContentRepositoryCleanerTask");
             cleanObsoleteContent();
         }
     }

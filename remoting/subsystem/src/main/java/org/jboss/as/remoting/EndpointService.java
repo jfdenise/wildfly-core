@@ -16,6 +16,7 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.remoting3.Endpoint;
 import org.jboss.remoting3.EndpointBuilder;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
 
@@ -43,8 +44,14 @@ public class EndpointService implements Service {
         this.optionMap = optionMap;
     }
 
+    private StartContext context;
     /** {@inheritDoc} */
     public void start(final StartContext context) throws StartException {
+        if (WildFlyGraalSetup.isBuildTime()) {
+            System.out.println("DO NOT CREATE ENDPOINT for graal execution");
+            this.context = context;
+            return;
+        }
         final Endpoint endpoint;
         final EndpointBuilder builder = Endpoint.builder();
         builder.setEndpointName(endpointName);
@@ -59,7 +66,9 @@ public class EndpointService implements Service {
         this.endpoint = endpoint;
         endpointConsumer.accept(endpoint);
     }
-
+    public void runtime() throws StartException {
+        start(context);
+    }
     /** {@inheritDoc} */
     public void stop(final StopContext context) {
         context.asynchronous();

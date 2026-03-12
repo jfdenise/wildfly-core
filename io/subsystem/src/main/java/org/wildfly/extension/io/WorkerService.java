@@ -14,25 +14,27 @@ import java.util.function.Supplier;
 
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
+import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.wildfly.common.net.CidrAddressTable;
 import org.wildfly.extension.io.logging.IOLogger;
+import org.wildfly.io.XnioWorkerSupplier;
 import org.xnio.XnioWorker;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2012 Red Hat Inc.
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-public final class WorkerService implements Service<XnioWorker> {
+public final class WorkerService implements Service<XnioWorkerSupplier> {
 
     private final XnioWorker.Builder builder;
-    private final Consumer<XnioWorker> workerConsumer;
+    private final Consumer<XnioWorkerSupplier> workerConsumer;
     private final Supplier<Executor> executorSupplier;
     private final Object stopLock = new Object();
-    private XnioWorker worker;
+    private XnioWorkerSupplier workerSupplier;
     private volatile StopContext stopContext;
-
-    public WorkerService(final Consumer<XnioWorker> workerConsumer, final Supplier<Executor> executorSupplier, final XnioWorker.Builder builder) {
+    private StartContext context;
+    public WorkerService(final Consumer<XnioWorkerSupplier> workerConsumer, final Supplier<Executor> executorSupplier, final XnioWorker.Builder builder) {
         this.workerConsumer = workerConsumer;
         this.executorSupplier = executorSupplier;
         this.builder = builder;
@@ -41,18 +43,22 @@ public final class WorkerService implements Service<XnioWorker> {
     @Override
     public void start(final StartContext startContext) {
         builder.setTerminationTask(this::stopDone);
-        worker = builder.build();
-        workerConsumer.accept(worker);
+        workerSupplier = new XnioWorkerSupplier(builder);
+        workerConsumer.accept(workerSupplier);
     }
 
+    public void runtime() throws StartException {
+        //start(context);
+        workerSupplier.init();
+    }
     @Override
     public void stop(final StopContext context) {
         this.stopContext = context;
         final Executor executor = executorSupplier.get();
         Runnable asyncStop = () -> {
-            XnioWorker localWorker = worker;
+            XnioWorker localWorker = workerSupplier.get();
             workerConsumer.accept(null);
-            worker = null;
+            workerSupplier.cleanup();
             localWorker.shutdown();
             boolean interrupted = false;
             try {
@@ -119,7 +125,7 @@ public final class WorkerService implements Service<XnioWorker> {
     }
 
     @Override
-    public XnioWorker getValue() throws IllegalStateException, IllegalArgumentException {
-        return worker;
+    public XnioWorkerSupplier getValue() throws IllegalStateException, IllegalArgumentException {
+        return workerSupplier;
     }
 }

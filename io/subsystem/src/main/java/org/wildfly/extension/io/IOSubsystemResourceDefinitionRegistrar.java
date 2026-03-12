@@ -22,6 +22,7 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.common.function.Functions;
 import org.wildfly.io.IOServiceDescriptor;
+import org.wildfly.io.XnioWorkerSupplier;
 import org.wildfly.subsystem.resource.ManagementResourceRegistrar;
 import org.wildfly.subsystem.resource.ManagementResourceRegistrationContext;
 import org.wildfly.subsystem.resource.ResourceDescriptor;
@@ -33,7 +34,6 @@ import org.wildfly.subsystem.service.ResourceServiceConfigurator;
 import org.wildfly.subsystem.service.ResourceServiceInstaller;
 import org.wildfly.subsystem.service.ServiceDependency;
 import org.wildfly.subsystem.service.capability.CapabilityServiceInstaller;
-import org.xnio.XnioWorker;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
@@ -45,7 +45,7 @@ class IOSubsystemResourceDefinitionRegistrar implements SubsystemResourceDefinit
 
     static final RuntimeCapability<Void> DEFAULT_WORKER_CAPABILITY = RuntimeCapability.Builder.of(IOServiceDescriptor.DEFAULT_WORKER).build();
 
-    static final CapabilityReferenceAttributeDefinition<XnioWorker> DEFAULT_WORKER = new CapabilityReferenceAttributeDefinition.Builder<>("default-worker", CapabilityReference.builder(DEFAULT_WORKER_CAPABILITY, IOServiceDescriptor.NAMED_WORKER).build())
+    static final CapabilityReferenceAttributeDefinition<XnioWorkerSupplier> DEFAULT_WORKER = new CapabilityReferenceAttributeDefinition.Builder<>("default-worker", CapabilityReference.builder(DEFAULT_WORKER_CAPABILITY, IOServiceDescriptor.NAMED_WORKER).build())
             .setRequired(false)
             .build();
 
@@ -92,7 +92,7 @@ class IOSubsystemResourceDefinitionRegistrar implements SubsystemResourceDefinit
         List<ResourceServiceInstaller> installers = new ArrayList<>(2);
         installers.add(maxThreadsBuilder.build());
 
-        ServiceDependency<XnioWorker> defaultWorker = DEFAULT_WORKER.resolve(context, model);
+        ServiceDependency<XnioWorkerSupplier> defaultWorker = DEFAULT_WORKER.resolve(context, model);
         if (defaultWorker.isPresent()) {
             installers.add(CapabilityServiceInstaller.builder(DEFAULT_WORKER_CAPABILITY, defaultWorker).build());
         }

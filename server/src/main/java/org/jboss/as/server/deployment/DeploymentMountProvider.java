@@ -76,7 +76,7 @@ public interface DeploymentMountProvider {
             private final Supplier<ExecutorService> executorSupplier;
             private volatile TempFileProvider tempFileProvider;
             private volatile ScheduledExecutorService scheduledExecutorService;
-
+            private JBossThreadFactory threadFactory;
             private ServerDeploymentRepositoryImpl(final Consumer<DeploymentMountProvider> deploymentMountProviderConsumer, final Supplier<ExecutorService> executorSupplier) {
                 this.deploymentMountProviderConsumer = deploymentMountProviderConsumer;
                 this.executorSupplier = executorSupplier;
@@ -101,7 +101,7 @@ public interface DeploymentMountProvider {
             @Override
             public void start(StartContext context) throws StartException {
                 try {
-                    final JBossThreadFactory threadFactory = doPrivileged(new PrivilegedAction<JBossThreadFactory>() {
+                    threadFactory = doPrivileged(new PrivilegedAction<JBossThreadFactory>() {
                         public JBossThreadFactory run() {
                             return new JBossThreadFactory(ThreadGroupHolder.THREAD_GROUP, true, null, "%G - %t", null, null);
                         }
@@ -117,6 +117,7 @@ public interface DeploymentMountProvider {
 
             @Override
             public void stop(final StopContext context) {
+                System.out.println("STOP MOUNT PROVIDER");
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
@@ -148,7 +149,23 @@ public interface DeploymentMountProvider {
                     context.asynchronous();
                 }
             }
+            public void passivate() {
+                scheduledExecutorService.shutdownNow();
+                try {
+                    tempFileProvider.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
 
+            public void runtime() throws StartException {
+                scheduledExecutorService = Executors.newScheduledThreadPool(2, threadFactory);
+                try {
+                    tempFileProvider = TempFileProvider.create("temp", scheduledExecutorService, true);
+                } catch (IOException ex) {
+                    throw new StartException(ex);
+                }
+            }
         }
 
         // Wrapper class to delay thread group creation until when it's needed.

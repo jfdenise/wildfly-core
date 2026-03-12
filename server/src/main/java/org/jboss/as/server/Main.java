@@ -50,7 +50,7 @@ public final class Main {
     private static void usage(ProductConfig productConfig) {
         CommandLineArgumentUsageImpl.printUsage(productConfig, STDOUT);
     }
-
+    private static BootstrapImpl impl;
     private Main() {
     }
 
@@ -58,14 +58,17 @@ public final class Main {
         System.out.println("PRE MAIN");
         // Start the server in suspend mode
         String[] args = {"--start-mode=suspend"};
-        BootstrapImpl bootstrap = (BootstrapImpl)doMain(args);
-        Thread.sleep(7000);
-        try {
-            bootstrap.shutdownContainer();
-        } catch(Throwable ex) {
-            System.out.println("ERROR SHUTING DOWN " + ex);
-        }
-        Thread.sleep(5000);
+        impl = (BootstrapImpl)doMain(args);
+        Thread.sleep(2000);
+        System.out.println("STARTED, NOW PASSIVATE");
+        //impl.container.dumpServices();
+        impl.container.passivateServices();
+//        try {
+//            bootstrap.shutdownContainer();
+//        } catch(Throwable ex) {
+//            System.out.println("ERROR SHUTING DOWN " + ex);
+//        }
+        //Thread.sleep(5000);
         System.out.println("LEAVING");
     }
 
@@ -74,8 +77,14 @@ public final class Main {
      *
      * @param args the command-line arguments
      */
-    public static void main(String[] args) {
-        doMain(args);
+    public static void main(String[] args) throws Exception {
+        //doMain(args);
+        if(impl == null) {
+            impl = (BootstrapImpl) doMain(args);
+        } else {
+            org.jboss.modules.ref.References.startReaperThread();
+            impl.finishBoot();
+        }
     }
 
     public static Bootstrap doMain(String[] args) {

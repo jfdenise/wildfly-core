@@ -15,6 +15,7 @@ import org.jboss.as.network.SocketBinding;
 import org.jboss.as.network.SocketBindingManager;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
+import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 
 /**
@@ -69,7 +70,14 @@ public class SocketBindingService implements Service<SocketBinding> {
         socketBindingConsumer.accept(null);
         binding = null;
     }
+    public void passivate() {
+        socketBindingConsumer.accept(null);
+        binding = null;
+    }
 
+    public void runtime() throws StartException {
+        start(null);
+    }
     @Override
     public synchronized SocketBinding getValue() throws IllegalStateException {
         final SocketBinding binding = this.binding;

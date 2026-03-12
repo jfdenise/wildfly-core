@@ -16,9 +16,13 @@ import java.io.File;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -26,6 +30,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import org.jboss.as.controller.AbstractControllerService;
@@ -212,7 +217,7 @@ public final class ServerService extends AbstractControllerService {
      *  @param serviceTarget the service target
      * @param configuration the bootstrap configuration
      */
-    public static void addService(final ServiceTarget serviceTarget, final Bootstrap.Configuration configuration,
+    public static ServerService addService(final ServiceTarget serviceTarget, final Bootstrap.Configuration configuration,
                                   final ControlledProcessState processState, final BootstrapListener bootstrapListener,
                                   final RunningModeControl runningModeControl, final ManagedAuditLogger auditLogger,
                                   final DelegatingConfigurableAuthorizer authorizer, final ManagementSecurityIdentitySupplier securityIdentitySupplier,
@@ -223,7 +228,7 @@ public final class ServerService extends AbstractControllerService {
         final ThreadFactory threadFactory = doPrivileged(new PrivilegedAction<ThreadFactory>() {
             public ThreadFactory run() {
                 return new JBossThreadFactory(ThreadGroupHolder.THREAD_GROUP, Boolean.FALSE, null, namePattern, null, null);
-            }
+                    }
         });
 
         // TODO determine why QueuelessThreadPoolService makes boot take > 35 secs
@@ -263,6 +268,7 @@ public final class ServerService extends AbstractControllerService {
         serviceBuilder.install();
 
         ExternalManagementRequestExecutor.install(serviceTarget, ThreadGroupHolder.THREAD_GROUP, EXECUTOR_CAPABILITY.getCapabilityServiceName());
+        return service;
     }
 
     public synchronized void start(final StartContext context) throws StartException {
@@ -531,7 +537,87 @@ public final class ServerService extends AbstractControllerService {
 
     /** Temporary replacement for QueuelessThreadPoolService */
     private static class ServerExecutorService implements Service<ExecutorService> {
+        private class ExecutorServiceDelegate implements ExecutorService {
+            private ExecutorService delegate;
+            private void init() {
+                if (EnhancedQueueExecutor.DISABLE_HINT) {
+                    delegate = new ThreadPoolExecutor(getCorePoolSize(forDomain), Integer.MAX_VALUE, 20L, TimeUnit.SECONDS,
+                            new SynchronousQueue<Runnable>(), threadFactory);
+                } else {
+                    delegate = new EnhancedQueueExecutor.Builder()
+                            .setCorePoolSize(getCorePoolSize(forDomain))
+                            .setMaximumPoolSize(getMaxPoolSize())
+                            .setKeepAliveTime(20L, TimeUnit.SECONDS)
+                            .setThreadFactory(threadFactory)
+                            .setMBeanName(ENHANCED_EXECUTOR_MBEAN_NAME)
+                            .build();
+                }
+            }
+            @Override
+            public void shutdown() {
+                delegate.shutdown();
+            }
 
+            @Override
+            public List<Runnable> shutdownNow() {
+                return delegate.shutdownNow();
+            }
+
+            @Override
+            public boolean isShutdown() {
+                return delegate.isShutdown();
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return delegate.isTerminated();
+            }
+
+            @Override
+            public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+                return delegate.awaitTermination(timeout, unit);
+            }
+
+            @Override
+            public <T> Future<T> submit(Callable<T> task) {
+                return delegate.submit(task);
+            }
+
+            @Override
+            public <T> Future<T> submit(Runnable task, T result) {
+                return delegate.submit(task, result);
+            }
+
+            @Override
+            public Future<?> submit(Runnable task) {
+                return delegate.submit(task);
+            }
+
+            @Override
+            public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+                return delegate.invokeAll(tasks);
+            }
+
+            @Override
+            public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+                return delegate.invokeAll(tasks, timeout, unit);
+            }
+
+            @Override
+            public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+                return delegate.invokeAny(tasks);
+            }
+
+            @Override
+            public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                return delegate.invokeAny(tasks, timeout, unit);
+            }
+
+            @Override
+            public void execute(Runnable command) {
+                delegate.execute(command);
+            }
+        }
         private static final int DEFAULT_CORE_POOL_SIZE = 1;
         private static final int DEFAULT_MAX_POOL_SIZE = 1024;
         private static final int DEFAULT_DOMAIN_CORE_POOL_SIZE = 3; // keep more threads in a domain server as the intra-process comms use more tasks
@@ -541,7 +627,7 @@ public final class ServerService extends AbstractControllerService {
 
         private final ThreadFactory threadFactory;
         private final boolean forDomain;
-        private ExecutorService executorService;
+        private ExecutorServiceDelegate executorService;
 
         private ServerExecutorService(ThreadFactory threadFactory, boolean forDomain) {
             this.threadFactory = threadFactory;
@@ -550,20 +636,22 @@ public final class ServerService extends AbstractControllerService {
 
         @Override
         public synchronized void start(StartContext context) throws StartException {
-            if (EnhancedQueueExecutor.DISABLE_HINT) {
-                executorService = new ThreadPoolExecutor(getCorePoolSize(forDomain), Integer.MAX_VALUE, 20L, TimeUnit.SECONDS,
-                        new SynchronousQueue<Runnable>(), threadFactory);
-            } else {
-                executorService = new EnhancedQueueExecutor.Builder()
-                    .setCorePoolSize(getCorePoolSize(forDomain))
-                    .setMaximumPoolSize(getMaxPoolSize())
-                    .setKeepAliveTime(20L, TimeUnit.SECONDS)
-                    .setThreadFactory(threadFactory)
-                    .setMBeanName(ENHANCED_EXECUTOR_MBEAN_NAME)
-                    .build();
-            }
+                executorService = new ExecutorServiceDelegate();
+                executorService.init();
         }
 
+        public void passivate() {
+            executorService.shutdownNow();
+        }
+        public void runtime() throws StartException {
+            executorService.init();
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    //System.out.println("A NOP TASK TO HVE A FIRST NON DAEMON THREAD RUNNING");
+                }
+            });
+        }
         @Override
         public synchronized void stop(final StopContext context) {
 
@@ -688,6 +776,14 @@ public final class ServerService extends AbstractControllerService {
         @Override
         public synchronized ScheduledExecutorService getValue() throws IllegalStateException {
             return scheduledExecutorService;
+        }
+        public void passivate() {
+            System.out.println("SHUTDOWN SCHEDULED EXECUTOR!!!!!!!");
+            scheduledExecutorService.shutdownNow();
+        }
+
+        public void runtime() throws StartException {
+            start(null);
         }
     }
 

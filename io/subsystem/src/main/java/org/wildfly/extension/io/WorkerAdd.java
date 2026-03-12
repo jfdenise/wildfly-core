@@ -36,6 +36,7 @@ import org.wildfly.common.cpu.ProcessorInfo;
 import org.wildfly.extension.io.logging.IOLogger;
 import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.io.OptionAttributeDefinition;
+import org.wildfly.io.XnioWorkerSupplier;
 import org.xnio.Option;
 import org.xnio.OptionMap;
 import org.xnio.Xnio;
@@ -211,10 +212,10 @@ class WorkerAdd extends AbstractAddStepHandler {
 
         int workerMaxThreads = workerThreads;
         // Add to max threads on start, subtract from max threads on stop
-        Consumer<XnioWorker> maxThreadsRecorder = worker -> this.maxThreads.addAndGet((worker != null) ? workerMaxThreads : (0 - workerMaxThreads));
+        Consumer<XnioWorkerSupplier> maxThreadsRecorder = worker -> this.maxThreads.addAndGet((worker != null) ? workerMaxThreads : (0 - workerMaxThreads));
 
         final CapabilityServiceBuilder<?> capBuilder = context.getCapabilityServiceTarget().addCapability(WorkerResourceDefinition.CAPABILITY);
-        final Consumer<XnioWorker> workerConsumer = capBuilder.provides(WorkerResourceDefinition.CAPABILITY);
+        final Consumer<XnioWorkerSupplier> workerConsumer = capBuilder.provides(WorkerResourceDefinition.CAPABILITY);
         final Supplier<Executor> executorSupplier = capBuilder.requires(Capabilities.MANAGEMENT_EXECUTOR);
         capBuilder.setInstance(new WorkerService(workerConsumer.andThen(maxThreadsRecorder), executorSupplier, builder));
         capBuilder.setInitialMode(ServiceController.Mode.ON_DEMAND);

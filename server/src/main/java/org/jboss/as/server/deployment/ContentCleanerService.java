@@ -66,6 +66,7 @@ public class ContentCleanerService implements Service {
         final Supplier<ModelControllerClientFactory> mccfSupplier = builder.requires(clientFactoryService);
         final Supplier<ProcessStateNotifier> cpsnSupplier = builder.requires(ControlledProcessStateService.INTERNAL_SERVICE_NAME);
         final Supplier<ScheduledExecutorService> sesSupplier = builder.requires(scheduledExecutorServiceName);
+        System.out.println("EXECUTOR SUPPLIER " + scheduledExecutorServiceName);
         final Supplier<ExecutorService> esSupplier = Services.requireServerExecutor(builder);
         builder.setInstance(new ContentCleanerService(true, mccfSupplier, cpsnSupplier, sesSupplier, esSupplier));
         builder.install();
@@ -111,5 +112,11 @@ public class ContentCleanerService implements Service {
         this.deploymentContentCleaner = null;
         contentCleaner.stopScan();
     }
+    public void passivate() {
+        deploymentContentCleaner.stopScan();
+    }
 
+    public void runtime() throws StartException {
+        deploymentContentCleaner.startScan();
+    }
 }

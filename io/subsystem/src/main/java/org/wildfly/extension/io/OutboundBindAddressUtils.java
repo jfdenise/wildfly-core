@@ -36,10 +36,12 @@ final class OutboundBindAddressUtils {
     }
 
     static WorkerService getWorkerService(final OperationContext context) {
+        System.out.println("GET WORKER SERVICE");
         final ServiceRegistry serviceRegistry = context.getServiceRegistry(false);
         final String workerName = context.getCurrentAddress().getParent().getLastElement().getValue();
         final ServiceName workerServiceName = context.getCapabilityServiceName(IOServiceDescriptor.WORKER, workerName);
         final ServiceController<?> workerServiceController = serviceRegistry.getRequiredService(workerServiceName);
+        System.out.println("GET WORKER SERVICE DONE " + workerServiceController.getService());
         return (WorkerService) workerServiceController.getService();
     }
 }

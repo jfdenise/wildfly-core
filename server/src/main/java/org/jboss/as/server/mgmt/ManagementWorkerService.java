@@ -14,6 +14,7 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.xnio.OptionMap;
 import org.xnio.Options;
 import org.xnio.Xnio;
@@ -32,9 +33,13 @@ public class ManagementWorkerService implements Service<XnioWorker> {
     private ManagementWorkerService(OptionMap options) {
         this.options = options;
     }
-
+    private StartContext context;
     @Override
     public void start(StartContext startContext) throws StartException {
+        if (WildFlyGraalSetup.isBuildTime()) {
+            this.context = context;
+            return;
+        }
         final Xnio xnio = Xnio.getInstance();
         try {
             worker = xnio.createWorker(null,  options, this::stopDone);
@@ -51,7 +56,13 @@ public class ManagementWorkerService implements Service<XnioWorker> {
         worker.shutdown();
         worker = null;
     }
-
+    public void passivate() {
+        //worker.shutdown();
+        //worker = null;
+    }
+    public void runtime() throws StartException {
+        start(context);
+    }
     private void stopDone() {
         final StopContext stopContext = this.stopContext;
         this.stopContext = null;

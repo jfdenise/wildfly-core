@@ -17,6 +17,7 @@ import javax.management.ObjectName;
 import org.jboss.as.controller.ControlledProcessState;
 import org.jboss.as.controller.ControlledProcessStateService;
 import org.jboss.as.controller.ProcessStateNotifier;
+import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
 import org.jboss.as.server.jmx.RunningStateJmx;
 import org.jboss.as.server.logging.ServerLogger;
 import org.jboss.as.server.suspend.ServerSuspendController;
@@ -26,7 +27,6 @@ import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.msc.service.LifecycleEvent;
 import org.jboss.msc.service.LifecycleListener;
-import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceActivator;
 import org.jboss.msc.service.ServiceContainer;
 import org.jboss.msc.service.ServiceController;
@@ -49,8 +49,8 @@ final class BootstrapImpl implements Bootstrap {
 
     private static final int MAX_THREADS = ServerEnvironment.getBootstrapMaxThreads();
     private final ShutdownHook shutdownHook;
-    private final ServiceContainer container;
-
+    public final ServiceContainer container;
+    private static ApplicationServerService applicationServerService;
     public BootstrapImpl() {
         this.shutdownHook = new ShutdownHook();
         this.container = shutdownHook.register();
@@ -119,7 +119,7 @@ final class BootstrapImpl implements Bootstrap {
         } else {
             ServerLogger.ROOT_LOGGER.info("MBean not registered at build time.");
         }
-        final Service<?> applicationServerService = new ApplicationServerService(extraServices, configuration, processState,
+        applicationServerService = new ApplicationServerService(extraServices, configuration, processState,
                 suspendController, configuration.getServerEnvironment().getElapsedTime());
         tracker.addService(Services.JBOSS_AS, applicationServerService)
             .install();
@@ -258,6 +258,10 @@ final class BootstrapImpl implements Bootstrap {
         }
 
         private void shutdown(boolean failed) {
+            if(WildFlyGraalSetup.isBuildTime()) {
+                System.out.println("SHUTDOWN IS DISABLED AT BUILD TIME");
+                return;
+            }
             final ServiceContainer sc;
             final ControlledProcessState ps;
             synchronized (this) {
@@ -265,6 +269,8 @@ final class BootstrapImpl implements Bootstrap {
                 sc = container;
                 ps = processState;
             }
+            System.out.println("SHUTDOWN CALLED " + ps.getState() + " " + sc);
+
             try {
                 if (ps != null) {
                     if (!failed && ps.getState() == ControlledProcessState.State.RUNNING) {
@@ -302,6 +308,7 @@ final class BootstrapImpl implements Bootstrap {
 
         private void suspend(ServiceContainer sc) {
             ServerSuspendController suspendController = this.suspendController;
+            System.out.println("SUSPEND CONTROLLER " + suspendController + " is shutdown " + sc.isShutdownComplete());
             if ((suspendController != null) && !sc.isShutdownComplete()) {
                 long millis = TimeUnit.MILLISECONDS.convert(getSuspendTimeout(), TimeUnit.SECONDS);
                 ServerLogger.ROOT_LOGGER.suspendingServer(millis, TimeUnit.MILLISECONDS);
@@ -331,5 +338,9 @@ final class BootstrapImpl implements Bootstrap {
             }
             return 0L;
         }
+    }
+    public void finishBoot() throws ConfigurationPersistenceException {
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+        applicationServerService.finishBoot();
     }
 }

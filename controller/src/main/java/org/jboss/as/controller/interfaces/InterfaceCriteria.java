@@ -42,4 +42,10 @@ public interface InterfaceCriteria extends Serializable, Comparable<InterfaceCri
      * @throws SocketException
      */
     Map<NetworkInterface, Set<InetAddress>> getAcceptableAddresses(final Map<NetworkInterface, Set<InetAddress>> candidates) throws SocketException;
+    default void passivate() {
+
+    }
+    default void runtime() {
+
+    }
 }

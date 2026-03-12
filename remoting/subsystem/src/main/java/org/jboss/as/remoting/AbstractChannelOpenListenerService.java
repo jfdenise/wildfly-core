@@ -25,6 +25,7 @@ import org.jboss.remoting3.CloseHandler;
 import org.jboss.remoting3.Endpoint;
 import org.jboss.remoting3.OpenListener;
 import org.jboss.remoting3.Registration;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.xnio.OptionMap;
 
@@ -71,10 +72,15 @@ public abstract class AbstractChannelOpenListenerService implements Service, Ope
         this.channelName = channelName;
         this.optionMap = optionMap;
     }
-
+    private StartContext context;
     @Override
     public synchronized void start(StartContext context) throws StartException {
         try {
+                    if (WildFlyGraalSetup.isBuildTime()) {
+            System.out.println("DO NOT CREATE ENDPOINT for graal execution");
+            this.context = context;
+            return;
+        }
             closed = false;
             RemotingLogger.ROOT_LOGGER.debugf("Registering channel listener for %s", channelName);
             final ManagementChannelRegistryService registry = this.registrySupplier.get();
@@ -86,7 +92,9 @@ public abstract class AbstractChannelOpenListenerService implements Service, Ope
             throw RemotingLogger.ROOT_LOGGER.couldNotStartChanelListener(e);
         }
     }
-
+    public void runtime() throws StartException {
+        start(context);
+    }
     @Override
     public synchronized void stop(final StopContext context) {
         closed = true;
