@@ -20,6 +20,8 @@
         <module name="org.wildfly.openssl" optional="true"/>
         <module name="org.wildfly.security.elytron-web.undertow-server" services="import" />
         <module name="org.wildfly.graal.runtime"/>
+        <!-- For obscure reason, now that the XnioWorker is indirectly retrieved thanks to the XnioWorkerSupplier, we need this dep -->
+        <module name="org.wildfly.common"/>
     </dependencies>
 
 </module>

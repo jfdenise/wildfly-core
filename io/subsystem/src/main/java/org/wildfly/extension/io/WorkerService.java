@@ -44,12 +44,15 @@ public final class WorkerService implements Service<XnioWorkerSupplier> {
     public void start(final StartContext startContext) {
         builder.setTerminationTask(this::stopDone);
         workerSupplier = new XnioWorkerSupplier(builder);
+        workerSupplier.init();
         workerConsumer.accept(workerSupplier);
     }
 
     public void runtime() throws StartException {
-        //start(context);
         workerSupplier.init();
+    }
+    public void passivate() {
+        workerSupplier.cleanup();
     }
     @Override
     public void stop(final StopContext context) {
