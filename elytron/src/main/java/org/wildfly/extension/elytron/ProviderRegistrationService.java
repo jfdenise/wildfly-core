@@ -92,7 +92,6 @@ class ProviderRegistrationService implements Service<Void> {
     public void passivate() {
     }
     public void runtime() throws StartException {
-        System.out.println("ESTABLISH SECURITY PROVIDERS");
         start(null);
     }
     Injector<Provider[]> getInitialProivders() {

@@ -42,7 +42,7 @@ import org.jboss.msc.value.InjectedValue;
 final class DeploymentUnitPhaseService<T> implements Service<T> {
 
     private final InjectedValue<DeployerChains> deployerChainsInjector = new InjectedValue<DeployerChains>();
-    private final DeploymentUnit deploymentUnit;
+    private DeploymentUnit deploymentUnit;
     private final Phase phase;
     private final AttachmentKey<T> valueKey;
     private final List<AttachedDependency> injectedAttachedDependencies = new ArrayList<AttachedDependency>();
@@ -219,6 +219,9 @@ final class DeploymentUnitPhaseService<T> implements Service<T> {
         }
     }
 
+    public void passivate() {
+        //deploymentUnit = null;
+    }
     public synchronized void stop(final StopContext context) {
         final DeploymentUnit deploymentUnitContext = deploymentUnit;
         final DeployerChains chains = deployerChainsInjector.getValue();

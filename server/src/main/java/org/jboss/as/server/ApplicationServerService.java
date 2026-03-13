@@ -223,8 +223,7 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
       return result.toString();
    }
 
-    public void finishBoot() throws ConfigurationPersistenceException {
-        long start = System.currentTimeMillis();
+    public void finishBoot(long startTime) throws ConfigurationPersistenceException {
         final ServerEnvironment serverEnvironment = configuration.getServerEnvironment();
         final ProductConfig config = serverEnvironment.getProductConfig();
         final String prettyVersion = config.getPrettyVersionString();
@@ -236,7 +235,7 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-        ServerLogger.AS_ROOT_LOGGER.startedClean("Server started in " + (System.currentTimeMillis() - start) + "ms");
+        ServerLogger.AS_ROOT_LOGGER.startedClean("Server started in " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
 }

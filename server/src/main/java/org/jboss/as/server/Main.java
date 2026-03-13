@@ -59,16 +59,9 @@ public final class Main {
         // Start the server in suspend mode
         String[] args = {"--start-mode=suspend"};
         impl = (BootstrapImpl)doMain(args);
-        Thread.sleep(2000);
-        System.out.println("STARTED, NOW PASSIVATE");
-        //impl.container.dumpServices();
+        Thread.sleep(10000);
+        System.out.println("STARTED, NOW PASSIVATE SERVICES");
         impl.container.passivateServices();
-//        try {
-//            bootstrap.shutdownContainer();
-//        } catch(Throwable ex) {
-//            System.out.println("ERROR SHUTING DOWN " + ex);
-//        }
-        //Thread.sleep(5000);
         System.out.println("LEAVING");
     }
 
@@ -78,12 +71,12 @@ public final class Main {
      * @param args the command-line arguments
      */
     public static void main(String[] args) throws Exception {
-        //doMain(args);
+        long startTime = System.currentTimeMillis();
         if(impl == null) {
             impl = (BootstrapImpl) doMain(args);
         } else {
             org.jboss.modules.ref.References.startReaperThread();
-            impl.finishBoot();
+            impl.finishBoot(startTime);
         }
     }
 

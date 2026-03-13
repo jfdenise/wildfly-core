@@ -376,7 +376,7 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
 
     private static final class ModuleDefinitionService implements Service {
         private final Consumer<ModuleDefinition> moduleDefinitionConsumer;
-        private final ModuleDefinition moduleDefinition;
+        private ModuleDefinition moduleDefinition;
 
         private ModuleDefinitionService(final Consumer<ModuleDefinition> moduleDefinitionConsumer, final ModuleDefinition moduleDefinition) {
             this.moduleDefinitionConsumer = moduleDefinitionConsumer;
@@ -387,6 +387,9 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
             moduleDefinitionConsumer.accept(moduleDefinition);
         }
 
+        public void passivate() {
+            moduleDefinition = null;
+        }
         @Override
         public void stop(final StopContext stopContext) {
             moduleDefinitionConsumer.accept(null);

@@ -339,8 +339,8 @@ final class BootstrapImpl implements Bootstrap {
             return 0L;
         }
     }
-    public void finishBoot() throws ConfigurationPersistenceException {
+    public void finishBoot(long startTime) throws ConfigurationPersistenceException {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-        applicationServerService.finishBoot();
+        applicationServerService.finishBoot(startTime);
     }
 }

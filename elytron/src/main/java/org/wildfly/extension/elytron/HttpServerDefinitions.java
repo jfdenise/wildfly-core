@@ -196,14 +196,8 @@ class HttpServerDefinitions {
                 }
 
                 Predicate<Provider.Service> serviceFilter = (Provider.Service s) -> HttpServerAuthenticationMechanismFactory.class.getSimpleName().equals(s.getType());
-                final ClassLoader capturedClassLoader =  Thread.currentThread().getContextClassLoader();
                 return () -> {
-                    System.out.println("GOING TO CALL GET PROVIDER " + Thread.currentThread().getContextClassLoader());
                     final Provider[] actualProviders = providerSupplier.get();
-                    System.out.println("THE ACTUAL: PROVIDERS ARE " + actualProviders.length);
-                    for (Provider p : actualProviders) {
-                        System.out.println(p.getName());
-                    }
                     if ( findProviderService(actualProviders, serviceFilter) == null ) {
                         throw ROOT_LOGGER.noSuitableProvider(HttpServerAuthenticationMechanismFactory.class.getSimpleName());
                     }

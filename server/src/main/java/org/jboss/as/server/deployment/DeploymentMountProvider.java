@@ -30,6 +30,8 @@ import org.jboss.vfs.TempFileProvider;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.VirtualFile;
+import org.jboss.vfs.spi.JavaZipFileSystem;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * Provides VFS mounts of deployment content.
@@ -117,6 +119,10 @@ public interface DeploymentMountProvider {
 
             @Override
             public void stop(final StopContext context) {
+                if(WildFlyGraalSetup.isRuntime()) {
+                    System.out.println("NO CLEANUP OF MOUNTED FILES");
+                    return;
+                }
                 System.out.println("STOP MOUNT PROVIDER");
                 Runnable r = new Runnable() {
                     @Override
@@ -150,18 +156,22 @@ public interface DeploymentMountProvider {
                 }
             }
             public void passivate() {
+                System.out.println("PASSIVATE VFS!");
                 scheduledExecutorService.shutdownNow();
                 try {
-                    tempFileProvider.close();
+                   // tempFileProvider.close();
+                    scheduledExecutorService = null;
+                    JavaZipFileSystem.passivateFiles(tempFileProvider);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
             }
 
             public void runtime() throws StartException {
-                scheduledExecutorService = Executors.newScheduledThreadPool(2, threadFactory);
+                //scheduledExecutorService = Executors.newScheduledThreadPool(2, threadFactory);
                 try {
-                    tempFileProvider = TempFileProvider.create("temp", scheduledExecutorService, true);
+                    //tempFileProvider = TempFileProvider.create("temp", scheduledExecutorService, true);
+                    JavaZipFileSystem.activateFiles(tempFileProvider);
                 } catch (IOException ex) {
                     throw new StartException(ex);
                 }
