@@ -167,7 +167,9 @@ public class ServiceModuleLoader extends ModuleLoader implements Service<Service
     }
 
     public void passivate() {
-        controller.removeListener(listener);
+        if (controller != null) {
+            controller.removeListener(listener);
+        }
         controller = null;
         listener = null;
         serviceContainer = null;
