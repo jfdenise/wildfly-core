@@ -323,6 +323,13 @@ public class RequestController implements Service<RequestController>, Suspendabl
         timer = new Timer();
     }
 
+    public void passivate() {
+        timer = null;
+    }
+    public void runtime() {
+        timer = new Timer();
+    }
+
     @Override
     public void stop(StopContext stopContext) {
         this.registry.get().registerActivity(this);
