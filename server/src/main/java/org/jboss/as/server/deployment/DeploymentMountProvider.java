@@ -30,7 +30,7 @@ import org.jboss.vfs.TempFileProvider;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.VirtualFile;
-import org.jboss.vfs.spi.JavaZipFileSystem;
+import org.jboss.vfs.spi.JavaZipFileSystemGraal;
 import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
@@ -155,23 +155,22 @@ public interface DeploymentMountProvider {
                     context.asynchronous();
                 }
             }
+            @Override
             public void passivate() {
-                System.out.println("PASSIVATE VFS!");
                 scheduledExecutorService.shutdownNow();
                 try {
                    // tempFileProvider.close();
                     scheduledExecutorService = null;
-                    JavaZipFileSystem.passivateFiles(tempFileProvider);
+                    JavaZipFileSystemGraal.passivateFiles(tempFileProvider);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
             }
 
+            @Override
             public void runtime() throws StartException {
-                //scheduledExecutorService = Executors.newScheduledThreadPool(2, threadFactory);
                 try {
-                    //tempFileProvider = TempFileProvider.create("temp", scheduledExecutorService, true);
-                    JavaZipFileSystem.activateFiles(tempFileProvider);
+                    JavaZipFileSystemGraal.activateFiles(tempFileProvider);
                 } catch (IOException ex) {
                     throw new StartException(ex);
                 }
