@@ -230,7 +230,9 @@ final class ApplicationServerService implements Service<AsyncFuture<ServiceConta
         final String banner = serverEnvironment.getStability() == org.jboss.as.version.Stability.EXPERIMENTAL ? config.getBanner() : "";
         ServerLogger.AS_ROOT_LOGGER.serverStarting(prettyVersion, banner);
         try {
-            futureContainer.get().activateServices();
+            // We want undertow listener be the last ones...
+            // TO REVISIT
+            futureContainer.get().activateServices("org.wildfly.undertow.listener.");
             serverService.finishBoot(false);
         } catch (Exception ex) {
             throw new RuntimeException(ex);

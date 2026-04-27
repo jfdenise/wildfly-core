@@ -12,7 +12,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -57,11 +60,13 @@ public final class Main {
     /**
      * WildFly Graal launcher static initializer calls this entry point.
      */
-    public static void preMain() throws Exception {
+    public static void preMain(String[] args) throws Exception {
         System.out.println("Static Initialization of the server");
+        List<String> list = new ArrayList<String>(Arrays.asList(args));
         // Start the server in suspend mode
-        String[] args = {"--start-mode=suspend"};
-        impl = (BootstrapImpl)doMain(args);
+        list.add("--start-mode=suspend");
+
+        impl = (BootstrapImpl)doMain(list.toArray(String[]::new));
         int timeout = Integer.getInteger("org.wildfly.graal.build.time.timeout", 10000);
         System.out.println("We are done, waiting " + timeout + "ms for the server to stabilize.");
         Thread.sleep(timeout);
