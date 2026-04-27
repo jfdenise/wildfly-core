@@ -57,6 +57,9 @@ class TrivialService<T> implements Service<T>, org.jboss.msc.Service {
     @Override
     public void activate() throws StartException {
         value = checkNotNullParam("valueSupplier", valueSupplier).get();
+        if (valueConsumer != null) {
+            valueConsumer.accept(value);
+        }
     }
     @Override
     public void stop(StopContext context) {
