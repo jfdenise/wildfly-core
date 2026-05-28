@@ -45,7 +45,10 @@ public class InetAddressMatchInterfaceCriteria extends AbstractInterfaceCriteria
         this.resolved = address;
         this.address = resolved.getHostAddress();
     }
-
+    @Override
+    public void passivate() {
+        resolved = null;
+    }
     /**
      * Creates a new InetAddressMatchInterfaceCriteria
      *
