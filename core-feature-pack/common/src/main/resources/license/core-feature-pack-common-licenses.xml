@@ -11,10 +11,43 @@
       <artifactId>jansi</artifactId>
       <licenses>
         <license>
-          <name>Apache License 2.0</name>
+          <name>bsd license 3</name>
         </license>
+      </licenses>
+    </dependency>
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jansi-core</artifactId>
+      <licenses>
         <license>
-          <name>Eclipse Public License 1.0</name>
+          <name>bsd license 3</name>
+        </license>
+      </licenses>
+    </dependency>
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jline-native</artifactId>
+      <licenses>
+        <license>
+          <name>bsd license 3</name>
+        </license>
+      </licenses>
+    </dependency>
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jline-terminal</artifactId>
+      <licenses>
+        <license>
+          <name>bsd license 3</name>
+        </license>
+      </licenses>
+    </dependency>
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jline-terminal-jni</artifactId>
+      <licenses>
+        <license>
+          <name>bsd license 3</name>
         </license>
       </licenses>
     </dependency>

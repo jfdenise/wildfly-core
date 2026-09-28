@@ -259,6 +259,7 @@
                             <excludedGroups>org.wildfly.galleon-plugins</excludedGroups>
                             <excludedArtifacts>wildfly-core-model-test-framework|wildfly-jar-boot|wildfly-core-feature-pack-common|wildfly-core-feature-pack-ee-10-api|wildfly-elytron\z</excludedArtifacts>
                             <excludedScopes>system</excludedScopes>
+                            <shadedArtifactsFile>${project.build.directory}/shaded.xml</shadedArtifactsFile> 
                         </configuration>
                     </execution>
                 </executions>
@@ -268,6 +269,20 @@
                 <groupId>org.wildfly.galleon-plugins</groupId>
                 <artifactId>wildfly-galleon-maven-plugin</artifactId>
                 <executions>
+                    <execution>
+                        <id>discover-shaded-artifacts</id>
+                        <goals>
+                            <goal>discover-shaded-artifacts</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                          <outputFile>target/shaded.xml</outputFile>
+                          <excludeGA>
+                            <id>org.wildfly.galleon-plugins:*</id>
+                            <id>org.wildfly.core:wildfly-cli</id>
+                          </excludeGA>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>feature-pack-build</id>
                         <goals>
